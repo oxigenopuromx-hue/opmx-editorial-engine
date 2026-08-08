@@ -1,0 +1,164 @@
+{
+  "schema_name": "ENTRADA_EDITORIAL — OXÍGENO PURO MX",
+  "schema_version": "2.0",
+  "protocol_id": "OPMX-4.2",
+  "purpose": "Contrato de entrada y normalización multifuente para n8n, previo a la verificación, redacción, optimización editorial y publicación en WordPress.",
+  "rules": {
+    "minimum_sources": 1,
+    "multiple_sources_allowed": true,
+    "preserve_source_provenance": true,
+    "do_not_invent_missing_content": true,
+    "block_if_critical_source_unreadable": true,
+    "minimum_substantive_sources": 1,
+    "urls_optional": true,
+    "documents_optional": true,
+    "direct_text_optional": true,
+    "image_optional": true,
+    "empty_optional_branches_must_emit_default_package": true,
+    "do_not_duplicate_image_binary_per_source": true,
+    "discard_document_binary_after_text_extraction": true,
+    "blocked_source_does_not_block_other_usable_sources": true,
+    "one_submission_one_article": true
+  },
+  "accepted_input_types": [
+    "url",
+    "pdf",
+    "docx",
+    "txt",
+    "markdown",
+    "html",
+    "image",
+    "csv",
+    "xlsx",
+    "text",
+    "other"
+  ],
+  "request": {
+    "request_id": "",
+    "editorial_instruction": null,
+    "sources": [
+      {
+        "source_id": "source-001",
+        "input_type": "url",
+        "url": null,
+        "filename": null,
+        "mime_type": null,
+        "original_label": null,
+        "content_or_reference": null
+      }
+    ]
+  },
+  "normalized_source_contract": {
+    "source_id": "url_N|document_N|direct_text_1",
+    "input_type": "string",
+    "url": "string|null",
+    "filename": "string|null",
+    "mime_type": "string|null",
+    "title": "string|null",
+    "publisher": "string|null",
+    "author": "string|null",
+    "publication_date": "string|null",
+    "language": "string|null",
+    "extraction_status": "success|partial|failed",
+    "extraction_warnings": [],
+    "tables": [],
+    "links": [],
+    "metadata": {},
+    "original_url": "string|null",
+    "normalized_url": "string|null",
+    "final_url": "string|null",
+    "canonical_url": "string|null",
+    "description": "string|null",
+    "modified_date": "string|null",
+    "page_count": "integer|null",
+    "file_size_bytes": "integer|null",
+    "content": "string|null",
+    "paragraphs": [],
+    "word_count": "integer",
+    "normalized_content_available": "boolean",
+    "normalization_status": "string|null",
+    "retrieved_at": "ISO-8601|null",
+    "warnings": []
+  },
+  "form_contract": {
+    "fields": [
+      {
+        "label": "URLs de fuentes",
+        "type": "textarea",
+        "required": false,
+        "normalization": "one_url_per_line"
+      },
+      {
+        "label": "Texto fuente",
+        "type": "textarea",
+        "required": false
+      },
+      {
+        "label": "Documentos fuente",
+        "type": "file",
+        "multiple": true,
+        "required": false,
+        "binary_name_examples": [
+          "Documentos_fuente",
+          "Documentos_fuente_0",
+          "Documentos_fuente_1"
+        ]
+      },
+      {
+        "label": "Imagen",
+        "type": "file",
+        "multiple": false,
+        "required": false,
+        "binary_name": "Imagen"
+      }
+    ],
+    "validation": {
+      "at_least_one_of": [
+        "URLs de fuentes",
+        "Texto fuente",
+        "Documentos fuente"
+      ],
+      "image_does_not_count_as_substantive_source": true
+    }
+  },
+  "source_identity": {
+    "url_pattern": "url_{index}",
+    "document_pattern": "document_{index}",
+    "direct_text_id": "direct_text_1",
+    "must_travel_inside_item": true
+  },
+  "editorial_dossier_contract": {
+    "protocol_id": "OPMX-4.2",
+    "ingestion": {
+      "source_count": "integer",
+      "multi_source": "boolean",
+      "overall_status": "ready|partial|blocked",
+      "warnings": []
+    },
+    "sources": [],
+    "source_summary": {
+      "total": "integer",
+      "successful": "integer",
+      "partial": "integer",
+      "failed": "integer",
+      "total_words": "integer",
+      "web_sources": "integer",
+      "direct_text_sources": "integer",
+      "document_sources": "integer"
+    },
+    "image_context": {
+      "has_image": "boolean",
+      "pipeline": "object|null",
+      "file_metadata": []
+    },
+    "submission_context": {
+      "submitted_at": "ISO-8601|null",
+      "form_mode": "string|null",
+      "has_documents": "boolean"
+    },
+    "document_processing": {
+      "summary": "object"
+    },
+    "status": "READY_FOR_EDITORIAL_ENGINE|BLOCKED"
+  }
+}

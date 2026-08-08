@@ -1,0 +1,526 @@
+{
+  "config_name": "CONFIG_SEO — OXÍGENO PURO MX",
+  "config_version": "2.2",
+  "protocol_id": "OPMX-4.2",
+  "description": "Parámetros SEO y editoriales cuantificables sincronizados con OPMX-3.2. Priorizan compatibilidad razonable con Rank Math sin sacrificar rigor periodístico.",
+  "seo": {
+    "title_max_characters": 60,
+    "subtitle_max_characters": 160,
+    "meta_description_max_characters": 155,
+    "full_url_max_characters": 75,
+    "focus_keyword": {
+      "required_in_title": true,
+      "preferred_position_in_title": "inicio",
+      "required_in_slug": true,
+      "required_at_start_of_entradilla": true,
+      "required_in_h2": true,
+      "density_min_percent": 1.0,
+      "density_max_percent": 1.5,
+      "density_is_hard_requirement": false,
+      "over_optimization_warning_percent": 2.5
+    }
+  },
+  "article": {
+    "entradilla_min_words": 100,
+    "entradilla_max_words": 120,
+    "article_min_words": 850,
+    "article_max_words": 1050,
+    "development_h2_min": 3,
+    "development_h2_max": 5,
+    "sentence_target_min_words": 12,
+    "sentence_target_max_words": 20,
+    "sentences_over_20_words_max_percent": 20,
+    "paragraph_visual_lines_target_min": 3,
+    "paragraph_visual_lines_target_max": 5
+  },
+  "links": {
+    "external_links_min": 5,
+    "external_links_required": true,
+    "external_links_must_be_verified": true,
+    "preferred_sources": [
+      "fuentes oficiales",
+      "organismos internacionales",
+      "instituciones académicas",
+      "documentos primarios",
+      "medios reconocidos"
+    ],
+    "target_blank": true,
+    "nofollow": false,
+    "recommended_rel": "noopener noreferrer"
+  },
+  "keywords": {
+    "secondary_keywords_min": 5,
+    "secondary_keywords_max": 8,
+    "copy_block_separator": ",",
+    "focus_keyword_first": true
+  },
+  "verification": {
+    "central_claim_additional_source_required": true,
+    "stop_on_critical_discrepancy": true,
+    "stop_on_unverifiable_central_data": true,
+    "verify_names": true,
+    "verify_positions": true,
+    "verify_dates": true,
+    "verify_figures": true,
+    "claim_statuses": [
+      "VERIFIED",
+      "ATTRIBUTED_VERIFIED",
+      "UNVERIFIED",
+      "CONFLICTING"
+    ],
+    "attribute_when_primary_document_not_public": true,
+    "primary_document_pending_is_automatic_block": false,
+    "conflicting_central_claim_requires_human_review": true,
+    "separate_related_legal_disputes": true
+  },
+  "quality_control": {
+    "allowed_statuses": [
+      "PASS",
+      "WARNING",
+      "FAIL",
+      "BLOCKED"
+    ],
+    "check_word_count": true,
+    "check_title_length": true,
+    "check_subtitle_length": true,
+    "check_meta_description_length": true,
+    "check_slug_length": true,
+    "check_keyword_placement": true,
+    "check_keyword_density": true,
+    "check_external_links": true,
+    "check_h1_headline_match": true,
+    "check_alt_text": true,
+    "check_institutional_seal": true,
+    "check_source_verification": true,
+    "check_cannibalization": true,
+    "check_generation_artifacts": true
+  },
+  "optional_modules": {
+    "faq": false,
+    "internal_linking_map": false,
+    "semantic_entities": false,
+    "social_media_copy": false
+  },
+  "wordpress": {
+    "institutional_seal_required": true,
+    "schema_type": "NewsArticle",
+    "language": "es-MX",
+    "recommended_post_status_initial": "draft"
+  },
+  "versioning": {
+    "protocol_version_required_in_output": true,
+    "config_version_required_in_output": true,
+    "preserve_historical_versions": true
+  },
+  "rank_math": {
+    "optimization_goal": "maximize_score_without_editorial_degradation",
+    "minimum_target_score": 85,
+    "perfect_score_required": false,
+    "editorial_integrity_over_score": true,
+    "title_tests": {
+      "focus_keyword": {
+        "mode": "required"
+      },
+      "focus_keyword_near_beginning": {
+        "mode": "preferred"
+      },
+      "power_word": {
+        "mode": "conditional",
+        "allowed_only_when_natural": true,
+        "avoid_sensationalism": true
+      },
+      "number": {
+        "mode": "conditional",
+        "requires_verified_relevant_number": true,
+        "do_not_convert_news_to_listicle": true
+      },
+      "sentiment": {
+        "mode": "conditional",
+        "neutral_news_allowed": true
+      }
+    },
+    "conditional_test_statuses": [
+      "PASS",
+      "WARNING_EDITORIAL",
+      "NOT_APPLICABLE",
+      "FAIL"
+    ],
+    "acceptable_institutional_power_words": [
+      "clave",
+      "nuevo",
+      "oficial",
+      "estratégico",
+      "decisivo",
+      "relevante",
+      "urgente",
+      "histórico"
+    ],
+    "discouraged_sensational_power_words": [
+      "increíble",
+      "impactante",
+      "sorprendente",
+      "imperdible",
+      "espectacular",
+      "explosivo"
+    ]
+  },
+  "news_angle": {
+    "required": true,
+    "required_fields": [
+      "main_event",
+      "why_now",
+      "editorial_focus",
+      "primary_actors",
+      "context",
+      "secondary_context",
+      "do_not_displace_with"
+    ],
+    "seo_must_follow_editorial_angle": true,
+    "title_must_match_main_event": true,
+    "entradilla_must_match_main_event": true,
+    "first_h2_must_match_editorial_focus": true,
+    "context_must_remain_subordinate": true,
+    "multi_source_role_weighting": true,
+    "angle_failure_status": "FAIL_EDITORIAL_ANGLE",
+    "angle_failure_blocks_auto_publish": true
+  },
+  "image_pipeline": {
+    "enabled": true,
+    "priority_order": [
+      "USER_PROVIDED",
+      "OFFICIAL_SOURCE",
+      "AI_GENERATED",
+      "HUMAN_REQUIRED"
+    ],
+    "real_photo_edit_mode": "TECHNICAL_COLOR_GRADING",
+    "content_modification_allowed": false,
+    "allowed_adjustments": [
+      "white_balance",
+      "exposure",
+      "contrast",
+      "shadows",
+      "highlights",
+      "moderate_saturation",
+      "color_cast_correction",
+      "sharpness",
+      "noise_reduction",
+      "horizon_correction",
+      "crop",
+      "resize",
+      "format_conversion",
+      "compression",
+      "opmx_color_grading"
+    ],
+    "forbidden_adjustments": [
+      "add_person",
+      "remove_person",
+      "change_face",
+      "change_expression",
+      "change_clothing",
+      "replace_background",
+      "move_objects",
+      "remove_relevant_elements",
+      "add_documents",
+      "add_crowds",
+      "add_symbols",
+      "composite_false_scene",
+      "generative_fill_that_changes_context",
+      "alter_visible_text_or_figures"
+    ],
+    "official_source_preferred_for_press_events": true,
+    "ai_generation_allowed_for_abstract_topics": true,
+    "featured_aspect_ratio": "16:9",
+    "preferred_format": "webp",
+    "fallback_format": "jpeg",
+    "color_profile": "sRGB",
+    "require_alt_text": true,
+    "require_credit": true,
+    "require_source_record": true,
+    "require_content_modified_false_for_real_photos": true,
+    "auto_assign_allowed_statuses": [
+      "READY",
+      "READY_WITH_WARNINGS"
+    ],
+    "blocking_statuses": [
+      "HUMAN_REQUIRED",
+      "BLOCKED"
+    ],
+    "candidate_lifecycle": [
+      "DISCOVERED",
+      "SOURCE_IDENTIFIED",
+      "RIGHTS_CHECK_PENDING",
+      "USAGE_APPROVED",
+      "TECHNICALLY_READY",
+      "READY",
+      "REJECTED",
+      "HUMAN_REQUIRED"
+    ],
+    "discovery_is_not_usage_approval": true,
+    "search_engine_result_is_not_usage_permission": true,
+    "third_party_media_result_is_not_usage_permission": true,
+    "usage_approval_required_before_editing": true,
+    "ready_required_before_featured_media_assignment": true,
+    "candidate_evaluation": [
+      "editorial_suitability",
+      "rights_status",
+      "technical_suitability"
+    ]
+  },
+  "wordpress_post_composition": {
+    "post_type": "post",
+    "initial_post_status": "draft",
+    "title_field": "post_title",
+    "content_must_not_include_h1": true,
+    "content_order": [
+      "inline_image",
+      "subtitle",
+      "entradilla",
+      "sections",
+      "closing",
+      "institutional_seal"
+    ],
+    "subtitle_html": {
+      "tag": "p",
+      "class": "opmx-subtitulo"
+    },
+    "image": {
+      "upload_once": true,
+      "set_as_featured": true,
+      "insert_in_content": true,
+      "reuse_same_media_id": true,
+      "position": "before_subtitle",
+      "size_slug": "full",
+      "link_destination": "none",
+      "default_alignment": "none",
+      "use_alignfull": false,
+      "markup_mode": "clean_html_figure"
+    },
+    "preferred_content_format": "clean_html",
+    "generate_html_fallback": false,
+    "excerpt_source": "subtitle_or_custom_excerpt",
+    "resolve_category_name_to_id": true,
+    "resolve_tag_names_to_ids": true,
+    "auto_create_taxonomies": false,
+    "validation": {
+      "reject_duplicate_h1": true,
+      "reject_duplicate_media_upload": true,
+      "reject_unresolved_reference_markers": true,
+      "reject_markdown_urls_inside_html_attributes": true,
+      "reject_rel_dofollow": true,
+      "require_contextual_links": true,
+      "reject_manual_gutenberg_comments": true
+    },
+    "generate_gutenberg_serialized_comments": false,
+    "post_content_source": "content_html",
+    "slug": {
+      "required": true,
+      "write_field": "slug",
+      "verify_after_write": true
+    },
+    "taxonomy": {
+      "category_required": true,
+      "default_category_name": "Noticias",
+      "default_category_id_current_site": 13,
+      "resolve_category_name_to_id": true,
+      "verify_category_after_write": true,
+      "tags_enabled": false,
+      "tag_names_default": [],
+      "tag_ids_default": [],
+      "auto_create_categories": false,
+      "auto_create_tags": false,
+      "seo_keywords_are_not_wordpress_tags": true
+    },
+    "technical_account_capabilities_validated": [
+      "create_own_draft_posts",
+      "upload_media",
+      "update_media_alt_text",
+      "set_featured_media",
+      "update_post_content",
+      "write_rank_math_meta_via_rest_bridge",
+      "update_slug",
+      "assign_existing_categories"
+    ],
+    "technical_account_capabilities_not_required": [
+      "create_categories",
+      "create_tags",
+      "auto_publish",
+      "edit_other_users_posts",
+      "manage_plugins",
+      "manage_themes",
+      "manage_users"
+    ]
+  },
+  "rank_math_rest_bridge": {
+    "required": true,
+    "post_type": "post",
+    "meta_fields": {
+      "seo_title": "rank_math_title",
+      "description": "rank_math_description",
+      "focus_keyword": "rank_math_focus_keyword"
+    },
+    "registration": {
+      "type": "string",
+      "single": true,
+      "show_in_rest": true,
+      "sanitize_callback": "sanitize_text_field",
+      "required_capability": "edit_posts"
+    },
+    "write_payload_parent": "meta",
+    "verify_after_write": true,
+    "verification_context": "edit",
+    "expected_write_status": "READY",
+    "keep_post_as_draft_after_write": true,
+    "human_review_required_before_publish": true,
+    "validated_in_production_like_test": true
+  },
+  "url_normalization": {
+    "required_before_extraction": true,
+    "prefer_direct_source_urls": true,
+    "accept_redirect_urls": true,
+    "accepted_schemes": [
+      "https",
+      "http"
+    ],
+    "blocked_schemes": [
+      "javascript",
+      "data",
+      "file"
+    ],
+    "supported_redirect_types": [
+      301,
+      302,
+      303,
+      307,
+      308
+    ],
+    "supported_intermediaries": [
+      "google_amp",
+      "google_url_redirect",
+      "http_redirect",
+      "publisher_amp",
+      "shared_link_redirect"
+    ],
+    "fields_required": [
+      "original_url",
+      "normalized_url",
+      "final_url",
+      "canonical_url",
+      "redirect_detected",
+      "redirect_provider",
+      "tracking_parameters_removed",
+      "normalization_status",
+      "normalization_warnings"
+    ],
+    "tracking_parameters_safe_to_remove": [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_term",
+      "utm_content",
+      "gclid",
+      "fbclid"
+    ],
+    "preserve_original_url": true,
+    "prefer_canonical_when_verified": true,
+    "google_is_not_editorial_source_when_intermediary": true,
+    "do_not_invent_destination": true,
+    "human_review_when_unresolved": true,
+    "statuses": [
+      "PASS_DIRECT",
+      "PASS_REDIRECT_RESOLVED",
+      "PASS_CANONICAL_RESOLVED",
+      "WARNING_PARTIAL",
+      "HUMAN_REQUIRED",
+      "BLOCKED"
+    ]
+  },
+  "ingestion_pipeline": {
+    "enabled": true,
+    "workflow_name": "OPMX 01 — Generación editorial a WordPress",
+    "one_submission_one_article": true,
+    "minimum_substantive_sources": 1,
+    "accepted_combinations": [
+      "text_only",
+      "urls_without_documents",
+      "documents_without_urls",
+      "url_and_image",
+      "url_and_pdf",
+      "multiple_urls",
+      "multiple_documents",
+      "urls_documents_text_image"
+    ],
+    "source_id_patterns": {
+      "url": "url_{index}",
+      "document": "document_{index}",
+      "direct_text": "direct_text_1"
+    },
+    "web_pipeline": [
+      "split_urls",
+      "normalize_url",
+      "resolve_http",
+      "download_html",
+      "extract_meta",
+      "parse_json_ld",
+      "extract_body_candidates",
+      "clean_body",
+      "build_normalized_web_source",
+      "gather_web_sources"
+    ],
+    "document_pipeline": [
+      "split_documents",
+      "map_binary_to_document_file",
+      "extract_from_pdf",
+      "normalize_document",
+      "gather_document_sources"
+    ],
+    "optional_branch_defaults": {
+      "no_urls_emits_empty_package": true,
+      "no_documents_emits_empty_package": true
+    },
+    "binary_policy": {
+      "duplicate_image_per_url": false,
+      "duplicate_image_per_document": false,
+      "temporary_document_binary_field": "document_file",
+      "discard_document_binaries_after_extraction": true,
+      "preserve_single_image_at_final_ingestion": true
+    },
+    "blocked_source_policy": {
+      "single_source_failure_does_not_block_other_sources": true,
+      "captcha_bypass_allowed": false,
+      "block_only_when_no_usable_source_exists": true
+    },
+    "web_extraction": {
+      "metadata_layers": [
+        "open_graph",
+        "html_meta",
+        "json_ld",
+        "canonical"
+      ],
+      "preferred_json_ld_types": [
+        "NewsArticle",
+        "ReportageNewsArticle",
+        "AnalysisNewsArticle",
+        "Article",
+        "WebPage"
+      ],
+      "body_strategy": "PARAGRAPH_HEURISTIC_WITH_STOP_DETECTION",
+      "remove_noise": [
+        "advertising",
+        "related_links",
+        "related_headlines",
+        "email",
+        "footer",
+        "copyright"
+      ]
+    },
+    "pdf_extraction": {
+      "supported_initial_mode": "text_selectable_pdf",
+      "method": "N8N_EXTRACT_FROM_PDF",
+      "ocr_when_insufficient": "HUMAN_REQUIRED_OR_FUTURE_OCR_BRANCH",
+      "minimum_preferred_word_count": 50
+    },
+    "final_object": "editorial_dossier",
+    "ready_status": "READY_FOR_EDITORIAL_ENGINE",
+    "blocked_status": "BLOCKED"
+  }
+}

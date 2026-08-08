@@ -1,0 +1,91 @@
+{
+  "schema_name": "INGESTION_PIPELINE — OXÍGENO PURO MX",
+  "schema_version": "1.0",
+  "protocol_id": "OPMX-4.2",
+  "workflow": "OPMX 01 — Generación editorial a WordPress",
+  "purpose": "Referencia técnica validada para convertir URLs, texto, documentos e imagen en un único editorial_dossier listo para el motor editorial.",
+  "validated_cases": [
+    "text_only",
+    "two_urls_text_image_no_documents",
+    "text_pdf_image_no_urls",
+    "multiple_urls",
+    "multiple_pdfs",
+    "urls_text_multiple_pdfs_image"
+  ],
+  "node_groups": {
+    "entry": [
+      "On form submission",
+      "Normalizar entrada OPMX",
+      "¿Hay fuente válida?",
+      "¿Hay imagen OPMX?",
+      "Unificar ruta de imagen",
+      "Preparar paquete de fuentes"
+    ],
+    "web": [
+      "¿Hay URLs?",
+      "Sin URLs",
+      "Separar URLs",
+      "Normalizar URL inicial",
+      "¿URL lista para resolver?",
+      "Resolver y descargar URL",
+      "Unir URL y respuesta HTTP",
+      "Registrar respuesta web",
+      "Extraer metadatos HTML",
+      "Interpretar JSON-LD",
+      "Extraer cuerpo fuente",
+      "Limpiar cuerpo fuente",
+      "Unir metadatos y cuerpo",
+      "Reincorporar contexto de fuente",
+      "Construir fuente web normalizada",
+      "Reunir fuentes URL"
+    ],
+    "documents": [
+      "¿Hay documentos?",
+      "Sin documentos",
+      "Separar documentos",
+      "Extraer PDF",
+      "Normalizar documento PDF",
+      "Reunir fuentes documentales"
+    ],
+    "dossier": [
+      "Reincorporar paquete original",
+      "Construir dossier editorial OPMX",
+      "Integrar documentos al dossier",
+      "Finalizar dossier de ingestión"
+    ]
+  },
+  "binary_policy": {
+    "image_original_field": "Imagen",
+    "document_original_examples": [
+      "Documentos_fuente",
+      "Documentos_fuente_0",
+      "Documentos_fuente_1"
+    ],
+    "document_temporary_field": "document_file",
+    "binary_after_final_ingestion": [
+      "Imagen"
+    ],
+    "documents_discarded_after_extraction": true
+  },
+  "source_objects": {
+    "web": "source_normalized",
+    "document": "document_normalized",
+    "direct_text": "direct_text_1"
+  },
+  "empty_packages": {
+    "web_sources": [],
+    "document_sources": []
+  },
+  "final_statuses": [
+    "READY_FOR_EDITORIAL_ENGINE",
+    "BLOCKED"
+  ],
+  "known_pending_work": [
+    "DOCX extraction route",
+    "OCR route for scanned PDF",
+    "graceful HTTP error capture for CAPTCHA/403 without stopping item processing",
+    "editorial engine",
+    "image colorimetry pipeline",
+    "WordPress publication block"
+  ]
+}
