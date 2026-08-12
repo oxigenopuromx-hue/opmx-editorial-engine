@@ -1,6 +1,6 @@
 {
   "config_name": "CONFIG_SEO — OXÍGENO PURO MX",
-  "config_version": "2.2",
+  "config_version": "2.3",
   "protocol_id": "OPMX-4.2",
   "description": "Parámetros SEO y editoriales cuantificables sincronizados con OPMX-3.2. Priorizan compatibilidad razonable con Rank Math sin sacrificar rigor periodístico.",
   "seo": {
@@ -9,16 +9,25 @@
     "meta_description_max_characters": 155,
     "full_url_max_characters": 75,
     "focus_keyword": {
-      "required_in_title": true,
-      "preferred_position_in_title": "inicio",
-      "required_in_slug": true,
-      "required_at_start_of_entradilla": true,
-      "required_in_h2": true,
-      "density_min_percent": 1.0,
-      "density_max_percent": 1.5,
-      "density_is_hard_requirement": false,
-      "over_optimization_warning_percent": 2.5
-    }
+  "min_words": 2,
+  "target_max_words": 6,
+  "hard_max_words": 8,
+  "must_be_natural_search_phrase": true,
+  "must_represent_primary_search_intent": true,
+  "must_follow_editorial_angle": true,
+  "must_not_be_full_headline_rewrite": true,
+  "prefer_entity_topic_or_action_core": true,
+  "move_extended_long_tail_variants_to_secondary_keywords": true,
+  "required_in_title": true,
+  "preferred_position_in_title": "inicio",
+  "required_in_slug": true,
+  "required_at_start_of_entradilla": true,
+  "required_in_h2": true,
+  "density_min_percent": 1.0,
+  "density_max_percent": 1.5,
+  "density_is_hard_requirement": false,
+  "over_optimization_warning_percent": 2.5
+}
   },
   "article": {
     "entradilla_min_words": 100,
@@ -48,12 +57,14 @@
     "nofollow": false,
     "recommended_rel": "noopener noreferrer"
   },
-  "keywords": {
-    "secondary_keywords_min": 5,
-    "secondary_keywords_max": 8,
-    "copy_block_separator": ",",
-    "focus_keyword_first": true
-  },
+"keywords": {
+  "secondary_keywords_min": 5,
+  "secondary_keywords_max": 8,
+  "secondary_keywords_may_include_long_tail_variants": true,
+  "secondary_keywords_must_not_duplicate_focus_keyword": true,
+  "copy_block_separator": ",",
+  "focus_keyword_first": true
+}
   "verification": {
     "central_claim_additional_source_required": true,
     "stop_on_critical_discrepancy": true,
