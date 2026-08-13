@@ -1,7 +1,7 @@
 {
   "contract_id": "OPMX-4.2",
   "protocol": "PROTOCOLO_EDITORIAL_OPMX_v4.2.md",
-  "seo_config": "CONFIG_SEO_OPMX_v2.2.json",
+  "seo_config": "CONFIG_SEO_OPMX.json",
   "input_schema": "ENTRADA_EDITORIAL_OPMX_v2.0.json",
   "output_schema": "SALIDA_EDITORIAL_OPMX_v2.2.json",
   "ingestion_pipeline": "INGESTION_PIPELINE_OPMX_v1.0.json"
