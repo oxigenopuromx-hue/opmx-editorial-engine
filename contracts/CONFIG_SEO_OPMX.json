@@ -35,6 +35,18 @@
   "required_in_slug": true,
   "required_at_start_of_entradilla": true,
   "required_in_h2": true,
+
+  "h2_keyword_policy": {
+    "minimum_headings_with_focus_keyword": 1,
+    "automatic_adjustment_allowed": true,
+    "prefer_existing_h2_adjustment": true,
+    "create_new_heading_for_keyword": false,
+    "must_preserve_meaning": true,
+    "must_not_introduce_new_facts": true,
+    "must_remain_natural": true,
+    "maximum_automatic_h2_changes": 1
+  },
+    
   "density_min_percent": 1.0,
   "density_max_percent": 1.5,
   "density_is_hard_requirement": false,
