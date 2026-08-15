@@ -1,6 +1,6 @@
 {
   "config_name": "CONFIG_SEO — OXÍGENO PURO MX",
-  "config_version": "2.4",
+  "config_version": "2.5",
   "protocol_id": "OPMX-4.2",
   "description": "Parámetros SEO y editoriales cuantificables sincronizados con OPMX-3.2. Priorizan compatibilidad razonable con Rank Math sin sacrificar rigor periodístico.",
   "seo": {
@@ -18,6 +18,18 @@
   "must_not_be_full_headline_rewrite": true,
   "prefer_entity_topic_or_action_core": true,
   "move_extended_long_tail_variants_to_secondary_keywords": true,
+
+ "generation_rules": [
+    "La primary_keyword debe ser una frase de búsqueda, no un titular.",
+    "Debe priorizar entidad + tema o entidad + acción central.",
+    "Debe evitar verbos narrativos innecesarios como 'insiste', 'señala', 'afirma' o 'destaca', salvo que formen parte real de la intención de búsqueda.",
+    "Debe evitar fechas, subordinadas y contexto secundario salvo que sean indispensables para la intención de búsqueda.",
+    "Si la propuesta supera target_max_words, debe intentar reducirse antes de emitir la respuesta.",
+    "Si supera hard_max_words, debe reducirse obligatoriamente antes de emitir la respuesta.",
+    "Las variantes long-tail más extensas deben trasladarse a secondary_keywords.",
+    "No debe copiar ni reformular casi por completo el seo_title."
+  ],
+      
   "required_in_title": true,
   "preferred_position_in_title": "inicio",
   "required_in_slug": true,
@@ -62,9 +74,10 @@
   "secondary_keywords_max": 8,
   "secondary_keywords_may_include_long_tail_variants": true,
   "secondary_keywords_must_not_duplicate_focus_keyword": true,
+  "secondary_keywords_should_include_entities_and_related_concepts": true,
   "copy_block_separator": ",",
   "focus_keyword_first": true
-},
+}
   "verification": {
     "central_claim_additional_source_required": true,
     "stop_on_critical_discrepancy": true,
