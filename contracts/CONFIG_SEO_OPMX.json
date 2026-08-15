@@ -77,7 +77,7 @@
   "secondary_keywords_should_include_entities_and_related_concepts": true,
   "copy_block_separator": ",",
   "focus_keyword_first": true
-}
+},
   "verification": {
     "central_claim_additional_source_required": true,
     "stop_on_critical_discrepancy": true,
