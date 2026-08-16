@@ -1,0 +1,482 @@
+{
+  "contract": {
+    "contract_id": "OPMX_INGRESS",
+    "contract_version": "1.0",
+    "status": "ACTIVE",
+    "description": "Contrato canónico de ingreso multimodal para el sistema editorial OPMX.",
+    "language": "es-MX",
+    "updated_at": "2026-08-15"
+  },
+
+  "ingress": {
+    "supported_source_channels": [
+      "web",
+      "telegram",
+      "api",
+      "manual"
+    ],
+
+    "active_source_channels": [
+      "web"
+    ],
+
+    "supported_intents": [
+      "CREATE_WORDPRESS_DRAFT"
+    ],
+
+    "default_intent": "CREATE_WORDPRESS_DRAFT",
+
+    "job_control": {
+      "job_id_required": true,
+      "job_id_generated_server_side": true,
+      "job_id_prefix": "opmx",
+      "submitted_at_required": true,
+      "submitted_at_generated_server_side": true
+    }
+  },
+
+  "content_inputs": {
+    "combination_mode": "ANY_VALID_COMBINATION",
+
+    "minimum_total_factual_sources": 1,
+
+    "urls": {
+      "enabled": true,
+      "min_items": 0,
+      "max_items": 10,
+      "source_id_prefix": "url",
+      "required_fields": [
+        "source_id",
+        "url"
+      ],
+      "url_protocols_allowed": [
+        "http",
+        "https"
+      ],
+      "deduplicate": true,
+      "normalize_before_processing": true
+    },
+
+    "direct_texts": {
+      "enabled": true,
+      "min_items": 0,
+      "max_items": 10,
+      "source_id_prefix": "text",
+      "required_fields": [
+        "source_id",
+        "text"
+      ],
+      "optional_fields": [
+        "label"
+      ],
+      "trim_whitespace": true,
+      "reject_empty_text": true,
+      "deduplicate_exact_text": true
+    },
+
+    "documents": {
+      "enabled": true,
+      "min_items": 0,
+      "max_items": 10,
+      "source_id_prefix": "document",
+      "required_fields": [
+        "source_id",
+        "filename",
+        "mime_type",
+        "binary_field"
+      ],
+      "allowed_mime_types": [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+        "text/plain"
+      ],
+      "allowed_extensions": [
+        "pdf",
+        "docx",
+        "doc",
+        "txt"
+      ],
+      "binary_required": true,
+      "multiple_documents_supported": true,
+      "deduplicate_filename_only": false,
+      "deduplicate_by_content_hash": true
+    },
+
+    "validation_rule": {
+      "require_at_least_one_of": [
+        "urls",
+        "direct_texts",
+        "documents"
+      ],
+      "editorial_image_does_not_count_as_factual_source": true
+    }
+  },
+
+  "editorial_image": {
+    "enabled": true,
+    "required": false,
+    "max_items": 1,
+
+    "source_id": "image_1",
+    "binary_field": "editorial_image",
+
+    "required_fields_when_provided": [
+      "source_id",
+      "filename",
+      "mime_type",
+      "binary_field"
+    ],
+
+    "allowed_mime_types": [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ],
+
+    "allowed_extensions": [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp"
+    ],
+
+    "role": "FEATURED_AND_INLINE",
+
+    "factual_source": false,
+
+    "upload_once": true,
+    "reuse_same_media_id": true,
+    "set_as_featured": true,
+    "insert_in_content": true,
+
+    "recommended_dimensions": {
+      "width": 1200,
+      "height": 630,
+      "aspect_ratio": "1.9048:1",
+      "hard_requirement": false
+    },
+
+    "alt_text_policy": {
+      "required": true,
+      "prefer_primary_keyword": true,
+      "fallback_to_editorial_title": true,
+      "human_review_recommended_on_fallback": true
+    }
+  },
+
+  "editorial_instruction": {
+    "enabled": true,
+    "required": false,
+    "max_items": 1,
+    "trim_whitespace": true,
+    "reject_empty_instruction": true,
+    "must_not_override_factual_guardrails": true,
+    "must_not_force_unsupported_claims": true
+  },
+
+  "publication_request": {
+    "target": "wordpress",
+    "post_type": "post",
+    "initial_status": "draft",
+    "automatic_publish_allowed": false,
+    "human_review_required_before_publish": true,
+
+    "category_mode": "AUTO_WITH_FALLBACK",
+    "default_category_name": "Noticias",
+    "allow_multiple_categories": true,
+    "auto_create_categories": false,
+
+    "tags_enabled": true,
+    "auto_create_tags": false
+  },
+
+  "execution_control": {
+    "idempotency": {
+      "enabled": true,
+      "idempotency_key_required": true,
+      "idempotency_key_generated_server_side": true,
+      "algorithm": "SHA-256",
+
+      "include_in_hash": [
+        "normalized_urls",
+        "normalized_direct_texts",
+        "document_content_hashes",
+        "editorial_instruction"
+      ],
+
+      "exclude_from_hash": [
+        "submitted_at",
+        "job_id"
+      ],
+
+      "duplicate_submission_behavior": "REUSE_EXISTING_JOB"
+    },
+
+    "retry": {
+      "enabled": true,
+      "maximum_retry_attempts": 1,
+
+      "retryable_http_status_codes": [
+        429,
+        502,
+        503,
+        504
+      ],
+
+      "reuse_existing_post": true,
+      "reuse_existing_media": true,
+
+      "create_new_post_on_retry": false,
+      "reupload_media_on_retry": false
+    },
+
+    "wordpress_write_safety": {
+      "draft_only": true,
+      "require_readback_after_write": true,
+      "require_post_id_after_create": true,
+      "require_media_id_after_upload": true,
+      "verify_featured_media": true,
+      "verify_rank_math_meta": true
+    }
+  },
+
+  "binary_mapping": {
+    "strategy": "DECLARED_BINARY_FIELD",
+
+    "documents": {
+      "pattern": "document_N",
+      "examples": [
+        "document_1",
+        "document_2",
+        "document_3"
+      ]
+    },
+
+    "editorial_image": {
+      "field": "editorial_image"
+    },
+
+    "require_declared_binary_to_exist": true,
+    "reject_undeclared_document_binaries": false
+  },
+
+  "source_identity": {
+    "source_id_required": true,
+    "source_id_unique_within_job": true,
+
+    "reserved_prefixes": {
+      "url": "url_",
+      "text": "text_",
+      "document": "document_",
+      "image": "image_"
+    },
+
+    "source_order_preserved": true
+  },
+
+  "normalization": {
+    "urls": {
+      "trim_whitespace": true,
+      "remove_fragment": true,
+      "preserve_query_string": true,
+      "normalize_protocol_case": true
+    },
+
+    "text": {
+      "trim_whitespace": true,
+      "collapse_repeated_whitespace": true,
+      "preserve_paragraph_meaning": true
+    },
+
+    "filenames": {
+      "preserve_original_filename": true,
+      "sanitize_for_internal_use": true
+    }
+  },
+
+  "security": {
+    "accept_arbitrary_html_from_client": false,
+    "accept_client_generated_wordpress_payload": false,
+    "accept_client_generated_rank_math_payload": false,
+    "accept_client_generated_category_ids": false,
+    "accept_client_generated_media_id": false,
+    "accept_client_generated_post_id": false,
+
+    "server_controls": [
+      "job_id",
+      "idempotency_key",
+      "wordpress_post_id",
+      "wordpress_media_id",
+      "rank_math_payload",
+      "publication_status"
+    ]
+  },
+
+  "validation": {
+    "reject_unknown_top_level_fields": false,
+
+    "fatal_conditions": [
+      "NO_FACTUAL_SOURCE",
+      "INVALID_URL",
+      "MISSING_DECLARED_BINARY",
+      "UNSUPPORTED_DOCUMENT_TYPE",
+      "UNSUPPORTED_IMAGE_TYPE",
+      "DUPLICATE_SOURCE_ID",
+      "INVALID_INTENT",
+      "INVALID_SOURCE_CHANNEL"
+    ],
+
+    "warning_conditions": [
+      "NO_EDITORIAL_IMAGE",
+      "IMAGE_NOT_RECOMMENDED_DIMENSIONS",
+      "NO_EDITORIAL_INSTRUCTION",
+      "MULTIPLE_SIMILAR_SOURCES"
+    ]
+  },
+
+  "canonical_payload_shape": {
+    "schema": "OPMX_INGRESS_V1",
+
+    "ingress": {
+      "job_id": "string",
+      "source_channel": "web",
+      "submitted_at": "ISO-8601",
+      "intent": "CREATE_WORDPRESS_DRAFT"
+    },
+
+    "content_inputs": {
+      "urls": [
+        {
+          "source_id": "url_1",
+          "url": "https://example.com/source"
+        }
+      ],
+
+      "direct_texts": [
+        {
+          "source_id": "text_1",
+          "text": "Texto directo.",
+          "label": "Contexto opcional"
+        }
+      ],
+
+      "documents": [
+        {
+          "source_id": "document_1",
+          "filename": "documento.pdf",
+          "mime_type": "application/pdf",
+          "binary_field": "document_1"
+        }
+      ]
+    },
+
+    "editorial_image": {
+      "provided": true,
+      "source_id": "image_1",
+      "filename": "imagen.jpg",
+      "mime_type": "image/jpeg",
+      "binary_field": "editorial_image",
+      "role": "FEATURED_AND_INLINE",
+      "factual_source": false
+    },
+
+    "editorial_instruction": {
+      "provided": true,
+      "text": "Instrucción editorial opcional."
+    },
+
+    "publication_request": {
+      "target": "wordpress",
+      "post_type": "post",
+      "initial_status": "draft"
+    },
+
+    "execution_control": {
+      "job_id": "generated_server_side",
+      "idempotency_key": "generated_server_side"
+    }
+  },
+
+  "normalized_output_contract": {
+    "output_type": "OPMX_VALIDATED_INGRESS",
+
+    "required_blocks": [
+      "opmx_ingress",
+      "ingress_validation",
+      "ingress_control"
+    ],
+
+    "ingress_validation": {
+      "allowed_statuses": [
+        "INGRESS_VALID",
+        "INGRESS_VALID_WITH_WARNINGS",
+        "INGRESS_REJECTED"
+      ],
+
+      "required_metrics": [
+        "total_factual_source_count",
+        "url_count",
+        "direct_text_count",
+        "document_count",
+        "image_provided",
+        "warning_count",
+        "error_count"
+      ]
+    },
+
+    "ingress_control": {
+      "required_fields": [
+        "contract_id_used",
+        "contract_version_used",
+        "job_id",
+        "idempotency_key",
+        "can_continue",
+        "human_review_required"
+      ]
+    }
+  },
+
+  "pipeline_handoff": {
+    "target": "OPMX_EDITORIAL_INGESTION_PIPELINE",
+
+    "handoff_rules": {
+      "preserve_source_ids": true,
+      "preserve_source_order": true,
+      "preserve_binary_field_mapping": true,
+      "preserve_editorial_instruction": true,
+      "preserve_job_id": true,
+      "preserve_idempotency_key": true
+    },
+
+    "do_not_generate_at_ingress": [
+      "article",
+      "seo",
+      "rank_math",
+      "categories",
+      "tags",
+      "internal_links",
+      "external_links",
+      "wordpress_payload"
+    ]
+  },
+
+  "future_compatibility": {
+    "telegram_ready": true,
+    "api_ready": true,
+    "multi_url_ready": true,
+    "multi_document_ready": true,
+
+    "reserved_future_intents": [
+      "UPDATE_EXISTING_DRAFT",
+      "ANALYZE_ONLY",
+      "REGENERATE_SEO"
+    ],
+
+    "reserved_future_features": [
+      "MULTIPLE_EDITORIAL_IMAGES",
+      "VIDEO_INPUT",
+      "AUDIO_INPUT"
+    ]
+  }
+}
