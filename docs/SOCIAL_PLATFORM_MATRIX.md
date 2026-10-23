@@ -1,6 +1,6 @@
 # OPMX Social Distribution — Matriz de plataformas
 
-Estado: **v1.0 — investigación oficial 2026-10-23; sólo Threads tiene worker técnico versionado**
+Estado: **v1.0 — Fase 1 OPURO; investigación oficial 2026-10-23; sólo Threads tiene worker técnico versionado**
 
 | Plataforma | Formato aprobado | Ruta / autenticación a validar al habilitar | Estado v1 |
 |---|---|---|---|
@@ -16,7 +16,8 @@ Estado: **v1.0 — investigación oficial 2026-10-23; sólo Threads tiene worker
 
 ## Media y límites conocidos
 
-- Threads, Instagram y TikTok consumen o requieren URLs públicas accesibles por sus servidores; TikTok exige además dominio/prefijo verificado para `PULL_FROM_URL`.
+- `IMAGEN_SOCIAL` es un asset manual posterior al Publisher. n8n lo sube temporalmente al WordPress OPURO y usa su URL pública. Threads, Instagram y TikTok consumen URLs públicas accesibles por sus servidores; TikTok exige además dominio/prefijo verificado para `PULL_FROM_URL`.
+- El host del CMS se configura por variable. Al migrar a `cms.oxigenopuro.com.mx`, se cambia configuración y después se verifica ese host/prefijo para TikTok; no se requiere R2/Cloudflare en Fase 1.
 - TikTok Photo admite hasta 35 imágenes, título máximo de 90 unidades UTF-16 y descripción máxima de 4,000; el límite de init por token es seis solicitudes por minuto. OPMX usará una imagen por post.
 - El worker debe tomar opciones y límites de la respuesta de creator info de TikTok, no codificarlos como constantes editoriales.
 
