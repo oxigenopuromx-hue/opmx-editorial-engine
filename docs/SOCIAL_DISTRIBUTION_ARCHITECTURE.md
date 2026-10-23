@@ -5,7 +5,7 @@ Actualizado: 2026-10-23
 
 ## Objetivo y límite
 
-Social recibe únicamente una nota cuya publicación ya fue confirmada. No redacta, altera copy, decide target ni modifica el Publisher. Su función es preparar una copia técnica del asset, publicar por plataforma y registrar el resultado aislado de cada rama.
+Social v1 recibe únicamente una nota OPURO cuya publicación ya fue confirmada. Fase 1 distribuye exclusivamente `oxigenopuro.com.mx`; OPOL y `oxigenopuro.mx` quedan fuera. No redacta, altera copy, decide target ni modifica el Publisher. `IMAGEN_SOCIAL` es un tercer asset independiente de HERO e interiores: se crea manualmente en Canva después del flujo editorial y se entrega como archivo/binario.
 
 ## Componentes versionados
 
@@ -19,7 +19,7 @@ Cada workflow se importa de forma independiente. El coordinador se conecta a los
 
 ## Contrato de frontera
 
-`contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json` es el contrato activo de entrada/salida. La integración futura desde Publisher será un adaptador que construya este evento **después** de leer la publicación válida de WordPress. No se modifica Publisher para acomodar Social.
+`contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json` es el contrato activo de entrada/salida y exige `source_site=OPURO` en Fase 1. La integración futura desde Publisher será un adaptador que construya este evento **después** de leer la publicación válida de WordPress. No se modifica Publisher para acomodar Social.
 
 El contrato exige `event_id`, `publisher_run_id`, `source_post_id`, URL pública final, texto aprobado, URL del original, SHA-256, derechos aprobados, targets explícitos e `idempotency_key`. El resultado entrega exactamente un registro por cada una de las nueve plataformas.
 
@@ -40,18 +40,13 @@ Patrón fijo de cada worker:
 
 Una rama nunca cancela otra. `SKIPPED` se utiliza solamente cuando el target está deshabilitado o su política exige operación manual; una plataforma habilitada que carezca de credencial o precheck se reporta `FAILED`.
 
-## Propuesta de media staging pendiente de aprobación de infraestructura
+## Media staging v1 — WordPress temporal
 
-La implementación recomendada es **Cloudflare R2 con custom domain público y estable**, preferentemente `media.opmx.com.mx` (o el dominio que se apruebe y después se verifique en TikTok). La escritura se haría desde n8n con una credencial S3-compatible guardada en n8n; la lectura sería pública por HTTPS. No se ha creado infraestructura ni aprobado el dominio en este hito.
+n8n sube `IMAGEN_SOCIAL` temporalmente a la Media Library del WordPress OPURO. No se inserta en Gutenberg ni se asigna como featured image. El workflow conserva `wordpress_media_id`, `public_url`, `uploaded_at` y `cleanup_after`.
 
-- Ruta inmutable: `social/v1/{source_site}/{source_post_id}/{sha256}/original.{ext}`.
-- El original se copia byte por byte; no se sobrescribe ni se recorta.
-- Variantes se guardan en `derived/{variant}/{sha256}.{ext}` y conservan `parent_sha256`.
-- Cache-Control: `public, max-age=31536000, immutable`.
-- Retención mínima: 30 días antes de cualquier limpieza; no se usan URLs firmadas ni temporales.
-- El precheck realiza `HEAD` público, comprueba 2xx, `Content-Type`, longitud y SHA-256 antes de que cualquier API recupere el archivo.
+La base del CMS vive en la variable `OPMX_SOCIAL_WP_BASE_URL`; no se codifica el dominio. Al completar la migración se cambia a `https://cms.oxigenopuro.com.mx` sin modificar el workflow. Retención inicial: 7 días tras la distribución terminada; la limpieza será un workflow separado y sólo podrá eliminar assets SOCIAL identificados por su media ID.
 
-Esto satisface la recuperación pública requerida por Threads, Instagram y TikTok. La verificación de dominio/prefijo de TikTok y el DNS del custom domain son bloqueos de habilitación, no se simulan.
+TikTok queda bloqueado hasta que el CMS definitivo esté operativo y su dominio/prefijo sea verificado. Este bloqueo no detiene X, LinkedIn, Google Business Profile, Facebook, Instagram ni Threads. Cloudflare/R2 no forma parte de Fase 1.
 
 ## Threads v1
 
