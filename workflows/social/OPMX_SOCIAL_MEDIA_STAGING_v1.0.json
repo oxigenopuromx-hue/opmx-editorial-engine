@@ -1,0 +1,67 @@
+{
+  "name": "OPMX Social Media Staging v1.0",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "opmx-social/media-staging-v1", "responseMode": "lastNode", "options": {}},
+      "id": "8cba1099-029b-47b5-87af-0c9c87014df1",
+      "name": "Webhook — Stage Asset",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-720, 100],
+      "webhookId": "d9dd739b-bbfc-4f6f-88d5-98c0650cb603"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.first().json;\nconst original = payload.media?.original;\nconst event = payload.event;\nif (!event?.event_id || !event?.source_post_id || !original?.public_url || !original?.sha256 || !original?.mime_type) {\n  throw new Error('SOCIAL_MEDIA_STAGING_INPUT_INVALID');\n}\nif (!['image/jpeg', 'image/png', 'image/webp'].includes(original.mime_type)) {\n  throw new Error('SOCIAL_MEDIA_STAGING_MIME_UNSUPPORTED');\n}\nconst extension = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[original.mime_type];\nconst sourceSite = event.source_site || 'OPURO';\nconst objectKey = `social/v1/${sourceSite}/${event.source_post_id}/${original.sha256}/original.${extension}`;\nreturn [{ json: { ...payload, staging: { object_key: objectKey, expected_sha256: original.sha256, source_url: original.public_url, mime_type: original.mime_type } } }];"
+      },
+      "id": "4d6aee7f-7dd0-42bc-b4a8-0454024077d4",
+      "name": "Validate + Derive Immutable Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-480, 100]
+    },
+    {
+      "parameters": {"url": "={{ $json.staging.source_url }}", "options": {"response": {"response": {"response": {"neverError": false, "response": {"fullResponse": false, "responseFormat": "file"}}}}}},
+      "id": "e4397b38-8841-4590-8e3f-b90f472f6997",
+      "name": "Download Original for Staging",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-240, 100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "stopWorkflow"
+    },
+    {
+      "parameters": {"operation": "upload", "bucketName": "={{ $vars.OPMX_SOCIAL_R2_BUCKET }}", "fileName": "={{ $node['Validate + Derive Immutable Key'].json.staging.object_key }}", "binaryData": true, "binaryPropertyName": "data", "options": {"contentType": "={{ $node['Validate + Derive Immutable Key'].json.staging.mime_type }}", "cacheControl": "public, max-age=31536000, immutable"}},
+      "id": "56705e76-af3c-4dc1-93c3-40b36e686eaf",
+      "name": "R2 — Upload Immutable Original",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [0, 100],
+      "credentials": {"s3": {"name": "OPMX Social R2"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const source = $node['Validate + Derive Immutable Key'].json;\nconst base = $vars.OPMX_SOCIAL_PUBLIC_BASE_URL;\nif (!base || !/^https:\/\//.test(base)) throw new Error('OPMX_SOCIAL_PUBLIC_BASE_URL_NOT_CONFIGURED');\nconst publicUrl = `${base.replace(/\\/$/, '')}/${source.staging.object_key}`;\nreturn [{ json: { ...source, asset: { public_url: publicUrl, object_key: source.staging.object_key, sha256: source.staging.expected_sha256, mime_type: source.staging.mime_type, immutable: true } } }];"
+      },
+      "id": "a6780fc0-b973-4a1e-ac92-691e0b6163d2",
+      "name": "Return Staged Asset",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 100]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — Stage Asset": {"main": [[{"node": "Validate + Derive Immutable Key", "type": "main", "index": 0}]]},
+    "Validate + Derive Immutable Key": {"main": [[{"node": "Download Original for Staging", "type": "main", "index": 0}]]},
+    "Download Original for Staging": {"main": [[{"node": "R2 — Upload Immutable Original", "type": "main", "index": 0}]]},
+    "R2 — Upload Immutable Original": {"main": [[{"node": "Return Staged Asset", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner"},
+  "versionId": "e4764a51-0113-4b6f-9e7d-1d2c474f88a5",
+  "meta": {"templateCredsSetupCompleted": false, "instanceId": "OPMX_VERSIONED_EXPORT_NO_SECRETS"},
+  "tags": []
+}

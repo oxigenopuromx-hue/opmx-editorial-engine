@@ -1,0 +1,135 @@
+{
+  "name": "OPMX Social — Threads Worker v1.0",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "opmx-social/threads-v1", "responseMode": "lastNode", "options": {}},
+      "id": "dd0c52e7-998c-4b92-9975-7f60d2e12a9c",
+      "name": "Webhook — Threads Worker",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-800, 120],
+      "webhookId": "e3733f15-1b3a-4fc9-85dc-c3252116d4c7"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst target = p.targets?.threads;\nconst now = new Date().toISOString();\nconst result = (status, extra = {}) => [{ json: { mode: 'TERMINAL', platform: 'threads', status, idempotency_key: p.platform_idempotency_key || null, attempts: 0, started_at: now, completed_at: new Date().toISOString(), post_id: null, post_url: null, provider_request_id: null, asset_url: p.asset?.public_url || null, ...extra } }];\nif (!target?.enabled) return result('SKIPPED', { reason_code: 'DISABLED' });\nif (target.manual_required) return result('SKIPPED', { reason_code: 'MANUAL_REQUIRED' });\nif (p.execution?.dry_run) return result('SKIPPED', { reason_code: 'DISABLED', dry_run: true });\nif (!p.asset?.public_url || !p.content?.subtitulo || !p.content?.url_opuro || !p.media?.original?.alt_text || !p.platform_idempotency_key) {\n  return result('FAILED', { reason_code: 'PRECHECK_FAILED', error: { code: 'THREADS_INPUT_INVALID' } });\n}\nconst copy = `${p.content.subtitulo}\\n\\n${p.content.url_opuro}`;\nreturn [{ json: { ...p, mode: 'PUBLISH', threads: { copy, started_at: now } } }];"
+      },
+      "id": "6d4a50d5-57ac-4031-947d-cc3d2e4cf7c4",
+      "name": "Threads — Gate + Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-560, 120]
+    },
+    {
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.mode }}", "rightValue": "TERMINAL", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "options": {}},
+      "id": "4bb52377-44d7-46d8-b4aa-8b82576a2f69",
+      "name": "Threads — Is Terminal Result?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-320, 120]
+    },
+    {
+      "parameters": {"keepOnlySet": false, "values": {"string": [{"name": "mode", "value": "={{ undefined }}"}]}},
+      "id": "8b99cd04-4ff6-46f5-b535-873633493a56",
+      "name": "Threads — Terminal Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-80, 20]
+    },
+    {
+      "parameters": {"method": "POST", "url": "={{ ($vars.THREADS_API_BASE_URL || 'https://graph.threads.net/v1.0') + '/' + $vars.THREADS_USER_ID + '/threads' }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "contentType": "form-urlencoded", "bodyParameters": {"parameters": [{"name": "media_type", "value": "IMAGE"}, {"name": "image_url", "value": "={{ $json.asset.public_url }}"}, {"name": "text", "value": "={{ $json.threads.copy }}"}, {"name": "alt_text", "value": "={{ $json.media.original.alt_text }}"}]}, "options": {"timeout": 30000}},
+      "id": "c6804a10-2f4f-4ff6-a0d9-d38ea353f753",
+      "name": "Threads — Create Image Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-80, 220],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput",
+      "credentials": {"httpHeaderAuth": {"name": "OPMX Threads API"}}
+    },
+    {
+      "parameters": {"mode": "combine", "combineBy": "combineByPosition", "options": {}},
+      "id": "e2b17ec4-5260-410e-99e2-f08f69879c38",
+      "name": "Threads — Join Context + Container",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [160, 220]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst containerId = p.id;\nif (!containerId || p.error) {\n return [{ json: { mode: 'TERMINAL', platform: 'threads', status: 'FAILED', idempotency_key: p.platform_idempotency_key, attempts: 1, started_at: p.threads?.started_at || new Date().toISOString(), completed_at: new Date().toISOString(), post_id: null, post_url: null, provider_request_id: p.fbtrace_id || null, asset_url: p.asset?.public_url || null, reason_code: 'TRANSIENT_API_ERROR', error: p.error || { code: 'THREADS_CONTAINER_NOT_CREATED' } } }];\n}\nreturn [{ json: { ...p, mode: 'PUBLISH', threads: { ...p.threads, container_id: containerId } } }];"
+      },
+      "id": "a6e55e82-016a-4d1d-bc8f-a884f408c812",
+      "name": "Threads — Validate Container",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 220]
+    },
+    {
+      "parameters": {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.mode }}", "rightValue": "TERMINAL", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "options": {}},
+      "id": "a9120856-1534-4f5a-9b7c-a5a52e2a522d",
+      "name": "Threads — Container Terminal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [640, 220]
+    },
+    {
+      "parameters": {"keepOnlySet": false, "values": {"string": [{"name": "mode", "value": "={{ undefined }}"}]}},
+      "id": "99a623b9-6dc3-4b15-8782-9fcd4e8210d7",
+      "name": "Threads — Container Failure Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [880, 120]
+    },
+    {
+      "parameters": {"method": "POST", "url": "={{ ($vars.THREADS_API_BASE_URL || 'https://graph.threads.net/v1.0') + '/' + $vars.THREADS_USER_ID + '/threads_publish' }}", "authentication": "genericCredentialType", "genericAuthType": "httpHeaderAuth", "sendBody": true, "contentType": "form-urlencoded", "bodyParameters": {"parameters": [{"name": "creation_id", "value": "={{ $json.threads.container_id }}"}]}, "options": {"timeout": 30000}},
+      "id": "a6f3abfe-98d4-4d1f-b44f-29168969afbd",
+      "name": "Threads — Publish Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 320],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput",
+      "credentials": {"httpHeaderAuth": {"name": "OPMX Threads API"}}
+    },
+    {
+      "parameters": {"mode": "combine", "combineBy": "combineByPosition", "options": {}},
+      "id": "03f52ee1-311d-4c33-ad0e-e904127fda12",
+      "name": "Threads — Join Context + Publish",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [1120, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst postId = p.id;\nconst failed = !postId || p.error;\nreturn [{ json: { platform: 'threads', status: failed ? 'FAILED' : 'SUCCESS', idempotency_key: p.platform_idempotency_key, attempts: 2, started_at: p.threads?.started_at || new Date().toISOString(), completed_at: new Date().toISOString(), post_id: failed ? null : String(postId), post_url: null, provider_request_id: p.fbtrace_id || null, asset_url: p.asset?.public_url || null, reason_code: failed ? 'TRANSIENT_API_ERROR' : null, error: failed ? (p.error || { code: 'THREADS_PUBLISH_NOT_CONFIRMED' }) : null } }];"
+      },
+      "id": "492e7845-c73a-4f5d-9d94-21ad9a5fbd64",
+      "name": "Threads — Normalize Final Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 320]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — Threads Worker": {"main": [[{"node": "Threads — Gate + Payload", "type": "main", "index": 0}]]},
+    "Threads — Gate + Payload": {"main": [[{"node": "Threads — Is Terminal Result?", "type": "main", "index": 0}]]},
+    "Threads — Is Terminal Result?": {"main": [[{"node": "Threads — Terminal Result", "type": "main", "index": 0}], [{"node": "Threads — Create Image Container", "type": "main", "index": 0}, {"node": "Threads — Join Context + Container", "type": "main", "index": 0}]]},
+    "Threads — Create Image Container": {"main": [[{"node": "Threads — Join Context + Container", "type": "main", "index": 1}]]},
+    "Threads — Join Context + Container": {"main": [[{"node": "Threads — Validate Container", "type": "main", "index": 0}]]},
+    "Threads — Validate Container": {"main": [[{"node": "Threads — Container Terminal?", "type": "main", "index": 0}]]},
+    "Threads — Container Terminal?": {"main": [[{"node": "Threads — Container Failure Result", "type": "main", "index": 0}], [{"node": "Threads — Publish Container", "type": "main", "index": 0}, {"node": "Threads — Join Context + Publish", "type": "main", "index": 0}]]},
+    "Threads — Publish Container": {"main": [[{"node": "Threads — Join Context + Publish", "type": "main", "index": 1}]]},
+    "Threads — Join Context + Publish": {"main": [[{"node": "Threads — Normalize Final Result", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner"},
+  "versionId": "c73376c5-451f-414d-8031-0e2e74499e22",
+  "meta": {"templateCredsSetupCompleted": false, "instanceId": "OPMX_VERSIONED_EXPORT_NO_SECRETS"},
+  "tags": []
+}

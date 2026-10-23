@@ -25,7 +25,31 @@ Existe un Publisher operativo en n8n y debe tratarse como componente estable. La
 Regla: no modificar Publisher para resolver necesidades de Social salvo incompatibilidad contractual comprobada y aprobada.
 
 ### Social Distribution Engine
-Estado: DISEÑO v1.0.
+Estado: IMPLEMENTACIÓN BASE v1.0; ninguna plataforma ha sido publicada ni probada contra cuenta real.
+
+Terminados en este hito:
+- Contrato activo: `contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json`.
+- Arquitectura, política de media staging, idempotencia, reintentos y observabilidad documentadas.
+- Matriz actualizada contra documentación oficial al 2026-10-23.
+- Workflows n8n completos/importables en `workflows/social/`: coordinador de routing, media staging y worker de Threads. El coordinador es un esqueleto desactivado hasta resolver almacenamiento durable y conectar IDs de subworkflows.
+- Integración de Threads descrita y codificada contra el flujo oficial create container → publish; sigue sin prueba real hasta configurar OAuth/usuario/asset staging.
+
+Probado en este hito:
+- Parseo JSON de los contratos y los tres exports de workflow.
+- Verificación estática de grafo: cada conexión apunta a un nodo existente y cada nodo contiene metadatos de importación.
+- `git diff --check` sin errores de whitespace.
+- No se realizó importación en una instancia n8n, dry run, staging R2 ni llamada a API externa; por tanto no se declara validación funcional.
+
+No terminado / bloqueos:
+- Faltan exportar e incorporar al repositorio la versión exacta aprobada del Publisher del 2026-10-23. No se le hizo cambio alguno.
+- No hay credenciales n8n, IDs de cuenta/ubicación, bucket R2, dominio público verificado ni registros de idempotencia en este repositorio. Por ello no existe prueba de publicación real.
+- Está pendiente aprobar y provisionar el almacén durable de `social_distribution_runs`; sin ello no se activa el coordinador ni se afirma idempotencia efectiva.
+- Cloudflare R2 + custom domain público es la recomendación para media staging, pero requiere aprobación de infraestructura y verificación posterior en TikTok.
+- X, LinkedIn, Google Business Profile, Facebook, Instagram y TikTok están documentados, pero sus workers no se activan hasta configurar acceso, permisos y una prueba aislada por plataforma.
+- YouTube Community y WhatsApp Channel continúan `SKIPPED / MANUAL_REQUIRED`.
+
+Siguiente paso técnico: crear/configurar en n8n las credenciales y el bucket R2 con custom domain, importar los tres workflows, conectar el coordinador con workers y ejecutar una prueba `dry_run`. Después, prueba real de Threads con una nota controlada y verificación de permalink antes de habilitar otros targets.
+
 Debe construirse como workflow independiente y conectarse posteriormente al Publisher mediante contrato explícito. No crear un workflow monolítico.
 
 Destinos previstos:

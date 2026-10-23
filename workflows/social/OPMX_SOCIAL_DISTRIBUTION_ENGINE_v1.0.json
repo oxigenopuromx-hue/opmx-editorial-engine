@@ -1,0 +1,144 @@
+{
+  "name": "OPMX Social Distribution Engine v1.0 — Coordinator",
+  "nodes": [
+    {
+      "parameters": {"httpMethod": "POST", "path": "opmx-social/distribute-v1", "responseMode": "lastNode", "options": {}},
+      "id": "ea28aab8-51a7-45e0-8e1e-e627221c74cd",
+      "name": "Webhook — Distribution Event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-760, 160],
+      "webhookId": "7c91385d-4afe-43d2-b19a-7c1f5c72a0e2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst platforms = ['x','linkedin','google_business','facebook','instagram','threads','tiktok','youtube','whatsapp_channel'];\nif (p.social_contract_version !== '1.0' || !p.event?.event_id || !p.event?.source_post_id || !p.content?.titulo_seo || !p.content?.subtitulo || !p.content?.url_opuro || !p.media?.original?.public_url || !p.media?.original?.sha256) {\n throw new Error('OPMX_SOCIAL_CONTRACT_V1_INVALID');\n}\nif (!p.targets || platforms.some((platform) => !Object.prototype.hasOwnProperty.call(p.targets, platform))) {\n throw new Error('OPMX_SOCIAL_TARGETS_INCOMPLETE');\n}\nreturn [{ json: { ...p, social_engine_version: '1.0', run_id: p.execution.correlation_id || p.event.event_id, correlation_id: p.execution.correlation_id || p.event.event_id } }];"
+      },
+      "id": "4273c59f-7d0e-4036-8bba-80f0c4a1f0e9",
+      "name": "Validate Social Contract v1.0",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-520, 160]
+    },
+    {
+      "parameters": {"workflowId": {"__rl": true, "value": "CONFIGURE_AFTER_IMPORT_MEDIA_STAGING_WORKFLOW_ID", "mode": "id"}, "options": {"waitForSubWorkflow": true}},
+      "id": "9325a5f0-506b-4aaf-b884-b4eecc8f2e28",
+      "name": "Stage Asset — Configure Child Workflow ID",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [-280, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst platforms = ['x','linkedin','google_business','facebook','instagram','threads','tiktok','youtube','whatsapp_channel'];\nconst crypto = require('crypto');\nif (!p.asset?.public_url || !p.asset?.immutable) throw new Error('OPMX_SOCIAL_STAGING_REQUIRED');\nreturn platforms.map((platform) => ({ json: { ...p, platform, platform_idempotency_key: crypto.createHash('sha256').update(`${p.event.event_id}:${platform}:${p.social_contract_version}`).digest('hex') } }));"
+      },
+      "id": "2ac2ca85-d804-4dac-a5b3-1d421ae26b81",
+      "name": "Create Independent Platform Tickets",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-40, 160]
+    },
+    {
+      "parameters": {"rules": {"values": [{"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "x", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "X"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "linkedin", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "LinkedIn"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "google_business", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "Google Business"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "facebook", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "Facebook"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "instagram", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "Instagram"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "threads", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "Threads"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "tiktok", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "TikTok"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "youtube", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "YouTube"}, {"conditions": {"options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"}, "conditions": [{"leftValue": "={{ $json.platform }}", "rightValue": "whatsapp_channel", "operator": {"type": "string", "operation": "equals"}}], "combinator": "and"}, "renameOutput": true, "outputKey": "WhatsApp Channel"}]}, "options": {}},
+      "id": "bc779ee9-eb82-4c7b-82f2-ecebd5d22260",
+      "name": "Independent Platform Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [200, 160]
+    },
+    {
+      "parameters": {"workflowId": {"__rl": true, "value": "CONFIGURE_AFTER_IMPORT_THREADS_WORKER_ID", "mode": "id"}, "options": {"waitForSubWorkflow": true}},
+      "id": "4b5c6401-056e-42cb-a05b-0e933bf54ef9",
+      "name": "Threads — Configure Child Workflow ID",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [480, 310]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $input.first().json;\nconst target = p.targets[p.platform];\nconst manual = p.platform === 'youtube' || p.platform === 'whatsapp_channel' || target?.manual_required;\nconst status = !target?.enabled || manual || p.execution?.dry_run ? 'SKIPPED' : 'FAILED';\nconst reason = !target?.enabled || p.execution?.dry_run ? 'DISABLED' : manual ? 'MANUAL_REQUIRED' : 'MISSING_CREDENTIAL';\nreturn [{json:{platform:p.platform,status,idempotency_key:p.platform_idempotency_key,attempts:0,started_at:new Date().toISOString(),completed_at:new Date().toISOString(),post_id:null,post_url:null,provider_request_id:null,asset_url:p.asset?.public_url || null,reason_code:reason,error:status==='FAILED'?{code:'PLATFORM_WORKER_NOT_CONFIGURED'}:null}}];"
+      },
+      "id": "bd5475d3-a98c-4966-827a-8e9ceaf6d4d9",
+      "name": "X — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, -170]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'linkedin'}}];"},
+      "id": "1ef84041-d2c6-4f90-88ae-8e8bb8fc0991",
+      "name": "LinkedIn — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, -110]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'google_business'}}];"},
+      "id": "f4a42d24-0a31-4c10-8d26-ca9b6e01da27",
+      "name": "Google Business — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, -50]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'facebook'}}];"},
+      "id": "14418a42-b41c-48d9-a0f6-345437bb657b",
+      "name": "Facebook — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 10]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'instagram'}}];"},
+      "id": "26e212b0-ae02-47f6-95f5-8f6056a72056",
+      "name": "Instagram — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 70]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'tiktok'}}];"},
+      "id": "970ac798-b27c-4a62-8cc9-d2e9314a9484",
+      "name": "TikTok — Explicit Terminal Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 370]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'youtube', targets:{...$input.first().json.targets, youtube:{enabled:false,manual_required:true}}}];"},
+      "id": "e1f0cb01-1046-45f4-807f-3529435e2055",
+      "name": "YouTube — Manual Required",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 430]
+    },
+    {
+      "parameters": {"jsCode": "return [{json:{...$input.first().json, platform:'whatsapp_channel', targets:{...$input.first().json.targets, whatsapp_channel:{enabled:false,manual_required:true}}}];"},
+      "id": "2a009638-9bf1-4204-94fe-5642c8b85540",
+      "name": "WhatsApp Channel — Manual Required",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 490]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook — Distribution Event": {"main": [[{"node": "Validate Social Contract v1.0", "type": "main", "index": 0}]]},
+    "Validate Social Contract v1.0": {"main": [[{"node": "Stage Asset — Configure Child Workflow ID", "type": "main", "index": 0}]]},
+    "Stage Asset — Configure Child Workflow ID": {"main": [[{"node": "Create Independent Platform Tickets", "type": "main", "index": 0}]]},
+    "Create Independent Platform Tickets": {"main": [[{"node": "Independent Platform Router", "type": "main", "index": 0}]]},
+    "Independent Platform Router": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "LinkedIn — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "Google Business — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "Facebook — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "Instagram — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "Threads — Configure Child Workflow ID", "type": "main", "index": 0}], [{"node": "TikTok — Explicit Terminal Result", "type": "main", "index": 0}], [{"node": "YouTube — Manual Required", "type": "main", "index": 0}], [{"node": "WhatsApp Channel — Manual Required", "type": "main", "index": 0}]]},
+    "LinkedIn — Explicit Terminal Result": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "Google Business — Explicit Terminal Result": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "Facebook — Explicit Terminal Result": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "Instagram — Explicit Terminal Result": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "TikTok — Explicit Terminal Result": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "YouTube — Manual Required": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]},
+    "WhatsApp Channel — Manual Required": {"main": [[{"node": "X — Explicit Terminal Result", "type": "main", "index": 0}]]}
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1", "saveManualExecutions": true, "callerPolicy": "workflowsFromSameOwner"},
+  "versionId": "f1646d2e-4b62-416b-a618-5225a5218c99",
+  "meta": {"templateCredsSetupCompleted": false, "instanceId": "OPMX_VERSIONED_EXPORT_NO_SECRETS"},
+  "tags": []
+}
