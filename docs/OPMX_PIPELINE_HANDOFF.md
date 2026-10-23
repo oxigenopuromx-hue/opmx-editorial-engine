@@ -20,7 +20,7 @@ Motor Editorial OPMX → Publisher n8n → WordPress OPURO/OPOL → Social Distr
 Contratos vigentes ya versionados en `contracts/`, incluyendo Protocolo v4.2 y Salida Editorial v2.2.
 
 ### Publisher
-Existe un Publisher operativo en n8n y debe tratarse como componente estable. La versión vigente es la última entregada/aprobada por el usuario el 2026-10-23. Antes de modificarlo, Work debe incorporar/exportar esa versión exacta al directorio `workflows/publisher/` y registrar su versión en este documento. No reconstruirlo desde versiones históricas.
+Publisher operativo vigente: `OPMX Publisher MEDIA v1.2.11`, versionado en `workflows/publisher/`. `v1.2.10` se conserva como baseline exacto previo a la parametrización del CMS OPURO. v1.2.11 sustituyó únicamente los endpoints OPURO de WordPress por la variable canónica `OPMX_OPURO_WP_BASE_URL`; la rama OPOL permaneció intacta. El usuario ejecutó una publicación real completa el 2026-10-23 y confirmó que OPURO y OPOL terminaron correctamente. v1.2.11 queda como versión operativa vigente.
 
 Regla: no modificar Publisher para resolver necesidades de Social salvo incompatibilidad contractual comprobada y aprobada.
 
@@ -38,14 +38,13 @@ Probado en este hito:
 - Parseo JSON de los contratos y los tres exports de workflow.
 - Verificación estática de grafo: cada conexión apunta a un nodo existente y cada nodo contiene metadatos de importación.
 - `git diff --check` sin errores de whitespace.
-- No se realizó importación en una instancia n8n, dry run, staging R2 ni llamada a API externa; por tanto no se declara validación funcional.
+- Social Distribution todavía no tiene prueba real contra plataformas. Publisher v1.2.11 sí fue probado en una ejecución real completa en n8n el 2026-10-23: OPURO resolvió `OPMX_OPURO_WP_BASE_URL` y OPURO/OPOL terminaron correctamente.
 
 No terminado / bloqueos:
-- Faltan exportar e incorporar al repositorio la versión exacta aprobada del Publisher del 2026-10-23. No se le hizo cambio alguno.
 - No hay credenciales n8n, IDs de cuenta/ubicación, bucket R2, dominio público verificado ni registros de idempotencia en este repositorio. Por ello no existe prueba de publicación real.
 - Está pendiente aprobar y provisionar el almacén durable de `social_distribution_runs`; sin ello no se activa el coordinador ni se afirma idempotencia efectiva.
 - Fase 1 de Social Distribution es exclusivamente OPURO (`oxigenopuro.com.mx`). `IMAGEN_SOCIAL` es un tercer asset manual creado en Canva después del flujo editorial; no es HERO ni imagen interior.
-- Media staging v1 usa temporalmente WordPress OPURO, no R2: n8n sube `IMAGEN_SOCIAL`, obtiene `wordpress_media_id` + URL pública y la conserva inicialmente 7 días. El CMS se configura con `OPMX_SOCIAL_WP_BASE_URL`.
+- Media staging v1 usa temporalmente WordPress OPURO, no R2: n8n sube `IMAGEN_SOCIAL`, obtiene `wordpress_media_id` + URL pública y la conserva inicialmente 7 días. El CMS se configura con `OPMX_OPURO_WP_BASE_URL`.
 - Cuando el CMS migre a `cms.oxigenopuro.com.mx`, se cambia esa variable y se verifica el dominio/prefijo para TikTok. TikTok queda bloqueado por esa configuración, sin bloquear las demás ramas.
 - X, LinkedIn, Google Business Profile, Facebook, Instagram y TikTok están documentados, pero sus workers no se activan hasta configurar acceso, permisos y una prueba aislada por plataforma.
 - YouTube Community y WhatsApp Channel continúan `SKIPPED / MANUAL_REQUIRED`.
