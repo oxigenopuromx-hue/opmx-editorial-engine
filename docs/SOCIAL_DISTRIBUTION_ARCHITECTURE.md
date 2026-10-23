@@ -44,7 +44,7 @@ Una rama nunca cancela otra. `SKIPPED` se utiliza solamente cuando el target est
 
 n8n sube `IMAGEN_SOCIAL` temporalmente a la Media Library del WordPress OPURO. No se inserta en Gutenberg ni se asigna como featured image. El workflow conserva `wordpress_media_id`, `public_url`, `uploaded_at` y `cleanup_after`.
 
-La base del CMS vive en la variable `OPMX_SOCIAL_WP_BASE_URL`; no se codifica el dominio. Al completar la migración se cambia a `https://cms.oxigenopuro.com.mx` sin modificar el workflow. Retención inicial: 7 días tras la distribución terminada; la limpieza será un workflow separado y sólo podrá eliminar assets SOCIAL identificados por su media ID.
+La base del CMS vive en la variable `OPMX_OPURO_WP_BASE_URL`; no se codifica el dominio. Al completar la migración se cambia a `https://cms.oxigenopuro.com.mx` sin modificar el workflow. Retención inicial: 7 días tras la distribución terminada; la limpieza será un workflow separado y sólo podrá eliminar assets SOCIAL identificados por su media ID.
 
 TikTok queda bloqueado hasta que el CMS definitivo esté operativo y su dominio/prefijo sea verificado. Este bloqueo no detiene X, LinkedIn, Google Business Profile, Facebook, Instagram ni Threads. Cloudflare/R2 no forma parte de Fase 1.
 
