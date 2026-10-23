@@ -1,0 +1,38 @@
+{
+  "status": "DRAFT",
+  "version": "1.0",
+  "note": "Contrato de diseño. No promover a ACTIVE hasta cerrar especificación y validación.",
+  "input": {
+    "social_contract_version": "1.0",
+    "content": {
+      "titulo_seo": "string",
+      "subtitulo": "string",
+      "url_opuro": "string|null",
+      "url_opol": "string|null"
+    },
+    "media": {
+      "imagen_social": "BINARY_OR_PUBLIC_URL"
+    },
+    "targets": {
+      "x": "boolean",
+      "linkedin": "boolean",
+      "google_business": "boolean",
+      "facebook": "boolean",
+      "instagram": "boolean",
+      "threads": "boolean",
+      "tiktok": "boolean",
+      "youtube": "boolean",
+      "whatsapp_channel": "boolean"
+    }
+  },
+  "output": {
+    "status": "SUCCESS|PARTIAL_SUCCESS|FAILED",
+    "social_engine_version": "1.0",
+    "results": "map<platform,{status:SUCCESS|FAILED|SKIPPED,post_id?:string,post_url?:string,error?:string,reason?:string}>",
+    "summary": {
+      "success": "integer",
+      "failed": "integer",
+      "skipped": "integer"
+    }
+  }
+}
