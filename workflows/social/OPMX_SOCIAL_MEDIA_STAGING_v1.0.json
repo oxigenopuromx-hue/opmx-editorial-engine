@@ -34,7 +34,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ ($vars.OPMX_SOCIAL_WP_BASE_URL || '').replace(/\\/$/, '') + '/wp-json/wp/v2/media' }}",
+        "url": "={{ ($vars.OPMX_OPURO_WP_BASE_URL || '').replace(/\\/$/, '') + '/wp-json/wp/v2/media' }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendHeaders": true,
