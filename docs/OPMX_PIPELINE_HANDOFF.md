@@ -44,11 +44,13 @@ No terminado / bloqueos:
 - Faltan exportar e incorporar al repositorio la versión exacta aprobada del Publisher del 2026-10-23. No se le hizo cambio alguno.
 - No hay credenciales n8n, IDs de cuenta/ubicación, bucket R2, dominio público verificado ni registros de idempotencia en este repositorio. Por ello no existe prueba de publicación real.
 - Está pendiente aprobar y provisionar el almacén durable de `social_distribution_runs`; sin ello no se activa el coordinador ni se afirma idempotencia efectiva.
-- Cloudflare R2 + custom domain público es la recomendación para media staging, pero requiere aprobación de infraestructura y verificación posterior en TikTok.
+- Fase 1 de Social Distribution es exclusivamente OPURO (`oxigenopuro.com.mx`). `IMAGEN_SOCIAL` es un tercer asset manual creado en Canva después del flujo editorial; no es HERO ni imagen interior.
+- Media staging v1 usa temporalmente WordPress OPURO, no R2: n8n sube `IMAGEN_SOCIAL`, obtiene `wordpress_media_id` + URL pública y la conserva inicialmente 7 días. El CMS se configura con `OPMX_SOCIAL_WP_BASE_URL`.
+- Cuando el CMS migre a `cms.oxigenopuro.com.mx`, se cambia esa variable y se verifica el dominio/prefijo para TikTok. TikTok queda bloqueado por esa configuración, sin bloquear las demás ramas.
 - X, LinkedIn, Google Business Profile, Facebook, Instagram y TikTok están documentados, pero sus workers no se activan hasta configurar acceso, permisos y una prueba aislada por plataforma.
 - YouTube Community y WhatsApp Channel continúan `SKIPPED / MANUAL_REQUIRED`.
 
-Siguiente paso técnico: crear/configurar en n8n las credenciales y el bucket R2 con custom domain, importar los tres workflows, conectar el coordinador con workers y ejecutar una prueba `dry_run`. Después, prueba real de Threads con una nota controlada y verificación de permalink antes de habilitar otros targets.
+Siguiente paso técnico: configurar credenciales n8n de WordPress OPURO y de las plataformas, importar los workflows, conectar coordinador/staging/workers y ejecutar un `dry_run`. Después probar ramas automáticas de forma aislada. TikTok se habilitará tras la migración a `cms.oxigenopuro.com.mx` y la verificación requerida.
 
 Debe construirse como workflow independiente y conectarse posteriormente al Publisher mediante contrato explícito. No crear un workflow monolítico.
 
