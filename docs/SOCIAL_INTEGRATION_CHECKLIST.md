@@ -19,7 +19,7 @@ Este documento no contiene secretos. Los valores sensibles se crean y almacenan 
 ## WordPress OPURO
 
 Necesario:
-- Variable n8n `OPMX_SOCIAL_WP_BASE_URL`.
+- Variable n8n `OPMX_OPURO_WP_BASE_URL`.
 - Credencial n8n lógica `OPMX Social WordPress`.
 - Usuario técnico de WordPress con capacidad mínima para crear y posteriormente eliminar media.
 - Application Password o mecanismo REST aprobado; nunca guardar el secreto en GitHub.
@@ -149,7 +149,7 @@ Una plataforma sólo cambia a ENABLED después de:
 
 ## Variables no secretas previstas
 
-- `OPMX_SOCIAL_WP_BASE_URL`
+- `OPMX_OPURO_WP_BASE_URL`
 - `OPMX_FACEBOOK_PAGE_ID`
 - `OPMX_INSTAGRAM_ACCOUNT_ID`
 - `THREADS_USER_ID`
