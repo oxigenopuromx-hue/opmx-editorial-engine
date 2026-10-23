@@ -1,0 +1,2458 @@
+{
+  "name": "OPMX Publisher MEDIA v1.2.10",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const expected=$('OPURO — Preparar etiquetas v1.13').all().length;\nconst state=$getWorkflowStaticData('global');\nconst executionId=String($execution.id ?? 'execution');\nconst resultKey=`opmx_tag_results:${executionId}:opuro`;\nconst rows=(Array.isArray(state[resultKey]) ? state[resultKey] : [])\n  .filter(x=>Number(x?.tag_id)>0)\n  .sort((a,b)=>Number(a.tag_index)-Number(b.tag_index));\n\nif(rows.length!==expected){\n  throw new Error(`Etiquetas incompletas: esperadas ${expected}, resueltas ${rows.length}.`);\n}\n\nconst ids=[];\nconst seen=new Set();\nfor(const row of rows){\n  const id=Number(row.tag_id);\n  if(!seen.has(id)){\n    seen.add(id);\n    ids.push(id);\n  }\n}\n\ndelete state[resultKey];\n\nreturn [{json:{\n  tag_ids:ids,\n  tags_resolved:rows,\n  tags_count:ids.length\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2832,
+        672
+      ],
+      "id": "ec05e2d5-0a7b-4f0a-a7a0-ade92d364c07",
+      "name": "OPURO — Consolidar etiquetas v1.13",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const req = $('OPURO — Preparar etiquetas v1.13').item.json;\nconst rawEnvelope = $json ?? {};\nlet raw = rawEnvelope?.body ?? rawEnvelope?.data ?? rawEnvelope;\nlet body = raw;\n\nconst MAX_ATTEMPTS = 6;\nconst state = $getWorkflowStaticData('global');\nconst executionId = String($execution.id ?? 'execution');\nconst stateKey = `opmx_tag_retry:${executionId}:opuro:${req.tag_index}:${req.tag_slug}`;\nconst previousAttempt = Number(state[stateKey] ?? 0);\nconst attempt = previousAttempt + 1;\n\nfunction rawText(v) {\n  if (typeof v === 'string') return v.trim();\n  try { return JSON.stringify(v); } catch (_) { return String(v ?? '').trim(); }\n}\nconst text = rawText(raw);\n\nconst explicitStatus = Number(\n  rawEnvelope?.statusCode ??\n  rawEnvelope?.status ??\n  rawEnvelope?.httpCode ??\n  rawEnvelope?.response?.statusCode ??\n  rawEnvelope?.response?.status ??\n  body?.statusCode ??\n  0\n);\n\nconst transientByStatus = [429,502,503,504].includes(explicitStatus);\nconst transientByMessage =\n  /Service Unavailable|Bad Gateway|Gateway Timeout|Too Many Requests/i.test(text);\n\nconst transient = transientByStatus || transientByMessage;\n\nif (transient) {\n  const status = transientByStatus\n    ? explicitStatus\n    : (/Too Many Requests/i.test(text) ? 429\n      : /Bad Gateway/i.test(text) ? 502\n      : /Gateway Timeout/i.test(text) ? 504\n      : 503);\n\n  if (attempt >= MAX_ATTEMPTS) {\n    delete state[stateKey];\n    throw new Error(\n      `WordPress/Hostinger siguió devolviendo ${status} después de ${attempt} intentos ` +\n      `al asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}). ` +\n      `Última respuesta: ${text.slice(0, 500)}`\n    );\n  }\n\n  state[stateKey] = attempt;\n  const waitSeconds = Math.min(3 * Math.pow(2, attempt - 1), 48);\n\n  return {\n    json: {\n      tag_index:Number(req.tag_index),\n      tag_name:req.tag_name,\n      tag_slug:req.tag_slug,\n      __tag_retry:true,\n      __tag_retry_attempt:attempt,\n      __tag_retry_status:status,\n      __tag_retry_wait_seconds:waitSeconds,\n      __tag_retry_preview:text.slice(0,300)\n    }\n  };\n}\n\ndelete state[stateKey];\n\nif (typeof raw === 'string') {\n  if (!text) {\n    throw new Error(`WordPress devolvió una respuesta vacía al asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}).`);\n  }\n  try {\n    body = JSON.parse(text);\n  } catch (e) {\n    const start = text.indexOf('{');\n    const end = text.lastIndexOf('}');\n    if (start >= 0 && end > start) {\n      try { body = JSON.parse(text.slice(start, end + 1)); }\n      catch (_) {\n        throw new Error(`WordPress devolvió una respuesta no JSON al asegurar \"${req.tag_name}\" (${req.tag_slug}). Respuesta: ${text.slice(0,500)}`);\n      }\n    } else {\n      throw new Error(`WordPress devolvió una respuesta no JSON al asegurar \"${req.tag_name}\" (${req.tag_slug}). Respuesta: ${text.slice(0,500)}`);\n    }\n  }\n}\n\nlet id = Number(body?.id || 0);\nlet action = 'CREATED';\n\nif (!id && body?.code === 'term_exists') {\n  id = Number(body?.data?.term_id ?? body?.data?.term_exists ?? body?.term_id ?? 0);\n  action = 'EXISTING';\n}\n\nif (!id) {\n  throw new Error(\n    `No se pudo asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}). ` +\n    `Respuesta WordPress: ${JSON.stringify(body)}`\n  );\n}\n\nconst result = {\n  tag_index:Number(req.tag_index),\n  tag_name:req.tag_name,\n  tag_slug:req.tag_slug,\n  tag_id:id,\n  action,\n  attempts:attempt,\n  __tag_retry:false\n};\n\nconst resultKey = `opmx_tag_results:${executionId}:opuro`;\nif (!Array.isArray(state[resultKey])) state[resultKey] = [];\nstate[resultKey] = state[resultKey].filter(x => Number(x.tag_index) !== Number(result.tag_index));\nstate[resultKey].push(result);\n\nreturn {json:result};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        672
+      ],
+      "id": "d58b789b-c1c6-400f-8089-ac8be6af07c8",
+      "name": "OPURO — Resolver etiqueta v1.13",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oxigenopuro.com.mx/wp-json/wp/v2/tags",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: $json.tag_name, slug: $json.tag_slug } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2352,
+        672
+      ],
+      "id": "f6fda277-6bf6-4ada-ab6c-3c721c2e46e5",
+      "name": "OPURO — Asegurar etiqueta v1.13",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst tags=Array.isArray(c.tags)?c.tags.map(x=>String(x).trim()).filter(Boolean):[];\nif(!tags.length) throw new Error('SEO.ETIQUETAS está vacío.');\n\nconst norm=s=>String(s??'')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')\n  .trim().toLocaleLowerCase('es-MX');\n\nconst slugify=s=>norm(s)\n  .replace(/[^a-z0-9]+/g,'-')\n  .replace(/^-+|-+$/g,'');\n\nconst seen=new Set();\nconst out=[];\n\nfor(const name of tags){\n  const key=norm(name);\n  if(!key || seen.has(key)) continue;\n  seen.add(key);\n  out.push({json:{\n    tag_index:out.length,\n    tag_name:name,\n    tag_slug:slugify(name)\n  }});\n}\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        672
+      ],
+      "id": "a3a1ec40-f8da-4956-86b5-cd1610c6be91",
+      "name": "OPURO — Preparar etiquetas v1.13",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "formTitle": "OPMX Publisher MEDIA v1.2.10",
+        "formDescription": "Crea OPMX desde MASTER JSON + imágenes. Preflight bloqueante del Contrato v1.2, catálogo OPMX independiente por sitio, selector Android para JSON, Social Contract v1.0 y errores visibles.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "json",
+              "fieldType": "textarea",
+              "fieldName": "json",
+              "placeholder": "Pega aquí el OPMX MASTER JSON completo, o deja vacío y sube el archivo .json en el campo siguiente."
+            },
+            {
+              "fieldLabel": "Archivo JSON",
+              "fieldType": "file",
+              "fieldName": "json_file",
+              "multipleFiles": false,
+              "acceptFileTypes": "*/*"
+            },
+            {
+              "fieldLabel": "Imagen HERO",
+              "fieldType": "file",
+              "fieldName": "hero_file",
+              "multipleFiles": false,
+              "acceptFileTypes": "image/jpeg, image/png, image/webp"
+            },
+            {
+              "fieldLabel": "Imagen DESTACADA",
+              "fieldType": "file",
+              "fieldName": "featured_file",
+              "multipleFiles": false,
+              "acceptFileTypes": "image/jpeg, image/png, image/webp"
+            },
+            {
+              "fieldLabel": "CREAR_EN",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "OPURO"
+                  },
+                  {
+                    "option": "OPOL"
+                  },
+                  {
+                    "option": "AMBOS"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Publicar",
+              "fieldType": "checkbox",
+              "fieldName": "PUBLICAR",
+              "defaultValue": [
+                "Sí"
+              ],
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Sí"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        32,
+        480
+      ],
+      "id": "f3ee3d28-db86-4621-8ea1-4cdba547f7a6",
+      "name": "On form submission",
+      "webhookId": "cc8d0106-9c79-4a57-8400-21ba632bd441"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst post=$('OPURO — Readback público').first().json;\nconst media=$('OPURO — Subir DESTACADA').first().json;\nconst cat=$('OPURO — Resolver categoría').first().json;\nconst tagData=$('OPURO — Consolidar etiquetas v1.13').first().json;\nreturn {json:{status:(post?.id && post?.status==='publish')?'SUCCESS':'NOT_CONFIRMED',target:'oxigenopuro',post_id:post?.id??null,post_status:post?.status??null,slug:post?.slug??c.slug,link:post?.link??null,category:{requested:c.category,resolved_name:cat.category_name,id:cat.category_id},tags:{requested:c.tags,assigned_ids:tagData.tag_ids??[],resolved:tagData.tags??[],count:tagData.count??0},images:{hero_opuro:{id:Number($('OPURO — Subir HERO').first().json.id),url:$('OPURO — Subir HERO').first().json.source_url,role:'HTML_FINAL_ONLY'},featured_opuro:{id:Number(media.id),url:media.source_url,alt_requested:c.images.featured_opuro.alt_text,role:'WORDPRESS_FEATURED_MEDIA'},featured_opol:{url:c.images.featured_opol.url||null,role:'PRESERVED_FOR_FUTURE_OPOL_BRANCH'}},warnings:[]}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4128,
+        752
+      ],
+      "id": "7827444c-051c-4bc8-b1d2-21ecda17dd8b",
+      "name": "Resultado OPURO"
+    },
+    {
+      "parameters": {
+        "content": "## OPURO — publicación segura\nEl post se crea como draft con título Astra oculto, se completa y valida mediante readback; sólo después cambia a publish.",
+        "height": 300,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "79ed715b-fa09-4269-89da-67c89c278825",
+      "name": "NOTA — Oxígeno Puro v1.14"
+    },
+    {
+      "parameters": {
+        "content": "## OPURO — MEDIA v1.0\nHERO y DESTACADA se cargan directamente. No se busca una imagen preexistente. HERO reemplaza {{OPMX:HERO_OPURO}} en HTML_FINAL; DESTACADA usa el media_id recién creado como featured_media.",
+        "height": 300,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        16,
+        32
+      ],
+      "id": "6a977d35-c90a-4400-9f1e-644a65fbbbdb",
+      "name": "NOTA — Arquitectura"
+    },
+    {
+      "parameters": {
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/posts/{{ $('OPURO — Crear borrador HTML').first().json.id }}?context=edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3888,
+        544
+      ],
+      "id": "16946d8a-957b-4703-947d-ad52685d07ad",
+      "name": "OPURO — Readback",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/posts/{{ $('OPURO — Crear borrador HTML').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  meta: {\n    rank_math_title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n    rank_math_description: $('Validar y normalizar OPMX MASTER').first().json.canonical.meta_description,\n    rank_math_focus_keyword: $('Validar y normalizar OPMX MASTER').first().json.canonical.keywords_all\n  }\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        544
+      ],
+      "id": "ab0c3b0f-ee1d-41ee-8bff-399ee0769d44",
+      "name": "OPURO — Escribir Rank Math",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oxigenopuro.com.mx/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n  slug: $('Validar y normalizar OPMX MASTER').first().json.canonical.slug,\n  excerpt: $('Validar y normalizar OPMX MASTER').first().json.canonical.excerpt,\n  status: 'draft',\n  content: $('Validar y normalizar OPMX MASTER').first().json.canonical.html_final.split('{' + '{OPMX:HERO_OPURO}' + '}').join($('OPURO — Subir HERO').first().json.source_url),\n  featured_media: Number(\n    $('OPURO — Subir DESTACADA').first().json.id\n  ),\n  categories: [\n    Number(\n      $('OPURO — Resolver categoría').first().json.category_id\n    )\n  ],\n  tags: $('OPURO — Consolidar etiquetas v1.13').first().json.tag_ids,\n  author: Number(\n    $('Validar y normalizar OPMX MASTER').first().json.canonical.author.id\n  ),\n  meta: {\n    'site-post-title': 'disabled'\n  }\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3072,
+        544
+      ],
+      "id": "aa4d9036-bb6c-49c2-866d-56345515f6d2",
+      "name": "OPURO — Crear borrador HTML",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst requested=String(c.categories?.opuro?.principal ?? c.category ?? '').trim();\nif(!requested) throw new Error('El JSON MASTER no entregó la categoría principal para OPURO.');\n\nconst norm=s=>String(s??'')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')\n  .replace(/\\s+/g,' ')\n  .trim().toLocaleLowerCase('es-MX');\n\nconst rows=$input.all().map(i=>i.json).flatMap(x=>Array.isArray(x)?x:[x]);\nconst exact=rows.find(x=>norm(x.name)===norm(requested));\n\nif(!exact?.id){\n  const available=rows.map(x=>`${x.name??'(sin nombre)'} [slug ${x.slug??'?'} | ID ${x.id??'?'}]`).join(', ');\n  throw new Error(`La categoría \"${requested}\" no existe como coincidencia exacta por nombre en Oxígeno Puro. Categorías recibidas de WordPress: ${available||'ninguna'}.`);\n}\nreturn [{json:{\n  category_id:Number(exact.id),\n  category_name:exact.name,\n  category_slug:exact.slug??null,\n  requested_category:requested,\n  resolution:'EXACT_NORMALIZED_NAME_MATCH'\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        544
+      ],
+      "id": "2c278fa5-fb93-4e9c-9cf0-0eed180c1df7",
+      "name": "OPURO — Resolver categoría",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://oxigenopuro.com.mx/wp-json/wp/v2/categories?search=' + encodeURIComponent($('Validar y normalizar OPMX MASTER').first().json.canonical.categories.opuro.principal) + '&per_page=100&orderby=id&order=asc' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        544
+      ],
+      "id": "8ba7b912-29cc-4f8e-a16c-0d2a2ced832c",
+      "name": "OPURO — Buscar categoría",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let envelope = $json.body ?? $json;\n\nconst destinoRaw = String(envelope.CREAR_EN ?? '').trim().toUpperCase();\nconst destinosValidos = ['OPURO','OPOL','AMBOS'];\nif (!destinosValidos.includes(destinoRaw)) {\n  throw new Error(`CREAR_EN inválido o ausente. Valor recibido: \"${destinoRaw}\". Usa OPURO, OPOL o AMBOS.`);\n}\nconst publicarRaw = envelope.PUBLICAR;\nconst publish = Array.isArray(publicarRaw)\n  ? publicarRaw.length > 0\n  : (publicarRaw === true || ['sí','si','true','1','on'].includes(String(publicarRaw ?? '').trim().toLowerCase()));\nconst execution = {\n  destination: destinoRaw,\n  create_opuro: destinoRaw === 'OPURO' || destinoRaw === 'AMBOS',\n  create_opol: destinoRaw === 'OPOL' || destinoRaw === 'AMBOS',\n  publish\n};\n\n// v1.1.7: el MASTER llega pegado en \"json\" O como archivo \"json_file\".\nconst pastedJson = typeof envelope.json === 'string' ? envelope.json.trim() : '';\nconst binary = $input.item.binary ?? {};\nconst binaryKeys = Object.keys(binary);\nconst fileKey = binary.json_file ? 'json_file' : (binaryKeys.length === 1 ? binaryKeys[0] : null);\nconst hasFile = Boolean(fileKey);\n\nif (pastedJson && hasFile) {\n  throw new Error('Entrega el OPMX MASTER de una sola forma: pega el JSON en el cuadro de texto O sube el archivo .json, no ambos.');\n}\nif (!pastedJson && !hasFile) {\n  throw new Error('Falta el OPMX MASTER. Pega el JSON completo en el cuadro de texto o sube un archivo .json.');\n}\n\nlet d;\nif (hasFile) {\n  const meta = binary[fileKey] ?? {};\n  const fileName = String(meta.fileName ?? '').trim();\n  const extension = String(meta.fileExtension ?? '').trim().toLowerCase();\n  if (fileName && !/\\.json$/i.test(fileName) && extension !== 'json') {\n    throw new Error(`El archivo subido debe ser .json. Archivo recibido: ${fileName || '(sin nombre)'}`);\n  }\n\n  let fileText;\n  try {\n    const buffer = await this.helpers.getBinaryDataBuffer(0, fileKey);\n    fileText = buffer.toString('utf8').replace(/^\\uFEFF/, '').trim();\n  } catch (error) {\n    throw new Error(`No fue posible leer el archivo JSON subido: ${error.message}`);\n  }\n  if (!fileText) throw new Error('El archivo JSON subido está vacío.');\n\n  try { d = JSON.parse(fileText); }\n  catch (error) { throw new Error(`El archivo subido no contiene JSON válido: ${error.message}`); }\n} else {\n  try { d = JSON.parse(pastedJson); }\n  catch (error) { throw new Error(`El campo \"json\" no contiene JSON válido: ${error.message}`); }\n}\n\nif (typeof d === 'string') {\n  try { d = JSON.parse(d.trim()); }\n  catch (error) { throw new Error(`El OPMX MASTER recibido no contiene JSON válido: ${error.message}`); }\n}\n\nfunction str(v) {\n  return v === null || v === undefined ? '' : String(v).trim();\n}\nfunction arr(v) {\n  if (Array.isArray(v)) return v.map(x => str(x)).filter(Boolean);\n  if (typeof v === 'string' && v.trim()) return v.split(',').map(x => x.trim()).filter(Boolean);\n  return [];\n}\nfunction imageSlugFromUrl(url, label) {\n  if (!url) return '';\n  try {\n    const cleanUrl = String(url).split('?')[0].split('#')[0];\n    const filename = decodeURIComponent(cleanUrl.substring(cleanUrl.lastIndexOf('/') + 1));\n    return filename.replace(/\\.[a-zA-Z0-9]+$/, '').trim();\n  } catch (error) {\n    throw new Error(`No fue posible obtener el nombre de archivo desde ${label}: ${url}`);\n  }\n}\n\nconst SEO = d.SEO ?? d.seo ?? {};\nconst PUB = d.PUBLICACION ?? d.publication ?? {};\n// Contrato v1.2: AUTOR_ID está prohibido en el MASTER.\n// La identidad técnica del autor pertenece al Publisher.\nconst forbiddenAuthorFields = [\n  ['PUBLICACION.AUTOR_ID', PUB.AUTOR_ID],\n  ['PUBLICACION.author_id', PUB.author_id],\n  ['AUTOR_ID', d.AUTOR_ID],\n  ['author_id', d.author_id]\n].filter(([, value]) => value !== undefined && value !== null);\n\nif (forbiddenAuthorFields.length) {\n  throw new Error(\n    'CONTRATO_V1_2_AUTOR_ID_PROHIBIDO: el MASTER no debe contener AUTOR_ID. Campos detectados: ' +\n    forbiddenAuthorFields.map(([name]) => name).join(', ') + '.'\n  );\n}\n\nconst authorId = 3;\nconst authorSource = 'PUBLISHER_OPURO_REDACCION_OPMX';\n\nconst IMAGES = d.IMAGENES ?? d.images ?? {};\n\nconst HERO = IMAGES.HERO_OPURO ?? IMAGES.hero_opuro ?? {};\nconst FEATURED_OPURO = IMAGES.DESTACADA_OPURO ?? IMAGES.featured_opuro ?? {};\nconst FEATURED_OPOL = IMAGES.DESTACADA_OPOL ?? IMAGES.featured_opol ?? {};\n\nconst title = str(SEO.TITULO_SEO ?? d.TEXTO_EDITORIAL?.TITULO ?? d.article?.title);\nconst subtitle = str(SEO.SUBTITULO ?? d.TEXTO_EDITORIAL?.SUBTITULO ?? d.article?.subtitle);\nconst slug = str(SEO.SLUG ?? SEO.slug);\nconst excerpt = str(PUB.EXTRACTO ?? PUB.excerpt ?? SEO.EXTRACTO ?? SEO.excerpt ?? d.TEXTO_EDITORIAL?.ENTRADILLA);\nconst metaDescription = str(SEO.METADESCRIPCION ?? SEO.meta_description ?? excerpt);\nconst primaryKeyword = str(SEO.KEYWORD_PRINCIPAL ?? SEO.primary_keyword);\nconst secondaryKeywords = arr(SEO.KEYWORDS_SECUNDARIAS ?? SEO.secondary_keywords);\nconst keywordsAll = str(SEO.KEYWORDS_TODAS ?? SEO.keywords_todas ?? SEO.all_keywords_string);\nconst keywordsList = arr(SEO.KEYWORDS_TODAS_LISTA ?? SEO.keywords_todas_lista ?? SEO.KEYWORDS_TODAS ?? SEO.all_keywords);\nconst CATS=d.CATEGORIAS??d.categorias??{};\nconst OPUROCAT=CATS.OPURO??CATS.opuro??{};\nconst OPOLCAT=CATS.OPOL??CATS.opol??{};\nconst category=str(OPUROCAT.PRINCIPAL??OPUROCAT.principal??SEO.CATEGORIA??SEO.category);\nconst categoryOpol=str(OPOLCAT.PRINCIPAL??OPOLCAT.principal??SEO.CATEGORIA??SEO.category);\nconst categoryOpolSecondary=str(OPOLCAT.SECUNDARIA??OPOLCAT.secundaria)||null;\nconst tags = arr(SEO.ETIQUETAS ?? SEO.tags);\n\n// v1.2.10 — PREFLIGHT BLOQUEANTE DE CONTRATO v1.2 + CATÁLOGO OPMX v1.1.\n// Snapshot embebido deliberadamente: el Publisher no usa memoria ni homologa categorías entre sitios.\nconst CATEGORY_CATALOG = {\n  schema: \"OPMX_CATEGORY_CATALOG\",\n  schema_version: \"1.1\",\n  generated_at: \"2026-09-24T06:09:53.754Z\",\n  OPURO_ALLOWED: [\"Arbitraje Internacional\", \"Baja California Sur\", \"Comercio Internacional\", \"Congreso\", \"Cooperación internacional\", \"Cultura\", \"Derechos Humanos\", \"Derechos Laborales y Justicia Social\", \"Economía\", \"Estados\", \"Baja California\", \"CDMX\", \"Chiapas\", \"Guerrero\", \"Hidalgo\", \"Nuevo León\", \"Querétaro\", \"Sinaloa\", \"Tamaulipas\", \"Geopolítica\", \"Infraestructura carretera en México impulsa competitividad logística\", \"Innovación\", \"Ciencia\", \"IA\", \"Sustentabilidad\", \"Internacional\", \"Justicia\", \"Medio ambiente\", \"Noticias\", \"Agua\", \"Democracia en México\", \"Deporte\", \"Educación\", \"Energia\", \"Infraestructura\", \"Salud\", \"Seguridad\", \"Vivienda\", \"Opinión\", \"Plan México\", \"Política\", \"Política Internacional\", \"Pueblos Originarios\", \"Soberanía\", \"Tecnología\", \"TLCUEM\", \"TMEC\", \"Turismo\"],\n  OPOL_ALLOWED: [\"CIENCIA\", \"CONGRESO\", \"DIPUTADOS\", \"SENADORES\", \"CULTURA\", \"DEPORTES\", \"ECONOMÍA\", \"EDUCACIÓN\", \"ESTADOS\", \"BAJA CALIFORNIA\", \"GOBIERNO\", \"INTERNACIONAL\", \"JUSTICIA\", \"MEDIO AMBIENTE\", \"MEGALÓPOLIS\", \"OPINIÓN\", \"POLÍTICA\", \"TECNOLOGÍA\", \"TURISMO\", \"Uncategorized\"],\n  OPOL_CATEGORIES: [{\"name\": \"CIENCIA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"CONGRESO\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"DIPUTADOS\", \"parent_name\": \"CONGRESO\", \"parent_id\": 4}, {\"name\": \"SENADORES\", \"parent_name\": \"CONGRESO\", \"parent_id\": 4}, {\"name\": \"CULTURA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"DEPORTES\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"ECONOMÍA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"EDUCACIÓN\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"ESTADOS\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"BAJA CALIFORNIA\", \"parent_name\": \"ESTADOS\", \"parent_id\": 10}, {\"name\": \"GOBIERNO\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"INTERNACIONAL\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"JUSTICIA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"MEDIO AMBIENTE\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"MEGALÓPOLIS\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"OPINIÓN\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"POLÍTICA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"TECNOLOGÍA\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"TURISMO\", \"parent_name\": null, \"parent_id\": 0}, {\"name\": \"Uncategorized\", \"parent_name\": null, \"parent_id\": 0}]\n};\n\nconst CONTROL = d.CONTROL_EDITORIAL ?? d.control_editorial ?? {};\nconst controlEstado = str(CONTROL.ESTADO ?? CONTROL.estado).toUpperCase();\n\nif (controlEstado !== 'LISTO') {\n  throw new Error(\n    `CONTROL_EDITORIAL_NO_LISTO: el Publisher sólo admite paquetes con CONTROL_EDITORIAL.ESTADO = LISTO. Valor recibido: \"${controlEstado || '(vacío)'}\".`\n  );\n}\n\nif (!category) {\n  throw new Error('CATEGORIA_OPURO_NO_AUTORIZADA: falta CATEGORIAS.OPURO.PRINCIPAL.');\n}\nif (!CATEGORY_CATALOG.OPURO_ALLOWED.includes(category)) {\n  throw new Error(\n    `CATEGORIA_OPURO_NO_AUTORIZADA: \"${category}\" no existe literalmente en sites.OPURO.allowed_names del catálogo OPMX v${CATEGORY_CATALOG.schema_version}. No se enviará nada a WordPress.`\n  );\n}\n\nif (!categoryOpol) {\n  throw new Error('CATEGORIA_OPOL_NO_AUTORIZADA: falta CATEGORIAS.OPOL.PRINCIPAL.');\n}\nif (!CATEGORY_CATALOG.OPOL_ALLOWED.includes(categoryOpol)) {\n  throw new Error(\n    `CATEGORIA_OPOL_NO_AUTORIZADA: \"${categoryOpol}\" no existe literalmente en sites.OPOL.allowed_names del catálogo OPMX v${CATEGORY_CATALOG.schema_version}. No se enviará nada a WordPress.`\n  );\n}\n\nif (categoryOpolSecondary !== null) {\n  const child = CATEGORY_CATALOG.OPOL_CATEGORIES.find(x => x.name === categoryOpolSecondary);\n  if (!child || Number(child.parent_id) === 0 || child.parent_name !== categoryOpol) {\n    throw new Error(\n      `CATEGORIA_OPOL_JERARQUIA_INVALIDA: \"${categoryOpolSecondary}\" no es hija literal de \"${categoryOpol}\" en el catálogo OPMX v${CATEGORY_CATALOG.schema_version}. No se enviará nada a WordPress.`\n    );\n  }\n}\n\nconst seoCategory = str(SEO.CATEGORIA ?? SEO.category);\nif (seoCategory !== category) {\n  throw new Error(\n    `SEO_CATEGORIA_INCONSISTENTE: SEO.CATEGORIA debe ser idéntica a CATEGORIAS.OPURO.PRINCIPAL. Recibido SEO=\"${seoCategory}\" y OPURO=\"${category}\".`\n  );\n}\n\nconst htmlFinal = str(d.HTML_FINAL ?? d.html_final);\nconst gutenbergFinal = str(d.GUTENBERG_FINAL ?? d.GUTEMBERG_FINAL ?? d.gutenberg_final);\n\nconst heroOpuro = {\n  url: str(HERO.URL ?? HERO.url),\n  alt_text: str(HERO.ALT ?? HERO.alt_text),\n  title: str(HERO.TITULO_IMAGEN ?? HERO.title),\n  caption: str(HERO.LEYENDA ?? HERO.caption),\n  description: str(HERO.DESCRIPCION ?? HERO.description),\n  credit: HERO.CREDITO ?? HERO.credit ?? null,\n  class_name: str(HERO.CLASE_HERO ?? HERO.class_name)\n};\nheroOpuro.slug = '';\n\nconst featuredOpuro = {\n  url: str(FEATURED_OPURO.URL ?? FEATURED_OPURO.url),\n  alt_text: str(FEATURED_OPURO.ALT ?? FEATURED_OPURO.alt_text)\n};\nfeaturedOpuro.slug = '';\n\nconst featuredOpol = {\n  url: str(FEATURED_OPOL.URL ?? FEATURED_OPOL.url),\n  alt_text: str(FEATURED_OPOL.ALT ?? FEATURED_OPOL.alt_text)\n};\nfeaturedOpol.slug = '';\n\n// v1.1.6 — validación condicionada por destino.\n// Los campos editoriales comunes siguen siendo obligatorios.\n// Los artefactos y medios específicos sólo se exigen si ese destino será creado.\n\nconst commonRequired = {\n  title,\n  slug,\n  excerpt,\n  primaryKeyword,\n  tags\n};\n\nif (execution.create_opuro) {\n  commonRequired.category = category;\n}\nif (execution.create_opol) {\n  commonRequired.categoryOpol = categoryOpol;\n}\n\nconst commonMissing = Object.entries(commonRequired)\n  .filter(([, v]) => Array.isArray(v) ? v.length === 0 : !v)\n  .map(([k]) => k);\n\nif (commonMissing.length) {\n  throw new Error(`OPMX MASTER incompleto para ${execution.destination}. Faltan campos comunes/seleccionados: ${commonMissing.join(', ')}`);\n}\n\nif (execution.create_opuro) {\n  const requiredOpuro = {\n    htmlFinal,\n    heroOpuroUrl: heroOpuro.url,\n    featuredOpuroUrl: featuredOpuro.url,\n    featuredOpuroAlt: featuredOpuro.alt_text\n  };\n\n  const missingOpuro = Object.entries(requiredOpuro)\n    .filter(([, v]) => !v)\n    .map(([k]) => k);\n\n  if (missingOpuro.length) {\n    throw new Error(`OPMX MASTER incompleto para Oxígeno Puro. Faltan: ${missingOpuro.join(', ')}`);\n  }\n\n  const badHtml = [/^CONTENIDO_HTML_FINAL/i,/HTML_FINAL_COMPLETO/i,/INCLUIDO_EN_EL_JSON/i,/PLACEHOLDER/i,/TODO[_\\s-]*HTML/i];\n  if (badHtml.some(rx => rx.test(htmlFinal)) || !/<[a-z][\\s\\S]*>/i.test(htmlFinal)) {\n    throw new Error('HTML_FINAL no contiene HTML real; se recibió un placeholder o texto sin marcado HTML.');\n  }\n\n  const heroTokenCount = (htmlFinal.match(/\\{\\{OPMX:HERO_OPURO\\}\\}/g) || []).length;\n  if (heroTokenCount !== 1) {\n    throw new Error(`HTML_FINAL debe contener exactamente una vez {{OPMX:HERO_OPURO}}. Encontrado: ${heroTokenCount}.`);\n  }\n\n  if (heroOpuro.url !== '{{OPMX:HERO_OPURO}}') {\n    throw new Error(`HERO_OPURO.URL debe ser exactamente {{OPMX:HERO_OPURO}}. Valor recibido: ${heroOpuro.url}`);\n  }\n  if (featuredOpuro.url !== '{{OPMX:DESTACADA_OPURO}}') {\n    throw new Error(`DESTACADA_OPURO.URL debe ser exactamente {{OPMX:DESTACADA_OPURO}}. Valor recibido: ${featuredOpuro.url}`);\n  }\n  if (!binary.hero_file) throw new Error('Falta el archivo HERO (hero_file) para OPURO.');\n  if (!binary.featured_file) throw new Error('Falta el archivo DESTACADA (featured_file) para OPURO.');\n}\n\nif (execution.create_opol) {\n  const requiredOpol = {\n    gutenbergFinal,\n    featuredOpolUrl: featuredOpol.url,\n    featuredOpolAlt: featuredOpol.alt_text\n  };\n\n  const missingOpol = Object.entries(requiredOpol)\n    .filter(([, v]) => !v)\n    .map(([k]) => k);\n\n  if (missingOpol.length) {\n    throw new Error(`OPMX MASTER incompleto para OXígeno Político. Faltan: ${missingOpol.join(', ')}`);\n  }\n\n  if (!/<!--\\s*wp:[a-z0-9/-]+/i.test(gutenbergFinal)) {\n    throw new Error('GUTENBERG_FINAL es obligatorio para OPOL y debe contener bloques Gutenberg reales.');\n  }\n\n  if (featuredOpol.url !== '{{OPMX:DESTACADA_OPOL}}') {\n    throw new Error(`DESTACADA_OPOL.URL debe ser exactamente {{OPMX:DESTACADA_OPOL}}. Valor recibido: ${featuredOpol.url}`);\n  }\n  if (!binary.featured_file) throw new Error('Falta el archivo DESTACADA (featured_file) para OPOL.');\n}\n\nreturn {\n  json: {\n    execution,\n    canonical: {\n      title,\n      subtitle,\n      slug,\n      excerpt,\n      meta_description: metaDescription,\n      primary_keyword: primaryKeyword,\n      secondary_keywords: secondaryKeywords,\n      keywords_all: keywordsAll || [primaryKeyword, ...secondaryKeywords].filter(Boolean).join(', '),\n      keywords_list: keywordsList.length ? keywordsList : [primaryKeyword, ...secondaryKeywords].filter(Boolean),\n      keywords: keywordsList.length ? keywordsList : [primaryKeyword, ...secondaryKeywords].filter(Boolean),\n      category,\n      categories:{opuro:{principal:category},opol:{principal:categoryOpol,secundaria:categoryOpolSecondary}},\n      tags,\n      html_final: htmlFinal,\n      gutenberg_final: gutenbergFinal,\n      images: {\n        hero_opuro: heroOpuro,\n        featured_opuro: featuredOpuro,\n        featured_opol: featuredOpol\n      },\n      status: 'READY_FOR_SELECTED_DRAFTS',\n      author: {\n        id: authorId,\n        source: authorSource\n      }\n    },\n    original: d\n  },\n  binary\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        656
+      ],
+      "id": "6ae1bd38-4026-44f6-9ad9-d0ace20c1174",
+      "name": "Validar y normalizar OPMX MASTER",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const expected=$('OPOL — Preparar etiquetas v1.0').all().length;\nconst state=$getWorkflowStaticData('global');\nconst executionId=String($execution.id ?? 'execution');\nconst resultKey=`opmx_tag_results:${executionId}:opol`;\nconst rows=(Array.isArray(state[resultKey]) ? state[resultKey] : [])\n  .filter(x=>Number(x?.tag_id)>0)\n  .sort((a,b)=>Number(a.tag_index)-Number(b.tag_index));\n\nif(rows.length!==expected){\n  throw new Error(`Etiquetas incompletas: esperadas ${expected}, resueltas ${rows.length}.`);\n}\n\nconst ids=[];\nconst seen=new Set();\nfor(const row of rows){\n  const id=Number(row.tag_id);\n  if(!seen.has(id)){\n    seen.add(id);\n    ids.push(id);\n  }\n}\n\ndelete state[resultKey];\n\nreturn [{json:{\n  tag_ids:ids,\n  tags_resolved:rows,\n  tags_count:ids.length\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        1632
+      ],
+      "id": "e8263932-9f0d-4ab4-ad43-fe9fd31d6624",
+      "name": "OPOL — Consolidar etiquetas v1.0",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const req = $('OPOL — Preparar etiquetas v1.0').item.json;\nconst rawEnvelope = $json ?? {};\nlet raw = rawEnvelope?.body ?? rawEnvelope?.data ?? rawEnvelope;\nlet body = raw;\n\nconst MAX_ATTEMPTS = 6;\nconst state = $getWorkflowStaticData('global');\nconst executionId = String($execution.id ?? 'execution');\nconst stateKey = `opmx_tag_retry:${executionId}:opol:${req.tag_index}:${req.tag_slug}`;\nconst previousAttempt = Number(state[stateKey] ?? 0);\nconst attempt = previousAttempt + 1;\n\nfunction rawText(v) {\n  if (typeof v === 'string') return v.trim();\n  try { return JSON.stringify(v); } catch (_) { return String(v ?? '').trim(); }\n}\nconst text = rawText(raw);\n\nconst explicitStatus = Number(\n  rawEnvelope?.statusCode ??\n  rawEnvelope?.status ??\n  rawEnvelope?.httpCode ??\n  rawEnvelope?.response?.statusCode ??\n  rawEnvelope?.response?.status ??\n  body?.statusCode ??\n  0\n);\n\nconst transientByStatus = [429,502,503,504].includes(explicitStatus);\nconst transientByMessage =\n  /Service Unavailable|Bad Gateway|Gateway Timeout|Too Many Requests/i.test(text);\n\nconst transient = transientByStatus || transientByMessage;\n\nif (transient) {\n  const status = transientByStatus\n    ? explicitStatus\n    : (/Too Many Requests/i.test(text) ? 429\n      : /Bad Gateway/i.test(text) ? 502\n      : /Gateway Timeout/i.test(text) ? 504\n      : 503);\n\n  if (attempt >= MAX_ATTEMPTS) {\n    delete state[stateKey];\n    throw new Error(\n      `WordPress/Hostinger siguió devolviendo ${status} después de ${attempt} intentos ` +\n      `al asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}). ` +\n      `Última respuesta: ${text.slice(0, 500)}`\n    );\n  }\n\n  state[stateKey] = attempt;\n  const waitSeconds = Math.min(3 * Math.pow(2, attempt - 1), 48);\n\n  return {\n    json: {\n      tag_index:Number(req.tag_index),\n      tag_name:req.tag_name,\n      tag_slug:req.tag_slug,\n      __tag_retry:true,\n      __tag_retry_attempt:attempt,\n      __tag_retry_status:status,\n      __tag_retry_wait_seconds:waitSeconds,\n      __tag_retry_preview:text.slice(0,300)\n    }\n  };\n}\n\ndelete state[stateKey];\n\nif (typeof raw === 'string') {\n  if (!text) {\n    throw new Error(`WordPress devolvió una respuesta vacía al asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}).`);\n  }\n  try {\n    body = JSON.parse(text);\n  } catch (e) {\n    const start = text.indexOf('{');\n    const end = text.lastIndexOf('}');\n    if (start >= 0 && end > start) {\n      try { body = JSON.parse(text.slice(start, end + 1)); }\n      catch (_) {\n        throw new Error(`WordPress devolvió una respuesta no JSON al asegurar \"${req.tag_name}\" (${req.tag_slug}). Respuesta: ${text.slice(0,500)}`);\n      }\n    } else {\n      throw new Error(`WordPress devolvió una respuesta no JSON al asegurar \"${req.tag_name}\" (${req.tag_slug}). Respuesta: ${text.slice(0,500)}`);\n    }\n  }\n}\n\nlet id = Number(body?.id || 0);\nlet action = 'CREATED';\n\nif (!id && body?.code === 'term_exists') {\n  id = Number(body?.data?.term_id ?? body?.data?.term_exists ?? body?.term_id ?? 0);\n  action = 'EXISTING';\n}\n\nif (!id) {\n  throw new Error(\n    `No se pudo asegurar la etiqueta \"${req.tag_name}\" (${req.tag_slug}). ` +\n    `Respuesta WordPress: ${JSON.stringify(body)}`\n  );\n}\n\nconst result = {\n  tag_index:Number(req.tag_index),\n  tag_name:req.tag_name,\n  tag_slug:req.tag_slug,\n  tag_id:id,\n  action,\n  attempts:attempt,\n  __tag_retry:false\n};\n\nconst resultKey = `opmx_tag_results:${executionId}:opol`;\nif (!Array.isArray(state[resultKey])) state[resultKey] = [];\nstate[resultKey] = state[resultKey].filter(x => Number(x.tag_index) !== Number(result.tag_index));\nstate[resultKey].push(result);\n\nreturn {json:result};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        1632
+      ],
+      "id": "c90b9570-24bf-4b90-9812-4cc75009b9b1",
+      "name": "OPOL — Resolver etiqueta v1.0",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/tags",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: $json.tag_name, slug: $json.tag_slug } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        1632
+      ],
+      "id": "1d586f6a-cc62-4557-be9f-d30315873471",
+      "name": "OPOL — Asegurar etiqueta v1.0",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst tags=Array.isArray(c.tags)?c.tags.map(x=>String(x).trim()).filter(Boolean):[];\nif(!tags.length) throw new Error('SEO.ETIQUETAS está vacío.');\n\nconst norm=s=>String(s??'')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')\n  .trim().toLocaleLowerCase('es-MX');\n\nconst slugify=s=>norm(s)\n  .replace(/[^a-z0-9]+/g,'-')\n  .replace(/^-+|-+$/g,'');\n\nconst seen=new Set();\nconst out=[];\n\nfor(const name of tags){\n  const key=norm(name);\n  if(!key || seen.has(key)) continue;\n  seen.add(key);\n  out.push({json:{\n    tag_index:out.length,\n    tag_name:name,\n    tag_slug:slugify(name)\n  }});\n}\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        1632
+      ],
+      "id": "b043eb1e-a98f-4bc6-975a-d722db727b19",
+      "name": "OPOL — Preparar etiquetas v1.0",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical,p=$('OPOL — Construir URL pública').first().json,m=$('OPOL — Subir DESTACADA').first().json,cat=$('OPOL — Resolver categoría').first().json,t=$('OPOL — Consolidar etiquetas v1.0').first().json;\nreturn {json:{status:(p?.id && p?.status==='publish')?'SUCCESS':'NOT_CONFIRMED',target:'oxigenopolitico',post_id:p?.id??null,post_status:p?.status??null,slug:p?.slug??c.slug,link:p?.public_url??p?.link??null,author:{id:Number(p?.author??2),source:'OPOL_READBACK_REDACCION_OXIGENO_POLITICO'},subtitle:p?.meta?.opmx_editorial?.subtitle??c.subtitle,category:{requested:c.categories?.opol?.principal,resolved_name:cat.category_name,id:cat.category_id,frontend_primary_category:p?.meta?.opmx_editorial?.primary_category??cat.category_id},tags:{requested:c.tags,assigned_ids:t.tag_ids??[],resolved:t.tags??[],count:t.count??0},image:{id:Number(m.id),url:m.source_url,alt_requested:c.images.featured_opol.alt_text},rank_math:{title:p?.meta?.rank_math_title??null,description:p?.meta?.rank_math_description??null,focus_keyword:p?.meta?.rank_math_focus_keyword??null},warnings:[]}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4112,
+        1648
+      ],
+      "id": "05584449-e9c7-47cc-8992-0fa72dbe14b9",
+      "name": "Resultado OPOL"
+    },
+    {
+      "parameters": {
+        "content": "## OPOL — publicación segura\nSe conserva la secuencia draft mínimo → Gutenberg → metadata → Rank Math → readback → validación → publish → readback público.",
+        "height": 300,
+        "width": 540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        960
+      ],
+      "id": "292bc559-9367-47be-88d9-efeb94ab0870",
+      "name": "NOTA — OXígeno Político v1.5 MERGE"
+    },
+    {
+      "parameters": {
+        "content": "## OPOL — MEDIA v1.0\nDESTACADA se carga directamente a cms.oxigenopolitico.com.mx y su media_id se usa como featured_media. El borrador mínimo, Gutenberg, metadata editorial y Rank Math se conservan.",
+        "height": 300,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        48,
+        992
+      ],
+      "id": "6dc6e4cf-ac23-460b-9cb7-93324c8d18dd",
+      "name": "NOTA — Arquitectura OPOL"
+    },
+    {
+      "parameters": {
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}?context=edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3904,
+        1504
+      ],
+      "id": "d42d7eba-613b-42ea-9b52-1e24d7d26acb",
+      "name": "OPOL — Readback",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  meta: {\n    rank_math_title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n    rank_math_description: $('Validar y normalizar OPMX MASTER').first().json.canonical.meta_description,\n    rank_math_focus_keyword: $('Validar y normalizar OPMX MASTER').first().json.canonical.keywords_all\n  }\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3712,
+        1504
+      ],
+      "id": "11187ab6-c441-4743-8a0f-16e38cfcf2da",
+      "name": "OPOL — Escribir Rank Math",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n  slug: $('Validar y normalizar OPMX MASTER').first().json.canonical.slug,\n  status: 'draft',\n  author: 2\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        1504
+      ],
+      "id": "a7a6a535-a42b-4dc7-bbb1-3cd26d7b41e6",
+      "name": "OPOL — Crear borrador mínimo",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst requested=String(c.categories?.opol?.principal ?? '').trim();\nif(!requested) throw new Error('El JSON MASTER no entregó la categoría principal para OPOL.');\n\nconst norm=s=>String(s??'')\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')\n  .replace(/\\s+/g,' ')\n  .trim().toLocaleLowerCase('es-MX');\n\nconst rows=$input.all().map(i=>i.json).flatMap(x=>Array.isArray(x)?x:[x]);\nconst exact=rows.find(x=>norm(x.name)===norm(requested));\n\nif(!exact?.id){\n  const available=rows.map(x=>`${x.name??'(sin nombre)'} [slug ${x.slug??'?'} | ID ${x.id??'?'}]`).join(', ');\n  throw new Error(`La categoría \"${requested}\" no existe como coincidencia exacta por nombre en OXígeno Político. Categorías recibidas de WordPress: ${available||'ninguna'}.`);\n}\nreturn [{json:{\n  category_id:Number(exact.id),\n  category_name:exact.name,\n  category_slug:exact.slug??null,\n  requested_category:requested,\n  resolution:'EXACT_NORMALIZED_NAME_MATCH'\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        1504
+      ],
+      "id": "e5b08ed7-138c-442e-8ce3-3f2c7a701a1d",
+      "name": "OPOL — Resolver categoría",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/categories?search=' + encodeURIComponent($('Validar y normalizar OPMX MASTER').first().json.canonical.categories.opol.principal) + '&per_page=100&orderby=id&order=asc' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1664,
+        1504
+      ],
+      "id": "6ac91660-15ac-4a8a-9776-7331073784e9",
+      "name": "OPOL — Buscar categoría",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  meta: {\n    opmx_editorial: {\n      subtitle: $('Validar y normalizar OPMX MASTER').first().json.canonical.subtitle,\n      source_name: '',\n      source_url: '',\n      photo_credit: '',\n      featured_video: '',\n      primary_category: Number(\n        $('OPOL — Resolver categoría').first().json.category_id\n      ),\n      breaking_news: false,\n      breaking_expires_at: '',\n      show_updated: false,\n      focal_x: 50,\n      focal_y: 50,\n      demo: false\n    }\n  }\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3504,
+        1504
+      ],
+      "id": "ed359e64-c1a6-45b0-b0cc-1104fbf27c02",
+      "name": "OPOL — Escribir metadata editorial",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  excerpt: $('Validar y normalizar OPMX MASTER').first().json.canonical.meta_description,\n  content: $('Validar y normalizar OPMX MASTER').first().json.canonical.gutenberg_final,\n  featured_media: Number(\n    $('OPOL — Subir DESTACADA').first().json.id\n  ),\n  categories: [\n    Number(\n      $('OPOL — Resolver categoría').first().json.category_id\n    )\n  ],\n  tags: $('OPOL — Consolidar etiquetas v1.0').first().json.tag_ids\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3312,
+        1504
+      ],
+      "id": "25c034d0-ee31-4d13-af64-9d8f1f924e65",
+      "name": "OPOL — Completar borrador Gutenberg",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        4464,
+        1040
+      ],
+      "id": "2a354d98-e631-4d5f-8a6f-b2113c191090",
+      "name": "MERGE — Esperar OPURO + OPOL"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items=$input.all().map(i=>i.json);\nconst opuro=items.find(x=>x?.target==='oxigenopuro')??null;\nconst opol=items.find(x=>x?.target==='oxigenopolitico')??null;\nconst requested=[opuro,opol].filter(x=>x&&x.status!=='SKIPPED');\nconst ok=x=>['SUCCESS','DRAFT'].includes(x?.status);\nconst status=requested.length===0?'SKIPPED':requested.every(ok)?'SUCCESS':requested.some(ok)?'PARTIAL_SUCCESS':'FAILED';\nconst c=$('Validar y normalizar OPMX MASTER').first().json.canonical;\nconst publish=$('Validar y normalizar OPMX MASTER').first().json.execution.publish;\n\nconst finalUrlOpuro=opuro?.status==='SUCCESS'?(opuro.link??null):null;\nconst finalUrlOpol=opol?.status==='SUCCESS'?(opol.link??null):null;\n\nconst social_contract={\n  social_contract_version:'1.0',\n  content:{\n    titulo_seo:c.title??'',\n    subtitulo:c.subtitle??'',\n    url_opuro:finalUrlOpuro,\n    url_opol:finalUrlOpol\n  },\n  media:{\n    imagen_social:'BINARY_OR_URL'\n  },\n  targets:{\n    x:true,\n    linkedin:true,\n    google_business:true,\n    facebook:true,\n    instagram:true,\n    tiktok:true,\n    youtube:false,\n    whatsapp_channel:false\n  }\n};\n\nreturn [{json:{\n  status,\n  mode:publish?'PUBLISH':'DRAFT',\n  workflow:'OPMX Publisher MEDIA v1.2.10',\n  final_url_opuro:finalUrlOpuro,\n  final_url_opol:finalUrlOpol,\n  edit_url_opuro:opuro?.status==='DRAFT'?(opuro.edit_url??null):null,\n  edit_url_opol:opol?.status==='DRAFT'?(opol.edit_url??null):null,\n  seo_title:c.title,\n  seo_subtitle:c.subtitle,\n  targets:{oxigenopuro:opuro,oxigenopolitico:opol},\n  summary:{opuro:opuro?.status??'NO_RESULT',opol:opol?.status??'NO_RESULT'},\n  social_contract\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4720,
+        1040
+      ],
+      "id": "d981f295-45fd-4490-8890-f8641c56ee87",
+      "name": "Resultado consolidado OPMX"
+    },
+    {
+      "parameters": {
+        "content": "## OPMX Publisher MEDIA v1.0\n- Entrada: MASTER JSON + HERO + DESTACADA + CREAR_EN.\n- HERO → OPURO Media Library.\n- DESTACADA → OPURO y/o OPOL según destino.\n- Los IDs y source_url devueltos por WordPress sustituyen el contrato MEDIA.\n- Se construye en draft, se valida y sólo entonces se publica.\n- Readback final devuelve slug y URL pública.",
+        "height": 340,
+        "width": 650
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1328
+      ],
+      "id": "c30461d4-edac-400f-9455-7d651b100a7f",
+      "name": "NOTA — Publisher MEDIA v1.0"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c34848fa-848d-4330-bec1-914533404e65",
+              "leftValue": "={{ $json.execution.create_opuro }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        800
+      ],
+      "id": "d7b43b00-b9bc-4824-a91a-d2b2eab90d33",
+      "name": "¿DESTINO INCLUYE OPURO?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a27b63a0-8cc2-4cd5-9552-0add24e5c096",
+              "leftValue": "={{ $json.execution.create_opol }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        1248
+      ],
+      "id": "6299806f-3ef5-41f8-b127-55d5db5bed27",
+      "name": "¿DESTINO INCLUYE OPOL?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {json:{status:'SKIPPED',target:'oxigenopuro',reason:'CREAR_EN no incluye OPURO'}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        912
+      ],
+      "id": "c637a7b9-1a3a-45da-9e37-3a969f9c860d",
+      "name": "Resultado OPURO — SKIPPED"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {json:{status:'SKIPPED',target:'oxigenopolitico',reason:'CREAR_EN no incluye OPOL'}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        1440
+      ],
+      "id": "0264a802-8717-4257-908a-6d7bf2222ec4",
+      "name": "Resultado OPOL — SKIPPED"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "={{ $json.mode === 'DRAFT' ? '✓ Borrador completado' : ($json.status === 'SUCCESS' ? '✓ Publicación completada' : 'Publicación procesada') }}",
+        "completionMessage": "={{ ('Modo: ' + ($json.mode === 'DRAFT' ? 'BORRADOR' : 'PUBLICACIÓN') + '\\n' + 'Estado OPURO: ' + ($json.summary?.opuro || 'No disponible') + '\\n' + 'Estado OPOL: ' + ($json.summary?.opol || 'No disponible') + '\\n\\n' + ($json.mode === 'DRAFT' ? 'Edición OPURO: ' + ($json.edit_url_opuro || ($json.summary?.opuro === 'SKIPPED' ? 'No solicitado' : 'No disponible')) + '\\n' + 'Edición OPOL: ' + ($json.edit_url_opol || ($json.summary?.opol === 'SKIPPED' ? 'No solicitado' : 'No disponible')) + '\\n' + 'Título SEO: ' + ($json.seo_title || 'No disponible') + '\\n' + 'Subtítulo SEO: ' + ($json.seo_subtitle || 'No disponible') + '\\n\\nTexto para compartir en redes: No disponible porque la nota permanece en borrador.' : 'URL final OPURO: ' + ($json.final_url_opuro || ($json.summary?.opuro === 'SKIPPED' ? 'No solicitado' : 'No disponible')) + '\\n' + 'URL final OPOL: ' + ($json.final_url_opol || ($json.summary?.opol === 'SKIPPED' ? 'No solicitado' : 'No disponible')) + '\\n' + 'Título SEO: ' + ($json.seo_title || 'No disponible') + '\\n' + 'Subtítulo SEO: ' + ($json.seo_subtitle || 'No disponible') + '\\n\\n' + ($json.summary?.opuro === 'SKIPPED' ? 'Texto para compartir en redes: No disponible porque OPURO no fue solicitado' : 'Texto para compartir en redes:\\n' + ($json.seo_subtitle || 'No disponible') + '\\n\\n' + ($json.final_url_opuro || 'No disponible')))) + '\\n\\nJSON\\n\\n' + JSON.stringify($json.social_contract, null, 2) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        4944,
+        1040
+      ],
+      "id": "c3774a27-f6aa-4759-92d0-736811c18b31",
+      "name": "Form",
+      "webhookId": "8064cd02-60b2-4524-834f-ac805301c38c"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const raw = $json ?? {};\nconst err = raw.error ?? raw;\n\nfunction textOf(value) {\n  if (value === null || value === undefined) return '';\n  if (typeof value === 'string') return value.trim();\n  if (typeof value === 'number' || typeof value === 'boolean') return String(value);\n  if (typeof value === 'object') {\n    return String(\n      value.message ??\n      value.description ??\n      value.cause?.message ??\n      value.error?.message ??\n      ''\n    ).trim();\n  }\n  return '';\n}\n\nconst message =\n  textOf(raw.error) ||\n  textOf(err) ||\n  textOf(raw.message) ||\n  'La ejecución se detuvo por un error no identificado.';\n\nconst detailsCandidates = [\n  textOf(err?.description),\n  textOf(err?.cause?.message),\n  textOf(raw.description),\n  textOf(raw?.error?.description)\n].filter(Boolean);\n\nconst details = detailsCandidates.find(v => v !== message) ?? '';\n\nconst nodeName =\n  raw?.node?.name ??\n  raw?.error?.node?.name ??\n  raw?.nodeName ??\n  raw?.error?.nodeName ??\n  '';\n\nreturn {\n  json: {\n    status: 'FAILED',\n    workflow: 'OPMX Publisher MEDIA v1.2.10',\n    error_message: message,\n    error_details: details,\n    error_node: nodeName,\n    hint: 'El error quedó capturado en el formulario. Si necesitas diagnóstico técnico adicional, la ejecución completa sigue disponible en Executions.'\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4704,
+        2048
+      ],
+      "id": "b5361805-bb15-47ec-b8f3-37fc0548ce7c",
+      "name": "ERROR — Preparar respuesta visible"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "✕ OPMX Publisher encontró un error",
+        "completionMessage": "={{ 'ERROR\\n\\n' + ($json.error_node ? 'Nodo: ' + $json.error_node + '\\n\\n' : '') + ($json.error_message || 'La ejecución se detuvo.') + ($json.error_details ? '\\n\\nDetalle:\\n' + $json.error_details : '') + '\\n\\n' + ($json.hint || 'Revisa la ejecución y vuelve a intentarlo.') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        4928,
+        2048
+      ],
+      "id": "61ffccf0-073b-4cb9-b8e2-3bfcb735a30e",
+      "name": "Form — Error visible",
+      "webhookId": "3f78d8f0-7c31-4425-a34e-26550dd408d3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oxigenopuro.com.mx/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "={{ 'attachment; filename=\"' + ($binary.hero_file.fileName || 'image.jpg').replace(/\"/g, '') + '\"' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={$binary.hero_file.mimeType || 'image/jpeg'}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "hero_file",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        544
+      ],
+      "id": "65b1a74e-18e9-4366-833f-b676b0f93bdb",
+      "name": "OPURO — Subir HERO",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/media/{{ $('OPURO — Subir HERO').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { alt_text: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.alt_text, title: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.title, caption: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.caption, description: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.description } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        992,
+        544
+      ],
+      "id": "6bdaa91f-11a1-4170-be2d-0aeb2b511743",
+      "name": "OPURO — Metadata HERO",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oxigenopuro.com.mx/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "={{ 'attachment; filename=\"' + ($binary.featured_file.fileName || 'image.jpg').replace(/\"/g, '') + '\"' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={$binary.featured_file.mimeType || 'image/jpeg'}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "featured_file",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        544
+      ],
+      "id": "efa8f513-9d4a-406e-aa18-bd405cbffee1",
+      "name": "OPURO — Subir DESTACADA",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/media/{{ $('OPURO — Subir DESTACADA').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { alt_text: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.featured_opuro.alt_text } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        544
+      ],
+      "id": "3e62ed7e-4546-44da-a9db-4bb497d6e6a2",
+      "name": "OPURO — Metadata DESTACADA",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/media",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Disposition",
+              "value": "={{ 'attachment; filename=\"' + ($binary.featured_file.fileName || 'image.jpg').replace(/\"/g, '') + '\"' }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={$binary.featured_file.mimeType || 'image/jpeg'}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "featured_file",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        1216
+      ],
+      "id": "ee30c6b2-6b42-457d-b251-9d9af73813ea",
+      "name": "OPOL — Subir DESTACADA",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/media/{{ $('OPOL — Subir DESTACADA').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { alt_text: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.featured_opol.alt_text } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        1216
+      ],
+      "id": "2afaaa93-58f3-4cbf-8cd0-2f3351771384",
+      "name": "OPOL — Metadata DESTACADA",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: $json, binary: $('Validar y normalizar OPMX MASTER').first().binary };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        544
+      ],
+      "id": "9a5a32aa-db7f-43d7-a7f7-531866e4e8de",
+      "name": "OPURO — Recuperar binarios MEDIA"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p=$json;\nconst expectedFeatured=Number($('OPURO — Subir DESTACADA').first().json.id);\nconst expectedCat=Number($('OPURO — Resolver categoría').first().json.category_id);\nif(!p?.id) throw new Error('OPURO readback no devolvió ID.');\nif(String(p.status)!=='draft') throw new Error(`OPURO no está en draft antes de publicar. Estado: ${p.status}`);\nif(Number(p.featured_media)!==expectedFeatured) throw new Error(`OPURO featured_media no coincide. Esperado ${expectedFeatured}, recibido ${p.featured_media}.`);\nif(!Array.isArray(p.categories)||!p.categories.map(Number).includes(expectedCat)) throw new Error('OPURO no confirmó la categoría esperada.');\nconst content=String(p?.content?.raw ?? p?.content?.rendered ?? '');\nif(!content || content.includes('{{OPMX:HERO_OPURO}}')) throw new Error('OPURO conserva placeholder HERO o contenido vacío.');\nreturn {json:{validated:true,post_id:Number(p.id)}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4112,
+        464
+      ],
+      "id": "889b5885-f7f6-4568-883a-56aaa55035d3",
+      "name": "OPURO — Validar antes de publicar",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/posts/{{ $('OPURO — Crear borrador HTML').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { status: 'publish' } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4352,
+        464
+      ],
+      "id": "a996097b-2814-4fc3-b74e-451ead528956",
+      "name": "OPURO — Publicar",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://oxigenopuro.com.mx/wp-json/wp/v2/posts/{{ $('OPURO — Crear borrador HTML').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4592,
+        464
+      ],
+      "id": "e54ec468-e4da-4ee8-9ab7-85de88cd9779",
+      "name": "OPURO — Readback público",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p=$json;\nconst expectedFeatured=Number($('OPOL — Subir DESTACADA').first().json.id);\nconst expectedCat=Number($('OPOL — Resolver categoría').first().json.category_id);\nif(!p?.id) throw new Error('OPOL readback no devolvió ID.');\nif(String(p.status)!=='draft') throw new Error(`OPOL no está en draft antes de publicar. Estado: ${p.status}`);\nif(Number(p.featured_media)!==expectedFeatured) throw new Error(`OPOL featured_media no coincide. Esperado ${expectedFeatured}, recibido ${p.featured_media}.`);\nif(!Array.isArray(p.categories)||!p.categories.map(Number).includes(expectedCat)) throw new Error('OPOL no confirmó la categoría esperada.');\nconst content=String(p?.content?.raw ?? p?.content?.rendered ?? '');\nif(!content) throw new Error('OPOL devolvió contenido vacío.');\nreturn {json:{validated:true,post_id:Number(p.id)}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4112,
+        1456
+      ],
+      "id": "059dc39e-7f48-4245-8d22-518fc6d4f872",
+      "name": "OPOL — Validar antes de publicar",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { status: 'publish' } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4528,
+        1648
+      ],
+      "id": "93266180-af35-4ffd-ac12-5c5b1c3bc4c6",
+      "name": "OPOL — Publicar",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/{{ $('OPOL — Crear borrador mínimo').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4768,
+        1648
+      ],
+      "id": "1c4c80cd-e5ac-48c4-8765-08ff78c08954",
+      "name": "OPOL — Readback público",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "Otlzxx5vntBggHd3",
+          "name": "Oxigeno Politico"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const p=$json;\nconst cat=$('OPOL — Resolver categoría').first().json;\nconst slug=String(p?.slug ?? '').trim();\nconst catSlug=String(cat?.category_slug ?? '').trim();\nif(!slug || !catSlug) throw new Error('No fue posible construir la URL pública OPOL: falta slug final o slug de categoría.');\nconst public_url=`https://oxigenopolitico.com.mx/${catSlug}/${slug}/`;\nreturn {json:{...p,public_url}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5008,
+        1648
+      ],
+      "id": "010c2407-3920-433f-9b2a-138fe101272d",
+      "name": "OPOL — Construir URL pública",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "87c48cfa-22dc-4f79-aff7-a7dcc6fdbf93",
+              "leftValue": "={{ $('Validar y normalizar OPMX MASTER').first().json.execution.publish }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4336,
+        240
+      ],
+      "id": "2d13351e-8cf4-470e-afc4-ed6501871409",
+      "name": "¿PUBLICAR OPURO?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dbaf5652-58a0-4526-92d3-8425e9ffdf13",
+              "leftValue": "={{ $('Validar y normalizar OPMX MASTER').first().json.execution.publish }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4352,
+        1456
+      ],
+      "id": "4b5c2568-62de-47b9-844e-b3aea6c8e207",
+      "name": "¿PUBLICAR OPOL?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical; const p=$('OPURO — Readback').first().json; return {json:{status:(p?.id&&p?.status==='draft')?'DRAFT':'NOT_CONFIRMED',target:'oxigenopuro',post_id:p?.id??null,post_status:p?.status??null,slug:p?.slug??c.slug,link:null,edit_url:p?.id?`https://oxigenopuro.com.mx/wp-admin/post.php?post=${p.id}&action=edit`:null,warnings:[]}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4592,
+        256
+      ],
+      "id": "4f17d1e0-9e79-4c86-91c5-95b8bc500f37",
+      "name": "Resultado OPURO — BORRADOR"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const c=$('Validar y normalizar OPMX MASTER').first().json.canonical; const p=$('OPOL — Readback').first().json; return {json:{status:(p?.id&&p?.status==='draft')?'DRAFT':'NOT_CONFIRMED',target:'oxigenopolitico',post_id:p?.id??null,post_status:p?.status??null,slug:p?.slug??c.slug,link:null,edit_url:p?.id?`https://cms.oxigenopolitico.com.mx/wp-admin/post.php?post=${p.id}&action=edit`:null,warnings:[]}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4720,
+        1232
+      ],
+      "id": "768531e5-42fc-4b59-9fa0-9d73701793bc",
+      "name": "Resultado OPOL — BORRADOR"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2080,
+        896
+      ],
+      "id": "26192ed6-045e-4564-b69a-1645ba438433",
+      "name": "OPURO — Etiquetas secuenciales v1.2.4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "73eed800-6ced-40e3-9182-83b98875abb7",
+              "leftValue": "={{ $json.__tag_retry === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2800,
+        896
+      ],
+      "id": "36349e0b-6d5f-4941-ac81-050a8e141064",
+      "name": "OPURO — ¿Retry 503 etiqueta? v1.2.4"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.__tag_retry_wait_seconds }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3040,
+        800
+      ],
+      "id": "325a08a3-7527-41a7-85ec-05e74a6681e4",
+      "name": "OPURO — Esperar retry etiqueta v1.2.4",
+      "webhookId": "9eafbd80-0809-4e7f-80a0-b973e9850677"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {json:{\n  tag_index:Number($json.tag_index),\n  tag_name:String($json.tag_name),\n  tag_slug:String($json.tag_slug)\n}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        800
+      ],
+      "id": "304a9f67-45c2-44d8-8ea4-5b021699ab0c",
+      "name": "OPURO — Retry etiqueta v1.2.4"
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2080,
+        1856
+      ],
+      "id": "b4426f37-5cce-4529-ab11-1e70744c88e8",
+      "name": "OPOL — Etiquetas secuenciales v1.2.4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aead8423-d463-4971-a8b5-7e14f9ff58f0",
+              "leftValue": "={{ $json.__tag_retry === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2800,
+        1856
+      ],
+      "id": "abf74847-5ba7-4dd2-ba8d-483bab278c9b",
+      "name": "OPOL — ¿Retry 503 etiqueta? v1.2.4"
+    },
+    {
+      "parameters": {
+        "amount": "={{ $json.__tag_retry_wait_seconds }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3040,
+        1760
+      ],
+      "id": "9a1ded76-5716-4d05-a90a-3ab82d91f4c1",
+      "name": "OPOL — Esperar retry etiqueta v1.2.4",
+      "webhookId": "f393cfa0-80da-4d4b-aef6-6dd09e1dbcd8"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {json:{\n  tag_index:Number($json.tag_index),\n  tag_name:String($json.tag_name),\n  tag_slug:String($json.tag_slug)\n}};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3280,
+        1760
+      ],
+      "id": "ddd0f755-f1bc-4d7b-9b95-7b367631f0f3",
+      "name": "OPOL — Retry etiqueta v1.2.4"
+    },
+    {
+      "parameters": {
+        "content": "## v1.2.10 — Contract v1.2 + Category preflight\nAntes de cualquier llamada a WordPress, `Validar y normalizar OPMX MASTER` exige `CONTROL_EDITORIAL.ESTADO = LISTO`, valida literalmente OPURO contra `sites.OPURO.allowed_names`, OPOL contra `sites.OPOL.allowed_names`, valida la relación padre-hija de `OPOL.SECUNDARIA`, comprueba `SEO.CATEGORIA == CATEGORIAS.OPURO.PRINCIPAL` y rechaza `AUTOR_ID` en el MASTER. El lookup posterior de WordPress se conserva sólo para resolver IDs reales; no sustituye al catálogo.",
+        "height": 260,
+        "width": 620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        2080
+      ],
+      "id": "89b54ec6-1b09-4b68-9e1b-0b374ac2a0c5",
+      "name": "NOTA — v1.2.10 Contract v1.2 preflight"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OPURO — Resolver etiqueta v1.13": {
+      "main": [
+        [
+          {
+            "node": "OPURO — ¿Retry 503 etiqueta? v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Asegurar etiqueta v1.13": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Resolver etiqueta v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Preparar etiquetas v1.13": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Etiquetas secuenciales v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar OPMX MASTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Consolidar etiquetas v1.13": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Crear borrador HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Readback": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Validar antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Escribir Rank Math": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Readback",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Crear borrador HTML": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Escribir Rank Math",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Resolver categoría": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Preparar etiquetas v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Buscar categoría": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Resolver categoría",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar OPMX MASTER": {
+      "main": [
+        [
+          {
+            "node": "¿DESTINO INCLUYE OPURO?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿DESTINO INCLUYE OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Resolver etiqueta v1.0": {
+      "main": [
+        [
+          {
+            "node": "OPOL — ¿Retry 503 etiqueta? v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Asegurar etiqueta v1.0": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Resolver etiqueta v1.0",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Preparar etiquetas v1.0": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Etiquetas secuenciales v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Consolidar etiquetas v1.0": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Crear borrador mínimo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Readback": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Validar antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Escribir Rank Math": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Readback",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Resolver categoría": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Preparar etiquetas v1.0",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Buscar categoría": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Resolver categoría",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Escribir metadata editorial": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Escribir Rank Math",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Crear borrador mínimo": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Completar borrador Gutenberg",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Completar borrador Gutenberg": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Escribir metadata editorial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPURO": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPOL": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MERGE — Esperar OPURO + OPOL": {
+      "main": [
+        [
+          {
+            "node": "Resultado consolidado OPMX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPURO — SKIPPED": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPOL — SKIPPED": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "¿DESTINO INCLUYE OPURO?": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Subir HERO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado OPURO — SKIPPED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿DESTINO INCLUYE OPOL?": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Subir DESTACADA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado OPOL — SKIPPED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado consolidado OPMX": {
+      "main": [
+        [
+          {
+            "node": "Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERROR — Preparar respuesta visible": {
+      "main": [
+        [
+          {
+            "node": "Form — Error visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Subir HERO": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Metadata HERO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Metadata HERO": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Recuperar binarios MEDIA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Recuperar binarios MEDIA": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Subir DESTACADA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Subir DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Metadata DESTACADA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Metadata DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Buscar categoría",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Subir DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Metadata DESTACADA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Metadata DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Buscar categoría",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Validar antes de publicar": {
+      "main": [
+        [
+          {
+            "node": "¿PUBLICAR OPURO?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Publicar": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Readback público",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Readback público": {
+      "main": [
+        [
+          {
+            "node": "Resultado OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Validar antes de publicar": {
+      "main": [
+        [
+          {
+            "node": "¿PUBLICAR OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Publicar": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Readback público",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Readback público": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Construir URL pública",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Construir URL pública": {
+      "main": [
+        [
+          {
+            "node": "Resultado OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR — Preparar respuesta visible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿PUBLICAR OPURO?": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado OPURO — BORRADOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿PUBLICAR OPOL?": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado OPOL — BORRADOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPURO — BORRADOR": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado OPOL — BORRADOR": {
+      "main": [
+        [
+          {
+            "node": "MERGE — Esperar OPURO + OPOL",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OPURO — Etiquetas secuenciales v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Consolidar etiquetas v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPURO — Asegurar etiqueta v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — ¿Retry 503 etiqueta? v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Esperar retry etiqueta v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPURO — Etiquetas secuenciales v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Esperar retry etiqueta v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Retry etiqueta v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Retry etiqueta v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Asegurar etiqueta v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Etiquetas secuenciales v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Consolidar etiquetas v1.0",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPOL — Asegurar etiqueta v1.0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — ¿Retry 503 etiqueta? v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Esperar retry etiqueta v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPOL — Etiquetas secuenciales v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Esperar retry etiqueta v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Retry etiqueta v1.2.4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPOL — Retry etiqueta v1.2.4": {
+      "main": [
+        [
+          {
+            "node": "OPOL — Asegurar etiqueta v1.0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6d0ebe05-91f8-41b5-8ca2-3d975241fc11",
+  "meta": {
+    "instanceId": "e71a01cf5287104fcb05bd2ccb21f2f883ff95ace1ad7def567eaed028fd131b"
+  },
+  "nodeGroups": [],
+  "id": "TAyjP8mW1rMgocH1",
+  "tags": []
+}
