@@ -83,3 +83,17 @@ En CADA hito relevante:
 
 ## Siguiente hito
 Cerrar especificación funcional de Social Distribution v1.0, incluyendo Threads, contrato de entrada/salida, estrategia de media staging y matriz API/autenticación. Después construir el workflow en Work.
+
+
+## Unificación Motor Editorial — 2026-10-23
+
+Este repositorio también será el punto de convergencia versionado de los maestros del Motor Editorial OPMX. La migración se hace sin degradar componentes ya más nuevos de `main`.
+
+Reglas:
+- No sustituir `SALIDA_EDITORIAL_OPMX_v2.2.json`, `PROTOCOLO_EDITORIAL_OPMX_v4.2.md` ni otros contratos técnicos vigentes por archivos históricos sólo porque provengan de un chat anterior.
+- Las cinco familias maestras del Motor se resuelven por versión semántica máxima; sufijos de copia no son versión.
+- Los contextos `05_CONTEXTO_EDITORIAL_*.json` son opcionales y se resuelven por familia y versión semántica máxima.
+- Hechos actuales verificados prevalecen sobre cualquier contexto editorial.
+- `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json` continúa como Publisher vigente y probado; v1.2.10 permanece como baseline.
+- `workflows/social/` permanece separado del Publisher y sigue el contrato Social activo.
+- No reconstruir Template, CSS, Prompt Maestro, catálogo ni contrato MEDIA desde memoria. Su incorporación al repo debe hacerse desde el archivo fuente vigente exacto.
