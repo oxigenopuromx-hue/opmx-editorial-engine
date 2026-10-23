@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/oxigenopuromx-hue/opmx-editorial-engine/contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json",
   "title": "OPMX Social Distribution Contract v1.0",
-  "description": "Contrato técnico entre un publicador editorial ya completado y OPMX Social Distribution Engine. No contiene decisiones editoriales ni secretos.",
+  "description": "Contrato técnico de Social Distribution v1.0 para publicaciones ya completadas de Oxígeno Puro (OPURO). IMAGEN_SOCIAL es un asset independiente creado después del flujo editorial y entregado al motor como archivo/binario; no es HERO ni imagen interior.",
   "contract_id": "OPMX-SOCIAL-1.0",
   "version": "1.0",
   "status": "ACTIVE",
@@ -24,43 +24,142 @@
     "event": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["event_id", "publisher_run_id", "source_post_id", "published_at"],
+      "required": [
+        "event_id",
+        "publisher_run_id",
+        "source_post_id",
+        "published_at"
+      ],
       "properties": {
-        "event_id": {"type": "string", "minLength": 1, "description": "Identificador inmutable del evento de publicación; no reutilizar."},
-        "publisher_run_id": {"type": "string", "minLength": 1},
-        "source_post_id": {"type": ["string", "integer"], "description": "ID de la entrada WordPress ya publicada."},
-        "published_at": {"type": "string", "format": "date-time"},
-        "source_site": {"type": "string", "enum": ["OPURO", "OPOL"]}
+        "event_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identificador inmutable del evento de publicación; no reutilizar."
+        },
+        "publisher_run_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_post_id": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "description": "ID de la entrada WordPress ya publicada."
+        },
+        "published_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_site": {
+          "type": "string",
+          "const": "OPURO"
+        }
       }
     },
     "content": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["titulo_seo", "subtitulo", "url_opuro", "url_opol"],
+      "required": [
+        "titulo_seo",
+        "subtitulo",
+        "url_opuro"
+      ],
       "properties": {
-        "titulo_seo": {"type": "string", "minLength": 1},
-        "subtitulo": {"type": "string", "minLength": 1},
-        "url_opuro": {"type": "string", "format": "uri"},
-        "url_opol": {"type": ["string", "null"], "format": "uri"}
+        "titulo_seo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subtitulo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url_opuro": {
+          "type": "string",
+          "format": "uri"
+        },
+        "url_opol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "Reservado para fases posteriores; Social v1 no distribuye OPOL."
+        }
       }
     },
     "media": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["original"],
+      "required": [
+        "social"
+      ],
       "properties": {
-        "original": {
+        "social": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["public_url", "mime_type", "sha256", "alt_text", "rights_status"],
+          "required": [
+            "source_type",
+            "binary_property",
+            "mime_type",
+            "filename",
+            "alt_text"
+          ],
           "properties": {
-            "public_url": {"type": "string", "format": "uri", "description": "URL que el motor puede leer para realizar staging; no debe ser una URL firmada de corta duración."},
-            "mime_type": {"type": "string", "enum": ["image/jpeg", "image/png", "image/webp"]},
-            "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
-            "alt_text": {"type": "string"},
-            "width": {"type": ["integer", "null"], "minimum": 1},
-            "height": {"type": ["integer", "null"], "minimum": 1},
-            "rights_status": {"type": "string", "enum": ["CONFIRMED", "REASONABLE_OFFICIAL_USE", "NOT_APPLICABLE"]}
+            "source_type": {
+              "type": "string",
+              "const": "UPLOAD"
+            },
+            "binary_property": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Nombre de la propiedad binaria recibida por n8n; valor recomendado: imagen_social."
+            },
+            "mime_type": {
+              "type": "string",
+              "enum": [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+              ]
+            },
+            "filename": {
+              "type": "string",
+              "minLength": 1
+            },
+            "alt_text": {
+              "type": "string"
+            },
+            "width": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "height": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1
+            },
+            "sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^[a-fA-F0-9]{64}$",
+              "description": "Puede calcularse durante ingestión si no llega informado."
+            },
+            "origin": {
+              "type": "string",
+              "enum": [
+                "CANVA_MANUAL",
+                "USER_PROVIDED"
+              ],
+              "default": "CANVA_MANUAL"
+            }
           }
         }
       }
@@ -68,28 +167,80 @@
     "targets": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["x", "linkedin", "google_business", "facebook", "instagram", "threads", "tiktok", "youtube", "whatsapp_channel"],
+      "required": [
+        "x",
+        "linkedin",
+        "google_business",
+        "facebook",
+        "instagram",
+        "threads",
+        "tiktok",
+        "youtube",
+        "whatsapp_channel"
+      ],
       "properties": {
-        "x": {"$ref": "#/$defs/target"},
-        "linkedin": {"$ref": "#/$defs/target"},
-        "google_business": {"$ref": "#/$defs/target"},
-        "facebook": {"$ref": "#/$defs/target"},
-        "instagram": {"$ref": "#/$defs/target"},
-        "threads": {"$ref": "#/$defs/target"},
-        "tiktok": {"$ref": "#/$defs/target"},
-        "youtube": {"$ref": "#/$defs/target"},
-        "whatsapp_channel": {"$ref": "#/$defs/target"}
+        "x": {
+          "$ref": "#/$defs/target"
+        },
+        "linkedin": {
+          "$ref": "#/$defs/target"
+        },
+        "google_business": {
+          "$ref": "#/$defs/target"
+        },
+        "facebook": {
+          "$ref": "#/$defs/target"
+        },
+        "instagram": {
+          "$ref": "#/$defs/target"
+        },
+        "threads": {
+          "$ref": "#/$defs/target"
+        },
+        "tiktok": {
+          "$ref": "#/$defs/target"
+        },
+        "youtube": {
+          "$ref": "#/$defs/target"
+        },
+        "whatsapp_channel": {
+          "$ref": "#/$defs/target"
+        }
       }
     },
     "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["idempotency_key", "requested_at", "dry_run"],
+      "required": [
+        "idempotency_key",
+        "requested_at",
+        "dry_run"
+      ],
       "properties": {
-        "idempotency_key": {"type": "string", "minLength": 16, "description": "Clave estable por evento y plataforma; el coordinador la deriva como sha256(event_id:platform:contract_version)."},
-        "requested_at": {"type": "string", "format": "date-time"},
-        "dry_run": {"type": "boolean"},
-        "correlation_id": {"type": ["string", "null"]}
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 16,
+          "description": "Clave estable por evento y plataforma; el coordinador la deriva como sha256(event_id:platform:contract_version)."
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dry_run": {
+          "type": "boolean"
+        },
+        "correlation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cleanup_after_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 7,
+          "description": "Retención mínima del asset temporal en WordPress una vez terminada la distribución."
+        }
       }
     }
   },
@@ -97,56 +248,201 @@
     "target": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "properties": {
-        "enabled": {"type": "boolean"},
-        "account_ref": {"type": ["string", "null"], "description": "Nombre lógico de la cuenta o ubicación configurada sólo en n8n; no incluir IDs de token."},
-        "manual_required": {"type": "boolean", "default": false}
+        "enabled": {
+          "type": "boolean"
+        },
+        "account_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Nombre lógico de la cuenta o ubicación configurada sólo en n8n; no incluir IDs de token."
+        },
+        "manual_required": {
+          "type": "boolean",
+          "default": false
+        }
       }
     }
   },
   "x-opmx-output": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["social_engine_version", "run_id", "correlation_id", "status", "results", "summary"],
+    "required": [
+      "social_engine_version",
+      "run_id",
+      "correlation_id",
+      "status",
+      "results",
+      "summary"
+    ],
     "properties": {
-      "social_engine_version": {"type": "string", "const": "1.0"},
-      "run_id": {"type": "string"},
-      "correlation_id": {"type": ["string", "null"]},
-      "status": {"type": "string", "enum": ["SUCCESS", "PARTIAL_SUCCESS", "FAILED"]},
+      "social_engine_version": {
+        "type": "string",
+        "const": "1.0"
+      },
+      "run_id": {
+        "type": "string"
+      },
+      "correlation_id": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "SUCCESS",
+          "PARTIAL_SUCCESS",
+          "FAILED"
+        ]
+      },
       "results": {
         "type": "array",
         "minItems": 9,
         "items": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["platform", "status", "idempotency_key", "attempts", "started_at", "completed_at"],
+          "required": [
+            "platform",
+            "status",
+            "idempotency_key",
+            "attempts",
+            "started_at",
+            "completed_at"
+          ],
           "properties": {
-            "platform": {"type": "string", "enum": ["x", "linkedin", "google_business", "facebook", "instagram", "threads", "tiktok", "youtube", "whatsapp_channel"]},
-            "status": {"type": "string", "enum": ["SUCCESS", "FAILED", "SKIPPED"]},
-            "idempotency_key": {"type": "string"},
-            "attempts": {"type": "integer", "minimum": 0},
-            "started_at": {"type": "string", "format": "date-time"},
-            "completed_at": {"type": "string", "format": "date-time"},
-            "post_id": {"type": ["string", "null"]},
-            "post_url": {"type": ["string", "null"], "format": "uri"},
-            "provider_request_id": {"type": ["string", "null"]},
-            "asset_url": {"type": ["string", "null"], "format": "uri"},
-            "reason_code": {"type": ["string", "null"], "enum": [null, "DISABLED", "MANUAL_REQUIRED", "MISSING_CREDENTIAL", "PRECHECK_FAILED", "DUPLICATE", "PERMANENT_API_ERROR", "TRANSIENT_API_ERROR", "VALIDATION_ERROR"]},
-            "error": {"type": ["object", "null"]}
+            "platform": {
+              "type": "string",
+              "enum": [
+                "x",
+                "linkedin",
+                "google_business",
+                "facebook",
+                "instagram",
+                "threads",
+                "tiktok",
+                "youtube",
+                "whatsapp_channel"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "SUCCESS",
+                "FAILED",
+                "SKIPPED"
+              ]
+            },
+            "idempotency_key": {
+              "type": "string"
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "started_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "completed_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "post_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "post_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            },
+            "provider_request_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "asset_url": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uri"
+            },
+            "reason_code": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                null,
+                "DISABLED",
+                "MANUAL_REQUIRED",
+                "MISSING_CREDENTIAL",
+                "PRECHECK_FAILED",
+                "DUPLICATE",
+                "PERMANENT_API_ERROR",
+                "TRANSIENT_API_ERROR",
+                "VALIDATION_ERROR"
+              ]
+            },
+            "error": {
+              "type": [
+                "object",
+                "null"
+              ]
+            }
           }
         }
       },
       "summary": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["success", "failed", "skipped"],
+        "required": [
+          "success",
+          "failed",
+          "skipped"
+        ],
         "properties": {
-          "success": {"type": "integer", "minimum": 0},
-          "failed": {"type": "integer", "minimum": 0},
-          "skipped": {"type": "integer", "minimum": 0}
+          "success": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "skipped": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
     }
+  },
+  "x-opmx-runtime": {
+    "social_asset": {
+      "description": "Se genera después de subir IMAGEN_SOCIAL a WordPress; no forma parte del input externo.",
+      "properties": {
+        "wordpress_media_id": "integer",
+        "public_url": "uri",
+        "uploaded_at": "date-time",
+        "cleanup_after": "date-time"
+      }
+    },
+    "phase_1_scope": "OPURO_ONLY",
+    "staging": "WORDPRESS_MEDIA_TEMPORARY",
+    "tiktok_blocker": "Cambiar OPMX_SOCIAL_WP_BASE_URL al CMS definitivo y verificar cms.oxigenopuro.com.mx antes de habilitar PULL_FROM_URL."
   }
 }
