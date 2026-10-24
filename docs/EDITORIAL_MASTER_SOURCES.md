@@ -1,6 +1,6 @@
 # OPMX — Fuentes maestras editoriales
 
-Actualizado: 2026-10-23
+Actualizado: 2026-10-24
 
 ## Regla universal de descubrimiento
 
@@ -17,13 +17,13 @@ Sólo hay conflicto bloqueante cuando dos archivos de la misma familia tienen la
 
 | Familia | Versión vigente conocida al consolidar | Estado de materialización en GitHub |
 |---|---|---|
-| `01_OPMX_TEMPLATE_MAESTRO*.html` | v5 | pendiente de copiar archivo fuente exacto |
-| `02_OPMX_CSS_MAESTRO*.css` | v5 | pendiente de copiar archivo fuente exacto |
-| `03_PROMPT_MAESTRO_OPMX*.txt` | v4.6 MEDIA | pendiente de copiar archivo fuente exacto |
-| `04_CONTRATO_SALIDA_OPMX*.json` | v1.2 MEDIA | pendiente de copiar archivo fuente exacto |
-| `CATEGORIAS_OPMX*.json` | catálogo schema v1.1 | pendiente de copiar archivo fuente exacto |
+| `01_OPMX_TEMPLATE_MAESTRO*.html` | v5 | `masters/01_OPMX_TEMPLATE_MAESTRO_v5.html` |
+| `02_OPMX_CSS_MAESTRO*.css` | v5 | `masters/02_OPMX_CSS_MAESTRO_v5.css` |
+| `03_PROMPT_MAESTRO_OPMX*.txt` | v4.6 MEDIA | `masters/03_PROMPT_MAESTRO_OPMX_v4.6_MEDIA.txt` |
+| `04_CONTRATO_SALIDA_OPMX*.json` | v1.2 MEDIA | `masters/04_CONTRATO_SALIDA_OPMX_v1.2_MEDIA.json` |
+| `CATEGORIAS_OPMX*.json` | catálogo schema v1.2 | `masters/CATEGORIAS_OPMX_v1.2.json` |
 
-No reconstruir estos archivos desde este documento. Hasta que el archivo exacto esté materializado en el repositorio, la fuente maestra vigente del Project conserva autoridad editorial.
+Los cinco archivos fuente exactos están materializados en `main`. `manifest.json` registra los punteros aprobados; la regla universal de descubrimiento semántico sigue siendo el control contra downgrades o copias históricas.
 
 ## Contextos editoriales opcionales
 
@@ -32,6 +32,7 @@ Familia conocida:
 - versión vigente conocida: v1.0
 - schema: `OPMX_EDITORIAL_CONTEXT`
 - status: `ACTIVE`
+- materializado: `contexts/05_CONTEXTO_EDITORIAL_BCS_v1.0.json`
 
 Los contextos no son una sexta familia maestra universal. Sólo se aplican cuando su `scope` y `apply_when` corresponden materialmente a la nota. Hechos actuales verificados prevalecen sobre el contexto.
 
