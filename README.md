@@ -34,7 +34,7 @@ La incorporación física de estos maestros al repositorio debe preservar exacta
 Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Engine n8n → redes.
 
 ## Publisher vigente
-`workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json` es la versión operativa vigente. `v1.2.10` se conserva como baseline histórico previo a la parametrización del CMS OPURO.
+`workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json` es la última versión operativa validada. `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json` es la candidata vigente pendiente de prueba real: elimina la whitelist OPURO embebida y delega la existencia de categoría al lookup exacto contra WordPress. `v1.2.10` se conserva como baseline histórico.
 
 ## Regla de seguridad
 Nunca almacenar secretos, tokens, contraseñas o credenciales en este repositorio.
