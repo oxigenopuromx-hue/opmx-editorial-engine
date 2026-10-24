@@ -1,0 +1,513 @@
+{
+  "schema_name": "OPMX MASTER JSON",
+  "schema_version": "1.2",
+  "purpose": "Contrato canonico de salida OPMX para Publisher MEDIA: placeholders editoriales reservados, resueltos por n8n con media_id/source_url reales antes de publicar.",
+  "authority": {
+    "content_contract": "Único 04_CONTRATO_SALIDA_OPMX*.json vigente",
+    "html_structure": "Único 01_OPMX_TEMPLATE_MAESTRO*.html vigente",
+    "visual_rules": "Único 02_OPMX_CSS_MAESTRO*.css vigente",
+    "editorial_behavior": "Único 03_PROMPT_MAESTRO_OPMX*.txt vigente",
+    "category_catalog": "Único CATEGORIAS_OPMX*.json vigente"
+  },
+  "contract_rules": {
+    "valid_json_required": true,
+    "complete_strings_required": [
+      "HTML_FINAL",
+      "GUTENBERG_FINAL"
+    ],
+    "no_unresolved_placeholders": false,
+    "no_abbreviated_html": true,
+    "no_abbreviated_gutenberg": true,
+    "preserve_null_when_not_applicable": true,
+    "preserve_empty_arrays": true,
+    "author_id_in_master": false,
+    "secondary_images_object_in_master": false,
+    "seo_categoria_is_legacy_compatibility": true,
+    "allowed_editorial_placeholders": [
+      "{{OPMX:HERO_OPURO}}",
+      "{{OPMX:DESTACADA_OPURO}}",
+      "{{OPMX:DESTACADA_OPOL}}"
+    ],
+    "other_placeholders_forbidden": true,
+    "category_referential_validation_required": true,
+    "category_validation_source": "Único CATEGORIAS_OPMX*.json vigente",
+    "category_validation_failure_blocks_listo": true
+  },
+  "top_level_fields": [
+    "CONTROL_EDITORIAL",
+    "SEO",
+    "CATEGORIAS",
+    "IMAGENES",
+    "PUBLICACION",
+    "TEXTO_EDITORIAL",
+    "FUENTES",
+    "HTML_FINAL",
+    "GUTENBERG_FINAL"
+  ],
+  "required": [
+    "CONTROL_EDITORIAL",
+    "SEO",
+    "CATEGORIAS",
+    "IMAGENES",
+    "PUBLICACION",
+    "TEXTO_EDITORIAL",
+    "FUENTES",
+    "HTML_FINAL",
+    "GUTENBERG_FINAL"
+  ],
+  "properties": {
+    "CONTROL_EDITORIAL": {
+      "type": "object",
+      "required": [
+        "ESTADO",
+        "CORRECCIONES",
+        "ALERTAS",
+        "HERO",
+        "MOTIVO_HERO"
+      ],
+      "properties": {
+        "ESTADO": {
+          "type": "string",
+          "enum": [
+            "LISTO",
+            "REQUIERE_REVISION",
+            "FALTA_IMAGEN",
+            "BLOQUEADO"
+          ]
+        },
+        "CORRECCIONES": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ALERTAS": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "HERO": {
+          "type": "string",
+          "enum": [
+            "STANDARD",
+            "NATURAL",
+            "PORTRAIT"
+          ]
+        },
+        "MOTIVO_HERO": {
+          "type": "string"
+        }
+      }
+    },
+    "SEO": {
+      "type": "object",
+      "required": [
+        "TITULO_SEO",
+        "SUBTITULO",
+        "KEYWORD_PRINCIPAL",
+        "KEYWORDS_SECUNDARIAS",
+        "KEYWORDS_TODAS",
+        "KEYWORDS_TODAS_LISTA",
+        "SLUG",
+        "METADESCRIPCION",
+        "CATEGORIA",
+        "ETIQUETAS"
+      ],
+      "properties": {
+        "TITULO_SEO": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "SUBTITULO": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "KEYWORD_PRINCIPAL": {
+          "type": "string",
+          "description": "Exactamente 2 o 3 palabras; debe poder integrarse literalmente y en el mismo orden."
+        },
+        "KEYWORDS_SECUNDARIAS": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 8,
+          "items": {
+            "type": "string"
+          }
+        },
+        "KEYWORDS_TODAS": {
+          "type": "string",
+          "description": "Keyword principal seguida de todas las secundarias, separadas por comas."
+        },
+        "KEYWORDS_TODAS_LISTA": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "SLUG": {
+          "type": "string"
+        },
+        "METADESCRIPCION": {
+          "type": "string",
+          "minLength": 145,
+          "maxLength": 160
+        },
+        "CATEGORIA": {
+          "type": "string",
+          "description": "Campo temporal de compatibilidad. Debe ser identico a CATEGORIAS.OPURO.PRINCIPAL."
+        },
+        "ETIQUETAS": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CATEGORIAS": {
+      "type": "object",
+      "required": [
+        "OPURO",
+        "OPOL"
+      ],
+      "properties": {
+        "OPURO": {
+          "type": "object",
+          "required": [
+            "PRINCIPAL"
+          ],
+          "properties": {
+            "PRINCIPAL": {
+              "type": "string",
+              "description": "Nombre exacto existente en sites.OPURO.allowed_names del único CATEGORIAS_OPMX vigente. Debe validarse contra OPURO independientemente de OPOL."
+            }
+          }
+        },
+        "OPOL": {
+          "type": "object",
+          "required": [
+            "PRINCIPAL",
+            "SECUNDARIA"
+          ],
+          "properties": {
+            "PRINCIPAL": {
+              "type": "string",
+              "description": "Nombre exacto existente en sites.OPOL.allowed_names del único CATEGORIAS_OPMX vigente. Debe validarse contra OPOL independientemente de OPURO."
+            },
+            "SECUNDARIA": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Nombre exacto de subcategoría OPOL o null. Si no es null, debe existir literalmente en sites.OPOL.categories y su parent_name debe coincidir literalmente con CATEGORIAS.OPOL.PRINCIPAL."
+            }
+          }
+        }
+      }
+    },
+    "IMAGENES": {
+      "type": "object",
+      "required": [
+        "HERO_OPURO",
+        "DESTACADA_OPURO",
+        "DESTACADA_OPOL"
+      ],
+      "properties": {
+        "HERO_OPURO": {
+          "type": "object",
+          "required": [
+            "URL",
+            "ALT",
+            "TITULO_IMAGEN",
+            "LEYENDA",
+            "DESCRIPCION",
+            "CREDITO",
+            "CLASE_HERO"
+          ],
+          "properties": {
+            "URL": {
+              "type": "string",
+              "const": "{{OPMX:HERO_OPURO}}"
+            },
+            "ALT": {
+              "type": "string"
+            },
+            "TITULO_IMAGEN": {
+              "type": "string"
+            },
+            "LEYENDA": {
+              "type": "string"
+            },
+            "DESCRIPCION": {
+              "type": "string"
+            },
+            "CREDITO": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "CLASE_HERO": {
+              "type": "string"
+            }
+          },
+          "semantics": "Hero de OPURO; token reservado {{OPMX:HERO_OPURO}}. n8n sube el archivo, obtiene media_id/source_url y sustituye el token. No es featured_media automáticamente."
+        },
+        "DESTACADA_OPURO": {
+          "type": "object",
+          "required": [
+            "URL",
+            "ALT"
+          ],
+          "properties": {
+            "URL": {
+              "type": "string",
+              "const": "{{OPMX:DESTACADA_OPURO}}"
+            },
+            "ALT": {
+              "type": "string"
+            }
+          },
+          "semantics": "Destacada OPURO; token {{OPMX:DESTACADA_OPURO}}. n8n sube y usa media_id como featured_media."
+        },
+        "DESTACADA_OPOL": {
+          "type": "object",
+          "required": [
+            "URL",
+            "ALT"
+          ],
+          "properties": {
+            "URL": {
+              "type": "string",
+              "const": "{{OPMX:DESTACADA_OPOL}}"
+            },
+            "ALT": {
+              "type": "string"
+            }
+          },
+          "semantics": "Destacada OPOL; token {{OPMX:DESTACADA_OPOL}}. n8n sube independientemente el mismo archivo y usa el media_id resultante como featured_media."
+        }
+      },
+      "secondary_images_rule": "Las imagenes interiores no se duplican como estructura JSON. Si existen, quedan resueltas directamente dentro de HTML_FINAL y, solo cuando corresponda editorialmente, dentro de GUTENBERG_FINAL."
+    },
+    "PUBLICACION": {
+      "type": "object",
+      "required": [
+        "FECHA_ISO",
+        "FECHA_LARGA",
+        "LUGAR",
+        "TIEMPO_LECTURA",
+        "EXTRACTO",
+        "URL_FINAL_ESTIMADA"
+      ],
+      "properties": {
+        "FECHA_ISO": {
+          "type": "string"
+        },
+        "FECHA_LARGA": {
+          "type": "string"
+        },
+        "LUGAR": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "TIEMPO_LECTURA": {
+          "type": "string"
+        },
+        "EXTRACTO": {
+          "type": "string",
+          "description": "Debe ser identico a SEO.SUBTITULO."
+        },
+        "URL_FINAL_ESTIMADA": {
+          "type": "string"
+        }
+      },
+      "forbidden_fields": [
+        "AUTOR_ID"
+      ]
+    },
+    "TEXTO_EDITORIAL": {
+      "type": "object",
+      "required": [
+        "ENTRADILLA",
+        "SECCIONES",
+        "CIERRE"
+      ],
+      "properties": {
+        "ENTRADILLA": {
+          "type": "string"
+        },
+        "SECCIONES": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "H2",
+              "PARRAFOS"
+            ],
+            "properties": {
+              "H2": {
+                "type": "string"
+              },
+              "PARRAFOS": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "CIERRE": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "consistency_rule": "Fuente canónica del contenido final. HTML_FINAL y GUTENBERG_FINAL se generan desde esta versión y se regeneran tras cualquier corrección."
+    },
+    "FUENTES": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "NOMBRE",
+          "URL"
+        ],
+        "properties": {
+          "NOMBRE": {
+            "type": "string"
+          },
+          "URL": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "HTML_FINAL": {
+      "type": "string",
+      "description": "Documento OPURO completo. Única excepción de placeholder: {{OPMX:HERO_OPURO}} en el src del hero, resuelto por n8n."
+    },
+    "GUTENBERG_FINAL": {
+      "type": "string",
+      "description": "Cuerpo OPOL en bloques nativos Gutenberg, sin titulo/subtitulo/metadata/hero/creditos/etiquetas salvo que una regla editorial explicita indique lo contrario. Debe ser completo y literal."
+    }
+  },
+  "cross_field_invariants": [
+    "SEO.CATEGORIA == CATEGORIAS.OPURO.PRINCIPAL",
+    "PUBLICACION.EXTRACTO == SEO.SUBTITULO",
+    "SEO.KEYWORDS_TODAS_LISTA[0] == SEO.KEYWORD_PRINCIPAL",
+    "SEO.KEYWORDS_TODAS representa SEO.KEYWORD_PRINCIPAL + SEO.KEYWORDS_SECUNDARIAS en formato separado por comas",
+    "KEYWORD_PRINCIPAL contiene exactamente 2 o 3 palabras",
+    "CATEGORIAS.OPURO.PRINCIPAL debe existir literalmente en sites.OPURO.allowed_names del CATEGORIAS_OPMX vigente",
+    "CATEGORIAS.OPOL.PRINCIPAL debe existir literalmente en sites.OPOL.allowed_names del CATEGORIAS_OPMX vigente",
+    "La validez de una categoria en OPURO nunca valida su uso en OPOL y la validez de una categoria en OPOL nunca valida su uso en OPURO",
+    "SEO.CATEGORIA == CATEGORIAS.OPURO.PRINCIPAL es una comprobacion de consistencia interna y no sustituye la validacion de existencia contra sites.OPURO.allowed_names",
+    "Si CATEGORIAS.OPOL.SECUNDARIA no es null, debe existir literalmente en sites.OPOL.categories y su parent_name debe coincidir literalmente con CATEGORIAS.OPOL.PRINCIPAL",
+    "Un fallo de validacion referencial de categorias impide CONTROL_EDITORIAL.ESTADO == LISTO",
+    "HERO_OPURO no se usa automaticamente como featured_media",
+    "DESTACADA_OPURO no se inserta automaticamente en HTML_FINAL",
+    "DESTACADA_OPOL no se inserta automaticamente en GUTENBERG_FINAL",
+    "No existe AUTOR_ID en el contrato editorial",
+    "No existe IMAGENES.SECUNDARIAS en el contrato editorial",
+    "IMAGENES.HERO_OPURO.URL == {{OPMX:HERO_OPURO}}",
+    "IMAGENES.DESTACADA_OPURO.URL == {{OPMX:DESTACADA_OPURO}}",
+    "IMAGENES.DESTACADA_OPOL.URL == {{OPMX:DESTACADA_OPOL}}",
+    "No existe ningún placeholder distinto de los tres tokens MEDIA reservados",
+    "TEXTO_EDITORIAL es canónico; HTML_FINAL y GUTENBERG_FINAL corresponden a su versión final"
+  ],
+  "delivery_contract": {
+    "always_generate_files": [
+      "MASTER_JSON",
+      "HTML",
+      "GUTENBERG_HTML"
+    ],
+    "always_show_in_chat": [
+      "CONTROL_EDITORIAL_RESUMEN",
+      "SEO",
+      "CATEGORIAS",
+      "ETIQUETAS",
+      "FILE_LINKS",
+      "MASTER_JSON_COMPLETO_COPIABLE"
+    ],
+    "show_full_html_in_chat_by_default": false,
+    "show_full_gutenberg_in_chat_by_default": false,
+    "show_full_html_or_gutenberg_when_explicitly_requested": true,
+    "integrity_rule": "HTML_FINAL y GUTENBERG_FINAL corresponden a TEXTO_EDITORIAL final. Los tres tokens MEDIA reservados permanecen hasta su resolución por n8n."
+  },
+  "category_contract": {
+    "source_of_truth": "Único CATEGORIAS_OPMX*.json vigente resuelto mediante la REGLA UNIVERSAL DE DESCUBRIMIENTO",
+    "memory_is_not_authority": true,
+    "sites_are_independent": true,
+    "invent_categories": false,
+    "translate_categories": false,
+    "rename_categories": false,
+    "correct_catalog_names": false,
+    "mirror_categories_between_sites": false,
+    "semantic_similarity_is_not_validation": true,
+    "validation": {
+      "OPURO_PRINCIPAL": {
+        "value": "CATEGORIAS.OPURO.PRINCIPAL",
+        "must_exist_in": "sites.OPURO.allowed_names",
+        "comparison": "literal",
+        "failure_code": "CATEGORIA_OPURO_NO_AUTORIZADA"
+      },
+      "OPOL_PRINCIPAL": {
+        "value": "CATEGORIAS.OPOL.PRINCIPAL",
+        "must_exist_in": "sites.OPOL.allowed_names",
+        "comparison": "literal",
+        "failure_code": "CATEGORIA_OPOL_NO_AUTORIZADA"
+      },
+      "OPOL_SECUNDARIA": {
+        "value": "CATEGORIAS.OPOL.SECUNDARIA",
+        "nullable": true,
+        "when_not_null": {
+          "must_exist_in": "sites.OPOL.categories",
+          "parent_name_must_equal": "CATEGORIAS.OPOL.PRINCIPAL",
+          "comparison": "literal"
+        },
+        "failure_code": "CATEGORIA_OPOL_JERARQUIA_INVALIDA"
+      },
+      "SEO_CATEGORIA": {
+        "value": "SEO.CATEGORIA",
+        "must_equal": "CATEGORIAS.OPURO.PRINCIPAL",
+        "does_not_prove_catalog_membership": true,
+        "failure_code": "SEO_CATEGORIA_INCONSISTENTE"
+      }
+    },
+    "validation_order": [
+      "Resolver el CATEGORIAS_OPMX vigente",
+      "Obtener sites.OPURO.allowed_names y sites.OPOL.allowed_names",
+      "Validar CATEGORIAS.OPURO.PRINCIPAL contra sites.OPURO.allowed_names",
+      "Validar CATEGORIAS.OPOL.PRINCIPAL contra sites.OPOL.allowed_names",
+      "Si CATEGORIAS.OPOL.SECUNDARIA no es null, validar existencia y parent_name",
+      "Validar SEO.CATEGORIA == CATEGORIAS.OPURO.PRINCIPAL"
+    ],
+    "false_positive_guards": [
+      "La consistencia interna del MASTER JSON no demuestra pertenencia al catalogo",
+      "La existencia de una categoria en un sitio no autoriza su uso en el otro",
+      "Una categoria recordada o usada anteriormente no se considera valida sin comprobacion contra el catalogo vigente",
+      "La semejanza semantica no sustituye la pertenencia literal al catalogo"
+    ],
+    "failure": {
+      "policy": "BLOCK_LISTO",
+      "control_editorial_estado_must_not_be": "LISTO",
+      "do_not_invent_replacement": true,
+      "do_not_translate_replacement": true,
+      "do_not_rename_replacement": true,
+      "on_unambiguous_authorized_alternative": "Puede seleccionarse otra categoria existente y editorialmente legitima del sitio correspondiente",
+      "on_no_unambiguous_authorized_alternative": "Usar REQUIERE_REVISION y agregar CATEGORIA_REQUIERE_REVISION a CONTROL_EDITORIAL.ALERTAS"
+    },
+    "legacy_transition": "SEO.CATEGORIA permanece temporalmente para publishers congelados y replica CATEGORIAS.OPURO.PRINCIPAL. La igualdad entre ambos campos no valida existencia; CATEGORIAS.OPURO.PRINCIPAL debe pertenecer primero a sites.OPURO.allowed_names. CATEGORIAS es la estructura canonica."
+  },
+  "author_contract": {
+    "master_contains_author_id": false,
+    "responsibility": "Los publishers n8n asignan la cuenta institucional correspondiente a cada WordPress. Cualquier excepcion puede ser corregida por un humano en el borrador antes de publicar."
+  }
+}
