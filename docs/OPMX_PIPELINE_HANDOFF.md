@@ -20,7 +20,7 @@ Motor Editorial OPMX → Publisher n8n → WordPress OPURO/OPOL → Social Distr
 Contratos vigentes ya versionados en `contracts/`, incluyendo Protocolo v4.2 y Salida Editorial v2.2.
 
 ### Publisher
-Publisher operativo vigente: `OPMX Publisher MEDIA v1.2.11`, versionado en `workflows/publisher/`. `v1.2.10` se conserva como baseline exacto previo a la parametrización del CMS OPURO. v1.2.11 sustituyó únicamente los endpoints OPURO de WordPress por la variable canónica `OPMX_OPURO_WP_BASE_URL`; la rama OPOL permaneció intacta. El usuario ejecutó una publicación real completa el 2026-10-23 y confirmó que OPURO y OPOL terminaron correctamente. v1.2.11 queda como versión operativa vigente.
+Última versión operativa validada: `OPMX Publisher MEDIA v1.2.11`. Candidata actual: `v1.2.12`, versionada en `workflows/publisher/` y pendiente de prueba real. v1.2.12 elimina exclusivamente la whitelist embebida de categorías OPURO: la categoría sigue siendo obligatoria y `OPURO — Buscar categoría` + `OPURO — Resolver categoría` consultan WordPress y exigen coincidencia exacta normalizada para obtener el ID; no se crean categorías automáticamente. OPOL conserva su catálogo embebido y validación jerárquica. v1.2.11 permanece como rollback probado y v1.2.10 como baseline histórico.
 
 Regla: no modificar Publisher para resolver necesidades de Social salvo incompatibilidad contractual comprobada y aprobada.
 
@@ -94,6 +94,6 @@ Reglas:
 - Las cinco familias maestras del Motor se resuelven por versión semántica máxima; sufijos de copia no son versión.
 - Los contextos `05_CONTEXTO_EDITORIAL_*.json` son opcionales y se resuelven por familia y versión semántica máxima.
 - Hechos actuales verificados prevalecen sobre cualquier contexto editorial.
-- `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json` continúa como Publisher vigente y probado; v1.2.10 permanece como baseline.
+- `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json` continúa como última versión probada; `v1.2.12` es candidata pendiente de validación real y v1.2.10 permanece como baseline.
 - `workflows/social/` permanece separado del Publisher y sigue el contrato Social activo.
 - No reconstruir Template, CSS, Prompt Maestro, catálogo ni contrato MEDIA desde memoria. Su incorporación al repo debe hacerse desde el archivo fuente vigente exacto.
