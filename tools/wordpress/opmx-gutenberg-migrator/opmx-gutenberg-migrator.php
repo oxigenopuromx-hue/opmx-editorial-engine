@@ -269,7 +269,13 @@ final class OPMX_Gutenberg_Migrator {
             return null;
         }
         if ($tag === 'figure') {
-            return $node->getElementsByTagName('img')->length ? self::convert_figure($node, trim($node->getAttribute('class')), $post) : null;
+            $image = $node->getElementsByTagName('img')->item(0);
+            if (!$image instanceof DOMElement || str_contains($image->getAttribute('src'), 'URL_DE_LA_IMAGEN')) {
+                // This is a template token, not a recoverable media asset.  A real
+                // UAG feature image preceding the V4 story is retained separately.
+                return null;
+            }
+            return self::convert_figure($node, trim($node->getAttribute('class')), $post);
         }
         if (in_array($tag, ['div', 'section', 'aside', 'nav', 'header', 'footer', 'article'], true)) {
             $children = [];
