@@ -234,8 +234,15 @@ final class OPMX_Gutenberg_Migrator {
         if (!$story) {
             throw new RuntimeException('The OPMX Story wrapper is missing.');
         }
+        // Some V4 exports prepend an UAG feature image outside the story
+        // article. Convert the complete legacy wrapper, not only <article>,
+        // so that editorial media is never silently dropped.
+        $container = $dom->getElementById('opmx-root');
+        if (!$container instanceof DOMElement) {
+            throw new RuntimeException('The V4 document wrapper is missing.');
+        }
         $children = [];
-        foreach (self::element_children($story) as $child) {
+        foreach (self::element_children($container) as $child) {
             $block = self::block_from_v4_element($child, $post);
             if ($block !== null) {
                 $children[] = $block;
@@ -244,7 +251,7 @@ final class OPMX_Gutenberg_Migrator {
         if (!$children) {
             throw new RuntimeException('No editable V4 modules were recovered.');
         }
-        $root = self::group_block('article', 'opmx-story', $children);
+        $root = self::group_block('div', 'opmx-story-container', $children);
         $content = serialize_blocks([$root]);
         if (self::contains_block([$root], 'core/html') || str_contains($content, '<style') || str_contains($content, '<script')) {
             throw new RuntimeException('Unsafe legacy markup remained after conversion.');
@@ -252,7 +259,7 @@ final class OPMX_Gutenberg_Migrator {
         if (serialize_blocks(parse_blocks($content)) !== $content) {
             throw new RuntimeException('The generated blocks failed the WordPress parser round-trip check.');
         }
-        return ['content' => $content, 'modules' => count(self::element_children($story)), 'block_count' => self::count_blocks([$root])];
+        return ['content' => $content, 'modules' => count(self::element_children($container)), 'block_count' => self::count_blocks([$root])];
     }
 
     /** @return array<string,mixed>|null */
