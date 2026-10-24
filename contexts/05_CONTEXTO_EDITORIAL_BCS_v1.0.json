@@ -1,0 +1,208 @@
+{
+  "schema": "OPMX_EDITORIAL_CONTEXT",
+  "schema_version": "1.0",
+  "context_id": "BCS_UNIDAD_POLITICA_2026",
+  "name": "Línea editorial y caja de información — Baja California Sur",
+  "status": "ACTIVE",
+  "scope": {
+    "type": "STATE",
+    "country": "México",
+    "state": "Baja California Sur",
+    "code": "BCS"
+  },
+  "effective_date": "2026-10-05",
+  "source_document": {
+    "title": "EL LIBERAL × OXIGENO PURO — LINEA EDITORIAL Y CAJA DE INFORMACION | BAJA CALIFORNIA SUR",
+    "cutoff_date": "2026-10-05",
+    "focus": [
+      "Manuel Cota",
+      "Unidad política",
+      "Morena",
+      "PT",
+      "aliados"
+    ]
+  },
+  "purpose": "Contexto editorial territorial para orientar cobertura, verificación, selección de ángulos y seguimiento periodístico en Baja California Sur. No sustituye la verificación factual ni convierte tesis editoriales en hechos.",
+  "editorial_frame": {
+    "central": "De la competencia al acuerdo",
+    "description": "La etapa posterior a la designación de Manuel Cota puede cubrirse como un proceso de recomposición y construcción de unidad entre distintas expresiones de la 4T en Baja California Sur.",
+    "evidence_requirement": "La tesis debe sostenerse en hechos verificables: reconocimiento de resultados, diálogo con aliados, acercamiento con el gobernador y llamados públicos a una unidad incluyente.",
+    "mother_idea": "La definición de la coordinación abre una segunda prueba política: convertir competencia interna en acuerdos. Los movimientos de los últimos días muestran acercamientos entre Cota, actores de Morena y el PT, con llamados públicos a construir una etapa de unidad.",
+    "national_angle": "Baja California Sur ofrece un caso para observar cómo una coalición procesa una definición interna: medición, reconocimiento, diálogo entre competidores y recomposición con aliados. Presentarlo como caso o experiencia, no como modelo nacional ya probado.",
+    "editorial_concept": "La coordinación se definió en la medición; la conducción se construye sumando."
+  },
+  "verified_facts": [
+    {
+      "id": "BCS-F01",
+      "subject": "Christian Agúndez",
+      "fact": "El 5 de octubre informó que durante el fin de semana él y Manuel Cota acordaron dos mediciones adicionales y que Manuel Cota ganó las dos.",
+      "additional_context": "Planteó que ahora corresponde trabajar en equipo y construir acuerdos."
+    },
+    {
+      "id": "BCS-F02",
+      "subject": "Manuel Cota y Víctor Castro",
+      "fact": "Durante el fin de semana difundieron un encuentro y mensajes coincidentes sobre diálogo, respeto, trabajo y respaldo al proyecto de la presidenta Claudia Sheinbaum."
+    },
+    {
+      "id": "BCS-F03",
+      "subject": "Saúl González",
+      "fact": "Reconoció el triunfo de Manuel Cota, expresó respaldo personal y planteó que el cierre del proceso estatal debe darse con unidad."
+    },
+    {
+      "id": "BCS-F04",
+      "subject": "Milena Quiroga",
+      "fact": "Reconoció que no obtuvo la coordinación y mantuvo su respaldo a la 4T.",
+      "additional_context": "Planteó que la unidad debe respetar trayectorias, reconocer méritos, incluir esfuerzos e impulsar proyectos.",
+      "precision": "Las fuentes revisadas no permiten afirmar que haya formalizado un respaldo personal a Manuel Cota; sí informó que recibió y agradeció un mensaje suyo."
+    },
+    {
+      "id": "BCS-F05",
+      "subject": "Antecedente inmediato",
+      "fact": "Antes del acuerdo, el PT había solicitado mediciones adicionales entre Christian Agúndez y Manuel Cota.",
+      "additional_context": "El reconocimiento posterior de Agúndez cierra, en los hechos reportados el 5 de octubre, esa fase de competencia entre ambos."
+    }
+  ],
+  "editorial_angles": [
+    {
+      "id": "UNIDAD",
+      "guidance": "La etapa posterior al proceso interno se desplaza de la competencia al reconocimiento y al diálogo entre actores que representaron proyectos distintos."
+    },
+    {
+      "id": "INCLUSION",
+      "guidance": "El reto expresado por distintos liderazgos es integrar trayectorias, méritos, estructuras y aliados sin borrar diferencias."
+    },
+    {
+      "id": "GESTION_POLITICA",
+      "guidance": "El acercamiento con Christian Agúndez, Víctor Castro y otros actores permite documentar interlocución; cualquier juicio sobre capacidad debe presentarse como lectura o atribución."
+    },
+    {
+      "id": "COALICION",
+      "guidance": "El reconocimiento de Agúndez después de dos mediciones adicionales es el hecho más fuerte para explicar el cierre de la disputa Morena-PT en BCS."
+    },
+    {
+      "id": "SIGUIENTE_ETAPA",
+      "guidance": "El indicador relevante ya no será sólo la fotografía de unidad, sino acuerdos concretos, incorporaciones, agenda común y mecanismos de participación."
+    }
+  ],
+  "headline_examples": [
+    {
+      "type": "INFORMATIVO",
+      "text": "Christian Agúndez reconoce resultado favorable a Manuel Cota tras dos nuevas mediciones en BCS."
+    },
+    {
+      "type": "PROCESO_POLITICO",
+      "text": "De la competencia al acuerdo: Morena y PT abren etapa de unidad en Baja California Sur."
+    },
+    {
+      "type": "ANALISIS",
+      "text": "Manuel Cota enfrenta su segunda prueba: convertir la coordinación en una mesa amplia de acuerdos."
+    },
+    {
+      "type": "NACIONAL",
+      "text": "Baja California Sur, un caso de recomposición interna tras la definición de coordinaciones rumbo a 2027."
+    },
+    {
+      "type": "SEGUIMIENTO",
+      "text": "Tras encuentro con Víctor Castro y acuerdo con Agúndez, la unidad pasa de los mensajes a la construcción de acuerdos."
+    }
+  ],
+  "verification_required": [
+    {
+      "id": "BCS-V01",
+      "question": "¿Existe ya un documento o declaración conjunta formal de Morena, PT y PVEM sobre la nueva etapa? ¿Qué dirigencias participaron en la conferencia del 5 de octubre?"
+    },
+    {
+      "id": "BCS-V02",
+      "question": "¿Qué empresas realizaron las dos mediciones adicionales acordadas por Cota y Agúndez, cuál fue su metodología y cuáles fueron los resultados completos?"
+    },
+    {
+      "id": "BCS-V03",
+      "question": "¿Qué acuerdos concretos surgieron del encuentro Cota-Víctor Castro, más allá del mensaje público de unidad?"
+    },
+    {
+      "id": "BCS-V04",
+      "question": "¿Habrá una mesa formal de incorporación de los equipos de Milena Quiroga, Christian Agúndez, Saúl González y otros liderazgos?"
+    },
+    {
+      "id": "BCS-V05",
+      "question": "¿Qué agenda programática común acompañará la unidad: agua, vivienda, movilidad, seguridad, desarrollo turístico, salud u otros temas estatales?"
+    }
+  ],
+  "editorial_constraints": [
+    {
+      "id": "BCS-C01",
+      "rule": "No afirmar que Milena Quiroga respaldó formalmente a Manuel Cota.",
+      "reason": "Hasta las fuentes revisadas, reconoció el resultado, agradeció un mensaje de Cota y llamó a una unidad incluyente, pero no formalizó ese respaldo personal."
+    },
+    {
+      "id": "BCS-C02",
+      "rule": "No presentar a Baja California Sur como ejemplo nacional comprobado.",
+      "reason": "Puede plantearse como tesis de análisis: un caso que puede ser observado nacionalmente si los acuerdos se traducen en integración efectiva."
+    },
+    {
+      "id": "BCS-C03",
+      "rule": "No convertir las dos mediciones adicionales en una afirmación metodológica.",
+      "reason": "No se cuenta en el documento fuente con ficha técnica, casa encuestadora, muestra ni resultados completos."
+    }
+  ],
+  "documented_statements": [
+    {
+      "speaker": "Christian Agúndez",
+      "statement": "Informó que Manuel Cota ganó las dos mediciones adicionales acordadas entre ambos y planteó que ahora corresponde trabajar en equipo.",
+      "usage": "ATTRIBUTION_REQUIRED"
+    },
+    {
+      "speaker": "Manuel Cota",
+      "statement": "La unidad se construye con diálogo, respeto y trabajo.",
+      "context": "Mensaje posterior a su encuentro con Víctor Castro.",
+      "usage": "ATTRIBUTION_REQUIRED"
+    },
+    {
+      "speaker": "Milena Quiroga",
+      "statement": "Planteó que la unidad se alcanzará respetando trayectorias, reconociendo méritos, incluyendo esfuerzos e impulsando proyectos.",
+      "usage": "ATTRIBUTION_REQUIRED"
+    },
+    {
+      "speaker": "Saúl González",
+      "statement": "Expresó públicamente respaldo personal a Manuel Cota y confianza en el mecanismo de encuesta de Morena.",
+      "usage": "ATTRIBUTION_REQUIRED"
+    }
+  ],
+  "consultation_sources": [
+    {
+      "name": "Meganoticias",
+      "reference": "Christian Agúndez reconoce triunfo tras dos encuestas espejo"
+    },
+    {
+      "name": "HOY BCS",
+      "reference": "Encuentro Manuel Cota y Víctor Castro"
+    },
+    {
+      "name": "Diario El Independiente",
+      "reference": "Pronunciamiento de Milena Quiroga"
+    },
+    {
+      "name": "alDiaBCS",
+      "reference": "Saúl González reconoce triunfo de Manuel Cota"
+    },
+    {
+      "name": "Meganoticias",
+      "reference": "Diálogo Cota / Agúndez previo al acuerdo"
+    }
+  ],
+  "engine_rules": {
+    "application": "OPTIONAL_CONTEXT",
+    "apply_when": "La nota trate sustantivamente sobre Baja California Sur y el asunto cubierto guarde relación con el alcance político descrito por este contexto.",
+    "do_not_apply_merely_because": "La nota mencione incidentalmente Baja California Sur.",
+    "facts_override_context": true,
+    "verification_required_for_current_claims": true,
+    "analysis_must_be_labeled_or_attributed": true,
+    "context_does_not_create_facts": true,
+    "context_does_not_replace_master_prompt": true,
+    "context_does_not_replace_output_contract": true,
+    "context_does_not_replace_category_catalog": true,
+    "conflict_rule": "Si hechos actuales verificados contradicen una tesis, ejemplo o encuadre de este contexto, prevalecen los hechos actuales y el Motor debe informar la contradicción; nunca debe forzar la información para sostener el encuadre.",
+    "temporal_rule": "Los hechos y declaraciones aquí contenidos corresponden al corte documental del 5 de octubre de 2026. Para una nota posterior, verificar nuevamente cualquier elemento susceptible de haber cambiado.",
+    "source_rule": "Las referencias de consulta incluidas en el documento son una caja de fuentes, no prueba automática de verificación en una nota futura. Registrar en FUENTES sólo las fuentes realmente utilizadas o verificadas para la pieza."
+  }
+}
