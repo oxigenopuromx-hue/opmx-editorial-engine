@@ -104,3 +104,8 @@ Reglas:
 Se agregó `docs/GUTENBERG_EDITORIAL_RENDERING_CONTRACT_v1.0.md`: especificación del próximo adaptador Gutenberg del Publisher. Define bloques nativos, clases semánticas, separación entre contenido y chrome del frontend, UTF-8, validación de readback y compatibilidad OPURO/OPOL.
 
 Estado: piloto visual verificado en OPURO con el borrador `post_id=2790` (“Claude Duet”). El Publisher vigente **no se ha modificado**: `SALIDA_EDITORIAL_OPMX_v2.2.json` sigue declarando `clean_html`. La migración a `gutenberg_blocks_v1` requiere una versión contractual y un workflow Publisher nuevos, pruebas de bloque y aprobación antes de activarse.
+
+
+### Decisión adicional — cuerpo compartido
+
+`GUTENBERG_EDITORIAL_RENDERING_CONTRACT_v1.0.md` ahora fija `content_gutenberg_v1` como futuro cuerpo editorial canónico compartido por OPURO y OPOL: un documento con bloques Gutenberg nativos, no un bloque HTML monolítico. El Motor entrega blueprint estructurado; Publisher serializa y valida; cada frontend aplica su piel de marca. Pendiente: contrato formal, Publisher vNext, serializador, pruebas y CSS de paridad OPOL.
