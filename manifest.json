@@ -1,0 +1,74 @@
+{
+  "schema": "OPMX_ENGINE_MANIFEST",
+  "schema_version": "1.0",
+  "updated_at": "2026-10-24",
+  "branch": "main",
+  "discovery_rule": "Highest semantic version per family; manifest records the currently approved pointers and does not authorize downgrades.",
+  "masters": {
+    "template": {
+      "version": "5",
+      "path": "masters/01_OPMX_TEMPLATE_MAESTRO_v5.html"
+    },
+    "css": {
+      "version": "5",
+      "path": "masters/02_OPMX_CSS_MAESTRO_v5.css"
+    },
+    "prompt": {
+      "version": "4.6",
+      "variant": "MEDIA",
+      "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.6_MEDIA.txt"
+    },
+    "media_output_contract": {
+      "version": "1.2",
+      "variant": "MEDIA",
+      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.2_MEDIA.json"
+    },
+    "categories": {
+      "schema_version": "1.2",
+      "path": "masters/CATEGORIAS_OPMX_v1.2.json"
+    }
+  },
+  "contexts": {
+    "BCS": {
+      "version": "1.0",
+      "status": "ACTIVE",
+      "path": "contexts/05_CONTEXTO_EDITORIAL_BCS_v1.0.json"
+    }
+  },
+  "workflows": {
+    "publisher": {
+      "version": "1.2.11",
+      "status": "ACTIVE",
+      "path": "workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json"
+    },
+    "social_distribution": {
+      "version": "1.0",
+      "status": "IMPLEMENTATION_BASE",
+      "path": "workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.json"
+    },
+    "social_media_staging": {
+      "version": "1.0",
+      "status": "IMPLEMENTATION_BASE",
+      "path": "workflows/social/OPMX_SOCIAL_MEDIA_STAGING_v1.0.json"
+    },
+    "social_threads": {
+      "version": "1.0",
+      "status": "IMPLEMENTATION_BASE",
+      "path": "workflows/social/OPMX_SOCIAL_THREADS_v1.0.json"
+    }
+  },
+  "technical_contracts": {
+    "protocol": {
+      "version": "4.2",
+      "path": "contracts/PROTOCOLO_EDITORIAL_OPMX_v4.2.md"
+    },
+    "editorial_output": {
+      "version": "2.2",
+      "path": "contracts/SALIDA_EDITORIAL_OPMX_v2.2.json"
+    },
+    "social_distribution": {
+      "version": "1.0",
+      "path": "contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json"
+    }
+  }
+}
