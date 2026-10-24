@@ -1,0 +1,919 @@
+{
+  "schema": "OPMX_CATEGORY_CATALOG",
+  "schema_version": "1.2",
+  "generated_at": "2026-10-23",
+  "source": "WordPress REST API",
+  "status": "VALID",
+  "exporter_integrity": {
+    "OPURO": "CLEAN",
+    "OPOL": "CLEAN"
+  },
+  "instructions_for_engine": {
+    "source_of_truth": true,
+    "rule": "Seleccionar exclusivamente categorías existentes en este catálogo. No inventar, traducir, renombrar ni corregir nombres.",
+    "output_contract": {
+      "OPURO": {
+        "PRINCIPAL": "Nombre exacto de categoría OPURO"
+      },
+      "OPOL": {
+        "PRINCIPAL": "Nombre exacto de categoría principal OPOL",
+        "SECUNDARIA": "Nombre exacto de subcategoría OPOL o null"
+      }
+    }
+  },
+  "sites": {
+    "OPURO": {
+      "site": "https://oxigenopuro.com.mx",
+      "category_count": 50,
+      "root_category_count": 28,
+      "child_category_count": 22,
+      "raw_items_received": 50,
+      "duplicate_occurrences_removed": 0,
+      "duplicate_ids_detected": [],
+      "integrity": "CLEAN",
+      "allowed_names": [
+        "Agua",
+        "Arbitraje Internacional",
+        "Baja California",
+        "Baja California Sur",
+        "Baja California Sur",
+        "CDMX",
+        "Chiapas",
+        "Ciencia",
+        "Comercio Internacional",
+        "Congreso",
+        "Cooperación internacional",
+        "Cultura",
+        "Democracia en México",
+        "Deporte",
+        "Derechos Humanos",
+        "Derechos Laborales y Justicia Social",
+        "Economía",
+        "Educación",
+        "Energia",
+        "Estados",
+        "Geopolítica",
+        "Guerrero",
+        "Hidalgo",
+        "IA",
+        "Infraestructura",
+        "Infraestructura carretera en México impulsa competitividad logística",
+        "Innovación",
+        "Internacional",
+        "Justicia",
+        "Medio ambiente",
+        "Noticias",
+        "Nuevo León",
+        "Opinión",
+        "Plan México",
+        "Política",
+        "Política Internacional",
+        "Pueblos Originarios",
+        "Querétaro",
+        "Salud",
+        "Seguridad",
+        "Sinaloa",
+        "Soberanía",
+        "Sustentabilidad",
+        "Tamaulipas",
+        "Tecnología",
+        "TLCUEM",
+        "TMEC",
+        "Turismo",
+        "Videojuegos",
+        "Vivienda"
+      ],
+      "categories": [
+        {
+          "id": 16,
+          "name": "Agua",
+          "slug": "agua",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Agua"
+          ],
+          "count": 12
+        },
+        {
+          "id": 39,
+          "name": "Arbitraje Internacional",
+          "slug": "arbitraje-internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Arbitraje Internacional"
+          ],
+          "count": 1
+        },
+        {
+          "id": 47,
+          "name": "Baja California",
+          "slug": "baja-california",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Baja California"
+          ],
+          "count": 4
+        },
+        {
+          "id": 44,
+          "name": "Baja California Sur",
+          "slug": "baja-california-sur",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Baja California Sur"
+          ],
+          "count": 6
+        },
+        {
+          "id": 45,
+          "name": "Baja California Sur",
+          "slug": "baja-california-sur-estados",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Baja California Sur"
+          ],
+          "count": 2
+        },
+        {
+          "id": 52,
+          "name": "CDMX",
+          "slug": "cdmx",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "CDMX"
+          ],
+          "count": 26
+        },
+        {
+          "id": 166,
+          "name": "Chiapas",
+          "slug": "chiapas",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Chiapas"
+          ],
+          "count": 1
+        },
+        {
+          "id": 22,
+          "name": "Ciencia",
+          "slug": "ciencia",
+          "parent_id": 10,
+          "parent_name": "Innovación",
+          "path": [
+            "Innovación",
+            "Ciencia"
+          ],
+          "count": 7
+        },
+        {
+          "id": 11,
+          "name": "Comercio Internacional",
+          "slug": "comercio-internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Comercio Internacional"
+          ],
+          "count": 55
+        },
+        {
+          "id": 361,
+          "name": "Congreso",
+          "slug": "congreso",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Congreso"
+          ],
+          "count": 13
+        },
+        {
+          "id": 29,
+          "name": "Cooperación internacional",
+          "slug": "cooperacion-internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Cooperación internacional"
+          ],
+          "count": 23
+        },
+        {
+          "id": 36,
+          "name": "Cultura",
+          "slug": "cultura",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Cultura"
+          ],
+          "count": 14
+        },
+        {
+          "id": 18,
+          "name": "Democracia en México",
+          "slug": "democracia-en-mexico",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Democracia en México"
+          ],
+          "count": 12
+        },
+        {
+          "id": 26,
+          "name": "Deporte",
+          "slug": "deporte",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Deporte"
+          ],
+          "count": 18
+        },
+        {
+          "id": 51,
+          "name": "Derechos Humanos",
+          "slug": "derechos-humanos",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Derechos Humanos"
+          ],
+          "count": 8
+        },
+        {
+          "id": 34,
+          "name": "Derechos Laborales y Justicia Social",
+          "slug": "derechos-laborales-y-justicia-social",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Derechos Laborales y Justicia Social"
+          ],
+          "count": 6
+        },
+        {
+          "id": 8,
+          "name": "Economía",
+          "slug": "economia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Economía"
+          ],
+          "count": 86
+        },
+        {
+          "id": 27,
+          "name": "Educación",
+          "slug": "educacion",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Educación"
+          ],
+          "count": 19
+        },
+        {
+          "id": 28,
+          "name": "Energia",
+          "slug": "energia",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Energia"
+          ],
+          "count": 18
+        },
+        {
+          "id": 42,
+          "name": "Estados",
+          "slug": "estados",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Estados"
+          ],
+          "count": 35
+        },
+        {
+          "id": 33,
+          "name": "Geopolítica",
+          "slug": "geopolitica",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Geopolítica"
+          ],
+          "count": 11
+        },
+        {
+          "id": 48,
+          "name": "Guerrero",
+          "slug": "guerrero",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Guerrero"
+          ],
+          "count": 4
+        },
+        {
+          "id": 46,
+          "name": "Hidalgo",
+          "slug": "hidalgo",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Hidalgo"
+          ],
+          "count": 10
+        },
+        {
+          "id": 23,
+          "name": "IA",
+          "slug": "ia",
+          "parent_id": 10,
+          "parent_name": "Innovación",
+          "path": [
+            "Innovación",
+            "IA"
+          ],
+          "count": 23
+        },
+        {
+          "id": 25,
+          "name": "Infraestructura",
+          "slug": "infraestructura",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Infraestructura"
+          ],
+          "count": 23
+        },
+        {
+          "id": 24,
+          "name": "Infraestructura carretera en México impulsa competitividad logística",
+          "slug": "infraestructura-carretera-en-mexico-impulsa-competitividad-logistica",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Infraestructura carretera en México impulsa competitividad logística"
+          ],
+          "count": 0
+        },
+        {
+          "id": 10,
+          "name": "Innovación",
+          "slug": "innovacion",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Innovación"
+          ],
+          "count": 19
+        },
+        {
+          "id": 38,
+          "name": "Internacional",
+          "slug": "internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Internacional"
+          ],
+          "count": 34
+        },
+        {
+          "id": 78,
+          "name": "Justicia",
+          "slug": "justicia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Justicia"
+          ],
+          "count": 12
+        },
+        {
+          "id": 35,
+          "name": "Medio ambiente",
+          "slug": "medio-ambiente",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Medio ambiente"
+          ],
+          "count": 20
+        },
+        {
+          "id": 13,
+          "name": "Noticias",
+          "slug": "noticias",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Noticias"
+          ],
+          "count": 335
+        },
+        {
+          "id": 43,
+          "name": "Nuevo León",
+          "slug": "nuevo-leon",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Nuevo León"
+          ],
+          "count": 2
+        },
+        {
+          "id": 12,
+          "name": "Opinión",
+          "slug": "opinion",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Opinión"
+          ],
+          "count": 13
+        },
+        {
+          "id": 9,
+          "name": "Plan México",
+          "slug": "plan-mexico",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Plan México"
+          ],
+          "count": 30
+        },
+        {
+          "id": 30,
+          "name": "Política",
+          "slug": "politica",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Política"
+          ],
+          "count": 144
+        },
+        {
+          "id": 40,
+          "name": "Política Internacional",
+          "slug": "politica-internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Política Internacional"
+          ],
+          "count": 13
+        },
+        {
+          "id": 41,
+          "name": "Pueblos Originarios",
+          "slug": "pueblos-originarios",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Pueblos Originarios"
+          ],
+          "count": 4
+        },
+        {
+          "id": 49,
+          "name": "Querétaro",
+          "slug": "queretaro",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Querétaro"
+          ],
+          "count": 1
+        },
+        {
+          "id": 14,
+          "name": "Salud",
+          "slug": "salud",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Salud"
+          ],
+          "count": 41
+        },
+        {
+          "id": 17,
+          "name": "Seguridad",
+          "slug": "seguridad",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Seguridad"
+          ],
+          "count": 26
+        },
+        {
+          "id": 324,
+          "name": "Sinaloa",
+          "slug": "sinaloa",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Sinaloa"
+          ],
+          "count": 2
+        },
+        {
+          "id": 32,
+          "name": "Soberanía",
+          "slug": "soberania",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Soberanía"
+          ],
+          "count": 24
+        },
+        {
+          "id": 19,
+          "name": "Sustentabilidad",
+          "slug": "sustentabilidad",
+          "parent_id": 10,
+          "parent_name": "Innovación",
+          "path": [
+            "Innovación",
+            "Sustentabilidad"
+          ],
+          "count": 5
+        },
+        {
+          "id": 50,
+          "name": "Tamaulipas",
+          "slug": "tamaulipas",
+          "parent_id": 42,
+          "parent_name": "Estados",
+          "path": [
+            "Estados",
+            "Tamaulipas"
+          ],
+          "count": 3
+        },
+        {
+          "id": 20,
+          "name": "Tecnología",
+          "slug": "tecnologia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Tecnología"
+          ],
+          "count": 30
+        },
+        {
+          "id": 37,
+          "name": "TLCUEM",
+          "slug": "tlcuem",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "TLCUEM"
+          ],
+          "count": 1
+        },
+        {
+          "id": 31,
+          "name": "TMEC",
+          "slug": "tmec",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "TMEC"
+          ],
+          "count": 15
+        },
+        {
+          "id": 21,
+          "name": "Turismo",
+          "slug": "turismo",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Turismo"
+          ],
+          "count": 17
+        },
+        {
+          "id": 1390,
+          "name": "Videojuegos",
+          "slug": "videojuegos",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Videojuegos"
+          ],
+          "count": 0
+        },
+        {
+          "id": 15,
+          "name": "Vivienda",
+          "slug": "vivienda",
+          "parent_id": 13,
+          "parent_name": "Noticias",
+          "path": [
+            "Noticias",
+            "Vivienda"
+          ],
+          "count": 9
+        }
+      ]
+    },
+    "OPOL": {
+      "site": "https://cms.oxigenopolitico.com.mx",
+      "category_count": 20,
+      "root_category_count": 17,
+      "child_category_count": 3,
+      "raw_items_received": 20,
+      "duplicate_occurrences_removed": 0,
+      "duplicate_ids_detected": [],
+      "integrity": "CLEAN",
+      "allowed_names": [
+        "CIENCIA",
+        "CONGRESO",
+        "DIPUTADOS",
+        "SENADORES",
+        "CULTURA",
+        "DEPORTES",
+        "ECONOMÍA",
+        "EDUCACIÓN",
+        "ESTADOS",
+        "BAJA CALIFORNIA",
+        "GOBIERNO",
+        "INTERNACIONAL",
+        "JUSTICIA",
+        "MEDIO AMBIENTE",
+        "MEGALÓPOLIS",
+        "OPINIÓN",
+        "POLÍTICA",
+        "TECNOLOGÍA",
+        "TURISMO",
+        "Uncategorized"
+      ],
+      "categories": [
+        {
+          "id": 180,
+          "name": "CIENCIA",
+          "slug": "ciencia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "CIENCIA"
+          ],
+          "count": 0
+        },
+        {
+          "id": 4,
+          "name": "CONGRESO",
+          "slug": "congreso",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "CONGRESO"
+          ],
+          "count": 1
+        },
+        {
+          "id": 13,
+          "name": "DIPUTADOS",
+          "slug": "diputados",
+          "parent_id": 4,
+          "parent_name": "CONGRESO",
+          "path": [
+            "CONGRESO",
+            "DIPUTADOS"
+          ],
+          "count": 1
+        },
+        {
+          "id": 14,
+          "name": "SENADORES",
+          "slug": "senadores",
+          "parent_id": 4,
+          "parent_name": "CONGRESO",
+          "path": [
+            "CONGRESO",
+            "SENADORES"
+          ],
+          "count": 1
+        },
+        {
+          "id": 6,
+          "name": "CULTURA",
+          "slug": "cultura",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "CULTURA"
+          ],
+          "count": 0
+        },
+        {
+          "id": 7,
+          "name": "DEPORTES",
+          "slug": "deportes",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "DEPORTES"
+          ],
+          "count": 0
+        },
+        {
+          "id": 8,
+          "name": "ECONOMÍA",
+          "slug": "economia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "ECONOMÍA"
+          ],
+          "count": 10
+        },
+        {
+          "id": 327,
+          "name": "EDUCACIÓN",
+          "slug": "educacion",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "EDUCACIÓN"
+          ],
+          "count": 1
+        },
+        {
+          "id": 10,
+          "name": "ESTADOS",
+          "slug": "estados",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "ESTADOS"
+          ],
+          "count": 15
+        },
+        {
+          "id": 326,
+          "name": "BAJA CALIFORNIA",
+          "slug": "baja-california",
+          "parent_id": 10,
+          "parent_name": "ESTADOS",
+          "path": [
+            "ESTADOS",
+            "BAJA CALIFORNIA"
+          ],
+          "count": 1
+        },
+        {
+          "id": 3,
+          "name": "GOBIERNO",
+          "slug": "gobierno",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "GOBIERNO"
+          ],
+          "count": 6
+        },
+        {
+          "id": 11,
+          "name": "INTERNACIONAL",
+          "slug": "internacional",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "INTERNACIONAL"
+          ],
+          "count": 4
+        },
+        {
+          "id": 5,
+          "name": "JUSTICIA",
+          "slug": "justicia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "JUSTICIA"
+          ],
+          "count": 0
+        },
+        {
+          "id": 182,
+          "name": "MEDIO AMBIENTE",
+          "slug": "ambiente",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "MEDIO AMBIENTE"
+          ],
+          "count": 1
+        },
+        {
+          "id": 9,
+          "name": "MEGALÓPOLIS",
+          "slug": "megalopolis",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "MEGALÓPOLIS"
+          ],
+          "count": 14
+        },
+        {
+          "id": 12,
+          "name": "OPINIÓN",
+          "slug": "opinion",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "OPINIÓN"
+          ],
+          "count": 0
+        },
+        {
+          "id": 2,
+          "name": "POLÍTICA",
+          "slug": "politica",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "POLÍTICA"
+          ],
+          "count": 24
+        },
+        {
+          "id": 181,
+          "name": "TECNOLOGÍA",
+          "slug": "tecnologia",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "TECNOLOGÍA"
+          ],
+          "count": 5
+        },
+        {
+          "id": 32,
+          "name": "TURISMO",
+          "slug": "turismo",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "TURISMO"
+          ],
+          "count": 1
+        },
+        {
+          "id": 1,
+          "name": "Uncategorized",
+          "slug": "uncategorized",
+          "parent_id": 0,
+          "parent_name": null,
+          "path": [
+            "Uncategorized"
+          ],
+          "count": 0
+        }
+      ]
+    }
+  }
+}
