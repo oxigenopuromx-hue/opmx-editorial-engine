@@ -73,12 +73,9 @@ foreach ($ids as $id) {
         if (!$body instanceof DOMElement) throw new RuntimeException('missing_body');
         if ($xp->query('.//img|.//figure|.//iframe|.//*[contains(concat(" ",normalize-space(@class)," ")," opmx-editorial__inline-media ")]', $body)->length) throw new RuntimeException('unsafe_inline_media');
         $seen_lede = false;
-        $children = opmx_emit_children($body, $seen_lede);
-        // Legacy tags live beside the body in V5, not inside it. They are
-        // editorial data and therefore remain an explicit native module.
-        $legacy_tags = $xp->query('//*[contains(concat(" ",normalize-space(@class)," ")," opmx-editorial__tags ")]')->item(0);
-        if ($legacy_tags instanceof DOMElement) $children[] = opmx_group('opmx-module opmx-module--tags', opmx_emit_children($legacy_tags, $seen_lede));
-        $content = implode('', $children);
+        // Tags are inside the V5 body and are emitted as their own semantic
+        // module rather than being treated as removable page chrome.
+        $content = implode('', opmx_emit_children($body, $seen_lede));
         if (substr_count($content, '<!-- wp:') < 3) throw new RuntimeException('too_few_blocks');
         if (strpos($content, 'opmx-editorial__masthead') !== false || strpos($content, 'opmx-editorial__footer') !== false) throw new RuntimeException('chrome_leaked');
         $canonical = serialize_blocks(parse_blocks($content));
