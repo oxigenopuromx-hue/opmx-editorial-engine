@@ -34,6 +34,12 @@ clases compartidas `opmx-module--brief`, `opmx-module--analysis`,
 frontend. Notas con medios incrustados se rechazan explícitamente: deben pasar
 por la reconciliación de medios antes de esta etapa.
 
+Antes de serializar, normaliza dos residuos no editoriales del exportador
+histórico: el marcador de recorte `[&hellip;]` (incluidas sus variantes ya
+decodificadas) y los saltos de línea literales `\\n`, `\\r` y `\\r\\n`.
+Los acentos y el resto del contenido permanecen como UTF-8 normal; no se
+convierten a entidades HTML.
+
 ```bash
 OPMX_TARGET_ID=123 wp eval-file rehydrate-draft.php
 ```
