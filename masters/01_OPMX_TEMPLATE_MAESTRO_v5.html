@@ -1,0 +1,191 @@
+<!--
+  OXÍGENO PURO MX · PLANTILLA EDITORIAL PREMIUM
+  WordPress / Gutenberg / Astra · Template maestro
+
+  USO:
+  - Este archivo es una plantilla estructural, no un artículo terminado.
+  - Sustituye únicamente los campos {...} y elimina las secciones opcionales que no correspondan.
+  - NO modificar el CSS sin una razón explícita: este bloque es el diseño maestro.
+  - El logo está embebido en Base64 para conservarlo incluso si el archivo se mueve.
+  - Rank Math debe generar el schema NewsArticle; no duplicar JSON-LD aquí.
+  - La imagen principal debe ser la fotografía real de la nota y su alt-text debe describir
+    únicamente lo que aparece en esa fotografía, no datos generales del artículo.
+  - Si no se proporciona o adjunta la imagen principal, DETENERSE antes de generar el artículo.
+-->
+
+<article class="opmx-editorial" lang="es-MX">
+
+  <!-- ==================== MASTHEAD ==================== -->
+  <div class="opmx-editorial__masthead">
+    <a class="opmx-editorial__brand" href="https://oxigenopuro.com.mx/" aria-label="Oxígeno Puro MX">
+      <img
+        class="opmx-editorial__logo"
+        src="data:image/webp;base64,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"
+        alt="Oxígeno Puro MX"
+        width="320"
+        height="236"
+        decoding="async"
+      >
+      <span class="opmx-editorial__brand-copy">
+        <span class="opmx-editorial__brand-name">OXÍGENO PURO MX</span>
+        <span class="opmx-editorial__brand-claim">Periodismo · desarrollo · prosperidad compartida</span>
+      </span>
+    </a>
+    <span class="opmx-editorial__edition">Edición {EDICION}<br>{FECHA_CORTA}</span>
+  </div>
+
+  <!-- ==================== ENCABEZADO ==================== -->
+  <header class="opmx-editorial__header">
+    <p class="opmx-editorial__kicker">{SECCION} · {CATEGORIA}</p>
+    <h1>{TITULO}</h1>
+    <p class="opmx-editorial__deck">{SUBTITULO}</p>
+
+    <div class="opmx-editorial__meta" aria-label="Datos de publicación">
+      <span>Por <strong>Oxígeno Puro MX</strong></span>
+      <span class="opmx-editorial__meta-separator" aria-hidden="true"></span>
+      <time datetime="{FECHA_ISO}">{FECHA_LARGA}</time>
+      <span class="opmx-editorial__meta-separator" aria-hidden="true"></span>
+      <span>{LUGAR}</span>
+      <span class="opmx-editorial__meta-separator" aria-hidden="true"></span>
+      <span>Lectura: {MINUTOS} min</span>
+    </div>
+  </header>
+
+  <!-- ==================== IMAGEN PRINCIPAL ==================== -->
+  <figure class="opmx-editorial__hero{CLASE_HERO_OPCIONAL}">
+    <div class="opmx-editorial__hero-frame">
+      <img
+        src="{URL_IMAGEN_PRINCIPAL}"
+        alt="{ALT_TEXT_IMAGEN_PRINCIPAL}"
+        width="{ANCHO_IMAGEN}"
+        height="{ALTO_IMAGEN}"
+        loading="eager"
+        decoding="async"
+      >
+    </div>
+    <figcaption>
+      <span><strong>Imagen:</strong> {CREDITO_IMAGEN}</span>
+      <span>{DESCRIPCION_BREVE_IMAGEN}</span>
+    </figcaption>
+  </figure>
+
+  <!-- ==================== CUERPO ==================== -->
+  <div class="opmx-editorial__body">
+
+    <p class="opmx-editorial__lede">{ENTRADILLA}</p>
+
+    <!-- Opcional: puntos clave -->
+    <aside class="opmx-editorial__keypoints" aria-label="Puntos clave">
+      <h2>En breve</h2>
+      <ul>
+        <li><strong>{PUNTO_CLAVE_1_TITULO}:</strong> {PUNTO_CLAVE_1}</li>
+        <li><strong>{PUNTO_CLAVE_2_TITULO}:</strong> {PUNTO_CLAVE_2}</li>
+        <li><strong>{PUNTO_CLAVE_3_TITULO}:</strong> {PUNTO_CLAVE_3}</li>
+        <li><strong>{PUNTO_CLAVE_4_TITULO}:</strong> {PUNTO_CLAVE_4}</li>
+      </ul>
+    </aside>
+
+    <!-- Repetir H2 + párrafos según la nota -->
+    <h2>{H2_1}</h2>
+    <p>{PARRAFO_1}</p>
+
+    <h2>{H2_2}</h2>
+    <p>{PARRAFO_2}</p>
+
+    <h2>{H2_3}</h2>
+    <p>{PARRAFO_3}</p>
+
+    <!-- Opcional: imagen dentro del artículo -->
+    <figure class="opmx-editorial__inline-media">
+      <div class="opmx-editorial__inline-media-frame">
+        <img
+          src="{URL_IMAGEN_SECUNDARIA}"
+          alt="{ALT_TEXT_IMAGEN_SECUNDARIA}"
+          width="{ANCHO_IMAGEN_SECUNDARIA}"
+          height="{ALTO_IMAGEN_SECUNDARIA}"
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
+      <figcaption>
+        <span><strong>Imagen:</strong> {CREDITO_IMAGEN_SECUNDARIA}</span>
+        <span>{DESCRIPCION_BREVE_IMAGEN_SECUNDARIA}</span>
+      </figcaption>
+    </figure>
+
+    <!-- Opcional: cita destacada -->
+    <blockquote class="opmx-editorial__quote">
+      <p>{CITA_DESTACADA}</p>
+      <footer>{AUTOR_CITA}</footer>
+    </blockquote>
+
+    <!-- Opcional: cierre editorial -->
+    <section class="opmx-editorial__analysis" aria-labelledby="opmx-cierre-analitico">
+      <p class="opmx-editorial__analysis-label">Cierre editorial</p>
+      <h2 id="opmx-cierre-analitico">{TITULO_CIERRE_EDITORIAL}</h2>
+      <p>{CIERRE_EDITORIAL}</p>
+    </section>
+
+    <!-- Opcional: fuentes -->
+    <section class="opmx-editorial__sources" aria-labelledby="opmx-fuentes">
+      <h2 id="opmx-fuentes">Fuentes</h2>
+      <ol>
+        <li>{FUENTE_1}</li>
+        <li>{FUENTE_2}</li>
+        <li>{FUENTE_3}</li>
+      </ol>
+    </section>
+
+    <!-- ==================== ETIQUETAS ==================== -->
+    <div class="opmx-editorial__tags" aria-label="Temas relacionados">
+      <span class="opmx-editorial__tag">{ETIQUETA_1}</span>
+      <span class="opmx-editorial__tag">{ETIQUETA_2}</span>
+      <span class="opmx-editorial__tag">{ETIQUETA_3}</span>
+      <span class="opmx-editorial__tag">{ETIQUETA_4}</span>
+      <span class="opmx-editorial__tag">{ETIQUETA_5}</span>
+      <span class="opmx-editorial__tag">{ETIQUETA_6}</span>
+    </div>
+
+    <!-- ==================== COMPARTIR ==================== -->
+    <nav class="opmx-editorial__share" aria-label="Compartir esta publicación">
+      <p class="opmx-editorial__share-title">Comparte esta historia</p>
+      <div class="opmx-editorial__share-links">
+        <a class="opmx-editorial__share-link opmx-editorial__share-link--facebook"
+           href="{URL_FACEBOOK_SHARE}" target="_blank" rel="noopener noreferrer"
+           aria-label="Compartir en Facebook"><span>Facebook</span></a>
+        <a class="opmx-editorial__share-link opmx-editorial__share-link--x"
+           href="{URL_X_SHARE}" target="_blank" rel="noopener noreferrer"
+           aria-label="Compartir en X"><span>X</span></a>
+        <a class="opmx-editorial__share-link opmx-editorial__share-link--linkedin"
+           href="{URL_LINKEDIN_SHARE}" target="_blank" rel="noopener noreferrer"
+           aria-label="Compartir en LinkedIn"><span>LinkedIn</span></a>
+        <a class="opmx-editorial__share-link opmx-editorial__share-link--whatsapp"
+           href="{URL_WHATSAPP_SHARE}" target="_blank" rel="noopener noreferrer"
+           aria-label="Compartir en WhatsApp"><span>WhatsApp</span></a>
+        <a class="opmx-editorial__share-link opmx-editorial__share-link--telegram"
+           href="{URL_TELEGRAM_SHARE}" target="_blank" rel="noopener noreferrer"
+           aria-label="Compartir en Telegram"><span>Telegram</span></a>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="opmx-editorial__footer">
+    <img
+      class="opmx-editorial__footer-logo"
+      src="data:image/webp;base64,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"
+      alt=""
+      width="320"
+      height="236"
+      loading="lazy"
+      decoding="async"
+    >
+    <p>
+      <strong>OXÍGENO PURO MX</strong>
+      Periodismo con enfoque en desarrollo y prosperidad compartida.<br>
+      <a href="https://oxigenopuro.com.mx/">oxigenopuro.com.mx</a>
+    </p>
+  </footer>
+
+</article>
