@@ -120,3 +120,73 @@ Una implementación está lista para piloto sólo si:
 - OPOL renderiza un fallback semántico legible, con o sin la piel compartida.
 - La respuesta REST y el frontend muestran UTF-8 correcto.
 - Una edición manual pequeña en Gutenberg no destruye el resto de los bloques.
+
+
+## Decisión de arquitectura: un cuerpo canónico para OPURO y OPOL
+
+La unidad común será **`content_gutenberg_v1`**: un único documento Gutenberg serializado por nota, consumido por ambos CMS/frontends.
+
+“Único” significa una sola representación editorial canónica, **no** un único bloque `core/html` ni un bloque gigante. El documento usa varios bloques nativos para que el editor conserve edición granular, accesibilidad y portabilidad.
+
+```
+Motor Editorial → blueprint editorial estructurado
+                → serializador determinista
+                → content_gutenberg_v1
+                → WordPress
+                ↙              ↘
+      tema OPURO            tema OPOL
+```
+
+- OPURO y OPOL reciben el mismo `content_gutenberg_v1`.
+- Cada plataforma aplica su propio CSS a los mismos bloques y clases `opmx-*`.
+- Nunca se bifurca el texto, las fuentes ni la estructura de módulos por marca.
+- Las diferencias de marca viven en el frontend/tema; no se introducen con HTML alternativo dentro del post.
+
+### Responsabilidad del Motor Editorial
+
+El Motor Editorial no debe redactar header, footer, metadatos visuales ni HTML de plantilla. Para cada nota entregará un **blueprint editorial** con:
+
+- `lede`: primer párrafo de apertura;
+- `brief`: lista opcional de puntos verificables;
+- `sections`: encabezados y párrafos en orden;
+- `images` y embeds internos cuando existan;
+- `closure`: módulo editorial opcional;
+- `sources`: lista ordenada de fuentes;
+- `taxonomies` y `featured_media` como datos separados.
+
+El adaptador Gutenberg del Publisher convierte ese blueprint a `content_gutenberg_v1`. Esta separación evita que un modelo de lenguaje tenga que emitir comentarios Gutenberg a mano y permite validar la salida de forma determinista.
+
+### Insumos necesarios para convertir notas históricas
+
+Para cada nota se requiere, en orden de preferencia:
+
+1. **Snapshot o HTML editorial original** de la nota. Es la fuente para conservar jerarquía, módulos, citas, fuentes y enlaces.
+2. **Versión de plantilla identificable**. La plantilla maestra v5 es el perfil principal; variantes históricas se clasifican antes de convertirlas.
+3. **Metadatos WordPress existentes**: título, excerpt/bajada, autor, fecha, categorías, etiquetas, SEO y estado.
+4. **Featured media e imágenes interiores** disponibles o un registro explícito de ausencia. La portada se mantiene fuera del cuerpo; las imágenes interiores se convierten a `core/image`.
+5. **Regla de excepción** si una sección no puede preservarse sin inventar contenido: se conserva como párrafos/encabezados semánticos, se registra la advertencia y nunca se rellena con texto supuesto.
+
+No se requiere intervención manual del usuario por cada nota si existen los snapshots, media y metadatos. La revisión humana se concentra en los casos de plantilla no reconocida, medios ausentes, HTML dañado o módulos ambiguos.
+
+### Pipeline de conversión histórica
+
+1. Detectar plantilla y localizar el contenedor editorial útil.
+2. Eliminar chrome heredado: masthead, hero duplicado, meta, share, tags, footer y marcadores.
+3. Extraer el cuerpo en un blueprint semántico.
+4. Marcar explícitamente el primer párrafo como `opmx-editorial__lede`.
+5. Convertir módulos identificados a grupos `opmx-module`.
+6. Serializar `content_gutenberg_v1` en UTF-8.
+7. Guardar snapshot inmutable antes de modificar.
+8. Escribir como borrador, leer de vuelta con `context=edit` y validar bloques, clases, media, enlaces y codificación.
+9. Renderizar en las dos pieles, OPURO y OPOL, antes de publicar.
+
+### Criterio para una sola salida Publisher
+
+El Publisher vNext deberá aceptar o construir sólo `content_gutenberg_v1` en la frontera WordPress. `clean_html` seguirá siendo un formato heredado durante la transición, pero no será la salida objetivo.
+
+La migración formal requiere:
+- ampliar el contrato editorial con el blueprint y `content_gutenberg_v1`;
+- crear el serializador/validador determinista;
+- incorporar pruebas con notas de plantilla v5 y variantes históricas;
+- añadir estilos de módulos al frontend OPOL;
+- ejecutar un piloto de borradores y aprobarlo antes de activar publicación automática.
