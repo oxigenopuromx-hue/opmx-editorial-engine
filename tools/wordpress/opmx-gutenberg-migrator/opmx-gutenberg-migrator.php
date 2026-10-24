@@ -26,6 +26,7 @@ final class OPMX_Gutenberg_Migrator {
 
         if (defined('WP_CLI') && WP_CLI) {
             WP_CLI::add_command('opmx migrate-v5', [self::class, 'cli_migrate']);
+            WP_CLI::add_command('opmx migrate-v4', [self::class, 'cli_migrate_v4']);
         }
     }
 
@@ -166,6 +167,114 @@ final class OPMX_Gutenberg_Migrator {
             $limit
         );
         return array_map('intval', $wpdb->get_col($sql));
+    }
+
+    /**
+     * Convert the older OPMX Story markup.  Unlike V5 this template has no
+     * stable module wrapper, so it is deliberately single-post only.
+     *
+     * ## OPTIONS
+     *
+     * --post=<id>
+     * : The legacy-story post ID.
+     *
+     * [--apply]
+     * : Persist the conversion after the parser round-trip validation.
+     */
+    public static function cli_migrate_v4(array $args, array $assoc_args): void {
+        $id = (int) ($assoc_args['post'] ?? 0);
+        if (!$id || !($post = get_post($id)) instanceof WP_Post) {
+            throw new RuntimeException('Pass an existing --post=<id>.');
+        }
+        if (get_post_meta($id, self::META_KEY, true)) {
+            WP_CLI::warning("{$id}: already marked as migrated; skipped.");
+            return;
+        }
+        try {
+            $result = self::convert_v4_post($post);
+        } catch (RuntimeException $e) {
+            WP_CLI::warning("{$id}: {$e->getMessage()}");
+            return;
+        }
+        $summary = sprintf('%d: legacy story → %d native blocks%s', $id, $result['block_count'], isset($assoc_args['apply']) ? '' : ' (dry run)');
+        if (!isset($assoc_args['apply'])) {
+            WP_CLI::log($summary);
+            return;
+        }
+        if (!metadata_exists('post', $id, self::ORIGINAL_CONTENT_META_KEY)
+            && !add_post_meta($id, self::ORIGINAL_CONTENT_META_KEY, $post->post_content, true)) {
+            WP_CLI::warning("{$id}: original-content snapshot could not be saved; skipped.");
+            return;
+        }
+        wp_update_post(['ID' => $id, 'post_content' => $result['content']]);
+        update_post_meta($id, self::META_KEY, [
+            'version' => '0.1.2',
+            'source_sha256' => hash('sha256', $post->post_content),
+            'migrated_at_gmt' => gmdate('c'),
+            'legacy_modules' => $result['modules'],
+            'native_blocks' => $result['block_count'],
+        ]);
+        WP_CLI::success($summary);
+    }
+
+    /** @return array{content:string,modules:int,block_count:int} */
+    private static function convert_v4_post(WP_Post $post): array {
+        if (!str_contains($post->post_content, 'opmx-story') || !class_exists('DOMDocument')) {
+            throw new RuntimeException('Not a supported OPMX Story legacy article.');
+        }
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadHTML('<?xml encoding="utf-8" ?><div id="opmx-root">' . self::strip_legacy_wrapper($post->post_content) . '</div>');
+        libxml_clear_errors();
+        if (!$loaded) {
+            throw new RuntimeException('Legacy HTML could not be parsed.');
+        }
+        $xpath = new DOMXPath($dom);
+        $story = self::first_class($xpath, 'opmx-story');
+        if (!$story) {
+            throw new RuntimeException('The OPMX Story wrapper is missing.');
+        }
+        $children = [];
+        foreach (self::element_children($story) as $child) {
+            $block = self::block_from_v4_element($child, $post);
+            if ($block !== null) {
+                $children[] = $block;
+            }
+        }
+        if (!$children) {
+            throw new RuntimeException('No editable V4 modules were recovered.');
+        }
+        $root = self::group_block('article', 'opmx-story', $children);
+        $content = serialize_blocks([$root]);
+        if (self::contains_block([$root], 'core/html') || str_contains($content, '<style') || str_contains($content, '<script')) {
+            throw new RuntimeException('Unsafe legacy markup remained after conversion.');
+        }
+        if (serialize_blocks(parse_blocks($content)) !== $content) {
+            throw new RuntimeException('The generated blocks failed the WordPress parser round-trip check.');
+        }
+        return ['content' => $content, 'modules' => count(self::element_children($story)), 'block_count' => self::count_blocks([$root])];
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function block_from_v4_element(DOMElement $node, WP_Post $post): ?array {
+        $tag = strtolower($node->tagName);
+        if (in_array($tag, ['style', 'script', 'svg', 'path', 'button'], true) || $tag === 'h1') {
+            return null;
+        }
+        if ($tag === 'figure') {
+            return $node->getElementsByTagName('img')->length ? self::convert_figure($node, trim($node->getAttribute('class')), $post) : null;
+        }
+        if (in_array($tag, ['div', 'section', 'aside', 'nav', 'header', 'footer', 'article'], true)) {
+            $children = [];
+            foreach (self::element_children($node) as $child) {
+                $block = self::block_from_v4_element($child, $post);
+                if ($block !== null) {
+                    $children[] = $block;
+                }
+            }
+            return $children ? self::group_block($tag, trim($node->getAttribute('class')), $children) : null;
+        }
+        return self::block_from_element($node);
     }
 
     /** @return array{content:string,legacy_modules:int,block_count:int} */
