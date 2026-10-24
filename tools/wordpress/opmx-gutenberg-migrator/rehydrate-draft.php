@@ -12,7 +12,24 @@ function opmx_b($name, $attrs, $html) {
 function opmx_inner(DOMNode $node) {
     $out = '';
     foreach ($node->childNodes as $child) $out .= $node->ownerDocument->saveHTML($child);
-    return trim($out);
+    return opmx_normalize_fragment($out);
+}
+/**
+ * The legacy exporter occasionally left an excerpt marker (`[&hellip;]`) and
+ * JSON-style literal newlines in otherwise ordinary editorial text.  They are
+ * neither content nor Gutenberg syntax, so remove/normalise them before the
+ * fragment becomes a block.  This deliberately operates only on our known
+ * editorial fragments: inline markup (links, strong, em) is retained.
+ */
+function opmx_normalize_fragment($html) {
+    $html = preg_replace('/\\[\\s*(?:&hellip;|&#0*8230;|&#x0*2026;|…|\\x{2026})\\s*\\]/iu', '', $html);
+    $html = str_replace(["\\\\r\\\\n", "\\\\n", "\\\\r"], ' ', $html);
+    $html = preg_replace('/[\\r\\n\\t]+/u', ' ', $html);
+    $html = preg_replace('/[ \\x{00A0}]{2,}/u', ' ', $html);
+    return trim($html);
+}
+function opmx_clean_text($text) {
+    return trim(html_entity_decode(strip_tags(opmx_normalize_fragment($text)), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 }
 function opmx_text_block($tag, DOMElement $node, $attrs = []) {
     $inner = opmx_inner($node);
@@ -41,7 +58,7 @@ function opmx_emit_children(DOMElement $parent, &$seen_lede) {
         if (opmx_has($class, 'opmx-editorial__keypoints')) { $out[] = opmx_group('opmx-module opmx-module--brief', opmx_emit_children($node, $seen_lede)); continue; }
         if (opmx_has($class, 'opmx-editorial__sources')) { $out[] = opmx_group('opmx-module opmx-module--sources', opmx_emit_children($node, $seen_lede)); continue; }
         if (opmx_has($class, 'opmx-editorial__tags')) { $out[] = opmx_group('opmx-module opmx-module--tags', opmx_emit_children($node, $seen_lede)); continue; }
-        if (opmx_has($class, 'opmx-editorial__tag')) { $label = trim($node->textContent); if ($label !== '') $out[] = opmx_b('paragraph', ['className'=>'opmx-module__tag'], '<p class="opmx-module__tag">' . esc_html($label) . '</p>'); continue; }
+        if (opmx_has($class, 'opmx-editorial__tag')) { $label = opmx_clean_text($node->textContent); if ($label !== '') $out[] = opmx_b('paragraph', ['className'=>'opmx-module__tag'], '<p class="opmx-module__tag">' . esc_html($label) . '</p>'); continue; }
         if (opmx_has($class, 'opmx-editorial__closing')) { $out[] = opmx_group('opmx-module opmx-module--closure', opmx_emit_children($node, $seen_lede)); continue; }
         if (opmx_has($class, 'opmx-editorial__analysis')) { $out[] = opmx_group('opmx-module opmx-module--analysis', opmx_emit_children($node, $seen_lede)); continue; }
         if ($tag === 'p') { $attrs = $seen_lede ? [] : ['className'=>'opmx-editorial__lede']; $seen_lede = true; $out[] = opmx_text_block('p', $node, $attrs); continue; }
