@@ -1,0 +1,33 @@
+name: Social offline validation
+on:
+  pull_request:
+    paths:
+      - 'tools/social/**'
+      - 'contracts/SOCIAL_DISTRIBUTION*'
+      - 'workflows/social/**'
+      - '.github/workflows/social-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/social/**'
+      - 'contracts/SOCIAL_DISTRIBUTION*'
+      - 'workflows/social/**'
+      - '.github/workflows/social-validation.yml'
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/social
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/social/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test

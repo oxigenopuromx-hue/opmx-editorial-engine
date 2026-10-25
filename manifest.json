@@ -1,7 +1,7 @@
 {
   "schema": "OPMX_ENGINE_MANIFEST",
   "schema_version": "1.0",
-  "updated_at": "2026-10-24",
+  "updated_at": "2026-10-25",
   "branch": "main",
   "discovery_rule": "Highest semantic version per family; manifest records the currently approved pointers and does not authorize downgrades.",
   "masters": {
@@ -37,24 +37,24 @@
   },
   "workflows": {
     "publisher": {
-      "version": "1.2.11",
+      "version": "1.2.12",
       "status": "ACTIVE",
-      "path": "workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json"
+      "path": "workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json"
     },
     "social_distribution": {
-      "version": "1.0",
-      "status": "IMPLEMENTATION_BASE",
-      "path": "workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.json"
+      "version": "1.0.1",
+      "status": "OFFLINE_PREFLIGHT_TESTED",
+      "path": "workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.1.json"
     },
     "social_media_staging": {
-      "version": "1.0",
-      "status": "IMPLEMENTATION_BASE",
-      "path": "workflows/social/OPMX_SOCIAL_MEDIA_STAGING_v1.0.json"
+      "version": "1.0.1",
+      "status": "OFFLINE_PREFLIGHT_TESTED",
+      "path": "workflows/social/OPMX_SOCIAL_MEDIA_STAGING_v1.0.1.json"
     },
     "social_threads": {
-      "version": "1.0",
-      "status": "IMPLEMENTATION_BASE",
-      "path": "workflows/social/OPMX_SOCIAL_THREADS_v1.0.json"
+      "version": "1.0.1",
+      "status": "OFFLINE_PREFLIGHT_TESTED",
+      "path": "workflows/social/OPMX_SOCIAL_THREADS_v1.0.1.json"
     }
   },
   "technical_contracts": {
@@ -67,8 +67,8 @@
       "path": "contracts/SALIDA_EDITORIAL_OPMX_v2.2.json"
     },
     "social_distribution": {
-      "version": "1.0",
-      "path": "contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json"
+      "version": "1.0.1",
+      "path": "contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.1.json"
     }
   }
 }

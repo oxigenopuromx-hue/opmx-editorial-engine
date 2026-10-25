@@ -1,9 +1,23 @@
 # OPMX Social Distribution v1.0 — Checklist de integración
 
-Actualizado: 2026-10-23
+Actualizado: 2026-10-25
 Alcance: **OPURO únicamente**
 
 Este documento no contiene secretos. Los valores sensibles se crean y almacenan sólo en n8n o en el proveedor correspondiente.
+
+## Antes de habilitar APIs — revisión v1.0.1
+
+- Importar `workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.1.json` como
+  workflow de prueba independiente y llamar con `dry_run=true` desde un test
+  workflow manual. No conectar todavía el Publisher.
+- Confirmar versión n8n con Merge multi-input y permitir built-in `crypto` en el
+  runner cuando corresponda. No habilitar importaciones npm arbitrarias.
+- Ver `tools/social/README.md` para fixture y resultado esperado de nueve ramas.
+- `dry_run` no requiere credenciales ni subworkflow IDs; los nuevos exports no
+  tienen nodos de red y están desactivados.
+- Aprobar almacén de idempotencia y probar claim atómico antes de quitar el gate
+  `LIVE_BLOCKED`. Sólo entonces continuar con el orden de habilitación siguiente.
+- Los v1.0 anteriores se conservan como históricos, no son una versión operativa.
 
 ## Orden de habilitación
 
@@ -61,8 +75,10 @@ Necesario:
 - Variable de versión/base API si aplica.
 - URL pública de IMAGEN_SOCIAL.
 
-Worker existente: `workflows/social/OPMX_SOCIAL_THREADS_v1.0.json`.
-Estado: versionado, no probado contra cuenta real.
+Preflight vigente: `workflows/social/OPMX_SOCIAL_THREADS_v1.0.1.json`.
+Estado: lógica offline probada; no hay publicación real habilitada. El worker
+HTTP v1.0 anterior no se debe activar. Falta aprobar formato final Threads,
+construir/revalidar adapter con OAuth, polling/readback y deduplicación durable.
 
 ## LinkedIn
 

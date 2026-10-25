@@ -36,5 +36,14 @@ Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Eng
 ## Publisher vigente
 `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json` es la versión operativa vigente y validada en ejecución real el 2026-10-23. Elimina la whitelist OPURO embebida y delega la existencia de categoría al lookup exacto contra WordPress. `v1.2.11` se conserva como rollback probado y `v1.2.10` como baseline histórico.
 
+## Social vigente — 2026-10-25
+
+v1.0.1 es **preflight offline**, con 35 pruebas Node y validación de los Code nodes
+embebidos en los exports JSON. No se ha importado/probado en n8n nativo y no publica
+en redes. Las nueve ramas emiten estados explícitos; `dry_run` no ejecuta uploads
+ni llamadas externas. Publicación real bloqueada hasta implementar/probar el
+almacén durable de idempotencia. Los exports v1.0 se conservan como históricos y
+**no deben activarse**. Ver `tools/social/README.md` para reproducción y prueba.
+
 ## Regla de seguridad
 Nunca almacenar secretos, tokens, contraseñas o credenciales en este repositorio.

@@ -1,6 +1,6 @@
 # OPMX — Fuentes maestras editoriales
 
-Actualizado: 2026-10-24
+Actualizado: 2026-10-25
 
 ## Regla universal de descubrimiento
 
@@ -41,19 +41,23 @@ Los contextos no son una sexta familia maestra universal. Sólo se aplican cuand
 Los contratos técnicos/editoriales ya versionados en `contracts/` no deben degradarse durante esta consolidación. En particular:
 - `PROTOCOLO_EDITORIAL_OPMX_v4.2.md`
 - `SALIDA_EDITORIAL_OPMX_v2.2.json`
-- `SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json`
+- `SOCIAL_DISTRIBUTION_CONTRACT_v1.0.1.json` (revisión técnica; wire de entrada `1.0`)
 
 La coexistencia de estas piezas con las familias maestras debe resolverse explícitamente por responsabilidad, no por sobrescritura automática.
 
 ## Workflows n8n
 
 Publisher vigente:
-- `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.11.json`
-- v1.2.10 se conserva como baseline.
+- `workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json`
+- v1.2.11 se conserva como rollback probado y v1.2.10 como baseline. Este cambio
+  sólo alinea el puntero con README/handoff; no modifica los workflows.
 
 Social Distribution:
-- `workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.json`
-- `workflows/social/OPMX_SOCIAL_MEDIA_STAGING_v1.0.json`
-- `workflows/social/OPMX_SOCIAL_THREADS_v1.0.json`
+- `workflows/social/OPMX_SOCIAL_DISTRIBUTION_ENGINE_v1.0.1.json`
+- `workflows/social/OPMX_SOCIAL_MEDIA_STAGING_v1.0.1.json`
+- `workflows/social/OPMX_SOCIAL_THREADS_v1.0.1.json`
+
+Social v1.0.1 es preflight offline probado, no publicación real habilitada.
+Los exports Social v1.0 son históricos con inconsistencias conocidas; no activarlos.
 
 No modificar Publisher para resolver necesidades de Social salvo incompatibilidad contractual comprobada y aprobada.

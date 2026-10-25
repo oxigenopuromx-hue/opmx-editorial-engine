@@ -1,6 +1,6 @@
 # OPMX Pipeline — Handoff maestro
 
-Actualizado: 2026-10-23
+Actualizado: 2026-10-25
 
 ## Propósito
 Punto de entrada técnico para cualquier instancia de ChatGPT Work que opere el flujo OPMX desde la salida editorial hasta distribución social.
@@ -25,31 +25,57 @@ Versión operativa vigente y validada: `OPMX Publisher MEDIA v1.2.12`, versionad
 Regla: no modificar Publisher para resolver necesidades de Social salvo incompatibilidad contractual comprobada y aprobada.
 
 ### Social Distribution Engine
-Estado: IMPLEMENTACIÓN BASE v1.0; ninguna plataforma ha sido publicada ni probada contra cuenta real.
+Estado vigente: **v1.0.1 OFFLINE_PREFLIGHT_TESTED**. No se ha importado/ejecutado
+en n8n nativo ni publicado en plataformas. No confundir las pruebas Node con esas pruebas.
 
-Terminados en este hito:
-- Contrato activo: `contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.json`.
-- Arquitectura, política de media staging, idempotencia, reintentos y observabilidad documentadas.
-- Matriz actualizada contra documentación oficial al 2026-10-23.
-- Workflows n8n completos/importables en `workflows/social/`: coordinador de routing, media staging y worker de Threads. El coordinador es un esqueleto desactivado hasta resolver almacenamiento durable y conectar IDs de subworkflows.
-- Integración de Threads descrita y codificada contra el flujo oficial create container → publish; sigue sin prueba real hasta configurar OAuth/usuario/asset staging.
+Terminado el 2026-10-25:
+- Contrato técnico `contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.1.json`; entrada
+  wire mantiene `social_contract_version=1.0`. Exige `source_site=OPURO`, booleans
+  reales, nueve targets explícitos y nueve resultados de plataformas distintas.
+- Tres exports v1.0.1 completos y desactivados: coordinador, preflight staging y
+  preflight Threads. Son subworkflows, no webhooks públicos sin autenticación.
+- El coordinador devuelve nueve ramas independientes con consolidado validado.
+  No llama staging ni workers remotos durante simulación.
+- Los exports v1.0 se preservan históricamente, pero tienen incompatibilidades
+  conocidas y **no deben activarse**; ver `changelog/SOCIAL_v1.0.1.md`.
+- `tools/social/` permite regenerar exports, ejecutar pruebas y verificar que no
+  divergen del código fuente. Validadores Ajv empaquetados sin dependencia npm en n8n.
+- Corregidos sólo punteros documentales atrasados del Publisher en manifest y
+  fuentes maestras. Los tres exports Publisher y maestros no cambian.
 
-Probado en este hito:
-- Parseo JSON de los contratos y los tres exports de workflow.
-- Verificación estática de grafo: cada conexión apunta a un nodo existente y cada nodo contiene metadatos de importación.
-- `git diff --check` sin errores de whitespace.
-- Social Distribution todavía no tiene prueba real contra plataformas. Publisher v1.2.11 sí fue probado en una ejecución real completa en n8n el 2026-10-23: OPURO resolvió `OPMX_OPURO_WP_BASE_URL` y OPURO/OPOL terminaron correctamente.
+Probado:
+- 35 pruebas Node aprobadas, incluyendo ejecución de los Code nodes exactos del
+  JSON en VM sin red, rechazo de entradas inválidas, consolidado de nueve estados,
+  `dry_run` sin IO externo, live bloqueado, hash/firma del binario y preservación.
+- JSON Schema 2020-12 de entrada/salida, generación reproducible, grafo y
+  `git diff --check`. Audit npm incluyendo desarrollo: 0 vulnerabilidades reportadas.
+- CI agregado para repetir build-check/tests. No declarar aprobado CI remoto
+  hasta consultar la ejecución GitHub correspondiente.
 
 No terminado / bloqueos:
-- No hay credenciales n8n, IDs de cuenta/ubicación, bucket R2, dominio público verificado ni registros de idempotencia en este repositorio. Por ello no existe prueba de publicación real.
-- Está pendiente aprobar y provisionar el almacén durable de `social_distribution_runs`; sin ello no se activa el coordinador ni se afirma idempotencia efectiva.
-- Fase 1 de Social Distribution es exclusivamente OPURO (`oxigenopuro.com.mx`). `IMAGEN_SOCIAL` es un tercer asset manual creado en Canva después del flujo editorial; no es HERO ni imagen interior.
-- Media staging v1 usa temporalmente WordPress OPURO, no R2: n8n sube `IMAGEN_SOCIAL`, obtiene `wordpress_media_id` + URL pública y la conserva inicialmente 7 días. El CMS se configura con `OPMX_OPURO_WP_BASE_URL`.
-- Cuando el CMS migre a `cms.oxigenopuro.com.mx`, se cambia esa variable y se verifica el dominio/prefijo para TikTok. TikTok queda bloqueado por esa configuración, sin bloquear las demás ramas.
-- X, LinkedIn, Google Business Profile, Facebook, Instagram y TikTok están documentados, pero sus workers no se activan hasta configurar acceso, permisos y una prueba aislada por plataforma.
-- YouTube Community y WhatsApp Channel continúan `SKIPPED / MANUAL_REQUIRED`.
+- **Idempotencia efectiva pendiente:** no hay almacén durable elegido, provisionado
+  ni adaptador con claim atómico. Requisitos en `docs/SOCIAL_DURABLE_STORE_REQUIREMENTS.md`.
+  El gate `LIVE_BLOCKED` está en código, no admite bypass por input/variable.
+- Falta comprobar versión/configuración n8n (Merge 9 inputs y built-in crypto),
+  importar la revisión nueva y ejecutar el primer dry run nativo.
+- Fase 1 sigue exclusivamente OPURO (`oxigenopuro.com.mx`). `IMAGEN_SOCIAL` sigue
+  siendo un tercer asset manual de Canva posterior a Publisher; no HERO/interior.
+- Staging objetivo aprobado: WordPress OPURO temporal, no R2, mediante
+  `OPMX_OPURO_WP_BASE_URL`. v1.0.1 sólo inspecciona/prepara metadata offline; no
+  sube ni elimina medios. Retención siete días desde distribución terminada,
+  fecha de limpieza aún null durante preflight.
+- Pendientes: upload/readback WordPress, OAuth/permisos por red, publicación,
+  readback remoto y pruebas persistentes de duplicado/concurrencia/timeout.
+- Threads conserva propuesta de formato, no nueva aprobación editorial. El helper
+  offline ya lee `media.social.alt_text` y produce saltos de línea reales.
+- TikTok sigue bloqueado por migración/verificación del CMS definitivo;
+  YouTube Community y WhatsApp Channel siguen `SKIPPED/MANUAL_REQUIRED`.
 
-Siguiente paso técnico: configurar credenciales n8n de WordPress OPURO y de las plataformas, importar los workflows, conectar coordinador/staging/workers y ejecutar un `dry_run`. Después probar ramas automáticas de forma aislada. TikTok se habilitará tras la migración a `cms.oxigenopuro.com.mx` y la verificación requerida.
+Siguiente paso: importar v1.0.1 en un workflow de prueba **separado del Publisher**
+y ejecutar `dry_run=true`. En paralelo, el chat principal debe aprobar el servicio
+persistente que cumpla los requisitos de idempotencia; no se selecciona uno aquí.
+Sólo después implementar store y adapters, empezando por el orden de habilitación
+de `SOCIAL_INTEGRATION_CHECKLIST.md`. No activar publicaciones ni limpieza antes.
 
 Debe construirse como workflow independiente y conectarse posteriormente al Publisher mediante contrato explícito. No crear un workflow monolítico.
 
@@ -82,7 +108,9 @@ En CADA hito relevante:
 7. No declarar algo “probado” sin evidencia de ejecución.
 
 ## Siguiente hito
-Cerrar especificación funcional de Social Distribution v1.0, incluyendo Threads, contrato de entrada/salida, estrategia de media staging y matriz API/autenticación. Después construir el workflow en Work.
+Prueba n8n nativa del preflight v1.0.1 y aprobación del almacén durable. Después,
+claim atómico + staging WordPress + primer adapter real con verificación, sin
+modificar Publisher. Faltan aprobación funcional del formato Threads y sus pruebas.
 
 
 ## Unificación Motor Editorial — 2026-10-23

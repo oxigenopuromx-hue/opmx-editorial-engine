@@ -1,0 +1,16 @@
+{
+  "name": "opmx-social-validation",
+  "version": "1.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build-workflows.mjs",
+    "check": "node build-workflows.mjs --check",
+    "test": "node --test test/*.test.mjs"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "esbuild": "0.25.0"
+  }
+}

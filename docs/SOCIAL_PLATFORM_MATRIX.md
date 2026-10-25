@@ -1,6 +1,10 @@
 # OPMX Social Distribution — Matriz de plataformas
 
-Estado: **v1.0 — Fase 1 OPURO; investigación oficial 2026-10-23; sólo Threads tiene worker técnico versionado**
+Estado: **v1.0.1 — Fase 1 OPURO; preflight offline probado el 2026-10-25**.
+La investigación de APIs de esta tabla es del 2026-10-23; **no fue una prueba de
+permisos ni de publicación**. En esta revisión ninguna plataforma está habilitada
+para publicación automática. El export Threads v1.0 anterior es histórico y no
+debe activarse; v1.0.1 sólo ejecuta preflight seguro.
 
 | Plataforma | Formato aprobado | Ruta / autenticación a validar al habilitar | Estado v1 |
 |---|---|---|---|
@@ -9,7 +13,7 @@ Estado: **v1.0 — Fase 1 OPURO; investigación oficial 2026-10-23; sólo Thread
 | Google Business Profile | Copy aprobado + foto + CTA URL | `accounts.locations.localPosts.create`; OAuth 2.0 `business.manage`. Proyecto y acceso GBP requieren aprobación; Location ID y cuenta se configuran en n8n. | Diseño; no probado |
 | Facebook | Copy aprobado + imagen | Pages API. Page token; `pages_manage_posts`, `pages_read_engagement`, `pages_show_list` y los permisos/revisión aplicables. | Diseño; no probado |
 | Instagram | Copy aprobado + imagen | Instagram Content Publishing: crear media container y publicar; permisos y cuenta profesional vinculada requeridos. URL pública del asset. | Diseño; no probado |
-| Threads | `SUBTITULO + \n\n + URL_OPURO` + imagen original | Threads API OAuth 2.0 `threads_content_publish`; `POST /{threads-user-id}/threads`, luego `/{threads-user-id}/threads_publish`. Requiere URL pública para `image_url`. | Worker versionado; no publicado en vivo |
+| Threads | Propuesta: `SUBTITULO + \n\n + URL_OPURO` + imagen original; aprobación funcional pendiente | Threads API OAuth 2.0 `threads_content_publish`; `POST /{threads-user-id}/threads`, luego `/{threads-user-id}/threads_publish`. Requiere URL pública para `image_url`. | Preflight v1.0.1; publicar y verificar aún pendientes |
 | TikTok | PHOTO; título `TITULO_SEO`; descripción sólo `SUBTITULO`; sin URL | Content Posting API `POST /v2/post/publish/content/init/`; OAuth `video.publish`. Consulta previa de creator info; dominio/prefijo verificado; cliente auditado para posts públicos. | Diseño; no probado |
 | YouTube Community | Copy aprobado + derivado 1:1 top-aligned | YouTube Data API no expone un método de creación de Community posts en la referencia vigente. | `SKIPPED / MANUAL_REQUIRED` |
 | WhatsApp Channel | Compartir `URL_OPURO` para generar link card | No se habilita sin una API oficial de publicación de Channels que se valide y apruebe. | `SKIPPED / MANUAL_REQUIRED` |
@@ -33,3 +37,14 @@ Estado: **v1.0 — Fase 1 OPURO; investigación oficial 2026-10-23; sólo Thread
 ## Regla
 
 Facebook, Instagram y Threads mantienen ramas, permisos, credenciales, idempotencia y resultados independientes. No se infiere una capacidad de API por pertenecer al mismo proveedor.
+
+## Estados del preflight v1.0.1
+
+- Automáticas habilitadas, `dry_run=true`: `SKIPPED/DRY_RUN`, cero intentos.
+- Automáticas habilitadas, `dry_run=false`: `FAILED/LIVE_BLOCKED`, cero intentos,
+  hasta implementar el registro durable. Credenciales no eliminan este bloqueo.
+- Targets deshabilitados: `SKIPPED/DISABLED`.
+- YouTube Community y WhatsApp Channel: siempre `SKIPPED/MANUAL_REQUIRED`.
+
+No se ejecutan llamadas API desde los exports v1.0.1. El siguiente hito deberá
+revalidar scopes/endpoints/límites de la plataforma concreta antes de habilitarla.
