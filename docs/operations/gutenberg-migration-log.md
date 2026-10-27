@@ -23,3 +23,11 @@
 Los casos con ALT vacío de origen quedaron registrados como excepciones auditadas para no bloquear la cola. La siguiente pasada procesa los expedientes restantes con contenido y medios verificables; los casos sin ALT requieren recuperación editorial antes de poder completarse sin degradar accesibilidad.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Hallazgo de recuperación de medios — 27 de octubre
+
+El ALT vacío se reclasificó correctamente como valor original preservable. Al reanudar el lote de 500, el impedimento real fue distinto: la mayoría de las referencias `core/image` apuntan a IDs que ya no existen como adjuntos nativos en el CMS candidato; también hay bloques `core/video` que requieren tratamiento específico. Se completó un caso verificable con ALT vacío preservado y no se modificó ningún contenido visible.
+
+**Siguiente frente antes de producción:** reconciliar/restaurar adjuntos desde el respaldo de `uploads`, volver a validar las notas afectadas y después ejecutar el checklist de salida: SEO, equivalencia de sitemaps, redirecciones, robots/canonicals y smoke test del candidato.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
