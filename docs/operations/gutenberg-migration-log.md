@@ -57,3 +57,13 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 - No se ha modificado DNS, dominio, contenido publicado ni estado de los borradores. Sigue pendiente la auditoría profunda del CMS candidato y la importación del delta editorial de 40–50 notas antes de congelar inventario y comparar sitemaps.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Smoke test del preview privado — bloqueo de salida
+
+- El preview devuelve `200` y está correctamente aislado: `meta robots` y `X-Robots-Tag` son `noindex, nofollow`; `robots.txt` desautoriza todo rastreo.
+- El frontend sólo recibe un post publicado: `/hello-world/`. Por tanto, `post-sitemap.xml` contiene una URL y `news-sitemap.xml` está vacío. Los artículos migrados en `draft` no son visibles a través de la API pública que consume el frontend.
+- La ruta de prueba `/wp-content/uploads/2026/09/__opmx_redirect_probe__.jpg` devuelve `403`, no un `301` hacia el CMS. La redirección de uploads sigue pendiente.
+- El preview conserva la frase “Ideas que respiran soberanía” y una descripción de línea política; debe sustituirse por la identidad editorial aprobada de Oxígeno Puro MX antes de cualquier lanzamiento.
+- Conservar los posts en borrador sigue siendo correcto durante migración y QA, pero hay un gate explícito antes del corte: publicar únicamente el inventario aprobado —o implementar una estrategia autenticada que no exponga borradores— y luego regenerar/validar sitemaps. Nunca activar el dominio con el estado actual.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
