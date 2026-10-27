@@ -89,3 +89,15 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 - Los cambios están aislados de Production y no sustituyen los gates pendientes de contenido publicado aprobado, sitemaps finales, redirección de uploads y configuración explícita de Production.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+
+## Corte de origen y delta editorial — 27 de octubre
+
+- Se recibió la base de datos de origen del 27 de octubre de 2026 a las 12:16 y el respaldo de medios de octubre.
+- Integridad del paquete de medios: TAR de **299,940,458 bytes**, **3,297** archivos, manifiesto SHA-256 de **3,297** entradas y cero nombres duplicados.
+- SHA-256 del TAR: `fef2275515411306e63dcefdb2daf4e68574af0607cc696c65e58de2663dae2c`.
+- Comparación contra el snapshot del 21 de octubre: **47** notas publicadas nuevas, **98** adjuntos nuevos, 50 revisiones internas, dos posts en papelera y un borrador automático. No hubo modificaciones de posts preexistentes.
+- Las 47 notas nuevas tienen imagen destacada. Las 98 rutas de adjuntos están presentes en el TAR y tienen `_wp_attached_file`; dos ALT son vacíos de origen y se preservarán sin inventar texto.
+- El paquete queda como fuente de importación selectiva al CMS candidato. No se publica contenido ni se modifica Production.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
