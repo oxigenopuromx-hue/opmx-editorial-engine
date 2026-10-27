@@ -67,3 +67,13 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 - Conservar los posts en borrador sigue siendo correcto durante migración y QA, pero hay un gate explícito antes del corte: publicar únicamente el inventario aprobado —o implementar una estrategia autenticada que no exponga borradores— y luego regenerar/validar sitemaps. Nunca activar el dominio con el estado actual.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Identidad y menú editorial aprobados
+
+- Firma breve de marca aprobada: **Respira Soberanía**. Sustituirá tanto el lema superior heredado como la frase institucional del footer.
+- Menú principal aprobado, usando categorías existentes y sus rutas históricas: **Noticias**, **Política**, **Plan México**, **Economía**, **Tecnología**, **Innovación**, **Soberanía**, **Estados**, **Internacional**, **Congreso**, **Justicia** y **Opinión**.
+- `Gobierno` y `Megalópolis` no existen en Oxígeno Puro y se retiran. `Cultura`, `Deporte` y `Turismo` permanecen como archivos accesibles y se ubicarán fuera del menú principal.
+- Corregir enlaces heredados antes del corte: `Deportes` corresponde a `/category/noticias/deporte/`; `Ciencia` a `/category/innovacion/ciencia/`; `Educación` a `/category/noticias/educacion/`; y `Medio ambiente` a `/category/medio-ambiente/`.
+- Esta decisión no modifica aún código, WordPress, DNS ni estados de publicación.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
