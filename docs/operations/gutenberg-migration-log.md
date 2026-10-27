@@ -31,3 +31,9 @@ El ALT vacío se reclasificó correctamente como valor original preservable. Al 
 **Siguiente frente antes de producción:** reconciliar/restaurar adjuntos desde el respaldo de `uploads`, volver a validar las notas afectadas y después ejecutar el checklist de salida: SEO, equivalencia de sitemaps, redirecciones, robots/canonicals y smoke test del candidato.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Delta editorial antes del corte
+
+Antes del checklist de salida se importará el delta de notas creadas después del último corte de migración —estimado actual: **40–50 notas**— al CMS candidato. Permanecerán en borrador hasta que cada una tenga contenido, metadatos, medios y estado validados. Sólo después se congelará el inventario y se compararán sitemaps, URLs/canonicals, robots y redirecciones para el corte.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
