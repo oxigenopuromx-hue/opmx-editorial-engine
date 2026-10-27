@@ -37,3 +37,13 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 Antes del checklist de salida se importará el delta de notas creadas después del último corte de migración —estimado actual: **40–50 notas**— al CMS candidato. Permanecerán en borrador hasta que cada una tenga contenido, metadatos, medios y estado validados. Sólo después se congelará el inventario y se compararán sitemaps, URLs/canonicals, robots y redirecciones para el corte.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Restricción de proyecto y dominio final — obligatoria
+
+- **Único proyecto autorizado:** `oxigeno-puro-com-mx` (`prj_2VETh50RkVNY5Rmpx3EHVlAzXoDB`).
+- **Dominio público final:** `oxigenopuro.com.mx`.
+- **CMS:** `cms.oxigenopuro.com.mx` en Hostinger.
+- `oxigeno-puro-mx` y `oxigenopuro.mx` están explícitamente fuera de alcance: no se permiten cambios de dominio, DNS, despliegue, variables, rutas o configuración.
+- Auditoría: los únicos recursos usados allí durante esta migración fueron sesiones sandbox efímeras, todas ya detenidas. No se alteró su configuración ni sus dominios.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
