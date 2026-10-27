@@ -77,3 +77,15 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 - Esta decisión no modifica aún código, WordPress, DNS ni estados de publicación.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Implementación de identidad y navegación en Preview — 27 de octubre
+
+- Se implementó exclusivamente en la rama Preview `feature/platform-clone` del proyecto autorizado `oxigeno-puro-com-mx`; no hubo cambios en WordPress, borradores, DNS ni Production.
+- El lema de portada, cabecera, footer y metadatos sociales ahora es **Respira Soberanía**. Se retiró la identidad heredada “Ideas que respiran soberanía”.
+- El menú principal ahora contiene: Noticias, Política, Plan México, Economía, Tecnología, Innovación, CDMX, Estados, Internacional, Congreso, Justicia y Opinión. Se retiraron Gobierno y Megalópolis.
+- El footer conserva Cultura, Deporte y Turismo fuera del menú principal, e incorpora Ciencia, Medio Ambiente y Educación. Todos sus enlaces usan las rutas históricas verificadas.
+- Se añadieron archivos anidados para CDMX, Ciencia, Deporte y Educación; devuelven `200`, conservan canonical de la ruta histórica y están incluidos con esa ruta en el sitemap.
+- Smoke test privado de la compilación `971d3e92eb44778b708daa640e0bc19bd17d6500`: portada y cuatro rutas anidadas responden `200`; el menú/footer muestran la taxonomía aprobada; `Gobierno` y `Megalópolis` ya no aparecen; Preview mantiene `meta robots: noindex, nofollow`.
+- Los cambios están aislados de Production y no sustituyen los gates pendientes de contenido publicado aprobado, sitemaps finales, redirección de uploads y configuración explícita de Production.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
