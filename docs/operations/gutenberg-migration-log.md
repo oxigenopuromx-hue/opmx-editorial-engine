@@ -47,3 +47,13 @@ _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
 - Auditoría: los únicos recursos usados allí durante esta migración fueron sesiones sandbox efímeras, todas ya detenidas. No se alteró su configuración ni sus dominios.
 
 _Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
+
+## Verificación pre-corte SEO y enrutamiento — 27 de octubre
+
+- En el sitio público actual, una muestra de artículo conserva su slug histórico, canonical absoluto en `https://oxigenopuro.com.mx/<slug>/`, robots `index, follow` y schema que incluye `NewsArticle`. Su `robots.txt` anuncia `https://oxigenopuro.com.mx/sitemap_index.xml`.
+- El proyecto autorizado `oxigeno-puro-com-mx` permanece aislado: no tiene dominio personalizado, no tiene despliegue Production activo y su Preview usa `noindex`; las credenciales de migración están limitadas a Preview.
+- Antes de activar Production faltan variables explícitas de Production para CMS, URL pública, entorno e indexación. No deben inferirse ni copiarse desde Preview.
+- El código actual no contiene la redirección de activos requerida para el corte. Debe añadirse y probarse en el proyecto autorizado: `/wp-content/uploads/:path*` → `https://cms.oxigenopuro.com.mx/wp-content/uploads/:path*` con 301, conservando ruta y query string.
+- No se ha modificado DNS, dominio, contenido publicado ni estado de los borradores. Sigue pendiente la auditoría profunda del CMS candidato y la importación del delta editorial de 40–50 notas antes de congelar inventario y comparar sitemaps.
+
+_Actualizado: 27 de octubre de 2026 (America/Mexico_City)._
