@@ -1,0 +1,44 @@
+{
+  "contract_name": "OPMX Gutenberg Enriquecido OPURO",
+  "version": "1.0",
+  "status": "ACTIVE",
+  "purpose": "Representación publicable del cuerpo de una nota OPURO como Gutenberg nativo serializado. Es el valor de MASTER_JSON.GUTENBERG_ENRIQUECIDO_FINAL y el único cuerpo que el Publisher OPURO v1.3 envía a post_content.",
+  "canonical_source": "TEXTO_EDITORIAL",
+  "serialization": {
+    "required": true,
+    "must_contain": "<!-- wp:* -->",
+    "allowed_blocks": [
+      "core/paragraph",
+      "core/heading",
+      "core/list",
+      "core/quote",
+      "core/image"
+    ],
+    "heading_levels": [2, 3],
+    "forbidden": [
+      "core/html",
+      "H1",
+      "article",
+      "header",
+      "footer",
+      "opmx-editorial",
+      "data-opmx",
+      "unresolved placeholders"
+    ]
+  },
+  "media": {
+    "hero_and_featured": "HERO_OPURO and DESTACADA_OPURO remain native media operations of the Publisher and are not injected into post_content.",
+    "inline_image": "Only emit core/image after a native attachment has been resolved. It must have a numeric wp-image-{id} class, HTTPS source URL and literal ALT. If no binding exists, omit the block; never invent an ID, URL, ALT or token."
+  },
+  "compatibility": {
+    "HTML_FINAL": "Preserved for archive, review and compatibility; not used as OPURO post_content by Publisher v1.3.",
+    "GUTENBERG_FINAL": "Preserved as the portable OPOL body.",
+    "GUTENBERG_ENRIQUECIDO_FINAL": "Required OPURO body. It expresses the same substantive final text as TEXTO_EDITORIAL and the other outputs."
+  },
+  "publisher_preflight": [
+    "requires non-empty GUTENBERG_ENRIQUECIDO_FINAL",
+    "rejects forbidden structural markers and unresolved placeholders",
+    "rejects non-native or unapproved Gutenberg block names",
+    "rejects core/image without native attachment evidence"
+  ]
+}
