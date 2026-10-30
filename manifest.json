@@ -1,7 +1,7 @@
 {
   "schema": "OPMX_ENGINE_MANIFEST",
   "schema_version": "1.0",
-  "updated_at": "2026-10-25",
+  "updated_at": "2026-10-29",
   "branch": "main",
   "discovery_rule": "Highest semantic version per family; manifest records the currently approved pointers and does not authorize downgrades.",
   "masters": {
@@ -70,5 +70,12 @@
       "version": "1.0.1",
       "path": "contracts/SOCIAL_DISTRIBUTION_CONTRACT_v1.0.1.json"
     }
+  },
+  "project_instructions": {
+    "status": "ACTIVE",
+    "path": "PROJECT_INSTRUCTIONS.md",
+    "title": "MOTOR EDITORIAL OPMX — PROJECT INSTRUCTIONS",
+    "contract_label": "MEDIA CONTRACT · Septiembre 2026",
+    "purpose": "Canonical operational instructions for Motor Editorial OPMX instances."
   }
 }
