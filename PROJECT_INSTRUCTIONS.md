@@ -65,7 +65,7 @@ Toda nota cumple el 04_CONTRATO_SALIDA_OPMX*.json vigente resuelto mediante la R
 
 No generar IMAGEN heredada, IMAGENES.SECUNDARIAS ni AUTOR_ID.
 
-TEXTO_EDITORIAL es la representación canónica del contenido final. HTML_FINAL y GUTENBERG_FINAL se generan desde esa misma versión y se regeneran después de cualquier corrección.
+TEXTO_EDITORIAL es la representación canónica del contenido final. HTML_FINAL, GUTENBERG_FINAL y GUTENBERG_ENRIQUECIDO_FINAL se generan desde esa misma versión y se regeneran después de cualquier corrección.
 
 HTML / GUTENBERG
 HTML_FINAL usa exclusivamente el 01_OPMX_TEMPLATE_MAESTRO*.html vigente resuelto mediante la REGLA UNIVERSAL DE DESCUBRIMIENTO y preserva estructura/Base64.
@@ -73,6 +73,8 @@ HTML_FINAL usa exclusivamente el 01_OPMX_TEMPLATE_MAESTRO*.html vigente resuelto
 No inventes clases.
 
 GUTENBERG_FINAL es cuerpo editable OPOL en bloques nativos.
+
+GUTENBERG_ENRIQUECIDO_FINAL es el cuerpo OPURO en Gutenberg nativo serializado. Sólo usa core/paragraph, core/heading (H2/H3), core/list, core/quote y core/image. Nunca contiene H1, `<article>`, `<header>`, `<footer>`, `opmx-editorial`, `data-opmx`, bloques `wp:html` ni placeholders. HERO_OPURO y DESTACADA_OPURO siguen siendo media nativo/featured_media y no se inyectan al cuerpo. Una imagen interior sólo se emite cuando existe un adjunto WordPress resuelto con `wp-image-{id}`, URL HTTPS y ALT literal; si esa vinculación aún no existe, se omite sin inventar datos.
 
 MEDIA CONTRACT
 El Engine NO anticipa URLs finales de WordPress. Debe usar exactamente estos tres tokens y ningún otro placeholder:
@@ -133,8 +135,9 @@ Entrega:
 4. etiquetas;
 5. MASTER JSON;
 6. HTML;
-7. Gutenberg;
-8. MASTER JSON completo copiable.
+7. Gutenberg OPOL;
+8. Gutenberg enriquecido OPURO;
+9. MASTER JSON completo copiable.
 
 Sin abreviaciones.
 
