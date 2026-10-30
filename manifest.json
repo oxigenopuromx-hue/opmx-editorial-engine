@@ -14,9 +14,9 @@
       "path": "masters/02_OPMX_CSS_MAESTRO_v5.css"
     },
     "prompt": {
-      "version": "4.6",
-      "variant": "MEDIA",
-      "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.6_MEDIA.txt"
+      "version": "4.7",
+      "variant": "MEDIA_GUTENBERG_ENRIQUECIDO",
+      "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.7_MEDIA_GUTENBERG.txt"
     },
     "media_output_contract": {
       "version": "1.3",
