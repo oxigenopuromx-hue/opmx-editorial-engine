@@ -1,0 +1,184 @@
+{
+  "name": "OPMX OPURO — Recuperación manual de caché v1.0",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "56cdd479-89b0-4aa7-9790-954782063249",
+      "name": "Inicio manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a23e84eb-5e32-4b51-b531-c8fce66eaf6c",
+              "name": "slug",
+              "value": "guadalupe-chavira-preside-comision-de-estudios-legislativos",
+              "type": "string"
+            },
+            {
+              "id": "3cd0125c-4a40-40d9-a09a-5da8a6b44a4b",
+              "name": "category_slug",
+              "value": "congreso",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "b48d5d6e-ca0b-46a1-bd03-7c43f736a98d",
+      "name": "Indicar nota a refrescar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        464,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const slug=String($json.slug??'').trim();\nif(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {\n  throw new Error('Slug inválido. Usa minúsculas, números y guiones.');\n}\nconst categorySlug=String($json.category_slug??'').trim();\nconst categories=/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(categorySlug)?[categorySlug]:[];\nconst payload={scope:'story',slug,categories};\nconst revalidation_body=JSON.stringify(payload);\nconst revalidation_timestamp=String(Math.floor(Date.now()/1000));\nreturn {\n  json: {\n    slug,\n    category_slug: categorySlug,\n    revalidation_body,\n    revalidation_timestamp,\n    revalidation_input: `${revalidation_timestamp}.${revalidation_body}`,\n  },\n};"
+      },
+      "id": "bb05c5b5-80d3-4a03-bd93-399d0ce25243",
+      "name": "Preparar revalidación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "action": "hmac",
+        "type": "SHA256",
+        "value": "={{ $json.revalidation_input }}",
+        "dataPropertyName": "revalidation_signature",
+        "secret": "={{ $vars.OPMX_OPURO_REVALIDATION_SECRET }}",
+        "encoding": "hex"
+      },
+      "id": "cd605d89-f094-4ee3-b5b5-ae68025286d9",
+      "name": "Firmar HMAC",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        944,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.OPMX_OPURO_REVALIDATION_URL }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={{ { 'x-oxpuro-timestamp': $json.revalidation_timestamp, 'x-oxpuro-signature': 'sha256=' + $json.revalidation_signature } }}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.revalidation_body }}",
+        "options": {}
+      },
+      "id": "05a4d0a8-f9b6-4c8c-a7f4-5520b88250d3",
+      "name": "Invalidar caché pública",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1184,
+        320
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n  json: {\n    status: 'SUCCESS',\n    message: 'Caché pública invalidada.',\n    response: $json,\n  },\n};"
+      },
+      "id": "5c7c2bfb-f4e9-4f53-ac90-c263d172f184",
+      "name": "Confirmar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        320
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Inicio manual": {
+      "main": [
+        [
+          {
+            "node": "Indicar nota a refrescar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Indicar nota a refrescar": {
+      "main": [
+        [
+          {
+            "node": "Preparar revalidación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar revalidación": {
+      "main": [
+        [
+          {
+            "node": "Firmar HMAC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firmar HMAC": {
+      "main": [
+        [
+          {
+            "node": "Invalidar caché pública",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Invalidar caché pública": {
+      "main": [
+        [
+          {
+            "node": "Confirmar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "eb56a17f-8ea6-4511-b8d4-76c5c29b0ec7",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
