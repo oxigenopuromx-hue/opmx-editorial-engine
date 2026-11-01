@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — dependencia mysql2 de guard (2026-11-01)
+
+El guard desplegado H086 declara mysql2 3.14.5. Aviso oficial GitHub GHSA-3f6p-5ww8-9rcr, alto, afecta mysql2 <3.22.0: un servidor MySQL malicioso o intermediario capaz de alterar la conexión podría solicitar una autenticación que exponga la contraseña sin TLS. El guard conecta a 127.0.0.1:3306, lo que acota el escenario; no prueba compromiso. No se ha confirmado que sea la misma alerta alta del build de Hostinger. El registro también identifica GHSA-rgwj-5xj2-c3m3 (moderado, <=3.23.0 y requiere compresión; configuración actual no la habilita). Referencias: https://github.com/advisories/GHSA-3f6p-5ww8-9rcr y https://github.com/advisories/GHSA-rgwj-5xj2-c3m3.
+
+En rama, commit 4d7fd66 actualiza pin a mysql2 3.24.6; 63 pruebas locales existentes pasan con dobles, pero la versión nueva NO está instalada ni se ha probado con MariaDB real porque este entorno no tiene acceso al registro npm. No hay lockfile ni npm audit completo verificado. ZIP candidato reproducible opmx-guard-mysql2-h089.zip SHA256 f9bd41a5385336c0ced68df14b9dc642fb9cfc5d48ca1f6a82a012d2e5f8cab3; NO desplegado. Antes de uso: instalar mediante Hostinger con autorización, comprobar build, auditoría y repetir autenticación y concurrencia. WordPress y DNS sin cambios.
+
 ## Avance Work II — dos peticiones guard simultáneas (2026-11-01)
 
 En identidad sintética nueva #81 reservó (201) y #82 inició destino (200). phpMyAdmin bloqueó la fila del destino con SELECT FOR UPDATE y SLEEP(35), comprobado con una fila y COMMIT. Dos ejecuciones reales de n8n hacia `/v1/media/begin` de ese mismo Hero se solaparon: #83 inició 21:35:05.819Z, #84 21:35:14.505Z; ambas constaron ejecutándose simultáneamente durante el bloqueo. Al liberarlo, #83 devolvió 200 upload_started a 21:35:27.328Z; #84 409 already_started a 21:35:27.334Z. Consulta MySQL encontró una única fila Hero uploading. Prueba limitada a dos peticiones en una instancia de guard bajo bloqueo forzado; no demuestra seguridad de otros publicadores ni recuperación tras pérdida de respuesta. No hubo cargas ni escritura WordPress. Registro sintético permanece en base dedicada. Workflow de diagnóstico restaurado a lectura e inactivo. Ver hitos H-087/H-088 Drive.
