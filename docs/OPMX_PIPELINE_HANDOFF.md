@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — recuperación consolidada desplegada (2026-11-01)
+
+Con confirmación del usuario, `opmx-guard-recuperacion-h092.zip` SHA256 7cecc6ebe4dd22d3a8ab9306c1f4b650a281e729bf63187dd513b76fbb5caad6 se instaló en publisher.oxigenopuro.com.mx; Hostinger lo marca completado y actual. n8n diagnóstico inactivo, dos nodos y credencial existente: #94 consulta `/v1/recovery/status` con requestId, slug, destino y fingerprint sintéticos reales en DB; HTTP 200, reserva claimed/matched, destino writing/postId null, hero y featured uploading/mediaId null, action manual_reconciliation, retryPermitted=false, wordpressVerified=false, consistentSnapshot=false. #95 usó huella diferente: HTTP 200 identity_mismatch sin avance de destino ni medios y reintento deshabilitado. No se probaron timeouts de DB ni el endpoint con falta de reserva en vivo. Workflow diagnóstico restaurado a consulta original e inactivo. No se añadió acceso ni credenciales, no se escribieron notas ni se cambiaron DNS.
+
+Alcance: endpoint real de guard disponible y validado en estos dos casos de lectura; no está integrado al Publisher activo, no compara WordPress, no reanuda ni libera y no equivale a una recuperación terminada. Pendiente consumidor seguro y lectura WP para confirmar post/medios, procedimiento de incertidumbre, exclusión entre publicadores y prueba integral de borrador; redes posteriores. Revisión automática anterior rechazó ejecutar flujo con nodos de escritura WP incluso desconectados; no eludir.
+
 ## Avance Work II — endpoint consolidado de recuperación preparado (2026-11-01)
 
 En rama, commits 0eb4de5 y e091b45 agregan POST autenticado `/v1/recovery/status` al guard. Exige exactamente requestId, slug, destination y fingerprint válidos, comprueba reserva y huella antes de consultar avances de destino y medios; requiere OPURO/OPOL. Si falta identidad o es errónea no devuelve avances de destino. Sólo ejecuta SELECT; devuelve `retryPermitted:false`, `wordpressVerified:false` y `consistentSnapshot:false`, porque las consultas son secuenciales, los IDs los reporta el worker y WP aún no se consulta. Error de base produce 503 not_confirmed, sin reintentos, escrituras ni liberación. 69 pruebas locales pasan con dobles, incluida prueba HTTP autenticada, SQL sólo lectura, identidad incorrecta y fallo de DB.
