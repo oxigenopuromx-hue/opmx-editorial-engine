@@ -38,6 +38,8 @@ export function createMariaDbLedger(pool) {
       return {status:row.status,result:row.result_json ? JSON.parse(row.result_json) : undefined};
     },
     markSent(id) { return transition(id,'claimed','sent',null); },
+    accept(id,job) { return transition(id,'sent','accepted',JSON.stringify(job)); },
+    completeAccepted(id,result) { return transition(id,'accepted','complete',JSON.stringify(result)); },
     complete(id,result) { return transition(id,'sent','complete',JSON.stringify(result)); },
     failBeforeSend(id) { return transition(id,'claimed','failed_before_send',null); },
   };
