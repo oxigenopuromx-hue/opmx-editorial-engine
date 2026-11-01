@@ -23,7 +23,7 @@ export function createGuard({pool,secret}) {
       for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){req.resume();return end(413,{error:'too_large'});}data+=chunk.toString('utf8');}
       const input=JSON.parse(data);
       if(req.url==='/v1/reservations/status') {
-        if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='fingerprint,requestId') return end(400,{error:'invalid_request'});
+        if(!input || typeof input!=='object' || Array.isArray(input) || !['fingerprint,requestId','requestId'].includes(Object.keys(input).sort().join(','))) return end(400,{error:'invalid_request'});
         const result=await inspectDirectReservation(pool,input);
         return end(200,result);
       }
