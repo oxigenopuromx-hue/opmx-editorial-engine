@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — verificación de adjuntos en referencia guardada (2026-11-01)
+
+La referencia inactiva añade lectura WordPress `context=edit` de cada adjunto tras guardar su metadata y comprueba ID, tipo imagen, URL y alt; para Hero además título, leyenda y descripción raw. Falla cerrado ante discrepancia antes de crear el post. Sigue sin comprobar los bytes de archivo ni el render visual; la comparación estricta puede rechazar cambios legítimos de sanitización. El generador y las pruebas de grafo comprueban que ambos readbacks preceden al post; 60 pruebas locales aprobadas con dobles. El workflow contiene nodos de escritura, no se ha importado, autenticado ni ejecutado en n8n/WordPress. No activar hasta validar seguridad, reconciliación y prueba integral. Publisher activo y CMS sin cambios; no se publicó contenido.
+
 ## Avance Work II — prueba de solapamiento real (2026-11-01)
 
 En la base dedicada, phpMyAdmin inició una transacción sintética e insertó una fila `featured` para una reserva de prueba; mantuvo el lock con SLEEP(20) y luego COMMIT. El SELECT inició 18:45:45 UTC y tardó 20.0004 s; durante ese intervalo n8n inició la ejecución #64 a las 18:45:53 UTC contra `/v1/media/begin` para la misma identidad. El nodo esperó 11.945 s y devolvió 503 `not_confirmed` a las 18:46:05, no 409. La lectura posterior mostró dos filas sintéticas totales: una Hero `reported` previa y una featured `uploading`; sólo una por rol. El 503 es fallo cerrado que exige conciliación, NO confirmación de duplicado ni permiso de reintento. Causa exacta de 503 y manejo bajo contención no comprobados; no afirmar prueba integral de concurrencia de solicitudes n8n ni seguridad global. Queda fila featured sintética permanente, sin archivo WordPress.
