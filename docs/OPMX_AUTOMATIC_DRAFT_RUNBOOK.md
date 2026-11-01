@@ -1,25 +1,21 @@
-# Entrada automática OPURO — operación v1
+# Entrada automática OPURO / OPOL — operación v2
 
-Estado: activa en n8n; creación de borradores OPURO probada con fixture sintético el 2026-11-01. La publicación pública y Social no forman parte de esta entrada.
+Estado: activa y comprobada con fixtures sintéticos para OPURO, OPOL y AMBOS el 2026-11-01. Crea borradores; la publicación pública automática y Social siguen pendientes.
 
-## Recursos operativos
+## Recursos
 
-- Proyecto personal: OXÍGENO PURO <oxigenopuromx@gmail.com>, raíz, sin carpeta.
+- Proyecto personal OXÍGENO PURO <oxigenopuromx@gmail.com>, raíz, sin carpeta.
 - Workflow: https://n8n.oxigenopuro.com.mx/workflow/4o7K5TmKc7joScqB
 - Trigger: `Entrada automática protegida`.
-- Versión activa inicial: `c6ec4283-becb-4a1f-b83d-730ea2073934`.
-- Webhook: https://n8n.oxigenopuro.com.mx/webhook/opmx-automatic-opuro-draft-v1
-- Autenticación: n8n User Auth OAuth2, requiere permiso de ejecución. POST anónimo comprobado: 401.
-- Recuperación de sólo lectura: workflow `C4hk6fQQomueYC8f`, publicado; no libera ni reintenta.
-- Guard desplegado en publisher.oxigenopuro.com.mx. El Motor no necesita su secreto: sólo n8n usa la credencial ya existente.
+- Versión activa v2: `ef6429a7-d56e-4600-82c9-05191aa49bb5`, 90 nodos.
+- Rollback v1 OPURO: `c6ec4283-becb-4a1f-b83d-730ea2073934`.
+- Webhook conservado: https://n8n.oxigenopuro.com.mx/webhook/opmx-automatic-opuro-draft-v1
+- Autenticación n8n User Auth OAuth2 y permiso de ejecución. #110 probó rechazo anónimo HTTP401 en v1; v2 conserva esa configuración.
+- Conector oficial ChatGPT → n8n existente. Node en Hostinger continúa como guard durable; no desplegar el servidor MCP Node experimental para usar esta ruta.
 
-Se usa la conexión oficial ChatGPT → n8n. No desplegar el servidor experimental MCP Node ni configurar otro proveedor OAuth para utilizar esta entrada.
+## Entrega desde Motor / Work
 
-## Entrega desde el Motor / Work
-
-Antes de ejecutar, consultar detalles del workflow para confirmar su trigger y versión. El archivo MASTER conserva el contrato editorial vigente del repositorio: no alterar CONTROL_EDITORIAL para hacer pasar la validación.
-
-Enviar mediante la herramienta oficial de ejecución n8n:
+Consultar detalles del workflow antes de ejecutarlo. Mantener el contrato editorial vigente; nunca cambiar CONTROL_EDITORIAL para hacer pasar un paquete no aprobado.
 
 ```json
 {
@@ -31,48 +27,58 @@ Enviar mediante la herramienta oficial de ejecución n8n:
       "method": "POST",
       "body": {
         "request_id": "IDENTIFICADOR_ESTABLE_DE_16_A_128_CARACTERES",
-        "CREAR_EN": "OPURO",
+        "CREAR_EN": "AMBOS",
         "PUBLICAR": false,
         "master": {},
-        "hero_file": {"base64": "BYTES_DEL_ARCHIVO_HERO_EN_BASE64"},
-        "featured_file": {"base64": "BYTES_DEL_ARCHIVO_DESTACADO_EN_BASE64"}
+        "hero_file": {"base64": "BYTES_HERO_BASE64"},
+        "featured_file": {"base64": "BYTES_DESTACADA_BASE64"}
       }
     }
   }
 }
 ```
 
-El MASTER vacío y los marcadores del ejemplo no son ejecutables: reemplazarlos con el paquete aprobado y los bytes de los dos archivos. Para pruebas usar executionMode=manual y exclusivamente fixtures sintéticos o contenido cuya prueba esté autorizada.
+El ejemplo es estructural: MASTER vacío y marcadores no son ejecutables. Para pruebas usar executionMode=manual y fixtures sintéticos autorizados.
 
-Los archivos deben estar accesibles al entorno que llama: leer los adjuntos o archivos autorizados y convertir sus bytes a base64. No enviar una URL temporal en lugar del binario, ni pegar manualmente HTML en WordPress. No afirmar transferencia automática de adjuntos desde un chat que no haya leído los archivos. PNG/JPEG/WebP admitidos; el preparador limita cada cadena base64 a 14,000,000 caracteres. El flujo completo sólo se validó con PNG sintético pequeño; límites altos y transporte desde otro chat requieren comprobación real.
+CREAR_EN acepta OPURO, OPOL o AMBOS. PUBLICAR debe ser false.
 
-El MASTER OPURO debe contener GUTENBERG_ENRIQUECIDO_FINAL, metadata y categorías vigentes, Hero {{OPMX:HERO_OPURO}} y destacada {{OPMX:DESTACADA_OPURO}}. El validador heredado también exige la clasificación OPOL del paquete aunque se seleccione sólo OPURO. Mantener ambas clasificaciones como exige ese validador.
+- OPURO: MASTER con GUTENBERG_ENRIQUECIDO_FINAL, metadata/categoría OPURO y los archivos Hero + destacada.
+- OPOL: MASTER con GUTENBERG_FINAL, metadata/categoría OPOL y sólo archivo destacada; hero_file puede omitirse.
+- AMBOS: ambos campos Gutenberg y clasificaciones; Hero para OPURO y un archivo destacado que se carga independientemente a cada CMS.
+- Placeholders según destino: HERO_OPURO.URL={{OPMX:HERO_OPURO}}, DESTACADA_OPURO.URL={{OPMX:DESTACADA_OPURO}}, DESTACADA_OPOL.URL={{OPMX:DESTACADA_OPOL}}.
+- El validador heredado exige ambas clasificaciones del MASTER aun cuando se seleccione un solo sitio. Los IDs de autor son resueltos por Publisher; no añadir AUTOR_ID al MASTER.
 
-request_id es estable para la misma entrega y sólo admite A-Z, a-z, 0-9, guion y guion bajo. No generar uno nuevo para eludir un duplicado o una respuesta incierta. PUBLICAR=true y OPOL/AMBOS están bloqueados por esta entrada.
+Leer los adjuntos realmente accesibles y convertir sus bytes a base64. No sustituirlos por URLs temporales ni copiar HTML manualmente a WordPress. El transporte desde otro chat y tamaños habituales de sus imágenes sigue pendiente de prueba; no afirmarlo verificado sin leer esos archivos. PNG/JPEG/WebP admitidos; límite de 14,000,000 caracteres por cadena base64. Pruebas completas usaron PNG sintético pequeño.
 
-## Resultado y errores
+request_id es estable para la misma entrega, de 16–128 caracteres A-Z/a-z/0-9/guion/guion bajo. No cambiarlo para eludir duplicados o incertidumbre.
 
-La herramienta devuelve executionId; consultar esa ejecución del mismo workflow e incluir el nodo `Resultado consolidado OPMX`. El éxito final debe ser status=SUCCESS, mode=DRAFT, summary.opuro=DRAFT y un post_id_opuro válido, con edit_url_opuro. Una ejecución iniciada no confirma borrador terminado.
+## Resultado y fallos
 
-Si existe el slug, el flujo se detiene antes del guard y los medios. Si una escritura o reporte seleccionado falla, se consulta guard + WordPress y se exige conciliación manual; ese informe no equivale a éxito editorial. No hay autorización de reenvío automático. Otros errores de validación o taxonomía detienen el flujo sin conciliación automática. La recuperación no comprueba los archivos byte a byte ni ofrece snapshot consistente.
+La herramienta devuelve executionId. Consultar esa ejecución del mismo workflow y el nodo `Resultado consolidado OPMX`. Éxito requiere status=SUCCESS, mode=DRAFT y DRAFT para cada destino solicitado. Se devuelven edit_url_opuro/edit_url_opol y post_id_opuro/post_id_opol; el destino omitido queda SKIPPED. Iniciar ejecución no confirma éxito.
 
-No llamar al Publisher manual simultáneamente para el mismo slug: ese flujo no participa en este guard. El control de la nueva entrada no excluye otros publicadores ni ediciones externas.
+En AMBOS se consultan los dos CMS y se reservan ambos destinos antes de escribir. Después se procesa OPURO y luego OPOL. Si OPOL falla tras completar OPURO, devuelve PARTIAL_SUCCESS y conserva el enlace OPURO; nunca reenvía automáticamente ni elimina el borrador logrado. Si OPURO falla, se detiene antes de procesar OPOL y exige conciliación. No es una transacción entre WordPress: una falla no revierte publicaciones previas.
+
+La recuperación de sólo lectura C4hk6fQQomueYC8f cubre los errores OPURO seleccionados y no verifica bytes ni snapshot. OPOL conserva estado guard e informe NEEDS_RECONCILIATION; su cotejo automatizado de recuperación con CMS no está implementado. No reintentar ante ese informe.
+
+El Publisher formulario y otros publicadores omiten este guard: evitar envíos concurrentes para el mismo slug desde esas rutas.
 
 ## Evidencia
 
-- #108: paquete sintético completo, reserva durable, Hero 9679, destacada 9680, draft 9681. Readback verificó Gutenberg literal, slug, título, autor, categoría, etiquetas, subtítulo/crédito y Rank Math. Media readback verificó metadata por rol.
-- #109: replay del mismo paquete detenido en consulta de duplicados; no nuevas cargas ni reserva.
-- #110: POST vacío sin credenciales al webhook activo rechazado con HTTP 401.
-- #111 / hijo #112: lectura guard + CMS de la identidad del draft; postId 9681 coincide, medios reportados 9679/9680, retryPermitted=false. No verifica bytes de medios.
-- 77 pruebas locales Node; SDK validado con 48 nodos. Advertencias de credenciales del SDK corresponden a placeholders; la instalación usa credenciales existentes y no creó secretos nuevos.
-- Objetos sintéticos de pruebas permanecen como draft / medios de QA. Nunca publicarlos.
+- H101 #108: OPURO completo, draft9681; #109 replay bloqueado; #110 webhook anónimo401; #111/112 guard/CMS concordantes.
+- H102 #113: AMBOS, draft OPURO9685 y OPOL2771; Hero OPURO9683, destacada OPURO9684 y OPOL2770. Readback de ambos validó Gutenberg, autor, categorías, etiquetas, destacadas, metadata editorial y Rank Math; OPURO además Hero.
+- #114: OPOL solo y una imagen, draft2776; OPURO SKIPPED.
+- #115: replay AMBOS bloqueado antes de reserva/cargas.
+- #116: OPURO solo, draft9689; OPOL SKIPPED.
+- 81 pruebas locales Node. Grafo n8n actualizado sin advertencias. Resultado parcial probado con dobles localmente, no con fallo real provocado entre CMS.
+- Objetos sintéticos persisten; nunca publicarlos.
 
-## Fuentes reproducibles
+## Reproducción
 
-- `OPMX_ENTRADA_AUTOMATICA_OPURO_v1.json`: export sanitizado, inactivo y sin credenciales para revisión.
-- `OPMX_ENTRADA_AUTOMATICA_BORRADORES.n8n.js`: fuente SDK.
-- `tools/mcp-publisher/build-automatic-draft.mjs`: generador a partir de la referencia guardada.
-- `node tools/mcp-publisher/build-automatic-draft.mjs --check`.
-- `node --test tools/mcp-publisher/*.test.mjs`.
+Fuente actual: workflows/publisher/OPMX_ENTRADA_AUTOMATICA_DESTINOS_v2.json (sanitizada, inactiva y sin credenciales para revisión); generador tools/mcp-publisher/build-automatic-both.mjs; pruebas automatic-both.test.mjs. Los exports OPURO v1 y su SDK se conservan como historial de H101.
 
-Los exports no son una invitación a activar otra copia: reutilizar el workflow operativo identificado arriba y asignar credenciales sólo si se instala en otro entorno.
+```sh
+node tools/mcp-publisher/build-automatic-both.mjs --check
+node --test tools/mcp-publisher/*.test.mjs
+```
+
+Reutilizar el workflow operativo; no activar otra copia del export por accidente. La rama del PR contiene estos cambios; no declarar main actualizado ni CI remoto verde hasta verificarlo.
