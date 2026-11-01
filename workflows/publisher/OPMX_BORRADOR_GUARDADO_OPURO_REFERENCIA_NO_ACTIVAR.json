@@ -543,7 +543,7 @@
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const p=$('OPURO — Readback').first().json; return {json:{status:'DRAFT',target:'oxigenopuro',request_id:$('Preparar MASTER y binarios').first().json.request_id,post_id:p.id,slug:p.slug,edit_url:'https://cms.oxigenopuro.com.mx/wp-admin/post.php?post='+p.id+'&action=edit',warnings:['Los medios deben verificarse por separado.']}};"
+        "jsCode": "const p=$('OPURO — Readback').first().json; return {json:{status:'DRAFT',target:'oxigenopuro',request_id:$('Preparar MASTER y binarios').first().json.request_id,post_id:p.id,slug:p.slug,edit_url:'https://cms.oxigenopuro.com.mx/wp-admin/post.php?post='+p.id+'&action=edit',warnings:['No se cotejó el archivo byte a byte.']}};"
       }
     },
     {
@@ -665,6 +665,39 @@
       }
     },
     {
+      "id": "91b08a39-f2e5-66cf-cd24-5738cd70615e",
+      "name": "OPURO — Leer Hero",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        3824
+      ],
+      "parameters": {
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/media/' + $('OPURO — Subir HERO').first().json.id + '?context=edit' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "c2377469-41d6-c5d6-edb3-1c39034fb4bc",
+      "name": "OPURO — Verificar Hero",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const m=$json, c=$('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro; if(Number(m.id)!==Number($('OPURO — Subir HERO').first().json.id) || m.media_type!=='image' || !m.source_url || String(m.alt_text??'')!==String(c.alt_text??'') || String(m?.title?.raw??'')!==String(c.title??'') || String(m?.caption?.raw??'')!==String(c.caption??'') || String(m?.description?.raw??'')!==String(c.description??'')) throw new Error('Readback Hero no coincide; conciliación manual.'); return [{json:{status:'HERO_VERIFICADO'}}];"
+      }
+    },
+    {
       "id": "941a9566-16a9-c730-43de-29f973a042d8",
       "name": "GUARD — Iniciar destacada",
       "type": "n8n-nodes-base.httpRequest",
@@ -745,6 +778,39 @@
       ],
       "parameters": {
         "jsCode": "if ($json.status !== 'media_reported') throw new Error('Guard no confirmó media_reported; conciliación manual.'); return [{json:{status:'media_reported'}}];"
+      }
+    },
+    {
+      "id": "ba951694-c421-022a-149c-e54611c0d6bc",
+      "name": "OPURO — Leer destacada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        3824
+      ],
+      "parameters": {
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/media/' + $('OPURO — Subir DESTACADA').first().json.id + '?context=edit' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "0a221228-73ed-442f-b5e8-3dbf9b96ca5d",
+      "name": "OPURO — Verificar destacada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const m=$json, c=$('Validar y normalizar OPMX MASTER').first().json.canonical.images.featured_opuro; if(Number(m.id)!==Number($('OPURO — Subir DESTACADA').first().json.id) || m.media_type!=='image' || !m.source_url || String(m.alt_text??'')!==String(c.alt_text??'')) throw new Error('Readback destacada no coincide; conciliación manual.'); return [{json:{status:'DESTACADA_VERIFICADA'}}];"
       }
     },
     {
@@ -964,6 +1030,28 @@
       "main": [
         [
           {
+            "node": "OPURO — Leer Hero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Leer Hero": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Verificar Hero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Verificar Hero": {
+      "main": [
+        [
+          {
             "node": "GUARD — Iniciar destacada",
             "type": "main",
             "index": 0
@@ -1038,6 +1126,28 @@
       ]
     },
     "OPURO — Metadata DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Leer destacada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Leer destacada": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Verificar destacada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Verificar destacada": {
       "main": [
         [
           {
