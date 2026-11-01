@@ -8,7 +8,7 @@ const authOpts={endpoint:'https://issuer.example/introspect',clientId:'client',c
 test('OAuth valida sujeto, emisor, audiencia, alcance y expiración',async()=>{
  const auth=data=>createAuthenticator({...authOpts,fetchImpl:async()=>new Response(JSON.stringify(data))});
  assert.equal(await auth(active)('sample'),'user');
- for(const bad of [{...active,active:false},{...active,aud:'other'},{...active,scope:'read'},{...active,iss:'other'},{...active,exp:0}]) await assert.rejects(auth(bad)('sample'),/No autorizado/);
+ for(const bad of [{...active,active:false},{...active,aud:'other'},{...active,scope:'read'},{...active,iss:'other'},{...active,exp:0},{...active,nbf:2},{...active,nbf:'invalid'}]) await assert.rejects(auth(bad)('sample'),/No autorizado/);
 });
 test('n8n sólo confirma cuando todos los destinos están en borrador',async()=>{
  const result={status:'SUCCESS',mode:'DRAFT',summary:{opuro:'DRAFT',opol:'DRAFT'}};let sent;
