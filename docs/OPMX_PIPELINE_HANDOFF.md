@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — tabla real y pruebas SQL aisladas (2026-11-01)
+
+En la base dedicada del guard se creó `opmx_mcp_target_progress` con la migración de `target-progress.mjs`; no se modificó la base WordPress. Con la reserva sintética creada por la ejecución 39 se verificó en phpMyAdmin que INSERT SELECT inserta sólo la reserva correspondiente. En una transacción separada un segundo INSERT IGNORE sobre la misma clave insertó cero filas y produjo aviso 1062; UPDATE cambió una fila a reported con ID de prueba 123. ROLLBACK dejó cero filas en la tabla de avance. No se ejecutaron consultas simultáneas reales ni el código Node revisado contra MariaDB.
+
+Se preparó un paquete de prueba local `opmx-guard-progress-test.zip` con los seis archivos fuente y sin credenciales; SHA-256 `cdbe2b0bc64b00ee63042e934427690444aff077867e84c25fa1d7b827ad63e0`. NO se ha subido ni desplegado. Para validarlo en Hostinger se requiere autorización específica de carga por la política de interfaz gráfica; después probar autenticación, timeout, concurrencia y readback vía n8n antes de conectar cualquier escritura WordPress. No se cambió el Publisher activo ni se crearon notas. La referencia de despliegue anterior sigue operativa. No utilizar esta tabla como garantía para los demás publicadores.
+
 ## Avance — registro de escritura por destino (2026-11-01)
 
 En la rama del PR se preparó `target-progress.mjs` y la migración de tabla separada `opmx_mcp_target_progress`, junto a rutas autenticadas experimentales en el guard: inicio de escritura, registro de ID informado y consulta. El inicio sólo procede para destino previamente reservado y un inicio repetido se detiene. El registro del ID NO acredita que el post exista ni su estado; requiere lectura independiente de WordPress. Ninguna operación libera automáticamente reservas ni habilita reenvíos tras un resultado incierto. 44 pruebas locales Node pasan, con base simulada: no acreditan transacciones, concurrencia ni comportamiento de MariaDB real.
