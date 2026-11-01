@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — registro de escritura por destino (2026-11-01)
+
+En la rama del PR se preparó `target-progress.mjs` y la migración de tabla separada `opmx_mcp_target_progress`, junto a rutas autenticadas experimentales en el guard: inicio de escritura, registro de ID informado y consulta. El inicio sólo procede para destino previamente reservado y un inicio repetido se detiene. El registro del ID NO acredita que el post exista ni su estado; requiere lectura independiente de WordPress. Ninguna operación libera automáticamente reservas ni habilita reenvíos tras un resultado incierto. 44 pruebas locales Node pasan, con base simulada: no acreditan transacciones, concurrencia ni comportamiento de MariaDB real.
+
+No se ha creado la tabla, desplegado esta revisión, integrado Publisher ni creado borradores. La sesión phpMyAdmin mostraba inicio de sesión; el acceso desde la pantalla Hostinger no abrió una sesión verificable en esta revisión. Antes de usarse: validar la migración en la base dedicada, concurrencia real, conexión n8n, firma de los binarios, seguimiento de medios y readback exacto del post; la protección no cubre los otros publicadores ni operaciones manuales. No activar las rutas como solución completa.
+
 ## Avance — identificador estable en preflight aislado (2026-11-01)
 
 La copia inactiva sin nodos de escritura exige ahora `request_id` suministrado por el cliente antes de recibir el MASTER. Ejecución manual 38 rechazó su ausencia antes de consultar WordPress o reservar. Ejecución 39 completó el recorrido de preflight con MASTER y dos imágenes y devolvió ese identificador y la huella; se utilizó una copia transitoria y slug sintético, sin aprobar editorialmente ni publicar la nota. El cliente debe guardar el ID antes del envío. La referencia sanitizada está en `workflows/publisher/OPMX_PREFLIGHT_AISLADO_ID_ESTABLE_REFERENCIA_NO_ACTIVAR.json`: credenciales y webhookId retirados, no se ha probado su importación.
