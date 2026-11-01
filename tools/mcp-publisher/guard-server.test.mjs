@@ -53,3 +53,21 @@ test('limita la frecuencia incluso cuando falla la autenticación',async()=>{
   assert.equal((await fetch(url,{method:'POST'})).status,429);
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+test('rutas media requieren autenticación y nunca repiten una carga',async()=>{
+ let row=null;const db={async getConnection(){return {async execute(sql,args){
+  if(sql.startsWith('INSERT')){if(row)throw Object.assign(new Error(),{code:'ER_DUP_ENTRY'});row={status:'uploading',media_id:null};return [{affectedRows:1}]}
+  if(sql.startsWith('UPDATE')){if(!row||row.status!=='uploading')return [{affectedRows:0}];row={status:'reported',media_id:args[0]};return [{affectedRows:1}]}
+  if(sql.startsWith('SELECT'))return [[...(row?[row]:[])]];throw new Error('SQL inesperado');
+ },release(){}}}};
+ const server=createGuard({pool:db,secret});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try {const base=`http://127.0.0.1:${server.address().port}/v1/media/`;
+ const input={requestId:payload.requestId,slug:payload.slug,destination:'OPURO',role:'hero'};
+ const call=(path,body,token=secret)=>fetch(base+path,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(body)});
+ assert.equal((await call('begin',input,'bad')).status,401);assert.equal(row,null);
+ assert.equal((await call('begin',{...input,extra:true})).status,400);
+ assert.equal((await call('begin',input)).status,200);assert.equal((await call('begin',input)).status,409);
+ assert.equal((await call('report',{...input,mediaId:123})).status,200);
+ const status=await call('status',input);assert.deepEqual(await status.json(),{status:'reported',mediaId:'123',action:'manual_reconciliation'});
+ assert.equal((await call('report',{...input,mediaId:123})).status,409);
+ } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
