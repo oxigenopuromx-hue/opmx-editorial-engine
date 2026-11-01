@@ -8,6 +8,11 @@ export const schemaSql = `CREATE TABLE opmx_mcp_requests (
  result_json TEXT NULL,
  updated_at DATETIME(6) NOT NULL
 ) ENGINE=InnoDB`;
+export const targetSchemaSql = `CREATE TABLE opmx_mcp_targets (
+ target_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
+ request_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ INDEX request_target_owner (request_id)
+) ENGINE=InnoDB`;
 
 export function createMariaDbLedger(pool) {
   if (!pool || typeof pool.execute !== 'function') throw new Error('Pool MariaDB inválido');
@@ -16,6 +21,20 @@ export function createMariaDbLedger(pool) {
     if (out.affectedRows !== 1) throw new Error('Solicitud no disponible');
   }
   return {
+    async reserveTargets(id, keys) {
+      if(typeof pool.getConnection!=='function') throw new Error('Transacciones MariaDB no disponibles');
+      const connection=await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        for(const key of keys) await connection.execute('INSERT INTO opmx_mcp_targets (target_key,request_id) VALUES (?,?)',[key,id]);
+        await connection.commit();return true;
+      } catch(error) {
+        await connection.rollback();
+        if(error?.code==='ER_DUP_ENTRY' || error?.errno===1062) return false;
+        throw new Error('No se pudieron reservar los destinos');
+      } finally {connection.release();}
+    },
+    async releaseTargets(id) { await pool.execute('DELETE FROM opmx_mcp_targets WHERE request_id=?',[id]); },
     async getStatus(id) {
       if (!/^[A-Za-z0-9_-]{16,128}$/.test(id)) throw new Error('ID de solicitud inválido');
       const [rows] = await pool.execute('SELECT fingerprint,status,result_json FROM opmx_mcp_requests WHERE request_id=?',[id]);
