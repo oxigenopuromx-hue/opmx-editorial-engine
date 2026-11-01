@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Hallazgo Work II — subtítulo y crédito en ejecución histórica (2026-11-01)
+
+La ejecución histórica #9 del Publisher activo contenía subtítulo y crédito Hero en canonical, pero el readback de borrador 9671 registró `meta.oxpuro_editorial.subtitle` y `photo_credit` vacíos. Código del Core define ambos campos en `oxpuro_editorial`; el payload actual del Publisher no los asigna. Evidencia limitada a esa ejecución y momento; no se ha auditado su estado actual ni otras notas. No se ha decidido ni verificado el mapeo exacto de crédito o la preservación de opciones editoriales al escribir el objeto; resolver con el contrato y prueba aislada, sin inventar valores ni sobrescribir el objeto completo de notas existentes.
+
 ## Avance Work II — referencia OPURO de borrador con guard (2026-11-01)
 
 Se generó `workflows/publisher/OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json`, inactivo, saneado sin credenciales y sin nodos de publicación. Conecta preflight OPURO (consulta de slug, huella, reserva) → inicio durable de destino → inicio/reporte de Hero → inicio/reporte de destacada → creación y reporte de post → Rank Math → readback → validación de borrador. Fallos de guard cortan el camino. Las pruebas inspeccionan alcanzabilidad, ausencia de rutas de publicación, sintaxis de nodos Code y consistencia reproducible; 59 pruebas locales pasan. El generador `build-guarded-reference.mjs --check` no altera archivos.
