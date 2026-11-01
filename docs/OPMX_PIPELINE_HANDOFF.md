@@ -4,6 +4,9 @@
 
 ### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
 
+Acceso MySQL: con autorización, Hostinger recibió una regla limitada para la IP observada por HTTP desde n8n, y se guardó una credencial MySQL en n8n con SSL activado. La prueba devolvió acceso denegado e identificó una IP origen MySQL diferente a la IP HTTP; la regla anterior permanece habilitada y NO autoriza esa segunda IP. Esto demuestra que la IP de egreso puede depender del destino o el protocolo, no que sea fija. Conectividad autenticada, validación efectiva del cifrado y ejecución SQL desde n8n siguen sin comprobarse. No habilitar comodines ni relajar TLS. No se cambió el Publisher activo ni se publicaron notas.
+
+
 Base independiente del Publisher creada en Hostinger por autorización del usuario; incluye las tablas InnoDB `opmx_mcp_requests` y `opmx_mcp_targets` del prototipo, con claves primarias e índice. No se modificó la base WordPress. phpMyAdmin confirmó la creación. No existen aún datos de reservas y el workflow directo no usa estas tablas. Hostinger exige habilitar acceso remoto por IP; una consulta HTTP desde n8n observó una IP de salida, pero no se ha demostrado que sea la IP para conexiones MySQL ni que sea fija. No se ha habilitado acceso remoto ni guardado credencial MySQL en n8n. Verificar TLS, egress TCP, atomicidad con dos destinos y recuperación antes de usar la conexión. Las credenciales no se guardan en el repositorio.
 
 
