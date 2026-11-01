@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — rotación y conexión restablecida (2026-11-01)
+
+El usuario rotó contraseña MySQL y secreto del guard, actualizó las variables y la credencial Header Auth de n8n, y aplicó cambios en Hostinger. Diagnóstico n8n #60 tras contraseña y #61 tras secreto devolvieron HTTP 200 al consultar reserva sintética; identity unverified por ausencia de huella en la consulta. Acredita autenticación guard y lectura de base, no concurrencia ni integridad de identidad completa. No registrar los secretos. La incidencia de exposición de H-073 queda atendida según lo informado y comprobado por conectividad; no afecta la vulnerabilidad npm pendiente ni autoriza uso operativo sin QA.
+
 ## Avance Work II — rutas de medios reales, datos sintéticos (2026-11-01)
 
 El guard de prueba desplegado respondió por n8n y base dedicada: ejecución #55 inició escritura de destino (200 write_started); #56 inició Hero (200 upload_started); #57 rechazó repetición (409 already_started); #58 registró ID ficticio 456 (200 media_reported, verify_wordpress); #59 consultó ese ID (200 reported, manual_reconciliation). No se solicitó carga ni se accedió a WordPress: el ID 456 es ficticio y no acredita que exista un adjunto. Permanecen filas sintéticas de destino y medio en la base; no son datos editoriales. Las pruebas se ejecutaron secuencialmente; no prueban concurrencia real. El diagnóstico inactivo se restauró y verificó apuntando a /v1/reservations/status en modo lectura. Publisher activo no modificado.
