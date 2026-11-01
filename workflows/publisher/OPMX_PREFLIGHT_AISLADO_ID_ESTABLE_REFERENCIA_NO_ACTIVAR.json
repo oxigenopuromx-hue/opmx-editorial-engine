@@ -90,7 +90,7 @@
       "parameters": {
         "action": "hash",
         "type": "SHA256",
-        "value": "={{ JSON.stringify($('Validar y normalizar OPMX MASTER').first().json.canonical) }}",
+        "value": "={{ JSON.stringify({canonical:$('Validar y normalizar OPMX MASTER').first().json.canonical,hero_base64:($('Entrada de prueba protegida').first().json.body ?? $('Entrada de prueba protegida').first().json).hero_file.base64,featured_base64:($('Entrada de prueba protegida').first().json.body ?? $('Entrada de prueba protegida').first().json).featured_file.base64}) }}",
         "dataPropertyName": "fingerprint",
         "encoding": "hex"
       }
