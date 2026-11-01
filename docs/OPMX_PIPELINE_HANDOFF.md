@@ -4,6 +4,9 @@
 
 ### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
 
+Hostinger implementó `opmx-guard-test.zip` en publisher.oxigenopuro.com.mx y reportó despliegue completado; la raíz muestra respuesta unauthorized sin credenciales. Hay variables de base local y secreto configurados en Hostinger, y una credencial Header Auth guardada en n8n restringida al dominio Publisher. La revisión automática rechazó adjuntar esa credencial al workflow diagnóstico que aparece disponible por MCP, por el riesgo de exposición persistente; no se intentó sortear el rechazo. No se ejecutaron solicitudes autenticadas, no se probó el acceso a MySQL desde Node ni concurrencia del guard y no se modificó el Publisher activo. El guard está desplegado en el subdominio de prueba, pero no está conectado al flujo editorial y no debe considerarse listo. Se requiere aprobación y revisión del acceso MCP y un diseño que limite la ejecución del diagnóstico; no poner secretos en GitHub.
+
+
 En phpMyAdmin de la base dedicada se probó transacción real con dos reservas y rollback: conteo 2 antes y 0 después. Otra transacción comprobó el índice único: segunda inserción con misma clave afectó 0 filas y produjo advertencia duplicada, rollback dejó 0 filas. No es prueba de concurrencia ni del servicio Node. El guard ahora limita solicitudes por proceso y las pruebas específicas suman 6; todas las pruebas previas pasaron antes del último ajuste. Paquete de prueba preparado y documentado en tools/mcp-publisher/GUARD_DEPLOYMENT.md; no se ha desplegado ni configurado secretos. Se requiere validar runtime Hostinger, conexión MySQL local, HTTPS y pruebas de simultaneidad antes de integrar con WordPress. Hostinger documenta 127.0.0.1 como host local para app Node de la misma cuenta.
 
 
