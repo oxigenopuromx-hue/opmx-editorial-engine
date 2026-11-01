@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — dos peticiones guard simultáneas (2026-11-01)
+
+En identidad sintética nueva #81 reservó (201) y #82 inició destino (200). phpMyAdmin bloqueó la fila del destino con SELECT FOR UPDATE y SLEEP(35), comprobado con una fila y COMMIT. Dos ejecuciones reales de n8n hacia `/v1/media/begin` de ese mismo Hero se solaparon: #83 inició 21:35:05.819Z, #84 21:35:14.505Z; ambas constaron ejecutándose simultáneamente durante el bloqueo. Al liberarlo, #83 devolvió 200 upload_started a 21:35:27.328Z; #84 409 already_started a 21:35:27.334Z. Consulta MySQL encontró una única fila Hero uploading. Prueba limitada a dos peticiones en una instancia de guard bajo bloqueo forzado; no demuestra seguridad de otros publicadores ni recuperación tras pérdida de respuesta. No hubo cargas ni escritura WordPress. Registro sintético permanece en base dedicada. Workflow de diagnóstico restaurado a lectura e inactivo. Ver hitos H-087/H-088 Drive.
+
+Pendientes: reconciliación de resultados inciertos, exclusión con otros flujos, auditoría de dependencia alta, prueba de borrador Gutenberg y medios en WordPress y social; no activar referencia de publicación. La revisión automática anteriormente rechazó ejecutar un workflow que contenía nodos de escritura WordPress, incluso desconectados.
+
 ## Avance Work II — guard transaccional probado con MariaDB (2026-11-01)
 
 Con confirmación del usuario se desplegó en Hostinger `opmx-guard-transaccion-h086.zip` SHA256 3400bccf7f9a0988bd8cec62d2155c9a78b6f82b424e1282327ad6a8917e5aec; estado completado, 15:28 MX. n8n #72 comprobó autenticación y lectura HTTP 200. Reserva sintética #73 (201), inicio destino #74 (200). Dos inicios Hero #75/#76 devolvieron 200 y 409; empezaron con ~8 s de separación, por lo que son secuenciales, no prueba simultánea.
