@@ -17,3 +17,15 @@ Pruebas: Node.js 24 o superior; `node --test tools/mcp-publisher/*.test.mjs`.
 - Antes de producción: ejecutar una prueba completa con archivos reales y verificar borradores en cada WordPress, errores parciales, concurrencia, pérdida de respuesta y reconciliación. No activar publicación pública automática.
 
 El workflow de prueba n8n permanece inactivo. Los contratos y las instrucciones editoriales no se modifican.
+
+## Infraestructura Hostinger — auditoría 2026-11-01
+
+El panel muestra n8n como app administrada (2.45.6-1) y un plan Cloud Startup contratado que aún está en configuración. No se encontró un VPS en la sección VPS. No se ha configurado el plan ni creado una app.
+
+Hostinger documenta que Cloud Startup admite Node.js 24 y hasta 10 sitios Node.js, con límite de 120 s por solicitud. Es una opción potencial sin contratar otro plan, sujeta a terminar la configuración y a confirmar capacidad/dominio. https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/ y https://www.hostinger.com/support/hostinger-node-js-limits-for-web-and-cloud-plans/
+
+Hostinger describe MariaDB para planes web/cloud y remite a VPS para otros motores como SQLite: https://www.hostinger.com/es/support/1583226-que-sistema-de-gestion-de-bases-de-datos-se-utiliza-en-hostinger/. No asumir que el prototipo SQLite será apto en Cloud Startup; definir e implementar un almacén con transacciones y claim atómico y probar su durabilidad y concurrencia en el plan real. No usar la base WordPress de producción para pruebas.
+
+La autenticación OAuth de n8n existente es para su servidor MCP. Aún no se verificó que sirva para proteger el nuevo servidor ni que el proveedor implemente introspección compatible con `auth.mjs`. No reutilizar tokens con una audiencia distinta ni alterar validaciones para forzar compatibilidad. Un acceso temporal y revocable con privilegios mínimos debe configurarse sólo después de definir proveedor, metadata OAuth y el adaptador.
+
+El Publisher puede requerir más de 120 s. El servidor no debe depender de una única solicitud síncrona de 120 s: diseñar respuesta de aceptación, registro durable y consulta del resultado/reconciliación sin volver a ejecutar creación.
