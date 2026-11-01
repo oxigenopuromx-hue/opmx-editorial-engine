@@ -14,6 +14,10 @@ export function openRequestLedger(filename) {
   const insert = db.prepare("INSERT OR IGNORE INTO requests VALUES (?, ?, 'claimed', NULL, ?)");
   const finish = db.prepare('UPDATE requests SET status=?, result=?, updated_at=? WHERE request_id=? AND status=?');
   return {
+    getStatus(id) {
+      const row = get.get(id);
+      return row ? {status:row.status, result:row.result ? JSON.parse(row.result) : undefined} : null;
+    },
     claim(id, fingerprint) {
       if (!/^[A-Za-z0-9_-]{16,128}$/.test(id)) throw new Error('ID de solicitud inválido');
       const inserted = insert.run(id, fingerprint, new Date().toISOString()).changes === 1;
