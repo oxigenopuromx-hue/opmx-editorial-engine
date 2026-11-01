@@ -47,7 +47,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error}) {
       return end(result.status==='claimed'?201:409,result);
     } catch(error) {
       if (error?.message === 'Inicio de medio no confirmado') {
-        const allowed = ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED', 'OTHER'];
+        const allowed = ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED', 'WRITE_CONFLICT', 'OTHER'];
         const diagnostic = allowed.includes(error.diagnostic) ? error.diagnostic : 'OTHER';
         try { diagnosticLogger(`guard.media.begin: ${diagnostic}`); } catch { /* logging must not change fail-closed behavior */ }
       }
