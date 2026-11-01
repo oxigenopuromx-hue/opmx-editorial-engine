@@ -4,6 +4,11 @@
 
 ### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
 
+Preflight duplicados OPURO: la copia inactiva consulta REST autenticado de WordPress con status=any y slug exacto, sin escrituras. Ejecución 28 detectó una nota ya existente; ejecución 29, con slug artificial en una copia de prueba, no encontró coincidencia. La consulta es sólo preventiva: no ofrece exclusión atómica ni protege de solicitudes concurrentes, fallos parciales, variantes de slug, ediciones externas ni OPOL. La rama WordPress permanece desconectada. Referencia sanitizada para revisión: workflows/publisher/OPMX_PREFLIGHT_DIRECTO_OPURO_REFERENCIA_NO_ACTIVAR.json (sin credenciales, no importar para activar). Las credenciales n8n reales no se exportaron.
+
+Pendiente crítico para conexión directa: almacén transaccional dedicado accesible desde n8n, con claves únicas por destino+slug, transición durable antes de escritura, reconciliación ante incertidumbre y tratamiento de resultados parciales. Un almacén exclusivo de Node no protege llamadas que entran directamente en n8n. Hostinger muestra la opción de crear una base MySQL y un usuario; aún no se han creado, configurado ni probado conectividad o permisos de red. No usar la base WordPress existente. No reconectar escrituras hasta implementar y validar esta protección.
+
+
 Prueba nativa con datos reales: se desconectaron deliberadamente las dos ramas WordPress después de la validación en el workflow inactivo 8xQrN9gAfGSzvtpj, y se agregó una salida de preflight. Ejecución 26 envió el MASTER real de Binance y dos JPEG completos (371031 y 145597 bytes): n8n recibió y preparó ambos binarios; el validador rechazó correctamente CONTROL_EDITORIAL=REQUIERE_REVISION. Ejecución 27 usó una copia transitoria con ESTADO=LISTO exclusivamente para validar el transporte y el contrato: ambos nodos y el preflight finalizaron correctamente. El MASTER original no se modificó, no se declaró aprobado editorialmente, no se accedió a WordPress ni se crearon notas. Las ramas WordPress permanecen desconectadas como medida de prueba. La ejecución directa por n8n no usa el ledger del prototipo Node: falta idempotencia duradera y detección de duplicados en CMS antes de reconectar. Esta prueba desde Work no verifica la transferencia de archivos desde el otro chat del Motor ni un flujo real de publicación.
 
 
