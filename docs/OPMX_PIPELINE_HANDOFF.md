@@ -1,5 +1,13 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — mysql2 actualizado y verificado (2026-11-01)
+
+Con autorización se desplegó `opmx-guard-mysql2-h089.zip` SHA256 f9bd41a5385336c0ced68df14b9dc642fb9cfc5d48ca1f6a82a012d2e5f8cab3 en Hostinger; implementación 01a1990e-52ae-72ce-a756-ce1768e16ea3 completada 15:40 MX, Node 24. Registro de npm install: 12 paquetes añadidos, 13 auditados, found 0 vulnerabilities en ese momento. El ZIP fija mysql2 3.24.6, versión fuera del rango del aviso GHSA-3f6p-5ww8-9rcr; no se inspeccionó directamente el árbol instalado ni existe lockfile. No afirmar auditoría permanente ni ausencia de toda vulnerabilidad posible.
+
+n8n #85: lectura guard/base autenticada HTTP 200. #86: inicio featured sintético 200; #87: repetición 409. Contención real: phpMyAdmin bloqueó destino de prueba `opmx_dual_h088_20261101` con SELECT FOR UPDATE por 35 s y COMMIT; #88 y #89, para featured, se solaparon y constaron ejecutándose antes de la liberación. Tras el COMMIT #88 respondió 200 upload_started, #89 409 already_started; consulta SQL mostró una fila featured y una hero. No subió medios reales ni accedió a WordPress. Workflow diagnóstico restaurado a lectura e inactivo. Filas sintéticas persisten en ledger dedicado.
+
+Pendientes: lockfile y análisis continuo, conciliación de resultados inciertos, exclusión con otros publicadores, prueba integral aislada WordPress/Gutenberg/medios y redes. El rechazo automático anterior al workflow con nodos de escritura WP sigue vigente; no eludirlo. No se cambiaron DNS ni Publisher activo.
+
 ## Avance Work II — dependencia mysql2 de guard (2026-11-01)
 
 El guard desplegado H086 declara mysql2 3.14.5. Aviso oficial GitHub GHSA-3f6p-5ww8-9rcr, alto, afecta mysql2 <3.22.0: un servidor MySQL malicioso o intermediario capaz de alterar la conexión podría solicitar una autenticación que exponga la contraseña sin TLS. El guard conecta a 127.0.0.1:3306, lo que acota el escenario; no prueba compromiso. No se ha confirmado que sea la misma alerta alta del build de Hostinger. El registro también identifica GHSA-rgwj-5xj2-c3m3 (moderado, <=3.23.0 y requiere compresión; configuración actual no la habilita). Referencias: https://github.com/advisories/GHSA-3f6p-5ww8-9rcr y https://github.com/advisories/GHSA-rgwj-5xj2-c3m3.
