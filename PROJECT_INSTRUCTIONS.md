@@ -11,6 +11,7 @@ Antes de cada nota completa localiza y resuelve el archivo vigente de cada una d
 3. 04_CONTRATO_SALIDA_OPMX*.json
 4. CATEGORIAS_OPMX*.json
 5. 03_PROMPT_MAESTRO_OPMX*.txt
+6. 05_INSTRUCCION_GUTENBERG_ENRIQUECIDO_OPURO*.md
 
 Para cada familia debe resolverse EXACTAMENTE UN archivo vigente aplicando la REGLA UNIVERSAL DE DESCUBRIMIENTO.
 
