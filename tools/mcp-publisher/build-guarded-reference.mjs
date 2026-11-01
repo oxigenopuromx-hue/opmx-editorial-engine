@@ -9,6 +9,9 @@ const preNames=['Entrada de prueba protegida','Preparar MASTER y binarios','Vali
 const wpNames=['OPURO — Subir HERO','OPURO — Metadata HERO','OPURO — Subir DESTACADA','OPURO — Metadata DESTACADA','OPURO — Buscar categoría','OPURO — Resolver categoría','OPURO — Preparar etiquetas v1.13','OPURO — Etiquetas secuenciales v1.2.4','OPURO — Asegurar etiqueta v1.13','OPURO — Resolver etiqueta v1.13','OPURO — ¿Retry 503 etiqueta? v1.2.4','OPURO — Esperar retry etiqueta v1.2.4','OPURO — Retry etiqueta v1.2.4','OPURO — Consolidar etiquetas v1.13','OPURO — Crear borrador Gutenberg enriquecido','OPURO — Escribir Rank Math','OPURO — Readback','OPURO — Validar antes de publicar','Resultado OPURO — BORRADOR'];
 function pick(w,names) {return names.map(name=>{let n=w.nodes.find(x=>x.name===name);if(!n)throw Error('Falta '+name);return structuredClone(n);});}
 const nodes=[...pick(pre,preNames),...pick(src,wpNames)];
+// Keep the latest editorial validator from the Publisher reference, while
+// retaining the request-id preflight and duplicate checks from preflight.
+nodes[nodes.findIndex(n=>n.name==='Validar y normalizar OPMX MASTER')]=pick(src,['Validar y normalizar OPMX MASTER'])[0];
 const tplHttp=pre.nodes.find(n=>n.name==='OPMX — Reservar preflight');
 const tplCode=pre.nodes.find(n=>n.name==='OPMX — Verificar reserva');
 const input="requestId:$('Preparar MASTER y binarios').first().json.request_id,slug:$('Validar y normalizar OPMX MASTER').first().json.canonical.slug,destination:'OPURO'";
