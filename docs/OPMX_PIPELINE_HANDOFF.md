@@ -2,6 +2,11 @@
 
 ## Hito en preparación — integración ChatGPT → Publisher MCP (2026-11-01)
 
+### Diagnóstico OAuth — 2026-11-01
+
+La metadata pública OAuth de la instancia n8n se consultó mediante un workflow diagnóstico inactivo, ejecución manual 23: anuncia PKCE S256, registro dinámico y JWKS, pero no anuncia introspección. El validador preliminar del prototipo usa introspección, por lo que su compatibilidad con este proveedor no está demostrada. El prototipo ahora incorpora metadata de recurso protegido y challenge 401 con prueba local; no se ha conectado un proveedor de autorización ni un cliente real de ChatGPT. La conexión existente ChatGPT → n8n no equivale a autorización ChatGPT → Publisher.
+
+
 **Estado: prototipo en rama de PR, no integrado en main ni habilitado para producción.** El [PR #9](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/pull/9) contiene el código y pruebas bajo `tools/mcp-publisher/`; no sustituye los flujos vigentes mientras permanezca en borrador.
 
 - Hostinger: `publisher.oxigenopuro.com.mx` está en Cloud Startup con Node 24; despliega exclusivamente una aplicación temporal de mantenimiento que responde 503. No ejecuta el servidor MCP del PR. Hostinger creó registros DNS del subdominio. No se ha conectado base de datos ni proveedor OAuth.
