@@ -6,7 +6,7 @@ import {createMcpServer} from './server.mjs';
 test('MCP local: exige autorización, recibe archivos y evita duplicados',async t=>{
  const ledger=openRequestLedger(':memory:');let submitted=0;
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aN0AAAAASUVORK5CYII=','base64');
- const server=createMcpServer({ledger,authenticate:async token=>token==='ok'?'user-1':null,
+ const server=createMcpServer({ledger,resource:'https://publisher.example/mcp',issuer:'https://issuer.example',authenticate:async token=>token==='ok'?'user-1':null,
    prepareOptions:{allowHosts:['files.example'],fetchImpl:async()=>new Response(png)},
    start:async data=>{submitted++;assert.equal(data.PUBLICAR,false);return {executionId:'42'}},
    read:async()=>({state:'success',result:{status:'SUCCESS',mode:'DRAFT',summary:{opuro:'DRAFT',opol:'DRAFT'}}})});
@@ -15,7 +15,9 @@ test('MCP local: exige autorización, recibe archivos y evita duplicados',async 
  const url=`http://127.0.0.1:${server.address().port}/mcp`;
  const call=(data,authorization='Bearer ok')=>fetch(url,{method:'POST',headers:{authorization,'content-type':'application/json'},body:JSON.stringify(data)});
  const request=(method,params)=>({jsonrpc:'2.0',id:1,method,params});
- assert.equal((await call(request('tools/list'),'Bearer wrong')).status,401);
+ const unauthorized=await call(request('tools/list'),'Bearer wrong');assert.equal(unauthorized.status,401);assert.match(unauthorized.headers.get('www-authenticate'),/oauth-protected-resource/);
+ const metadata=await (await fetch(`http://127.0.0.1:${server.address().port}/.well-known/oauth-protected-resource/mcp`)).json();
+ assert.equal(metadata.resource,'https://publisher.example/mcp');assert.deepEqual(metadata.authorization_servers,['https://issuer.example']);
  let result=await (await call(request('tools/list'))).json();
  assert.deepEqual(result.result.tools[0]._meta['openai/fileParams'],['hero','destacada']);
  const file={file_id:'file-test',download_url:'https://files.example/x',mime_type:'image/png'};
