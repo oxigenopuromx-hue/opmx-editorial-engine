@@ -2,6 +2,10 @@
 
 ## Hito en preparación — integración ChatGPT → Publisher MCP (2026-11-01)
 
+### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
+
+La conexión OAuth del plugin n8n ya disponible se puede utilizar directamente; no requiere proveedor adicional ni servidor Node para la prueba técnica. Ejecución manual 25 en el workflow aislado 8xQrN9gAfGSzvtpj: se envió JSON mínimo con dos cadenas base64 sintéticas que contienen únicamente la firma PNG. El nodo Preparar MASTER y binarios procesó ambos campos binarios y el nodo de validación rechazó el MASTER vacío por CONTROL_EDITORIAL ausente. No alcanzó WordPress ni creó notas. Esto prueba el transporte de JSON y cadenas base64 en esa llamada, no la lectura automática de adjuntos del Motor ni la carga de imágenes reales completas. Confirmar tamaño máximo, disponibilidad de archivos en el entorno del Motor, compatibilidad de herramienta en ese chat, protección de duplicados y ejecución completa antes de habilitar la publicación. El workflow permanece inactivo; el Publisher v1.3.5 no se modificó. No almacenar binarios ni secretos en las instrucciones o repositorio.
+
 ### Diagnóstico OAuth — 2026-11-01
 
 Se verificó con ejecución manual 24 que el JWKS anunciado responde con claves públicas; no se ha verificado que firme los tokens MCP ni que admita al Publisher como audiencia. La documentación de n8n limita el recurso OAuth a las URLs configuradas de su servidor MCP; N8N_MCP_BASE_URL está diseñado para una URL alternativa del mismo servidor y no se ha cambiado. No reutilizar tokens emitidos para n8n como autorización del Publisher. La introspección simulada ahora también rechaza tokens cuyo nbf todavía no se cumple. Las 30 pruebas locales pasan. Pendiente: proveedor compatible con el recurso Publisher, SDK MCP, credenciales separadas hacia n8n y prueba real sin notas. No hay OAuth instalado ni configuración de producción cambiada.
