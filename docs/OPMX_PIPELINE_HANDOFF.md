@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — despliegue de prueba del guard de medios (2026-11-01)
+
+Con autorización, Hostinger desplegó opmx-guard-media-test.zip, SHA-256 716cccd0adfd5db1b09fe609ef8ef9496fc89726eb9fa78c043221b623bbc3a4; estado completado y actual 12:25 MX. La versión previa opmx-guard-progress-test.zip permanece en historial. Las rutas nuevas no se han probado aún; Publisher activo y WordPress no se modificaron. La tabla dedicada de medios existe y estaba vacía.
+
+ALERTA: la pantalla Hostinger de reimplementación devolvió automáticamente las variables de contraseña de base y secreto del guard en texto visible en la observación de la sesión. Considerar ambas credenciales expuestas y rotarlas nuevamente con participación del usuario antes de usar el servicio operativamente; actualizar sus valores dependientes, sin imprimirlos. Pendiente validar rutas con datos sintéticos, concurrencia, reconciliación y readback, e investigar el aviso previo de vulnerabilidad alta en npm.
+
 ## Avance Work II — paquete de prueba reproducible (2026-11-01)
 
 `tools/mcp-publisher/package-guard.py` construye el paquete sin secretos a partir de archivos versionados. El paquete `opmx-guard-media-test.zip` contiene guard-start, guard-server, direct-claim, target-progress, media-progress, package.json y server.js; SHA-256 716cccd0adfd5db1b09fe609ef8ef9496fc89726eb9fa78c043221b623bbc3a4. Dos construcciones locales produjeron la misma huella, ZIP validado. Es paquete temporal regenerable; no está cargado ni desplegado. La tabla dedicada media existe y está vacía.
