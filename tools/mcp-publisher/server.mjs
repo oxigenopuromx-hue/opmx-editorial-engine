@@ -52,7 +52,7 @@ export function createMcpServer({authenticate,ledger,start,read,prepareOptions,r
         const result=await queryDraft({ledger,requestId,read});
         return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result});
       }
-      const result=await startDraft({ledger,requestId,input,prepare:value=>prepareDraft(value,prepareOptions),start});
+      const result=await startDraft({ledger,requestId,input,prepare:value=>prepareDraft({...value,request_id:requestId},prepareOptions),start});
       return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:!['complete','pending'].includes(result.status)});
     } catch {return reply({content:[{type:'text',text:'No fue posible procesar la solicitud.'}],isError:true});}
   });
