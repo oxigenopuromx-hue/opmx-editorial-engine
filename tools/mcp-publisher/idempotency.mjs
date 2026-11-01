@@ -46,19 +46,19 @@ export function fingerprint(input) {
 }
 
 export async function runOnce({ledger, requestId, input, prepare, submit}) {
-  const state = ledger.claim(requestId, fingerprint(input));
+  const state = await ledger.claim(requestId, fingerprint(input));
   if (state.status === 'complete') return {status:'complete', result:state.result, replay:true};
   if (state.status !== 'new') return {status:'needs_reconciliation', replay:true};
   let payload;
   try { payload = await prepare(input); }
-  catch { ledger.failBeforeSend(requestId); return {status:'failed_before_send'}; }
+  catch { await ledger.failBeforeSend(requestId); return {status:'failed_before_send'}; }
   // Commit before dispatch: a crash/timeout thereafter has an unknown outcome.
-  ledger.markSent(requestId);
+  await ledger.markSent(requestId);
   let result;
   try { result = await submit(payload); }
   catch { return {status:'needs_reconciliation'}; }
   if (!result || result.status !== 'SUCCESS' || result.mode !== 'DRAFT') return {status:'needs_reconciliation'};
   const safeResult = {status:result.status, mode:result.mode, summary:result.summary, edit_url_opuro:result.edit_url_opuro ?? null, edit_url_opol:result.edit_url_opol ?? null};
-  ledger.complete(requestId, safeResult);
+  await ledger.complete(requestId, safeResult);
   return {status:'complete', result:safeResult, replay:false};
 }
