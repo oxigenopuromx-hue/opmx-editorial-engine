@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — referencia OPURO de borrador con guard (2026-11-01)
+
+Se generó `workflows/publisher/OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json`, inactivo, saneado sin credenciales y sin nodos de publicación. Conecta preflight OPURO (consulta de slug, huella, reserva) → inicio durable de destino → inicio/reporte de Hero → inicio/reporte de destacada → creación y reporte de post → Rank Math → readback → validación de borrador. Fallos de guard cortan el camino. Las pruebas inspeccionan alcanzabilidad, ausencia de rutas de publicación, sintaxis de nodos Code y consistencia reproducible; 59 pruebas locales pasan. El generador `build-guarded-reference.mjs --check` no altera archivos.
+
+ESTA REFERENCIA CONTIENE NODOS DE ESCRITURA WORDPRESS. No importar, activar ni ejecutar contra CMS real hasta revisar autenticación, conciliación, concurrencia, permiso y resultados parciales. No se ha importado ni probado ejecución n8n ni readback real. Estado DRAFT no prueba que los adjuntos reportados existan o tengan metadata correcta: requiere validación independiente de archivos y frontend. El guard no protege publicadores externos ni todas las carreras. El Publisher activo y WordPress no cambiaron; ningún artículo fue publicado.
+
 ## Avance Work II — readback editorial conservador (2026-11-01)
 
 Referencia sanitizada inactiva del Publisher amplía validación de draft: slug, autor, título raw, etiquetas, Gutenberg raw exacto y tres campos Rank Math, además de featured, Hero y categoría. Detiene el flujo ante diferencias y no declara borrador válido; prueba local Node 55/55 incluyendo mutaciones de campos. El cotejo exacto puede producir falsos negativos por transformaciones legítimas WordPress: no se ha probado contra WP/n8n y requiere contraste antes de activar. La referencia conserva nodos de escritura desconectados en el entorno de pruebas y NO se ha integrado al guard ni al Publisher activo. No se publicaron notas ni se cambió CMS. Pendiente integración, prueba nativa, concurrencia y conciliación; no considerar QA terminado.
