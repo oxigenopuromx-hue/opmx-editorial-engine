@@ -18,12 +18,26 @@ export function createGuard({pool,secret,diagnosticLogger=console.error}) {
     if(++requestCount>120){req.resume();res.setHeader('Retry-After','60');return end(429,{error:'rate_limited'});}
     const given=Buffer.from(req.headers.authorization??'');
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
-    if(req.method!=='POST'||!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status'].includes(req.url)) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url)) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
       for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){req.resume();return end(413,{error:'too_large'});}data+=chunk.toString('utf8');}
       const input=JSON.parse(data);
+      if(req.url==='/v1/recovery/status') {
+        if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='destination,fingerprint,requestId,slug' ||
+          typeof input.requestId!=='string' || !/^[A-Za-z0-9_-]{16,128}$/.test(input.requestId) ||
+          typeof input.slug!=='string' || input.slug.length>200 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(input.slug) ||
+          !['OPURO','OPOL'].includes(input.destination) || typeof input.fingerprint!=='string' || !/^[a-f0-9]{64}$/.test(input.fingerprint)) return end(400,{error:'invalid_request'});
+        const reservation=await inspectDirectReservation(pool,{requestId:input.requestId,fingerprint:input.fingerprint});
+        const observed={reservation};
+        if(reservation.status==='claimed' && reservation.identity==='matched') {
+          const identity={requestId:input.requestId,slug:input.slug,destination:input.destination};
+          observed.target=await inspectTargetProgress(pool,identity);
+          for(const role of input.destination==='OPURO'?['hero','featured']:['featured']) observed[role]=await inspectMediaUpload(pool,{...identity,role});
+        }
+        return end(200,{observed,action:'manual_reconciliation',retryPermitted:false,wordpressVerified:false,consistentSnapshot:false});
+      }
       if(req.url.startsWith('/v1/media/')) {
         const expectedKeys=req.url==='/v1/media/report'?'destination,mediaId,requestId,role,slug':'destination,requestId,role,slug';
         if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!==expectedKeys) return end(400,{error:'invalid_request'});
