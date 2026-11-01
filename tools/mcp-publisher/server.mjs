@@ -7,21 +7,29 @@ const statusTool = {
   name:'consultar_borrador_opmx', description:'Consulta el estado de una solicitud sin crear otra entrada.',
   inputSchema:{type:'object',properties:{request_id:{type:'string',minLength:16,maxLength:128,pattern:'^[A-Za-z0-9_-]+$'}},required:['request_id'],additionalProperties:false},
   annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false},
+  securitySchemes:[{type:'oauth2',scopes:['publisher.draft']}],
+  _meta:{securitySchemes:[{type:'oauth2',scopes:['publisher.draft']}]},
 };
 
 // This transport is experimental: OAuth discovery, network policy, and live
 // n8n integration must be implemented and tested before remote deployment.
 // Callers must supply an authenticate() implementation; no anonymous mode.
-export function createMcpServer({authenticate,ledger,start,read,prepareOptions}) {
+export function createMcpServer({authenticate,ledger,start,read,prepareOptions,resource,issuer}) {
   if (typeof authenticate !== 'function' || !ledger || typeof start !== 'function' || typeof read !== 'function') throw new Error('Falta configuración de autenticación o backend');
+  let resourceUrl, issuerUrl;
+  try {resourceUrl=new URL(resource);issuerUrl=new URL(issuer);} catch {throw new Error('Metadatos OAuth no configurados');}
+  if(resourceUrl.protocol!=='https:' || issuerUrl.protocol!=='https:' || resourceUrl.pathname!=='/mcp' || resourceUrl.search || resourceUrl.hash || resourceUrl.username || resourceUrl.password || issuerUrl.search || issuerUrl.hash || issuerUrl.username || issuerUrl.password) throw new Error('Metadatos OAuth inválidos');
+  const metadataUrl=new URL('/.well-known/oauth-protected-resource/mcp',resourceUrl.origin).href;
   return createServer(async (req,res) => {
     const send=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(body));};
+    if (req.url === '/.well-known/oauth-protected-resource/mcp' && req.method==='GET') return send(200,{resource:resourceUrl.href,authorization_servers:[issuerUrl.href.replace(/\/$/,'')],scopes_supported:['publisher.draft']});
     if (req.url !== '/mcp' || req.method !== 'POST') return send(404,{error:'not found'});
+    const unauthorized=()=>{res.setHeader('WWW-Authenticate',`Bearer resource_metadata="${metadataUrl}", scope="publisher.draft"`);return send(401,{error:'unauthorized'});};
     const header=req.headers.authorization;
-    if (typeof header !== 'string' || !/^Bearer [^\s]+$/.test(header)) return send(401,{error:'unauthorized'});
+    if (typeof header !== 'string' || !/^Bearer [^\s]+$/.test(header)) return unauthorized();
     let subject;
-    try { subject=await authenticate(header.slice(7)); } catch { return send(401,{error:'unauthorized'}); }
-    if (typeof subject !== 'string' || !subject) return send(401,{error:'unauthorized'});
+    try { subject=await authenticate(header.slice(7)); } catch { return unauthorized(); }
+    if (typeof subject !== 'string' || !subject) return unauthorized();
     const chunks=[]; let bytes=0;
     try {
       for await (const part of req) {bytes+=part.length; if(bytes>2*1024*1024) return send(413,{error:'request too large'}); chunks.push(part);}
