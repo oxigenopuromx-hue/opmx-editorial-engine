@@ -86,3 +86,21 @@ test('diagnóstico de contención no filtra datos y conserva respuesta incierta'
   assert.deepEqual(messages,['guard.media.begin: ER_LOCK_DEADLOCK','guard.media.begin: ER_LOCK_WAIT_TIMEOUT','guard.media.begin: WRITE_CONFLICT','guard.media.begin: WRITE_CONFLICT','guard.media.begin: OTHER']);
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+test('recuperación agregada es sólo lectura y exige identidad coincidente',async()=>{
+ const sqlSeen=[];let fingerprint=payload.fingerprint,fail=false;
+ const db={async getConnection(){return {async execute(sql){sqlSeen.push(sql);assert.match(sql,/^SELECT /);if(fail)throw new Error('dato privado');
+   if(sql.includes('FROM opmx_mcp_requests'))return [[{fingerprint,status:'claimed'}]];
+   if(sql.includes('FROM opmx_mcp_target_progress'))return [[{status:'writing',post_id:null}]];
+   if(sql.includes('FROM opmx_mcp_media_progress'))return [[{status:'uploading',media_id:null}]];
+   throw new Error('unexpected');},release(){}}}};
+ const server=createGuard({pool:db,secret});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try {
+  const url=`http://127.0.0.1:${server.address().port}/v1/recovery/status`,input={requestId:payload.requestId,slug:payload.slug,destination:'OPURO',fingerprint:payload.fingerprint};
+  const call=(body,token=secret)=>fetch(url,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(body)});
+  assert.equal((await call(input,'bad')).status,401);assert.equal(sqlSeen.length,0);
+  assert.equal((await call({...input,extra:true})).status,400);assert.equal(sqlSeen.length,0);
+  let response=await call(input);let body=await response.json();assert.equal(response.status,200);assert.equal(sqlSeen.length,4);assert.equal(body.observed.reservation.identity,'matched');assert.equal(body.observed.target.status,'writing');assert.equal(body.observed.hero.status,'uploading');assert.equal(body.observed.featured.status,'uploading');assert.equal(body.retryPermitted,false);assert.equal(body.wordpressVerified,false);assert.equal(body.consistentSnapshot,false);
+  fingerprint='b'.repeat(64);response=await call(input);body=await response.json();assert.equal(body.observed.reservation.status,'identity_mismatch');assert.deepEqual(Object.keys(body.observed),['reservation']);assert.equal(sqlSeen.length,5);assert.equal(body.retryPermitted,false);
+  fail=true;response=await call(input);assert.equal(response.status,503);assert.deepEqual(await response.json(),{error:'not_confirmed'});
+ } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
