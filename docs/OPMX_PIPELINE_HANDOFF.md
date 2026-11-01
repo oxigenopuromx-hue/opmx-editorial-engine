@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — subtítulo y crédito de Hero (2026-11-01)
+
+Contrastando un MASTER existente con Core OPURO, la referencia inactiva de creación de borrador ahora mapea `SEO.SUBTITULO` a `meta.oxpuro_editorial.subtitle` y `IMAGENES.HERO_OPURO.CREDITO` a `meta.oxpuro_editorial.photo_credit`; la leyenda sigue en `caption` del adjunto Hero. El readback exige ambos valores, y el validador rechaza tipos de crédito no textuales y textos demasiado largos. El generador de referencia guardada toma el validador actualizado y ambas referencias quedan regeneradas. 59 pruebas locales aprobadas, con dobles. No se ha validado el comportamiento real de sanitización WordPress ni la visualización de caption/crédito; comparación exacta puede rechazar cambios legítimos. No afecta contenido existente, no activado, ni se publicó nada.
+
 ## Hallazgo Work II — subtítulo y crédito en ejecución histórica (2026-11-01)
 
 La ejecución histórica #9 del Publisher activo contenía subtítulo y crédito Hero en canonical, pero el readback de borrador 9671 registró `meta.oxpuro_editorial.subtitle` y `photo_credit` vacíos. Código del Core define ambos campos en `oxpuro_editorial`; el payload actual del Publisher no los asigna. Evidencia limitada a esa ejecución y momento; no se ha auditado su estado actual ni otras notas. No se ha decidido ni verificado el mapeo exacto de crédito o la preservación de opciones editoriales al escribir el objeto; resolver con el contrato y prueba aislada, sin inventar valores ni sobrescribir el objeto completo de notas existentes.
