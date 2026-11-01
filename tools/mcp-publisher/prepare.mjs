@@ -61,12 +61,13 @@ async function download(file, {fetchImpl, allowHosts, maxBytes}) {
 
 export async function prepareDraft(input, {fetchImpl = fetch, allowHosts = [], maxBytes = 10 * 1024 * 1024} = {}) {
   if (!input || !input.master || typeof input.master !== 'object' || Array.isArray(input.master)) throw new Error('MASTER inválido');
+  if (typeof input.request_id !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(input.request_id)) throw new Error('request_id inválido');
   if (!['OPURO','OPOL','AMBOS'].includes(input.destino)) throw new Error('Destino inválido');
   if (input.destino !== 'OPOL' && !input.hero) throw new Error('Falta HERO');
   if (!input.destacada) throw new Error('Falta destacada');
   if (!Array.isArray(allowHosts) || !allowHosts.length) throw new Error('Orígenes de archivos no configurados');
   const featured_file = await download(input.destacada, {fetchImpl, allowHosts, maxBytes});
-  const result = {master: input.master, CREAR_EN: input.destino, PUBLICAR: false, featured_file};
+  const result = {request_id: input.request_id, master: input.master, CREAR_EN: input.destino, PUBLICAR: false, featured_file};
   if (input.destino !== 'OPOL') result.hero_file = await download(input.hero, {fetchImpl, allowHosts, maxBytes});
   return result;
 }
