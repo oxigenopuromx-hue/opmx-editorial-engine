@@ -17,7 +17,7 @@ Después consultar:
 - `changelog/` para cambios versionados
 
 ## Motor Editorial maestro
-El Motor Editorial OPMX mantiene además cinco familias maestras editoriales y contextos opcionales. Su resolución siempre es por versión semántica más alta; sufijos automáticos como `(1)`, `(2)` o `(3)` no cuentan como versión.
+El Motor Editorial OPMX mantiene además seis familias maestras editoriales y contextos opcionales. Su resolución siempre es por versión semántica más alta; sufijos automáticos como `(1)`, `(2)` o `(3)` no cuentan como versión.
 
 Familias:
 1. `01_OPMX_TEMPLATE_MAESTRO*.html`
@@ -25,8 +25,9 @@ Familias:
 3. `04_CONTRATO_SALIDA_OPMX*.json`
 4. `CATEGORIAS_OPMX*.json`
 5. `03_PROMPT_MAESTRO_OPMX*.txt`
+6. `05_INSTRUCCION_GUTENBERG_ENRIQUECIDO_OPURO*.md`
 
-Contextos opcionales: `05_CONTEXTO_EDITORIAL_*.json`. No constituyen una sexta familia universal y sólo se aplican cuando su scope/apply_when corresponde materialmente.
+Contextos opcionales: `05_CONTEXTO_EDITORIAL_*.json`. No constituyen una familia maestra universal y sólo se aplican cuando su scope/apply_when corresponde materialmente.
 
 La incorporación física de estos maestros al repositorio debe preservar exactamente sus archivos vigentes; no reconstruirlos desde documentación histórica. Mientras una familia no esté materializada en GitHub, la fuente maestra vigente del Project conserva autoridad editorial para esa familia.
 
