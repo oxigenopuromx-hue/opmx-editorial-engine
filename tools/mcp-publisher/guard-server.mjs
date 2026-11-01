@@ -1,6 +1,6 @@
 import {createServer} from 'node:http';
 import {timingSafeEqual} from 'node:crypto';
-import {reserveDirectPublication} from './direct-claim.mjs';
+import {reserveDirectPublication,inspectDirectReservation} from './direct-claim.mjs';
 
 const MAX_BODY=4096;
 export function createGuard({pool,secret}) {
@@ -16,12 +16,17 @@ export function createGuard({pool,secret}) {
     if(++requestCount>120){req.resume();res.setHeader('Retry-After','60');return end(429,{error:'rate_limited'});}
     const given=Buffer.from(req.headers.authorization??'');
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
-    if(req.method!=='POST'||req.url!=='/v1/reservations') {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||!['/v1/reservations','/v1/reservations/status'].includes(req.url)) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
       for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){req.resume();return end(413,{error:'too_large'});}data+=chunk.toString('utf8');}
       const input=JSON.parse(data);
+      if(req.url==='/v1/reservations/status') {
+        if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='fingerprint,requestId') return end(400,{error:'invalid_request'});
+        const result=await inspectDirectReservation(pool,input);
+        return end(200,result);
+      }
       if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='destinations,fingerprint,requestId,slug') return end(400,{error:'invalid_request'});
       const result=await reserveDirectPublication(pool,input);
       return end(result.status==='claimed'?201:409,result);
