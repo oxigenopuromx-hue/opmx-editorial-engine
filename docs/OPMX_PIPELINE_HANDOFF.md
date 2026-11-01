@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — revisión tras cambio de contraseña (2026-11-01)
+
+El usuario indicó haber cambiado la contraseña de la base dedicada y actualizado el entorno. Ejecución de diagnóstico 47 devolvió HTTP 200 y lectura de la reserva sintética. Esa lectura no prueba por sí sola que el proceso haya reiniciado o que una conexión nueva use la contraseña nueva: el historial de Hostinger aún muestra como último despliegue el paquete de las 11:35. Verificar conexión con proceso reiniciado tras los cambios, sin revelar secretos. Pendiente rotar `OPMX_GUARD_SECRET` en Hostinger y valor Authorization de la credencial Header Auth en n8n, coordinados por el usuario; aplicar/reiniciar el servicio y validar. Publisher editorial no modificado.
+
 ## Avance — huella de imágenes en preflight aislado (2026-11-01)
 
 En el workflow inactivo `8ufo4fYPAc7ObNVC` la huella ahora incluye el canonical y ambas cadenas base64 de imágenes enviadas. Ejecución manual 45 completó preflight OPURO con copia transitoria y archivos reales; ejecución 46 conservó solicitud y contenido pero sustituyó HERO por la destacada: produjo otra huella y la reserva rechazó el reenvío con 409. No hubo escritura WordPress y el paquete original sigue REQUIERE_REVISION. Las cadenas base64 de la solicitud se incluyen en su codificación exacta, no es una normalización universal por bytes. La referencia sanitizada actualizada se encuentra en `workflows/publisher/OPMX_PREFLIGHT_AISLADO_ID_ESTABLE_REFERENCIA_NO_ACTIVAR.json`; su importación sigue sin probar. Hay nuevas reservas sintéticas permanentes.
