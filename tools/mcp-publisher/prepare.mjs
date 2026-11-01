@@ -22,7 +22,8 @@ export const toolDescriptor = {
     required: ['request_id', 'master', 'destino', 'destacada'], additionalProperties: false,
   },
   annotations: {readOnlyHint: false, destructiveHint: false, openWorldHint: false},
-  _meta: {'openai/fileParams': ['hero', 'destacada']},
+  securitySchemes: [{type:'oauth2',scopes:['publisher.draft']}],
+  _meta: {'openai/fileParams': ['hero', 'destacada'],securitySchemes:[{type:'oauth2',scopes:['publisher.draft']}]},
 };
 
 function imageType(buffer) {
