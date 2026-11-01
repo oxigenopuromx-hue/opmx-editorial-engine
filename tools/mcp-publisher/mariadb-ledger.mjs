@@ -16,6 +16,12 @@ export function createMariaDbLedger(pool) {
     if (out.affectedRows !== 1) throw new Error('Solicitud no disponible');
   }
   return {
+    async getStatus(id) {
+      if (!/^[A-Za-z0-9_-]{16,128}$/.test(id)) throw new Error('ID de solicitud inválido');
+      const [rows] = await pool.execute('SELECT fingerprint,status,result_json FROM opmx_mcp_requests WHERE request_id=?',[id]);
+      const row = rows[0];
+      return row ? {status:row.status, result:row.result_json ? JSON.parse(row.result_json) : undefined} : null;
+    },
     async claim(id, fingerprint) {
       if (!/^[A-Za-z0-9_-]{16,128}$/.test(id) || !/^[a-f0-9]{64}$/.test(fingerprint)) throw new Error('ID o huella inválido');
       let inserted = true;
