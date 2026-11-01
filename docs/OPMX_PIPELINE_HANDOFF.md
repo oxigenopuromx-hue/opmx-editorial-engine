@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — prueba SQL de medios (2026-11-01)
+
+Se creó opmx_mcp_media_progress en la base dedicada del guard (no WordPress). En una transacción de phpMyAdmin con una reserva sintética existente se insertó inicio de destino y luego una Hero; un segundo INSERT IGNORE de la misma clave insertó cero filas y avisó duplicado 1062; SELECT arrojó una fila Hero y ROLLBACK revirtió los cambios. Una lectura posterior confirmó cero filas en la tabla media. Esto verifica el SQL y clave única en una transacción, NO solicitudes concurrentes, código Node nuevo, readback WordPress ni el despliegue de las rutas. La tabla queda creada y vacía. El servicio guard activo sigue en su versión anterior, sin rutas media; el Publisher activo no cambió.
+
+Pendiente empaquetar de forma reproducible y probar la versión nueva en entorno aislado y con concurrencia real, integrar n8n sin exposición de credenciales, reconciliar y comprobar los medios en WordPress antes de permitir una prueba de borrador.
+
 ## Avance Work II — seguimiento experimental de medios (2026-11-01)
 
 En esta rama se agregó `media-progress.mjs` con migración dedicada InnoDB y endpoints experimentales del guard `/v1/media/begin`, `/v1/media/report`, `/v1/media/status`. La identidad incluye destino y rol: Hero y destacada tienen registro independiente. Se exige inicio durable del destino; duplicados o estado incierto requieren conciliación manual y el ID informado exige readback WordPress. 54 pruebas Node locales pasan con base simulada; no prueban SQL real ni concurrencia distribuida. NO está desplegado, la tabla NO se creó, no está integrado en n8n y no debe usarse en producción. La migración corresponde sólo a la base dedicada del guard, nunca WordPress.
