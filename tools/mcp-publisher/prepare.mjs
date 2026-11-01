@@ -39,7 +39,9 @@ async function download(file, {fetchImpl, allowHosts, maxBytes}) {
   try { url = new URL(file.download_url); } catch { throw new Error('URL de archivo inválida'); }
   if (url.protocol !== 'https:' || url.username || url.password || url.port || !allowHosts.includes(url.hostname)) throw new Error('Origen de archivo no autorizado');
   // Reject redirects: signed URLs must not be forwarded to a different origin.
-  const response = await fetchImpl(url.href, {redirect:'error', signal: AbortSignal.timeout(15000)});
+  let response;
+  try { response = await fetchImpl(url.href, {redirect:'error', signal: AbortSignal.timeout(15000)}); }
+  catch { throw new Error('No fue posible descargar el archivo'); }
   if (!response.ok || !response.body) throw new Error('No fue posible descargar el archivo');
   const length = response.headers.get('content-length');
   if (length && (!/^\d+$/.test(length) || Number(length) > maxBytes)) throw new Error('Archivo demasiado grande');
