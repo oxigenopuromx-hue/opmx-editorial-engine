@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — prueba de solapamiento real (2026-11-01)
+
+En la base dedicada, phpMyAdmin inició una transacción sintética e insertó una fila `featured` para una reserva de prueba; mantuvo el lock con SLEEP(20) y luego COMMIT. El SELECT inició 18:45:45 UTC y tardó 20.0004 s; durante ese intervalo n8n inició la ejecución #64 a las 18:45:53 UTC contra `/v1/media/begin` para la misma identidad. El nodo esperó 11.945 s y devolvió 503 `not_confirmed` a las 18:46:05, no 409. La lectura posterior mostró dos filas sintéticas totales: una Hero `reported` previa y una featured `uploading`; sólo una por rol. El 503 es fallo cerrado que exige conciliación, NO confirmación de duplicado ni permiso de reintento. Causa exacta de 503 y manejo bajo contención no comprobados; no afirmar prueba integral de concurrencia de solicitudes n8n ni seguridad global. Queda fila featured sintética permanente, sin archivo WordPress.
+
+El workflow diagnóstico inactivo fue restaurado a /v1/reservations/status y timeout 10 s. No se ejecutó escritura WordPress ni se publicó. Pendiente investigar 503, reconciliación y readback; verificar carreras entre workflows y otros publicadores.
+
 ## Avance Work II — validación de readback en n8n sin conexiones (2026-11-01)
 
 Workflow inactivo `WanHEnbEXVulmaTL`, proyecto personal OXÍGENO PURO, contiene exclusivamente disparador manual y siete nodos Code con datos ficticios, sin credenciales, HTTP, WordPress ni efectos editoriales. Usa literalmente el código de validación del Publisher. Ejecución #62 pasó con título, subtítulo, crédito, Gutenberg, Hero, destacada, autor, taxonomía y SEO sintéticos. Ejecución #63 con crédito omitido falló como se esperaba con crédito de Hero no coincide; se restauró el fixture válido. La referencia SDK reproducible `workflows/publisher/OPMX_QA_READBACK_SIMULADO.n8n.js` quedó en GitHub. n8n señala advertencia visual por ocho nodos sin agrupar; es un fixture intencional con nombres originales para resolver referencias por nodo, no afecta la prueba.
