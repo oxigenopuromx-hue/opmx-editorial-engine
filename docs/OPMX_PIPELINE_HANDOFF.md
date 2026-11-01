@@ -1,5 +1,15 @@
 # OPMX Pipeline — Handoff maestro
 
+## Estado más reciente — preflight aislado OPURO (2026-11-01)
+
+La ejecución manual 36 del workflow inactivo aislado `8ufo4fYPAc7ObNVC`, que contiene nueve nodos y ningún nodo de escritura WordPress, completó la validación de un MASTER y dos JPEG completos, GET preventivo del slug, y reserva autenticada en guard y MySQL local. Para la prueba se usó una copia transitoria con slug sintético y ESTADO=LISTO; el MASTER original permanece REQUIERE_REVISION y no se publicó ni se editó ninguna entrada. La ejecución 37 repitió el slug con otro identificador y fue rechazada por el guard con HTTP 409 conflict_or_replay. Son pruebas desde Work: no acreditan transferencia de adjuntos desde el chat del Motor ni publicación de borradores.
+
+El workflow aislado está inactivo y disponible por MCP para pruebas; incluye credenciales restringidas para consulta WordPress y reserva, por lo que debe tratarse como capacidad sensible. Las reservas de prueba permanecen en la base. El Publisher activo no se modificó. La revisión automática rechazó ejecutar la copia anterior que contenía nodos de escritura incluso desconectados; se utilizó una alternativa materialmente más segura sin esos nodos.
+
+Pendientes antes de usarlo para publicar: diseñar y probar reconciliación y recuperación segura de reservas ante fallos o respuestas inciertas, integración al Publisher real, OPOL, detección de duplicados y carreras fuera del guard, y prueba desde el Project del Motor. Una reserva no debe liberarse ni reintentarse automáticamente ante incertidumbre. El guard no protege otros flujos de publicación que no pasen por él. No activar ni fusionar el PR como solución completa hasta validar el recorrido.
+
+Los párrafos siguientes son **registro histórico** y describen estados vigentes en su momento; cuando se contradicen, prevalece este estado más reciente.
+
 ## Hito en preparación — integración ChatGPT → Publisher MCP (2026-11-01)
 
 ### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
