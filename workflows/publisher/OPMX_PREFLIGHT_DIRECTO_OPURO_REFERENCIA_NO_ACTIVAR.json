@@ -1,5 +1,5 @@
 {
-  "name": "OPMX — Referencia preflight aislado OPURO — NO ACTIVAR",
+  "name": "OPMX — Referencia preflight OPURO — NO ACTIVAR",
   "active": false,
   "nodes": [
     {
@@ -91,7 +91,59 @@
         3200
       ],
       "parameters": {
-        "jsCode": "const slug=$('Validar y normalizar OPMX MASTER').first().json.canonical.slug; const rows=$input.all().map(x=>x.json).flatMap(x=>Array.isArray(x)?x:[x]); if(rows.some(x=>x?.slug===slug && Number(x.id)>0)) throw new Error('Posible duplicado OPURO: ya existe una nota con ese slug.'); return [{json:{status:'SIN_COINCIDENCIA_EXACTA',slug,advertencia:'Lectura preliminar: no bloquea ejecuciones simultáneas'}}];"
+        "jsCode": "const v=$('Validar y normalizar OPMX MASTER').first().json; if(!v.execution?.create_opuro || v.execution?.create_opol) throw new Error('Preflight temporal: sólo admite OPURO.'); const slug=v.canonical.slug; const rows=$input.all().map(x=>x.json).flatMap(x=>Array.isArray(x)?x:[x]); if(rows.some(x=>x?.slug===slug && Number(x.id)>0)) throw new Error('Posible duplicado OPURO: ya existe una nota con ese slug.'); return [{json:{status:'SIN_COINCIDENCIA_EXACTA',slug}}];"
+      }
+    },
+    {
+      "id": "f56fdf5b-d98b-4450-a1bf-78ec8cf902ef",
+      "name": "OPMX — Generar huella de prueba",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        3200
+      ],
+      "parameters": {
+        "action": "hash",
+        "type": "SHA256",
+        "value": "={{ JSON.stringify($('Validar y normalizar OPMX MASTER').first().json.canonical) }}",
+        "dataPropertyName": "fingerprint",
+        "encoding": "hex"
+      }
+    },
+    {
+      "id": "d850d09d-c378-473d-ba49-4217c9b5a89f",
+      "name": "OPMX — Reservar preflight",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1650,
+        3200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/reservations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {requestId:'opmx_request_execution_'+$execution.id, fingerprint:$json.fingerprint, slug:$('Validar y normalizar OPMX MASTER').first().json.canonical.slug, destinations:['OPURO']} }}",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "32542ade-57dc-49ed-9feb-f23e963e5da7",
+      "name": "OPMX — Verificar reserva",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        3200
+      ],
+      "parameters": {
+        "jsCode": "if ($json.status !== 'claimed') throw new Error('Reserva no confirmada: se detiene el flujo.'); return [{json:{status:'RESERVA_CONFIRMADA'}}];"
       }
     }
   ],
@@ -144,6 +196,39 @@
       "main": [
         [
           {
+            "node": "OPMX — Generar huella de prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPMX — Generar huella de prueba": {
+      "main": [
+        [
+          {
+            "node": "OPMX — Reservar preflight",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPMX — Reservar preflight": {
+      "main": [
+        [
+          {
+            "node": "OPMX — Verificar reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPMX — Verificar reserva": {
+      "main": [
+        [
+          {
             "node": "FIN — preflight sin escrituras",
             "type": "main",
             "index": 0
@@ -157,6 +242,6 @@
     "availableInMCP": false
   },
   "meta": {
-    "description": "Referencia sanitizada: no activar; asignar credencial manualmente, reemplazar webhook path y revisar. Sólo consulta, no garantiza exclusión concurrente."
+    "description": "Referencia sanitizada; no activar; contiene POST al servicio de reservas; requiere nueva credencial y webhook de prueba. Sólo OPURO; no publica."
   }
 }
