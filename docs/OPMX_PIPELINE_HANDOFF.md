@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — validación de readback en n8n sin conexiones (2026-11-01)
+
+Workflow inactivo `WanHEnbEXVulmaTL`, proyecto personal OXÍGENO PURO, contiene exclusivamente disparador manual y siete nodos Code con datos ficticios, sin credenciales, HTTP, WordPress ni efectos editoriales. Usa literalmente el código de validación del Publisher. Ejecución #62 pasó con título, subtítulo, crédito, Gutenberg, Hero, destacada, autor, taxonomía y SEO sintéticos. Ejecución #63 con crédito omitido falló como se esperaba con crédito de Hero no coincide; se restauró el fixture válido. La referencia SDK reproducible `workflows/publisher/OPMX_QA_READBACK_SIMULADO.n8n.js` quedó en GitHub. n8n señala advertencia visual por ocho nodos sin agrupar; es un fixture intencional con nombres originales para resolver referencias por nodo, no afecta la prueba.
+
+Prueba limitada al validador en runtime n8n con respuestas simuladas: no demuestra serialización real, flujo guardado completo, WordPress, medios o publicación; falta revisar que WP entregue realmente esos campos y preservar separación Hero/destacada. Publisher activo y CMS sin cambios; no publicar nota de prueba.
+
 ## Avance Work II — subtítulo y crédito de Hero (2026-11-01)
 
 Contrastando un MASTER existente con Core OPURO, la referencia inactiva de creación de borrador ahora mapea `SEO.SUBTITULO` a `meta.oxpuro_editorial.subtitle` y `IMAGENES.HERO_OPURO.CREDITO` a `meta.oxpuro_editorial.photo_credit`; la leyenda sigue en `caption` del adjunto Hero. El readback exige ambos valores, y el validador rechaza tipos de crédito no textuales y textos demasiado largos. El generador de referencia guardada toma el validador actualizado y ambas referencias quedan regeneradas. 59 pruebas locales aprobadas, con dobles. No se ha validado el comportamiento real de sanitización WordPress ni la visualización de caption/crédito; comparación exacta puede rechazar cambios legítimos. No afecta contenido existente, no activado, ni se publicó nada.
