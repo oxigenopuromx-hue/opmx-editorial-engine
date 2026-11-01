@@ -36,4 +36,8 @@ for(const name of ['OPURO — Etiquetas secuenciales v1.2.4','OPURO — Asegurar
 const tail=['OPURO — Crear borrador Gutenberg enriquecido','GUARD — Reportar post','GUARD — Verificar reporte post','OPURO — Escribir Rank Math','OPURO — Readback','OPURO — Validar antes de publicar','Resultado OPURO — BORRADOR'];
 for(let i=0;i<tail.length-1;i++)link(tail[i],tail[i+1]);
 const result={name:'OPMX — REFERENCIA GUARDED OPURO — NO ACTIVAR',nodes,connections:edges,active:false,settings:{executionOrder:'v1'},tags:[]};
-writeFileSync(root+'OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json',JSON.stringify(result,null,2)+'\n');
+const outputPath=root+'OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json';
+const generated=JSON.stringify(result,null,2)+'\n';
+if(process.argv.includes('--check')) {
+  if(readFileSync(outputPath,'utf8')!==generated) throw new Error('La referencia guardada no coincide con el generador');
+} else writeFileSync(outputPath,generated);
