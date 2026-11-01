@@ -4,6 +4,8 @@
 
 ### Diagnóstico OAuth — 2026-11-01
 
+Se verificó con ejecución manual 24 que el JWKS anunciado responde con claves públicas; no se ha verificado que firme los tokens MCP ni que admita al Publisher como audiencia. La documentación de n8n limita el recurso OAuth a las URLs configuradas de su servidor MCP; N8N_MCP_BASE_URL está diseñado para una URL alternativa del mismo servidor y no se ha cambiado. No reutilizar tokens emitidos para n8n como autorización del Publisher. La introspección simulada ahora también rechaza tokens cuyo nbf todavía no se cumple. Las 30 pruebas locales pasan. Pendiente: proveedor compatible con el recurso Publisher, SDK MCP, credenciales separadas hacia n8n y prueba real sin notas. No hay OAuth instalado ni configuración de producción cambiada.
+
 La metadata pública OAuth de la instancia n8n se consultó mediante un workflow diagnóstico inactivo, ejecución manual 23: anuncia PKCE S256, registro dinámico y JWKS, pero no anuncia introspección. El validador preliminar del prototipo usa introspección, por lo que su compatibilidad con este proveedor no está demostrada. El prototipo ahora incorpora metadata de recurso protegido y challenge 401 con prueba local; no se ha conectado un proveedor de autorización ni un cliente real de ChatGPT. La conexión existente ChatGPT → n8n no equivale a autorización ChatGPT → Publisher.
 
 
