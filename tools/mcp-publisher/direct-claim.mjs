@@ -1,5 +1,19 @@
 import {createHash} from 'node:crypto';
 
+// Read-only reconciliation: an absent record is never permission to retry a
+// WordPress write. The original worker might still be running or have timed out.
+export async function inspectDirectReservation(pool, {requestId, fingerprint}) {
+  if (!/^[A-Za-z0-9_-]{16,128}$/.test(requestId) || !/^[a-f0-9]{64}$/.test(fingerprint)) throw new Error('Solicitud inválida');
+  const conn = await pool.getConnection();
+  try {
+    const [rows] = await conn.execute('SELECT fingerprint,status,updated_at FROM opmx_mcp_requests WHERE request_id=?', [requestId]);
+    if (!rows.length) return {status:'not_found',action:'manual_reconciliation'};
+    if (rows[0].fingerprint !== fingerprint) return {status:'identity_mismatch',action:'manual_reconciliation'};
+    return {status:rows[0].status,action:'manual_reconciliation'};
+  } catch { throw new Error('Resultado de consulta desconocido'); }
+  finally { conn.release(); }
+}
+
 // Experimental: reserve an entire request and every destination in one InnoDB
 // transaction. Failure after commit must never cause automatic resubmission.
 export async function reserveDirectPublication(pool, {requestId, fingerprint, slug, destinations}) {
