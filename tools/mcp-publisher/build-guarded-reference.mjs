@@ -43,6 +43,20 @@ for(let i=0;i<chain.length-1;i++)link(chain[i],chain[i+1]);
 for(const name of ['OPURO — Etiquetas secuenciales v1.2.4','OPURO — Asegurar etiqueta v1.13','OPURO — Resolver etiqueta v1.13','OPURO — ¿Retry 503 etiqueta? v1.2.4','OPURO — Esperar retry etiqueta v1.2.4','OPURO — Retry etiqueta v1.2.4','OPURO — Consolidar etiquetas v1.13'])edges[name]=structuredClone(src.connections[name]);
 const tail=['OPURO — Crear borrador Gutenberg enriquecido','GUARD — Reportar post','GUARD — Verificar reporte post','OPURO — Escribir Rank Math','OPURO — Readback','OPURO — Validar antes de publicar','Resultado OPURO — BORRADOR'];
 for(let i=0;i<tail.length-1;i++)link(tail[i],tail[i+1]);
+// Preparation only: errors after a potentially committed write lead to a
+// read-only subworkflow. This is an installation-specific ID; review ownership,
+// permissions and the child workflow before importing. Never activate this draft.
+const recoveryInput='OPMX — Preparar conciliación';
+const recoveryCall='OPMX — Consultar conciliación';
+const inputNode=structuredClone(tplCode);
+inputNode.id=id(recoveryInput); inputNode.name=recoveryInput;
+inputNode.parameters.jsCode="const requestId=$('Preparar MASTER y binarios').first().json.request_id, slug=$('Validar y normalizar OPMX MASTER').first().json.canonical.slug, fingerprint=$('OPMX — Generar huella de prueba').first().json.fingerprint; if(typeof requestId!=='string'||typeof slug!=='string'||typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint)) throw new Error('Identidad incompleta: conciliación manual'); return [{json:{requestId,slug,destination:'OPURO',fingerprint}}];";
+nodes.push(inputNode, {id:id(recoveryCall),name:recoveryCall,type:'n8n-nodes-base.executeWorkflow',typeVersion:1.4,position:[2800,1200],parameters:{source:'database',workflowId:{__rl:true,mode:'id',value:'C4hk6fQQomueYC8f'},mode:'once',options:{waitForSubWorkflow:true}}});
+for(const name of ['OPURO — Subir HERO','GUARD — Reportar Hero','OPURO — Metadata HERO','OPURO — Subir DESTACADA','GUARD — Reportar destacada','OPURO — Metadata DESTACADA','OPURO — Crear borrador Gutenberg enriquecido','GUARD — Reportar post','OPURO — Escribir Rank Math']) {
+ const n=nodes.find(x=>x.name===name); if(!n || !edges[name]?.main?.[0]) throw new Error('Falta conexión '+name);
+ n.onError='continueErrorOutput'; edges[name].main[1]=[{node:recoveryInput,type:'main',index:0}];
+}
+link(recoveryInput,recoveryCall);
 const result={name:'OPMX — REFERENCIA GUARDED OPURO — NO ACTIVAR',nodes,connections:edges,active:false,settings:{executionOrder:'v1'},tags:[]};
 const outputPath=root+'OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json';
 const generated=JSON.stringify(result,null,2)+'\n';
