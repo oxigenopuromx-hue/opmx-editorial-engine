@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — seguimiento experimental de medios (2026-11-01)
+
+En esta rama se agregó `media-progress.mjs` con migración dedicada InnoDB y endpoints experimentales del guard `/v1/media/begin`, `/v1/media/report`, `/v1/media/status`. La identidad incluye destino y rol: Hero y destacada tienen registro independiente. Se exige inicio durable del destino; duplicados o estado incierto requieren conciliación manual y el ID informado exige readback WordPress. 54 pruebas Node locales pasan con base simulada; no prueban SQL real ni concurrencia distribuida. NO está desplegado, la tabla NO se creó, no está integrado en n8n y no debe usarse en producción. La migración corresponde sólo a la base dedicada del guard, nunca WordPress.
+
+Pendiente: probar SQL/HTTP con MariaDB aislado y solicitudes simultáneas reales; diseñar comprobación de imágenes por ID y protección ante fallas entre subida y reporte; integrar y verificar el recorrido antes de conectar escrituras WordPress. No libera reservas y no protege otros flujos. Publisher activo y CMS sin cambios.
+
 ## Avance Work II — repetición de reserva en guard real (2026-11-01)
 
 Diagnóstico temporal n8n contra el guard y base dedicada: ejecuciones #53 y #54 con mismo identificador, huella y dos destinos retornaron 201 claimed y 409 conflict_or_replay. Se iniciaron en paralelo desde Work, pero sus nodos HTTP llegaron separados aproximadamente 6.4 segundos; verifica rechazo de repetición real, NO concurrencia simultánea. Permanece una reserva sintética y sus destinos asociados. Después se restauró el workflow de diagnóstico inactivo a la consulta de estado preexistente; Publisher activo y WordPress no se modificaron. Pendiente prueba real con solapamiento temporal, conciliación y flujo completo de borrador.
