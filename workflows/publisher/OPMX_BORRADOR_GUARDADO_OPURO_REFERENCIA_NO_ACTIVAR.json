@@ -169,7 +169,7 @@
           }
         }
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": false,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -193,7 +193,7 @@
         "jsonBody": "={{ { alt_text: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.alt_text, title: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.title, caption: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.caption, description: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.description } }}",
         "options": {}
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": true,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -236,7 +236,7 @@
           }
         }
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": false,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -260,7 +260,7 @@
         "jsonBody": "={{ { alt_text: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.featured_opuro.alt_text } }}",
         "options": {}
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": true,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -468,7 +468,7 @@
         "jsonBody": "={{\n{\n  title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n  slug: $('Validar y normalizar OPMX MASTER').first().json.canonical.slug,\n  excerpt: $('Validar y normalizar OPMX MASTER').first().json.canonical.excerpt,\n  status: 'draft',\n  content: $('Validar y normalizar OPMX MASTER').first().json.canonical.gutenberg_enriquecido_final,\n  featured_media: Number(\n    $('OPURO — Subir DESTACADA').first().json.id\n  ),\n  categories: [\n    Number(\n      $('OPURO — Resolver categoría').first().json.category_id\n    )\n  ],\n  tags: $('OPURO — Consolidar etiquetas v1.13').first().json.tag_ids,\n  author: Number(\n    $('Validar y normalizar OPMX MASTER').first().json.canonical.author.id\n  ),\n  meta: {\n    'site-post-title': 'disabled',\n    oxpuro_hero_media_id: Number($('OPURO — Subir HERO').first().json.id),\n    oxpuro_editorial: { subtitle: $('Validar y normalizar OPMX MASTER').first().json.canonical.subtitle, photo_credit: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.credit || '' }\n  }\n}\n}}",
         "options": {}
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": false,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -492,7 +492,7 @@
         "jsonBody": "={{ {\n  meta: {\n    rank_math_title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n    rank_math_description: $('Validar y normalizar OPMX MASTER').first().json.canonical.meta_description,\n    rank_math_focus_keyword: $('Validar y normalizar OPMX MASTER').first().json.canonical.keywords_all\n  }\n} }}",
         "options": {}
       },
-      "onError": "stopWorkflow",
+      "onError": "continueErrorOutput",
       "retryOnFail": true,
       "maxTries": 5,
       "waitBetweenTries": 3000
@@ -649,7 +649,8 @@
         "options": {
           "timeout": 10000
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "id": "a268eb6e-2195-efec-4d05-800689c11983",
@@ -765,7 +766,8 @@
         "options": {
           "timeout": 10000
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "id": "32709340-1f4f-1234-5d48-28697cb9e4ac",
@@ -833,7 +835,8 @@
         "options": {
           "timeout": 10000
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "id": "321db798-306e-08c0-62b8-ab99901c4ece",
@@ -846,6 +849,41 @@
       ],
       "parameters": {
         "jsCode": "if ($json.status !== 'post_reported') throw new Error('Guard no confirmó post_reported; conciliación manual.'); return [{json:{status:'post_reported'}}];"
+      }
+    },
+    {
+      "id": "534004ba-b397-a83d-25d3-936e691d1234",
+      "name": "OPMX — Preparar conciliación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const requestId=$('Preparar MASTER y binarios').first().json.request_id, slug=$('Validar y normalizar OPMX MASTER').first().json.canonical.slug, fingerprint=$('OPMX — Generar huella de prueba').first().json.fingerprint; if(typeof requestId!=='string'||typeof slug!=='string'||typeof fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(fingerprint)) throw new Error('Identidad incompleta: conciliación manual'); return [{json:{requestId,slug,destination:'OPURO',fingerprint}}];"
+      }
+    },
+    {
+      "id": "7fcd50d8-940c-a4dd-b9a3-e3049c77e99c",
+      "name": "OPMX — Consultar conciliación",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        2800,
+        1200
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "C4hk6fQQomueYC8f"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
       }
     }
   ],
@@ -1001,6 +1039,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1009,6 +1054,13 @@
         [
           {
             "node": "GUARD — Verificar reporte Hero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
             "type": "main",
             "index": 0
           }
@@ -1031,6 +1083,13 @@
         [
           {
             "node": "OPURO — Leer Hero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
             "type": "main",
             "index": 0
           }
@@ -1100,6 +1159,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1108,6 +1174,13 @@
         [
           {
             "node": "GUARD — Verificar reporte destacada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
             "type": "main",
             "index": 0
           }
@@ -1130,6 +1203,13 @@
         [
           {
             "node": "OPURO — Leer destacada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
             "type": "main",
             "index": 0
           }
@@ -1293,6 +1373,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1301,6 +1388,13 @@
         [
           {
             "node": "GUARD — Verificar reporte post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
             "type": "main",
             "index": 0
           }
@@ -1326,6 +1420,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "OPMX — Preparar conciliación",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1345,6 +1446,17 @@
         [
           {
             "node": "Resultado OPURO — BORRADOR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPMX — Preparar conciliación": {
+      "main": [
+        [
+          {
+            "node": "OPMX — Consultar conciliación",
             "type": "main",
             "index": 0
           }
