@@ -4,7 +4,7 @@ import {openRequestLedger} from './idempotency.mjs';
 import {startDraft,queryDraft} from './async-jobs.mjs';
 
 const id='1234567890123456';
-const input={master:{test:true},destino:'AMBOS',hero:{file_id:'h'},destacada:{file_id:'d'}};
+const input={master:{SEO:{SLUG:'nota-de-prueba'}},destino:'AMBOS',hero:{file_id:'h'},destacada:{file_id:'d'}};
 const payload={PUBLICAR:false,CREAR_EN:'AMBOS'};
 const result={status:'SUCCESS',mode:'DRAFT',summary:{opuro:'DRAFT',opol:'DRAFT'}};
 test('inicia una sola vez, consulta y confirma los dos borradores',async()=>{
@@ -34,4 +34,18 @@ test('consulta fallida conserva estado para posterior recuperación',async()=>{
  const ledger=openRequestLedger(':memory:');await startDraft({ledger,requestId:id,input,prepare:async()=>payload,start:async()=>({executionId:'7'})});
  assert.equal((await queryDraft({ledger,requestId:id,read:async()=>{throw Error('offline')}})).status,'pending');
  assert.equal((await queryDraft({ledger,requestId:id,read:async()=>({state:'success',result})})).status,'complete');ledger.close();
+});
+test('bloquea otra solicitud para la misma nota y destinos solapados',async()=>{
+ const ledger=openRequestLedger(':memory:');let calls=0;
+ const opts={ledger,input,prepare:async()=>payload,start:async()=>{calls++;return {executionId:'7'}}};
+ assert.equal((await startDraft({...opts,requestId:id})).status,'pending');
+ const conflict=await startDraft({...opts,requestId:'otra_solicitud_123',input:{...input,destino:'OPURO'}});
+ assert.equal(conflict.status,'possible_duplicate');assert.equal(calls,1);ledger.close();
+});
+test('si la preparación falla libera los destinos antes del envío',async()=>{
+ const ledger=openRequestLedger(':memory:');
+ const first=await startDraft({ledger,requestId:id,input,prepare:async()=>{throw Error('falta imagen')},start:async()=>({executionId:'7'})});
+ assert.equal(first.status,'failed_before_send');
+ const second=await startDraft({ledger,requestId:'otra_solicitud_123',input,prepare:async()=>payload,start:async()=>({executionId:'8'})});
+ assert.equal(second.status,'pending');ledger.close();
 });
