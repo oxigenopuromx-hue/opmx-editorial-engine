@@ -28,7 +28,7 @@ Hostinger describe MariaDB para planes web/cloud y remite a VPS para otros motor
 
 La autenticación OAuth de n8n existente es para su servidor MCP. Aún no se verificó que sirva para proteger el nuevo servidor ni que el proveedor implemente introspección compatible con `auth.mjs`. No reutilizar tokens con una audiencia distinta ni alterar validaciones para forzar compatibilidad. Un acceso temporal y revocable con privilegios mínimos debe configurarse sólo después de definir proveedor, metadata OAuth y el adaptador.
 
-El Publisher puede requerir más de 120 s. El servidor no debe depender de una única solicitud síncrona de 120 s: diseñar respuesta de aceptación, registro durable y consulta del resultado/reconciliación sin volver a ejecutar creación.
+El Publisher puede requerir más de 120 s. El prototipo asíncrono permite iniciar y consultar por separado, pero aún requiere una integración real con n8n y verificar el almacenamiento durable y la reconciliación.
 
 Se agregó `mariadb-ledger.mjs` para una base dedicada: usa clave primaria y cambios de estado condicionales. Las pruebas actuales emplean un doble simulado; no demuestran bloqueo, aislamiento, recuperación ni persistencia en MariaDB real. Se requiere mysql2/promise u otro pool compatible, cuenta de mínimos privilegios y pruebas en una base de prueba independiente de WordPress. No se creó base ni credencial.
 
