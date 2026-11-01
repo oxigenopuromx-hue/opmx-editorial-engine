@@ -49,3 +49,9 @@ test('si la preparación falla libera los destinos antes del envío',async()=>{
  const second=await startDraft({ledger,requestId:'otra_solicitud_123',input,prepare:async()=>payload,start:async()=>({executionId:'8'})});
  assert.equal(second.status,'pending');ledger.close();
 });
+test('solicitudes distintas simultáneas no crean dos veces el mismo destino',async()=>{
+ const ledger=openRequestLedger(':memory:');let calls=0;
+ const shared={ledger,input,prepare:async()=>payload,start:async()=>{calls++;await new Promise(resolve=>setTimeout(resolve,10));return {executionId:'9'}}};
+ const values=await Promise.all([startDraft({...shared,requestId:id}),startDraft({...shared,requestId:'otra_solicitud_123'})]);
+ assert.equal(calls,1);assert.deepEqual(values.map(x=>x.status).sort(),['pending','possible_duplicate']);ledger.close();
+});
