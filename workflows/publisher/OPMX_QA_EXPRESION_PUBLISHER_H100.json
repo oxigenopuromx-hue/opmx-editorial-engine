@@ -1,0 +1,295 @@
+{
+  "name": "OPMX — QA expresión real Publisher H100",
+  "nodes": [
+    {
+      "id": "12be9255-151b-4717-80f2-452685d762ed",
+      "name": "Iniciar QA expresión",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "9a9a77ec-14a2-4124-90c9-fcf43e1633f2",
+      "name": "Preflight draft QA expresión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/9674?context=edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "ca5777ad-8962-4429-83ab-9cc080932080",
+      "name": "Validar y normalizar OPMX MASTER",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$input.first().json;if(p.id!==9674||p.status!=='draft'||p.slug!=='opmx-qa-sintetico-h100-20261101')throw new Error('No es draft sintético');return [{json:{\"canonical\":{\"title\":\"PRUEBA TÉCNICA OPMX — NO PUBLICAR — H100\",\"slug\":\"opmx-qa-sintetico-h100-20261101\",\"excerpt\":\"Contenido sintético de prueba OPMX\",\"gutenberg_enriquecido_final\":\"<!-- wp:paragraph --><p>Contenido sintético exclusivo para verificar la conexión técnica OPMX. No publicar.</p><!-- /wp:paragraph -->\",\"subtitle\":\"Subtítulo sintético H100\",\"images\":{\"hero_opuro\":{\"credit\":\"Fixture técnico OPMX\"}},\"author\":{\"id\":4}}}}];"
+      }
+    },
+    {
+      "id": "33e12f2d-bfd3-4400-9f2b-1f89cb0409c5",
+      "name": "OPURO — Subir HERO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"id\":9675}}];"
+      }
+    },
+    {
+      "id": "d70d97c4-4ad2-402d-8b93-c048aefee5ca",
+      "name": "OPURO — Subir DESTACADA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"id\":9676}}];"
+      }
+    },
+    {
+      "id": "d6cc4d90-c1f2-47ea-b5b7-c04b41a22566",
+      "name": "OPURO — Resolver categoría",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"category_id\":1}}];"
+      }
+    },
+    {
+      "id": "4beb5dfa-dac7-43b5-9002-de297ced0ba8",
+      "name": "OPURO — Consolidar etiquetas v1.13",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"tag_ids\":[]}}];"
+      }
+    },
+    {
+      "id": "1255fe81-aa0f-440c-8233-2042d4dbf084",
+      "name": "Aplicar expresión Publisher al draft QA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/9674",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  title: $('Validar y normalizar OPMX MASTER').first().json.canonical.title,\n  slug: $('Validar y normalizar OPMX MASTER').first().json.canonical.slug,\n  excerpt: $('Validar y normalizar OPMX MASTER').first().json.canonical.excerpt,\n  status: 'draft',\n  content: $('Validar y normalizar OPMX MASTER').first().json.canonical.gutenberg_enriquecido_final,\n  featured_media: Number(\n    $('OPURO — Subir DESTACADA').first().json.id\n  ),\n  categories: [\n    Number(\n      $('OPURO — Resolver categoría').first().json.category_id\n    )\n  ],\n  tags: $('OPURO — Consolidar etiquetas v1.13').first().json.tag_ids,\n  author: Number(\n    $('Validar y normalizar OPMX MASTER').first().json.canonical.author.id\n  ),\n  meta: {\n    'site-post-title': 'disabled',\n    oxpuro_hero_media_id: Number($('OPURO — Subir HERO').first().json.id),\n    oxpuro_editorial: { subtitle: $('Validar y normalizar OPMX MASTER').first().json.canonical.subtitle, photo_credit: $('Validar y normalizar OPMX MASTER').first().json.canonical.images.hero_opuro.credit || '' }\n  }\n}\n}}",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "b17f6449-2b59-49ff-96bb-fd6fab625e4c",
+      "name": "Readback QA expresión",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/9674?context=edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000
+        }
+      }
+    },
+    {
+      "id": "1e8e5659-f1aa-4bfe-a7d5-2284d9563e55",
+      "name": "Validar expresión Publisher QA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$input.first().json;if(p.id!==9674||p.status!=='draft'||p.featured_media!==9676||p.meta?.oxpuro_hero_media_id!==9675||p.meta?.oxpuro_editorial?.subtitle!=='Subtítulo sintético H100'||p.meta?.oxpuro_editorial?.photo_credit!=='Fixture técnico OPMX'||!p.content?.raw?.includes('Contenido sintético exclusivo'))throw new Error('Expresión Publisher no confirmada');return [{json:{status:'PUBLISHER_EXPRESSION_VERIFIED',post_id:9674,hero:9675,featured:9676,status_wp:p.status}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Iniciar QA expresión": {
+      "main": [
+        [
+          {
+            "node": "Preflight draft QA expresión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preflight draft QA expresión": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar OPMX MASTER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar OPMX MASTER": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Subir HERO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Subir HERO": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Subir DESTACADA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Subir DESTACADA": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Resolver categoría",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Resolver categoría": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Consolidar etiquetas v1.13",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Consolidar etiquetas v1.13": {
+      "main": [
+        [
+          {
+            "node": "Aplicar expresión Publisher al draft QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aplicar expresión Publisher al draft QA": {
+      "main": [
+        [
+          {
+            "node": "Readback QA expresión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Readback QA expresión": {
+      "main": [
+        [
+          {
+            "node": "Validar expresión Publisher QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "6ad5eda3-ea83-4cec-a3e2-944b9ca7678b",
+      "name": "Fixture sintético",
+      "nodeNames": [
+        "Preflight draft QA expresión",
+        "Validar y normalizar OPMX MASTER",
+        "OPURO — Subir HERO",
+        "OPURO — Subir DESTACADA",
+        "OPURO — Resolver categoría",
+        "OPURO — Consolidar etiquetas v1.13"
+      ]
+    },
+    {
+      "id": "18d568a8-eaa8-4b5a-8a26-886871d03bff",
+      "name": "Expresión y lectura",
+      "nodeNames": [
+        "Aplicar expresión Publisher al draft QA",
+        "Readback QA expresión",
+        "Validar expresión Publisher QA"
+      ]
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "tags": []
+}
