@@ -6,15 +6,15 @@ const base={requestId:'opmx_request_example_123',slug:'prueba-editorial',destina
 function fakeDb({started=true,broken=false}={}) {
   const rows=new Map(); let releases=0;
   return {rows,get releases(){return releases},async getConnection(){return {
+    async beginTransaction(){},async commit(){},async rollback(){},
     async execute(sql,args) {
       if(broken) throw Error('disconnect');
+      if(sql.includes('FROM opmx_mcp_target_progress')) return [[...(started?[{target_key:args[0]}]:[])]];
       if(sql.startsWith('INSERT')) {
-        assert.match(sql,/FROM opmx_mcp_target_progress/);
-        const [role,key,requestId,destination]=args;
-        if(!started)return [{affectedRows:0}];
+        const [key,requestId,role]=args;
         const index=key+':'+role;
         if(rows.has(index))throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});
-        rows.set(index,{requestId,destination,role,status:'uploading',media_id:null});return [{affectedRows:1}];
+        rows.set(index,{requestId,role,status:'uploading',media_id:null});return [{affectedRows:1}];
       }
       if(sql.startsWith('UPDATE')) {
         const [id,key,requestId,role]=args,row=rows.get(key+':'+role);
@@ -58,4 +58,28 @@ test('errores de base no se confunden con éxito y exigen revisión',async()=>{
 });
 test('migración usa clave compuesta por destino y rol en InnoDB',()=>{
   assert.match(mediaSchemaSql,/PRIMARY KEY \(target_key, role\)/);assert.match(mediaSchemaSql,/InnoDB/);
+});
+test('la autorización requiere transacción y confirmación; un commit incierto nunca autoriza carga',async()=>{
+ const events=[];const db={async getConnection(){return {
+  async beginTransaction(){events.push('begin')},
+  async execute(sql){events.push(sql.startsWith('SELECT')?'lock':'insert');return sql.startsWith('SELECT')?[[{target_key:'synthetic'}]]:[{affectedRows:1}]},
+  async commit(){events.push('commit');throw Object.assign(new Error('connection lost after commit'),{code:'ETIMEDOUT'})},
+  async rollback(){events.push('rollback')},release(){events.push('release')}
+ }}};
+ await assert.rejects(beginMediaUpload(db,{...base,role:'hero'}),/no confirmado/);
+ assert.deepEqual(events,['begin','lock','insert','commit','rollback','release']);
+});
+test('dos solicitudes solapadas al mismo rol se serializan y sólo una recibe permiso',async()=>{
+ let tail=Promise.resolve(),rowExists=false;
+ const db={async getConnection(){let unlock;return {
+  async beginTransaction(){},
+  async execute(sql){
+   if(sql.startsWith('SELECT')) {const prior=tail;tail=new Promise(resolve=>{unlock=resolve});await prior;assert.match(sql,/FOR UPDATE/);return [[{target_key:'synthetic'}]];}
+   if(rowExists)throw Object.assign(new Error('duplicate'),{errno:1062});
+   rowExists=true;return [{affectedRows:1}];
+  },
+  async commit(){unlock()},async rollback(){unlock?.()},release(){}
+ }}};
+ const result=await Promise.all([beginMediaUpload(db,{...base,role:'hero'}),beginMediaUpload(db,{...base,role:'hero'})]);
+ assert.deepEqual(result.map(x=>x.status).sort(),['already_started','upload_started']);
 });
