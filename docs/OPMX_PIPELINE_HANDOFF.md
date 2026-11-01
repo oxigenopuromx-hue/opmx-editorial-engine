@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — rutas de medios reales, datos sintéticos (2026-11-01)
+
+El guard de prueba desplegado respondió por n8n y base dedicada: ejecución #55 inició escritura de destino (200 write_started); #56 inició Hero (200 upload_started); #57 rechazó repetición (409 already_started); #58 registró ID ficticio 456 (200 media_reported, verify_wordpress); #59 consultó ese ID (200 reported, manual_reconciliation). No se solicitó carga ni se accedió a WordPress: el ID 456 es ficticio y no acredita que exista un adjunto. Permanecen filas sintéticas de destino y medio en la base; no son datos editoriales. Las pruebas se ejecutaron secuencialmente; no prueban concurrencia real. El diagnóstico inactivo se restauró y verificó apuntando a /v1/reservations/status en modo lectura. Publisher activo no modificado.
+
+SIGUE BLOQUEADO uso operativo: se deben rotar de nuevo contraseña de base y secreto guard expuestos por la pantalla Hostinger de ajustes; pruebas de concurrencia real, conciliación completa y readback WordPress, integración n8n y prueba de borrador real pendiente. No publicar contenido de prueba.
+
 ## Avance Work II — despliegue de prueba del guard de medios (2026-11-01)
 
 Con autorización, Hostinger desplegó opmx-guard-media-test.zip, SHA-256 716cccd0adfd5db1b09fe609ef8ef9496fc89726eb9fa78c043221b623bbc3a4; estado completado y actual 12:25 MX. La versión previa opmx-guard-progress-test.zip permanece en historial. Las rutas nuevas no se han probado aún; Publisher activo y WordPress no se modificaron. La tabla dedicada de medios existe y estaba vacía.
