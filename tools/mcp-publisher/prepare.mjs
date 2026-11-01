@@ -15,10 +15,11 @@ export const toolDescriptor = {
     type: 'object',
     properties: {
       master: {type: 'object'},
+      request_id: {type: 'string', minLength: 16, maxLength: 128, pattern: '^[A-Za-z0-9_-]+$'},
       destino: {type: 'string', enum: ['OPURO', 'OPOL', 'AMBOS']},
       hero: fileSchema, destacada: fileSchema,
     },
-    required: ['master', 'destino', 'destacada'], additionalProperties: false,
+    required: ['request_id', 'master', 'destino', 'destacada'], additionalProperties: false,
   },
   annotations: {readOnlyHint: false, destructiveHint: false, openWorldHint: false},
   _meta: {'openai/fileParams': ['hero', 'destacada']},
