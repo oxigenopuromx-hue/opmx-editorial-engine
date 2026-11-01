@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — repetición de reserva en guard real (2026-11-01)
+
+Diagnóstico temporal n8n contra el guard y base dedicada: ejecuciones #53 y #54 con mismo identificador, huella y dos destinos retornaron 201 claimed y 409 conflict_or_replay. Se iniciaron en paralelo desde Work, pero sus nodos HTTP llegaron separados aproximadamente 6.4 segundos; verifica rechazo de repetición real, NO concurrencia simultánea. Permanece una reserva sintética y sus destinos asociados. Después se restauró el workflow de diagnóstico inactivo a la consulta de estado preexistente; Publisher activo y WordPress no se modificaron. Pendiente prueba real con solapamiento temporal, conciliación y flujo completo de borrador.
+
 ## Avance Work II — conexión y Hero independiente (2026-11-01)
 
 Tras rotación y aplicación por el usuario, diagnóstico n8n #52 devolvió HTTP 200 al consultar una reserva sintética: autenticación del guard y lectura de base verificadas; identidad sin verificar por consulta sin huella. No acredita concurrencia real ni borradores WordPress. El Publisher activo sigue sin cambios.
