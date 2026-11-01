@@ -17,3 +17,10 @@ test('HTTP exige secreto y sólo acepta reservas limitadas',async()=>{
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 test('falla cerrado ante secreto inválido',()=>assert.throws(()=>createGuard({pool,secret:'corto'}),/Configuración/));
+test('limita la frecuencia incluso cuando falla la autenticación',async()=>{
+ const server=createGuard({pool,secret}); await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try {const url=`http://127.0.0.1:${server.address().port}/v1/reservations`;
+  for(let i=0;i<120;i++) assert.equal((await fetch(url,{method:'POST'})).status,401);
+  assert.equal((await fetch(url,{method:'POST'})).status,429);
+ } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
