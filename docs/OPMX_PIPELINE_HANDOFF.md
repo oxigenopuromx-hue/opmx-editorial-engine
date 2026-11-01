@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — guard desplegado y prueba n8n (2026-11-01)
+
+El usuario autorizó el paquete de prueba. Hostinger muestra `opmx-guard-progress-test.zip` como despliegue actual completado, con versión previa disponible en historial. Desde el workflow diagnóstico inactivo `EarnvktAyNGlKzq1`, que no contiene nodos WordPress, llamadas autenticadas con reserva sintética existente: ejecución 40 devolvió 200 write_started; ejecución 41 devolvió 409 already_started; ejecución 42 registró ID sintético 123 y respondió post_reported; ejecución 43 consultó reported/123; ejecución 44 consultó reserva sin huella y recibió claimed con identidad unverified. Ninguna de estas llamadas verifica WordPress ni crea un post. La tabla contiene una fila de avance sintética persistente y la reserva sintética correspondiente. Las ejecuciones 40/41 llegaron separadas por varios segundos, por lo que no demuestran simultaneidad real, sólo rechazo de repetición. Falta prueba real de carrera, seguimiento y reconciliación de medios y post, incorporación al Publisher, readback WordPress y prueba desde el Project del Motor. Publisher activo sin cambios.
+
+La pantalla de ajustes de Hostinger mostró la contraseña de la base y el secreto del guard en texto visible durante la inspección; considerarlos expuestos en los registros de la sesión y coordinar su rotación antes del uso productivo, actualizando los puntos dependientes sin registrar valores. El workflow diagnóstico sigue inactivo pero disponible mediante MCP y conserva una credencial restringida; su acción actual es consulta de reserva de prueba.
+
 ## Avance — tabla real y pruebas SQL aisladas (2026-11-01)
 
 En la base dedicada del guard se creó `opmx_mcp_target_progress` con la migración de `target-progress.mjs`; no se modificó la base WordPress. Con la reserva sintética creada por la ejecución 39 se verificó en phpMyAdmin que INSERT SELECT inserta sólo la reserva correspondiente. En una transacción separada un segundo INSERT IGNORE sobre la misma clave insertó cero filas y produjo aviso 1062; UPDATE cambió una fila a reported con ID de prueba 123. ROLLBACK dejó cero filas en la tabla de avance. No se ejecutaron consultas simultáneas reales ni el código Node revisado contra MariaDB.
