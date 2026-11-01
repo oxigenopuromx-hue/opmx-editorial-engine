@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — paquete de prueba reproducible (2026-11-01)
+
+`tools/mcp-publisher/package-guard.py` construye el paquete sin secretos a partir de archivos versionados. El paquete `opmx-guard-media-test.zip` contiene guard-start, guard-server, direct-claim, target-progress, media-progress, package.json y server.js; SHA-256 716cccd0adfd5db1b09fe609ef8ef9496fc89726eb9fa78c043221b623bbc3a4. Dos construcciones locales produjeron la misma huella, ZIP validado. Es paquete temporal regenerable; no está cargado ni desplegado. La tabla dedicada media existe y está vacía.
+
+Hostinger registra en la compilación anterior (12:10) `npm install` y 1 vulnerabilidad de severidad alta, sin detalle mostrado en ese registro. No se ha identificado su dependencia ni evaluado su alcance; no ejecutar npm audit fix --force ni declarar seguridad validada. El paquete conserva mysql2 3.14.5, sin lockfile verificado. Antes de usar esta revisión operativamente deben verificarse dependencias y probar su funcionamiento, rollback, concurrencia y reconciliación; no conectar Publisher activo a escritura.
+
 ## Avance Work II — prueba SQL de medios (2026-11-01)
 
 Se creó opmx_mcp_media_progress en la base dedicada del guard (no WordPress). En una transacción de phpMyAdmin con una reserva sintética existente se insertó inicio de destino y luego una Hero; un segundo INSERT IGNORE de la misma clave insertó cero filas y avisó duplicado 1062; SELECT arrojó una fila Hero y ROLLBACK revirtió los cambios. Una lectura posterior confirmó cero filas en la tabla media. Esto verifica el SQL y clave única en una transacción, NO solicitudes concurrentes, código Node nuevo, readback WordPress ni el despliegue de las rutas. La tabla queda creada y vacía. El servicio guard activo sigue en su versión anterior, sin rutas media; el Publisher activo no cambió.
