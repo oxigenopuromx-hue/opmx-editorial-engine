@@ -9,11 +9,29 @@ export function openRequestLedger(filename) {
     CREATE TABLE IF NOT EXISTS requests (
       request_id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL,
       status TEXT NOT NULL, result TEXT, updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS request_targets (
+      target_key TEXT PRIMARY KEY, request_id TEXT NOT NULL
     )`);
   const get = db.prepare('SELECT fingerprint, status, result FROM requests WHERE request_id = ?');
   const insert = db.prepare("INSERT OR IGNORE INTO requests VALUES (?, ?, 'claimed', NULL, ?)");
   const finish = db.prepare('UPDATE requests SET status=?, result=?, updated_at=? WHERE request_id=? AND status=?');
+  const reserve = db.prepare('INSERT INTO request_targets(target_key,request_id) VALUES (?,?)');
+  const release = db.prepare('DELETE FROM request_targets WHERE request_id=?');
   return {
+    reserveTargets(id, keys) {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        for (const key of keys) reserve.run(key,id);
+        db.exec('COMMIT');
+        return true;
+      } catch (error) {
+        db.exec('ROLLBACK');
+        if (error.code === 'ERR_SQLITE_ERROR' && /UNIQUE constraint failed/.test(error.message)) return false;
+        throw error;
+      }
+    },
+    releaseTargets(id) { release.run(id); },
     getStatus(id) {
       const row = get.get(id);
       return row ? {status:row.status, result:row.result ? JSON.parse(row.result) : undefined} : null;
