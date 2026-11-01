@@ -1,7 +1,7 @@
 import {createServer} from 'node:http';
 import {createHash} from 'node:crypto';
 import {toolDescriptor,prepareDraft} from './prepare.mjs';
-import {runOnce} from './idempotency.mjs';
+import {startDraft,queryDraft} from './async-jobs.mjs';
 
 const statusTool = {
   name:'consultar_borrador_opmx', description:'Consulta el estado de una solicitud sin crear otra entrada.',
@@ -12,8 +12,8 @@ const statusTool = {
 // This transport is experimental: OAuth discovery, network policy, and live
 // n8n integration must be implemented and tested before remote deployment.
 // Callers must supply an authenticate() implementation; no anonymous mode.
-export function createMcpServer({authenticate,ledger,submit,prepareOptions}) {
-  if (typeof authenticate !== 'function' || !ledger || typeof submit !== 'function') throw new Error('Falta configuración de autenticación o backend');
+export function createMcpServer({authenticate,ledger,start,read,prepareOptions}) {
+  if (typeof authenticate !== 'function' || !ledger || typeof start !== 'function' || typeof read !== 'function') throw new Error('Falta configuración de autenticación o backend');
   return createServer(async (req,res) => {
     const send=(status,body)=>{res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});res.end(JSON.stringify(body));};
     if (req.url !== '/mcp' || req.method !== 'POST') return send(404,{error:'not found'});
@@ -41,12 +41,11 @@ export function createMcpServer({authenticate,ledger,submit,prepareOptions}) {
     const requestId=createHash('sha256').update(JSON.stringify([subject,input.request_id])).digest('hex');
     try {
       if (message.params.name === statusTool.name) {
-        const status=await ledger.getStatus(requestId);
-        const result=status ?? {status:'not_found'};
+        const result=await queryDraft({ledger,requestId,read});
         return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result});
       }
-      const result=await runOnce({ledger,requestId,input,prepare:value=>prepareDraft(value,prepareOptions),submit});
-      return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:result.status!=='complete'});
+      const result=await startDraft({ledger,requestId,input,prepare:value=>prepareDraft(value,prepareOptions),start});
+      return reply({content:[{type:'text',text:JSON.stringify(result)}],structuredContent:result,isError:!['complete','pending'].includes(result.status)});
     } catch {return reply({content:[{type:'text',text:'No fue posible procesar la solicitud.'}],isError:true});}
   });
 }
