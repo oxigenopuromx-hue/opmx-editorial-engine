@@ -73,15 +73,15 @@ test('rutas media requieren autenticación y nunca repiten una carga',async()=>{
 });
 test('diagnóstico de contención no filtra datos y conserva respuesta incierta',async()=>{
  const messages=[];let code='ER_LOCK_DEADLOCK';
- const db={async getConnection(){return {async execute(){throw Object.assign(new Error('SQL y secreto privado'),{code})},release(){}}}};
+ const db={async getConnection(){return {async execute(){throw Object.assign(new Error('SQL y secreto privado'), typeof code === 'number' ? {errno:code} : {code})},release(){}}}};
  const server=createGuard({pool:db,secret,diagnosticLogger:msg=>messages.push(msg)});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try {
   const url=`http://127.0.0.1:${server.address().port}/v1/media/begin`;
   const input={requestId:payload.requestId,slug:payload.slug,destination:'OPURO',role:'hero'};
   const call=()=>fetch(url,{method:'POST',headers:{authorization:'Bearer '+secret,'content-type':'application/json'},body:JSON.stringify(input)});
-  for(const candidate of ['ER_LOCK_DEADLOCK','ER_LOCK_WAIT_TIMEOUT','SQL y secreto privado']) {
+  for(const candidate of ['ER_LOCK_DEADLOCK','ER_LOCK_WAIT_TIMEOUT',1020,'ER_CHECKREAD','SQL y secreto privado']) {
    code=candidate;const result=await call();assert.equal(result.status,503);assert.deepEqual(await result.json(),{error:'not_confirmed'});
   }
-  assert.deepEqual(messages,['guard.media.begin: ER_LOCK_DEADLOCK','guard.media.begin: ER_LOCK_WAIT_TIMEOUT','guard.media.begin: OTHER']);
+  assert.deepEqual(messages,['guard.media.begin: ER_LOCK_DEADLOCK','guard.media.begin: ER_LOCK_WAIT_TIMEOUT','guard.media.begin: WRITE_CONFLICT','guard.media.begin: WRITE_CONFLICT','guard.media.begin: OTHER']);
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
