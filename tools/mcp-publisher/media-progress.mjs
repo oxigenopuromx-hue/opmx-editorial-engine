@@ -33,7 +33,7 @@ export async function beginMediaUpload(pool,input) {
     if(error?.code==='ER_DUP_ENTRY'||error?.errno===1062) return {status:'already_started',action:'manual_reconciliation'};
     // Preserve only a recognized database error class for server diagnostics;
     // never expose the driver's message, SQL, credentials, or request data.
-    const diagnostic = ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED'].includes(error?.code) ? error.code : 'OTHER';
+    const diagnostic = error?.errno === 1020 || error?.code === 'ER_CHECKREAD' ? 'WRITE_CONFLICT' : ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED'].includes(error?.code) ? error.code : 'OTHER';
     const failure = new Error('Inicio de medio no confirmado');
     failure.diagnostic = diagnostic;
     throw failure;
