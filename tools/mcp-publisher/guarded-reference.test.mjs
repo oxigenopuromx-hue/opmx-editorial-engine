@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
-execFileSync(process.execPath,['tools/mcp-publisher/build-guarded-reference.mjs']);
+execFileSync(process.execPath,['tools/mcp-publisher/build-guarded-reference.mjs','--check']);
 const w=JSON.parse(readFileSync('workflows/publisher/OPMX_BORRADOR_GUARDADO_OPURO_REFERENCIA_NO_ACTIVAR.json'));
 const byName=Object.fromEntries(w.nodes.map(n=>[n.name,n]));
 function reachable(blocked=[]) {
