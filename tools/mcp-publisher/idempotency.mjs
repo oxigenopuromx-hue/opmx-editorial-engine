@@ -28,6 +28,12 @@ export function openRequestLedger(filename) {
     markSent(id) {
       if (finish.run('sent', null, new Date().toISOString(), id, 'claimed').changes !== 1) throw new Error('Solicitud no disponible para envío');
     },
+    accept(id, job) {
+      if (finish.run('accepted', JSON.stringify(job), new Date().toISOString(), id, 'sent').changes !== 1) throw new Error('Solicitud no disponible');
+    },
+    completeAccepted(id, result) {
+      if (finish.run('complete', JSON.stringify(result), new Date().toISOString(), id, 'accepted').changes !== 1) throw new Error('Solicitud no disponible');
+    },
     complete(id, result) {
       if (finish.run('complete', JSON.stringify(result), new Date().toISOString(), id, 'sent').changes !== 1) throw new Error('Solicitud no disponible para completar');
     },
