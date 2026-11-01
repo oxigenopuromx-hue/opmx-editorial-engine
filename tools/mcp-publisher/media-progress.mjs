@@ -31,7 +31,12 @@ export async function beginMediaUpload(pool,input) {
     return result.affectedRows===1 ? {status:'upload_started'} : {status:'not_started',action:'manual_reconciliation'};
   } catch(error) {
     if(error?.code==='ER_DUP_ENTRY'||error?.errno===1062) return {status:'already_started',action:'manual_reconciliation'};
-    throw new Error('Inicio de medio no confirmado');
+    // Preserve only a recognized database error class for server diagnostics;
+    // never expose the driver's message, SQL, credentials, or request data.
+    const diagnostic = ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED'].includes(error?.code) ? error.code : 'OTHER';
+    const failure = new Error('Inicio de medio no confirmado');
+    failure.diagnostic = diagnostic;
+    throw failure;
   } finally {conn.release();}
 }
 
