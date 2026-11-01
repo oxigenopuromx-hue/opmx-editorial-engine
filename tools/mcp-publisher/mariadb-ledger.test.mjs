@@ -28,3 +28,10 @@ test('otros errores de base no son tratados como duplicados',async()=>{
  const ledger=createMariaDbLedger({execute:async()=>{throw new Error('desconectado')}});
  await assert.rejects(ledger.claim('request_123456789','a'.repeat(64)),/No se pudo registrar/);
 });
+test('la reserva MariaDB cancela la transacción completa ante un destino duplicado',async()=>{
+ const calls=[];let inserts=0;
+ const connection={beginTransaction:async()=>calls.push('begin'),commit:async()=>calls.push('commit'),rollback:async()=>calls.push('rollback'),release:()=>calls.push('release'),execute:async()=>{if(++inserts===2){const error=new Error('duplicado');error.code='ER_DUP_ENTRY';throw error;}calls.push('insert')}};
+ const ledger=createMariaDbLedger({execute:async()=>[],getConnection:async()=>connection});
+ assert.equal(await ledger.reserveTargets('request_123456789',['a'.repeat(64),'b'.repeat(64)]),false);
+ assert.deepEqual(calls,['begin','insert','rollback','release']);
+});
