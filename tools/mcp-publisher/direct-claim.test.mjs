@@ -10,11 +10,12 @@ test('valida entrada antes de tocar la base',async()=>{let m=mock();await assert
 test('consulta de recuperación distingue reserva, ausencia e identidad incorrecta sin escribir',async()=>{
  let row={fingerprint:input.fingerprint,status:'claimed'}; let released=0;
  const pool={async getConnection(){return {async execute(sql,args){assert.match(sql,/^SELECT /);assert.deepEqual(args,[input.requestId]);return [row?[row]:[]]},release(){released++}}}};
- assert.deepEqual(await inspectDirectReservation(pool,input),{status:'claimed',action:'manual_reconciliation'});
+ assert.deepEqual(await inspectDirectReservation(pool,input),{status:'claimed',identity:'matched',action:'manual_reconciliation'});
+ assert.deepEqual(await inspectDirectReservation(pool,{requestId:input.requestId}),{status:'claimed',identity:'unverified',action:'manual_reconciliation'});
  row={...row,fingerprint:'b'.repeat(64)};
  assert.deepEqual(await inspectDirectReservation(pool,input),{status:'identity_mismatch',action:'manual_reconciliation'});
  row=null;assert.deepEqual(await inspectDirectReservation(pool,input),{status:'not_found',action:'manual_reconciliation'});
- assert.equal(released,3);
+ assert.equal(released,4);
 });
 test('una consulta de recuperación sin identidad válida se rechaza sin tocar la base',async()=>{
  const m=mock();await assert.rejects(inspectDirectReservation(m.pool,{requestId:'bad',fingerprint:input.fingerprint}));assert.equal(m.events.length,0);
