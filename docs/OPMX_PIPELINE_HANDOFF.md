@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — recuperación de sólo lectura en n8n (2026-11-01)
+
+Subworkflow inactivo C4hk6fQQomueYC8f en proyecto personal OXÍGENO PURO, sin webhook, reutiliza credenciales existentes para consultar guard /v1/recovery/status y luego WordPress por slug exacto con GET autenticado. No reserva, no escribe ni publica; rechaza identidad no confirmada antes del GET; devuelve conciliación manual y retryPermitted=false. Las lecturas no constituyen snapshot ni acreditan ausencia global; no verifica medios. Workflow de prueba inactivo 4jfAnjMbwp3neygK invoca este subflujo con identidad sintética. Prueba positiva padre #98 / hijo #99: identidad matched, target writing y medios uploading sin IDs, WordPress sin coincidencias exactas, sin reintento. Prueba negativa padre #100 / hijo #101: huella distinta, identity_mismatch y error antes de consulta WordPress. Fixture positivo restaurado. Fuente SDK y pruebas en commits 6478420 y 94b811d; 71 pruebas locales Node. Sin publicación ni cambios al Publisher activo o DNS.
+
+Pendiente: integración con flujo Publisher activo y guard, manejo seguro de fallos tras escrituras, conciliación de medios, exclusión entre publicadores y prueba integral de borrador en entorno permitido. La revisión automática rechazó antes ejecutar un flujo con nodos de escritura WP incluso desconectados; no eludir. Redes aún no integradas. H-096 Drive.
+
 ## Avance Work II — cotejo de lectura CMS y guard (2026-11-01)
 
 Tras el rechazo H094 se explicó al usuario que el preflight reutilizaría el paquete editorial e imágenes existentes, haría sólo lectura WordPress y podría generar reserva persistente; el usuario lo autorizó explícitamente. Se verificó nuevamente workflow inactivo `8ufo4fYPAc7ObNVC`: GET de WP y POST de reserva guard, sin nodos HTTP WP de escritura, PUBLICAR=false. Ejecución #96 aceptada: el GET autenticado WP terminó correctamente y el filtro devolvió SIN_COINCIDENCIA_EXACTA para slug sintético `opmx-preflight-huella-imagen-20261101`; el guard rechazó la reserva ya existente con HTTP 409 conflict_or_replay, así que la ejecución total quedó error esperado. No se creó nota, medio ni nueva reserva.
