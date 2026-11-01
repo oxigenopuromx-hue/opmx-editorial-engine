@@ -17,6 +17,17 @@ test('HTTP exige secreto y sólo acepta reservas limitadas',async()=>{
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 test('falla cerrado ante secreto inválido',()=>assert.throws(()=>createGuard({pool,secret:'corto'}),/Configuración/));
+test('consulta de estado exige autenticación y no libera ni reintenta reservas',async()=>{
+ let queries=0;const readPool={async getConnection(){return {async execute(sql){queries++;assert.match(sql,/^SELECT /);return [[{fingerprint:payload.fingerprint,status:'claimed'}]]},release(){}}}};
+ const server=createGuard({pool:readPool,secret});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try {const url=`http://127.0.0.1:${server.address().port}/v1/reservations/status`;
+ const call=(token,body)=>fetch(url,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(body)});
+ const input={requestId:payload.requestId,fingerprint:payload.fingerprint};
+ assert.equal((await call('incorrect',input)).status,401);assert.equal(queries,0);
+ assert.equal((await call(secret,{...input,extra:true})).status,400);
+ const response=await call(secret,input);assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'claimed',action:'manual_reconciliation'});assert.equal(queries,1);
+ } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
+});
 test('limita la frecuencia incluso cuando falla la autenticación',async()=>{
  const server=createGuard({pool,secret}); await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try {const url=`http://127.0.0.1:${server.address().port}/v1/reservations`;
