@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — diagnóstico seguro de contención (2026-11-01)
+
+Consulta de sólo lectura en phpMyAdmin: MariaDB 11.8.9 y @@innodb_lock_wait_timeout=50 en esa sesión. La ejecución n8n #64 recibió 503 tras ~11.945 s: el valor leído en otra sesión no identifica la causa ni demuestra que el guard comparta la misma configuración. Se añadió instrumentación local al inicio de medios que sólo registra categorías de una lista fija para errores de SQL, sin mensaje SQL, credenciales ni datos de petición; el cliente conserva 503 not_confirmed. Los errores no reconocidos se reducen a OTHER; no cambia la política de no reintento. Prueba local de códigos y filtrado aprobada; 61 pruebas locales en total. Commits b03b8c1, 14f9f7c, d20699c. El cambio no está desplegado ni identifica por sí mismo la causa; sólo cubre fallos de execute dentro de beginMediaUpload, no conexión inicial. Requiere validación y posterior despliegue del paquete del guard para obtener evidencia real, luego repetir contención y reconciliar. Publisher, WordPress y DNS sin cambios.
+
 ## Avance Work II — validación de medios en n8n sin conexiones (2026-11-01)
 
 Se creó workflow inactivo `w8Z6h5NLluCLX49S` en proyecto personal OXÍGENO PURO, con disparador manual y siete nodos Code únicamente; no tiene credenciales ni nodos HTTP. Usa los validadores de lectura Hero y destacada de la referencia guardada. Ejecución #65 verificó ambos con datos simulados; #66 con leyenda ausente falló con el mensaje esperado. Se restauró el fixture válido. SDK versionado en `workflows/publisher/OPMX_QA_MEDIOS_SIMULADO.n8n.js`. n8n presenta advertencia visual por ocho nodos no agrupados; el fixture conserva nombres para probar referencias reales. Estas pruebas NO consultaron WordPress ni verificaron archivos, concurrencia o render. Publisher activo sin cambios, no se publicó contenido.
