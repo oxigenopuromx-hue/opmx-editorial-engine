@@ -9,7 +9,7 @@ Pruebas: Node.js 24 o superior; `node --test tools/mcp-publisher/*.test.mjs`.
 ## Límites obligatorios
 
 - El servidor no tiene launcher ni configuración de producción. Debe usarse el SDK MCP oficial y probar negociación, encabezados, sesiones y cliente real antes de hacerlo público. El transporte incluido sólo sirve para investigación local.
-- OAuth de introspección exige `active`, emisor, audiencia, alcance, sujeto y expiración. Aún no hay proveedor elegido ni metadata OAuth de descubrimiento; no se probó interoperabilidad con OAuth de n8n ni con ChatGPT.
+- OAuth de introspección exige `active`, emisor, audiencia, alcance, sujeto y expiración. El prototipo ahora expone metadatos de recurso protegido y challenge 401, pero no hay proveedor de autorización elegido ni se ha probado interoperabilidad con OAuth de n8n o ChatGPT.
 - El almacenamiento SQLite necesita un solo archivo durable compartido por todos los procesos; no funciona como garantía distribuida en instancias serverless con discos independientes o efímeros. Verificar bloqueos del almacenamiento real. Si no se garantiza esto, usar otro almacén con claim atómico. Los envíos inciertos no se reintentan: se reconcilian manualmente.
 - El webhook n8n debe activarse sólo después de validar autenticación y permisos mínimos. No hay credenciales ni tokens en el repositorio. El adaptador real no se ha probado.
 - Confirmar los orígenes que ChatGPT usa para URLs temporales. Limitar egress y resolver DNS de forma segura contra SSRF/rebinding; la allowlist exacta de hosts y rechazo de redirecciones son sólo una capa, no una garantía completa. No almacenar URLs firmadas ni archivos en logs.
@@ -45,3 +45,9 @@ Hostinger desplegó un sitio de mantenimiento en `publisher.oxigenopuro.com.mx` 
 Se ejecutó manualmente el workflow inactivo `OPMX — Publisher MCP · borrador de integración` mediante el conector MCP existente, con MASTER sintético y sin imágenes. `execute_workflow` devolvió el ID 22 inmediatamente; `get_workflow_execution` confirmó estado `error` en `Preparar MASTER y binarios` por ausencia de `hero_file`. La validación ocurrió antes de llegar a WordPress. Esta prueba valida el comportamiento de inicio/consulta del conector existente, no el cliente SDK nuevo, OAuth del nuevo servidor, carga real de imágenes ni publicación.
 
 Las reservas se prueban con SQLite local; el adaptador de transacciones MariaDB aún no se ha probado en una base real. La tabla de destinos es independiente de la tabla de solicitudes y debe crearse en una base de prueba dedicada, nunca en la base de WordPress.
+
+## Diagnóstico OAuth de n8n — 2026-11-01
+
+Se consultó desde un workflow diagnóstico de solo lectura la metadata pública OAuth de la instancia n8n (ejecución manual 23). El servidor anuncia autorización por código, refresh token, PKCE S256, registro dinámico y JWKS; **no anuncia un endpoint de introspección**. `auth.mjs` usa introspección, por lo que no debe apuntarse al OAuth de n8n suponiendo compatibilidad. Tampoco debe aceptarse un token emitido para n8n como si fuera válido para `publisher.oxigenopuro.com.mx` sin verificar que su recurso, audiencia y permisos lo autorizan. La conexión ya existente ChatGPT → n8n es distinta del futuro OAuth ChatGPT → Publisher.
+
+El prototipo emite metadata de recurso protegido y challenge 401 para `publisher.draft`, con pruebas locales. Son simulaciones: sigue faltando integrar un servidor de autorización compatible, el SDK MCP oficial, creación/renovación segura de credenciales servidor → n8n y pruebas reales. Ningún secreto se consultó o almacenó.
