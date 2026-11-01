@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — readback editorial conservador (2026-11-01)
+
+Referencia sanitizada inactiva del Publisher amplía validación de draft: slug, autor, título raw, etiquetas, Gutenberg raw exacto y tres campos Rank Math, además de featured, Hero y categoría. Detiene el flujo ante diferencias y no declara borrador válido; prueba local Node 55/55 incluyendo mutaciones de campos. El cotejo exacto puede producir falsos negativos por transformaciones legítimas WordPress: no se ha probado contra WP/n8n y requiere contraste antes de activar. La referencia conserva nodos de escritura desconectados en el entorno de pruebas y NO se ha integrado al guard ni al Publisher activo. No se publicaron notas ni se cambió CMS. Pendiente integración, prueba nativa, concurrencia y conciliación; no considerar QA terminado.
+
 ## Avance Work II — rotación y conexión restablecida (2026-11-01)
 
 El usuario rotó contraseña MySQL y secreto del guard, actualizó las variables y la credencial Header Auth de n8n, y aplicó cambios en Hostinger. Diagnóstico n8n #60 tras contraseña y #61 tras secreto devolvieron HTTP 200 al consultar reserva sintética; identity unverified por ausencia de huella en la consulta. Acredita autenticación guard y lectura de base, no concurrencia ni integridad de identidad completa. No registrar los secretos. La incidencia de exposición de H-073 queda atendida según lo informado y comprobado por conectividad; no afecta la vulnerabilidad npm pendiente ni autoriza uso operativo sin QA.
