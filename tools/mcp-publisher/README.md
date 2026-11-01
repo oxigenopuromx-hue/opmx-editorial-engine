@@ -31,3 +31,11 @@ La autenticación OAuth de n8n existente es para su servidor MCP. Aún no se ver
 El Publisher puede requerir más de 120 s. El servidor no debe depender de una única solicitud síncrona de 120 s: diseñar respuesta de aceptación, registro durable y consulta del resultado/reconciliación sin volver a ejecutar creación.
 
 Se agregó `mariadb-ledger.mjs` para una base dedicada: usa clave primaria y cambios de estado condicionales. Las pruebas actuales emplean un doble simulado; no demuestran bloqueo, aislamiento, recuperación ni persistencia en MariaDB real. Se requiere mysql2/promise u otro pool compatible, cuenta de mínimos privilegios y pruebas en una base de prueba independiente de WordPress. No se creó base ni credencial.
+
+## Avance de ejecución asíncrona — 2026-11-01
+
+Se agregó un contrato interno de inicio y consulta de ejecución (`async-jobs.mjs`), un adaptador experimental para un cliente MCP de n8n ya autenticado (`n8n-mcp.mjs`) y estados persistidos `sent`, `accepted` y `complete`. La confirmación requiere resultado DRAFT para todos los destinos solicitados. Si falla la respuesta de inicio o la persistencia tras iniciar, queda `needs_reconciliation` y no se reinicia automáticamente. Una consulta de estado no vuelve a crear la nota. La prevención sólo cubre repetir el mismo request_id; un ID distinto para la misma nota requiere controles adicionales.
+
+Las pruebas son locales y usan dobles simulados para el cliente MCP, OAuth y MariaDB. No se verificaron compatibilidad de la sesión MCP real, selección de herramientas, seguridad de la credencial, tiempo de ejecución ni readback en WordPress. Antes de operar, usar SDK oficial y configurar acceso mínimo.
+
+Hostinger desplegó un sitio de mantenimiento en `publisher.oxigenopuro.com.mx` (Node 24, HTTP 503 intencional); no ejecuta este prototipo ni se le conectaron credenciales. No confundir la página de mantenimiento desplegada con el servidor MCP.
