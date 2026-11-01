@@ -1,5 +1,15 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — conexión y Hero independiente (2026-11-01)
+
+Tras rotación y aplicación por el usuario, diagnóstico n8n #52 devolvió HTTP 200 al consultar una reserva sintética: autenticación del guard y lectura de base verificadas; identidad sin verificar por consulta sin huella. No acredita concurrencia real ni borradores WordPress. El Publisher activo sigue sin cambios.
+
+La ejecución histórica #9 del Publisher activo subió Hero 9669 y destacada 9670, pero el readback del borrador 9671 devolvió oxpuro_hero_media_id=0. En la referencia sanitizada inactiva se agregó asignación del ID Hero a oxpuro_hero_media_id y comprobación en readback antes de devolver borrador o publicar. Las 48 pruebas locales Node pasan, incluidas cuatro pruebas del payload, readback e inactividad; sin conexiones WordPress y sin validación n8n real. El archivo no es importación validada ni debe activarse: mantiene nodos de escritura y la protección durable completa no está integrada. No extrapolar el error a todas las notas.
+
+Pendiente: confirmar reservas concurrentes reales, registro completo y reconciliación de medios/post, readback de WordPress, integración al flujo desde el Motor, QA de Hero en borrador aislado, y documentación en Drive. No publicar notas de prueba ni modificar el Publisher activo hasta completar pruebas y control de duplicados.
+
+# OPMX Pipeline — Handoff maestro
+
 ## Avance — revisión tras cambio de contraseña (2026-11-01)
 
 El usuario indicó haber cambiado la contraseña de la base dedicada y actualizado el entorno. Ejecución de diagnóstico 47 devolvió HTTP 200 y lectura de la reserva sintética. Esa lectura no prueba por sí sola que el proceso haya reiniciado o que una conexión nueva use la contraseña nueva: el historial de Hostinger aún muestra como último despliegue el paquete de las 11:35. Verificar conexión con proceso reiniciado tras los cambios, sin revelar secretos. Pendiente rotar `OPMX_GUARD_SECRET` en Hostinger y valor Authorization de la credencial Header Auth en n8n, coordinados por el usuario; aplicar/reiniciar el servicio y validar. Publisher editorial no modificado.
