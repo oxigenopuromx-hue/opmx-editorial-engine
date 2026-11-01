@@ -1,4 +1,5 @@
 import {test} from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {openRequestLedger} from './idempotency.mjs';
 import {createMcpServer} from './server.mjs';
@@ -8,7 +9,7 @@ test('MCP local: exige autorización, recibe archivos y evita duplicados',async 
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aN0AAAAASUVORK5CYII=','base64');
  const server=createMcpServer({ledger,resource:'https://publisher.example/mcp',issuer:'https://issuer.example',authenticate:async token=>token==='ok'?'user-1':null,
    prepareOptions:{allowHosts:['files.example'],fetchImpl:async()=>new Response(png)},
-   start:async data=>{submitted++;assert.equal(data.PUBLICAR,false);return {executionId:'42'}},
+   start:async data=>{submitted++;assert.equal(data.PUBLICAR,false);assert.equal(data.request_id,createHash('sha256').update(JSON.stringify(['user-1','request_1234567890'])).digest('hex'));return {executionId:'42'}},
    read:async()=>({state:'success',result:{status:'SUCCESS',mode:'DRAFT',summary:{opuro:'DRAFT',opol:'DRAFT'}}})});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  t.after(()=>{server.close();ledger.close()});
