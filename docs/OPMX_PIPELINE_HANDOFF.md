@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — huella de imágenes en preflight aislado (2026-11-01)
+
+En el workflow inactivo `8ufo4fYPAc7ObNVC` la huella ahora incluye el canonical y ambas cadenas base64 de imágenes enviadas. Ejecución manual 45 completó preflight OPURO con copia transitoria y archivos reales; ejecución 46 conservó solicitud y contenido pero sustituyó HERO por la destacada: produjo otra huella y la reserva rechazó el reenvío con 409. No hubo escritura WordPress y el paquete original sigue REQUIERE_REVISION. Las cadenas base64 de la solicitud se incluyen en su codificación exacta, no es una normalización universal por bytes. La referencia sanitizada actualizada se encuentra en `workflows/publisher/OPMX_PREFLIGHT_AISLADO_ID_ESTABLE_REFERENCIA_NO_ACTIVAR.json`; su importación sigue sin probar. Hay nuevas reservas sintéticas permanentes.
+
+Sigue pendiente incluir esta verificación en el Publisher real, pruebas concurrentes reales, seguimiento de todos los medios, conciliación y readback WordPress. Antes de producción, usuario debe rotar contraseña de base dedicada y secreto guard expuestos en visualización de ajustes, y actualizar ambos lugares correspondientes. La versión activa del Publisher no cambió.
+
 ## Avance — guard desplegado y prueba n8n (2026-11-01)
 
 El usuario autorizó el paquete de prueba. Hostinger muestra `opmx-guard-progress-test.zip` como despliegue actual completado, con versión previa disponible en historial. Desde el workflow diagnóstico inactivo `EarnvktAyNGlKzq1`, que no contiene nodos WordPress, llamadas autenticadas con reserva sintética existente: ejecución 40 devolvió 200 write_started; ejecución 41 devolvió 409 already_started; ejecución 42 registró ID sintético 123 y respondió post_reported; ejecución 43 consultó reported/123; ejecución 44 consultó reserva sin huella y recibió claimed con identidad unverified. Ninguna de estas llamadas verifica WordPress ni crea un post. La tabla contiene una fila de avance sintética persistente y la reserva sintética correspondiente. Las ejecuciones 40/41 llegaron separadas por varios segundos, por lo que no demuestran simultaneidad real, sólo rechazo de repetición. Falta prueba real de carrera, seguimiento y reconciliación de medios y post, incorporación al Publisher, readback WordPress y prueba desde el Project del Motor. Publisher activo sin cambios.
