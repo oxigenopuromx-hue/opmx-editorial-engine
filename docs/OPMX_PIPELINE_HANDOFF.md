@@ -1,5 +1,9 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — validación de medios en n8n sin conexiones (2026-11-01)
+
+Se creó workflow inactivo `w8Z6h5NLluCLX49S` en proyecto personal OXÍGENO PURO, con disparador manual y siete nodos Code únicamente; no tiene credenciales ni nodos HTTP. Usa los validadores de lectura Hero y destacada de la referencia guardada. Ejecución #65 verificó ambos con datos simulados; #66 con leyenda ausente falló con el mensaje esperado. Se restauró el fixture válido. SDK versionado en `workflows/publisher/OPMX_QA_MEDIOS_SIMULADO.n8n.js`. n8n presenta advertencia visual por ocho nodos no agrupados; el fixture conserva nombres para probar referencias reales. Estas pruebas NO consultaron WordPress ni verificaron archivos, concurrencia o render. Publisher activo sin cambios, no se publicó contenido.
+
 ## Avance Work II — verificación de adjuntos en referencia guardada (2026-11-01)
 
 La referencia inactiva añade lectura WordPress `context=edit` de cada adjunto tras guardar su metadata y comprueba ID, tipo imagen, URL y alt; para Hero además título, leyenda y descripción raw. Falla cerrado ante discrepancia antes de crear el post. Sigue sin comprobar los bytes de archivo ni el render visual; la comparación estricta puede rechazar cambios legítimos de sanitización. El generador y las pruebas de grafo comprueban que ambos readbacks preceden al post; 60 pruebas locales aprobadas con dobles. El workflow contiene nodos de escritura, no se ha importado, autenticado ni ejecutado en n8n/WordPress. No activar hasta validar seguridad, reconciliación y prueba integral. Publisher activo y CMS sin cambios; no se publicó contenido.
