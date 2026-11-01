@@ -4,6 +4,9 @@
 
 ### Ruta simplificada: conexión existente ChatGPT → n8n — 2026-11-01
 
+Tras autorizar el usuario, se permitió la IP observada por MySQL y se retiró la IP previa. Al reintentar, MySQL reportó otra IP de origen y negó acceso, por lo que el egreso de n8n no es estable entre esas dos pruebas. Permanece una sola regla remota activa; no se habilitaron comodines. Credencial n8n tiene SSL habilitado pero la conexión no autenticó, de modo que cifrado y verificación no están probados. No se ha realizado SQL desde n8n. Se propone explorar un servicio interno autenticado en Hostinger con acceso local a la base y HTTPS desde n8n, pero aún no existe ni se ha desplegado. Prototipo experimental direct-claim.mjs reserva solicitud y destinos en una sola transacción; 33 pruebas locales pasan, tres nuevas usan un pool simulado y no validan concurrencia en MySQL real. Aún faltan API, autenticación, integración de workflow, verificación del TLS, pruebas reales de concurrencia y recuperación. No reconectar ramas WordPress.
+
+
 Acceso MySQL: con autorización, Hostinger recibió una regla limitada para la IP observada por HTTP desde n8n, y se guardó una credencial MySQL en n8n con SSL activado. La prueba devolvió acceso denegado e identificó una IP origen MySQL diferente a la IP HTTP; la regla anterior permanece habilitada y NO autoriza esa segunda IP. Esto demuestra que la IP de egreso puede depender del destino o el protocolo, no que sea fija. Conectividad autenticada, validación efectiva del cifrado y ejecución SQL desde n8n siguen sin comprobarse. No habilitar comodines ni relajar TLS. No se cambió el Publisher activo ni se publicaron notas.
 
 
