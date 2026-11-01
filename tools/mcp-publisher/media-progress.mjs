@@ -24,13 +24,29 @@ function targetKey({requestId,slug,destination,role}) {
 // duplicate or uncertain response never grants permission to upload again.
 export async function beginMediaUpload(pool,input) {
   const key=targetKey(input),conn=await pool.getConnection();
+  let transactionStarted=false, phase='begin';
   try {
+    // Lock the existing target before deciding whether a role can begin.
+    // Competing claimants serialize on this row; permission is returned only
+    // after COMMIT completes, never after a merely attempted insert.
+    await conn.beginTransaction(); transactionStarted=true;
+    const [targets]=await conn.execute(
+      "SELECT target_key FROM opmx_mcp_target_progress WHERE target_key=? AND request_id=? AND destination=? AND status='writing' FOR UPDATE",
+      [key,input.requestId,input.destination]);
+    if(targets.length!==1) {
+      await conn.rollback(); transactionStarted=false;
+      return {status:'not_started',action:'manual_reconciliation'};
+    }
+    phase='insert';
     const [result]=await conn.execute(
-      "INSERT INTO opmx_mcp_media_progress (target_key,request_id,role,status,media_id,updated_at) SELECT target_key,request_id,?,'uploading',NULL,UTC_TIMESTAMP(6) FROM opmx_mcp_target_progress WHERE target_key=? AND request_id=? AND destination=? AND status='writing'",
-      [input.role,key,input.requestId,input.destination]);
-    return result.affectedRows===1 ? {status:'upload_started'} : {status:'not_started',action:'manual_reconciliation'};
+      "INSERT INTO opmx_mcp_media_progress (target_key,request_id,role,status,media_id,updated_at) VALUES (?,?,?,'uploading',NULL,UTC_TIMESTAMP(6))",
+      [key,input.requestId,input.role]);
+    if(result.affectedRows!==1) throw new Error('Inserción no confirmada');
+    phase='commit'; await conn.commit(); transactionStarted=false;
+    return {status:'upload_started'};
   } catch(error) {
-    if(error?.code==='ER_DUP_ENTRY'||error?.errno===1062) return {status:'already_started',action:'manual_reconciliation'};
+    if(transactionStarted) {try {await conn.rollback();} catch { /* uncertain state still fails closed */ }}
+    if(phase==='insert' && (error?.code==='ER_DUP_ENTRY'||error?.errno===1062)) return {status:'already_started',action:'manual_reconciliation'};
     // Preserve only a recognized database error class for server diagnostics;
     // never expose the driver's message, SQL, credentials, or request data.
     const diagnostic = error?.errno === 1020 || error?.code === 'ER_CHECKREAD' ? 'WRITE_CONFLICT' : ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED'].includes(error?.code) ? error.code : 'OTHER';
