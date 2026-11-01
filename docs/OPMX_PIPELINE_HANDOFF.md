@@ -1,5 +1,17 @@
 # OPMX Pipeline — Handoff maestro
 
+## Hito en preparación — integración ChatGPT → Publisher MCP (2026-11-01)
+
+**Estado: prototipo en rama de PR, no integrado en main ni habilitado para producción.** El [PR #9](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/pull/9) contiene el código y pruebas bajo `tools/mcp-publisher/`; no sustituye los flujos vigentes mientras permanezca en borrador.
+
+- Hostinger: `publisher.oxigenopuro.com.mx` está en Cloud Startup con Node 24; despliega exclusivamente una aplicación temporal de mantenimiento que responde 503. No ejecuta el servidor MCP del PR. Hostinger creó registros DNS del subdominio. No se ha conectado base de datos ni proveedor OAuth.
+- n8n: existe una copia separada e **inactiva**, `OPMX — Publisher MCP · borrador de integración`. El Publisher v1.3.5 activo no fue modificado. Una prueba real MCP con datos incompletos produjo ejecución 22 y fue rechazada antes de WordPress; las demás pruebas del workflow usaron respuestas simuladas. El webhook de la copia está configurado para n8n OAuth2, cuya interoperabilidad aún no está verificada.
+- Referencia del workflow: `workflows/publisher/OPMX_PUBLISHER_MCP_REFERENCIA_SANITIZADA_NO_ACTIVAR.json`. Se retiraron identificadores de credenciales y de webhooks y se desactivó MCP. Es una referencia saneada, **no se ha probado su importación** y no debe activarse; requiere revisión y asignación de credenciales si se utiliza para preparar una copia.
+- Prototipo: crea sólo borradores, permite iniciar y consultar ejecución y evita reenvíos tras un resultado incierto. Reserva destino/slug para bloquear solicitudes solapadas ingresadas por este prototipo. No verifica duplicados creados previamente en WordPress u otros flujos; tampoco existe aún procedimiento de actualización o liberación segura de reservas.
+- Validación: 30 pruebas locales Node aprobadas; MariaDB, OAuth, conexión del cliente MCP nuevo y WordPress están simulados. La prueba n8n real descrita arriba no publicó ni creó notas.
+- Pendientes obligatorios: SDK y protocolo MCP, OAuth real y permisos mínimos, prevención SSRF/egress, MariaDB dedicada y pruebas de transacciones reales, reconciliación de fallos/duplicados y prueba integral con imágenes y borradores reales. No desplegar el prototipo ni activar la copia antes de validar. No se cambian instrucciones o maestros editoriales.
+
+
 Actualizado: 2026-10-25
 
 ## Propósito
