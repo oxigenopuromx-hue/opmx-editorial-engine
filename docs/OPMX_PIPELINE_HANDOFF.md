@@ -1,5 +1,11 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance de recuperación de reservas — 2026-11-01
+
+Preparada en la rama del PR una consulta autenticada de estado por identificador y huella en `POST /v1/reservations/status`. Sólo lee la base; devuelve reconciliación manual tanto si encuentra la reserva como si falta o la identidad no coincide. Nunca libera reservas, reintenta escrituras ni demuestra por sí sola que sea seguro volver a publicar. Se verificaron 39 pruebas locales Node, incluidas autenticación, consulta sin escritura y validación; no hay prueba con MariaDB o n8n reales de esta revisión. Los cambios no están desplegados.
+
+Antes de una prueba de borrador, quedan por resolver y probar un identificador estable que el cliente conozca incluso tras un timeout, registro durable de avance y resultados por destino, reconciliación de WordPress y ejecución n8n terminada, y protección contra carreras y otros flujos. No usar `not_found` como autorización para reenviar. El Publisher activo no se cambió. La prueba aislada anterior sigue limitada a preflight OPURO y no prueba creación de borradores.
+
 ## Estado más reciente — preflight aislado OPURO (2026-11-01)
 
 La ejecución manual 36 del workflow inactivo aislado `8ufo4fYPAc7ObNVC`, que contiene nueve nodos y ningún nodo de escritura WordPress, completó la validación de un MASTER y dos JPEG completos, GET preventivo del slug, y reserva autenticada en guard y MySQL local. Para la prueba se usó una copia transitoria con slug sintético y ESTADO=LISTO; el MASTER original permanece REQUIERE_REVISION y no se publicó ni se editó ninguna entrada. La ejecución 37 repitió el slug con otro identificador y fue rechazada por el guard con HTTP 409 conflict_or_replay. Son pruebas desde Work: no acreditan transferencia de adjuntos desde el chat del Motor ni publicación de borradores.
