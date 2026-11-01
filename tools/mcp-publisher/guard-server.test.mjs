@@ -54,7 +54,8 @@ test('limita la frecuencia incluso cuando falla la autenticación',async()=>{
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 test('rutas media requieren autenticación y nunca repiten una carga',async()=>{
- let row=null;const db={async getConnection(){return {async execute(sql,args){
+ let row=null;const db={async getConnection(){return {async beginTransaction(){},async commit(){},async rollback(){},async execute(sql,args){
+  if(sql.includes('FROM opmx_mcp_target_progress'))return [[{target_key:'synthetic'}]];
   if(sql.startsWith('INSERT')){if(row)throw Object.assign(new Error(),{code:'ER_DUP_ENTRY'});row={status:'uploading',media_id:null};return [{affectedRows:1}]}
   if(sql.startsWith('UPDATE')){if(!row||row.status!=='uploading')return [{affectedRows:0}];row={status:'reported',media_id:args[0]};return [{affectedRows:1}]}
   if(sql.startsWith('SELECT'))return [[...(row?[row]:[])]];throw new Error('SQL inesperado');
@@ -73,7 +74,7 @@ test('rutas media requieren autenticación y nunca repiten una carga',async()=>{
 });
 test('diagnóstico de contención no filtra datos y conserva respuesta incierta',async()=>{
  const messages=[];let code='ER_LOCK_DEADLOCK';
- const db={async getConnection(){return {async execute(){throw Object.assign(new Error('SQL y secreto privado'), typeof code === 'number' ? {errno:code} : {code})},release(){}}}};
+ const db={async getConnection(){return {async beginTransaction(){},async rollback(){},async execute(){throw Object.assign(new Error('SQL y secreto privado'), typeof code === 'number' ? {errno:code} : {code})},release(){}}}};
  const server=createGuard({pool:db,secret,diagnosticLogger:msg=>messages.push(msg)});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try {
   const url=`http://127.0.0.1:${server.address().port}/v1/media/begin`;
