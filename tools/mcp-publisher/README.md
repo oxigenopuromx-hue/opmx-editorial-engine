@@ -39,3 +39,7 @@ Se agregó un contrato interno de inicio y consulta de ejecución (`async-jobs.m
 Las pruebas son locales y usan dobles simulados para el cliente MCP, OAuth y MariaDB. No se verificaron compatibilidad de la sesión MCP real, selección de herramientas, seguridad de la credencial, tiempo de ejecución ni readback en WordPress. Antes de operar, usar SDK oficial y configurar acceso mínimo.
 
 Hostinger desplegó un sitio de mantenimiento en `publisher.oxigenopuro.com.mx` (Node 24, HTTP 503 intencional); no ejecuta este prototipo ni se le conectaron credenciales. No confundir la página de mantenimiento desplegada con el servidor MCP.
+
+### Prueba MCP real de rechazo seguro
+
+Se ejecutó manualmente el workflow inactivo `OPMX — Publisher MCP · borrador de integración` mediante el conector MCP existente, con MASTER sintético y sin imágenes. `execute_workflow` devolvió el ID 22 inmediatamente; `get_workflow_execution` confirmó estado `error` en `Preparar MASTER y binarios` por ausencia de `hero_file`. La validación ocurrió antes de llegar a WordPress. Esta prueba valida el comportamiento de inicio/consulta del conector existente, no el cliente SDK nuevo, OAuth del nuevo servidor, carga real de imágenes ni publicación.
