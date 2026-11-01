@@ -23,6 +23,7 @@ test('todas las escrituras requieren reserva e inicio de destino',()=>{
 test('las cargas y la nota quedan detrás de los hitos de guard',()=>{
  for(const [blocker,target] of [['GUARD — Verificar inicio Hero','OPURO — Subir HERO'],['GUARD — Verificar reporte Hero','OPURO — Subir DESTACADA'],['GUARD — Verificar inicio destacada','OPURO — Subir DESTACADA'],['GUARD — Verificar reporte destacada','OPURO — Crear borrador Gutenberg enriquecido'],['GUARD — Verificar reporte post','OPURO — Readback'],['OPURO — Validar antes de publicar','Resultado OPURO — BORRADOR']]) assert.equal(reachable([blocker]).has(target),false,target);
  assert.ok(reachable().has('Resultado OPURO — BORRADOR'));
+ for(const blocker of ['OPURO — Verificar Hero','OPURO — Verificar destacada']) assert.equal(reachable([blocker]).has('OPURO — Crear borrador Gutenberg enriquecido'),false,blocker);
 });
 test('los nodos Code compilan y los reportes usan IDs por rol',()=>{
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
@@ -30,4 +31,17 @@ test('los nodos Code compilan y los reportes usan IDs por rol',()=>{
  assert.match(byName['GUARD — Reportar Hero'].parameters.jsonBody,/role:'hero'.*Subir HERO/);
  assert.match(byName['GUARD — Reportar destacada'].parameters.jsonBody,/role:'featured'.*Subir DESTACADA/);
  assert.match(byName['GUARD — Reportar post'].parameters.jsonBody,/postId:.*Crear borrador Gutenberg/);
+});
+test('readback de medios compara ID, tipo y metadata antes de crear el post',()=>{
+ const canonical={images:{hero_opuro:{alt_text:'alt',title:'título',caption:'leyenda',description:'descripción'},featured_opuro:{alt_text:'miniatura'}}};
+ const lookup=name=>({first:()=>({json:name==='Validar y normalizar OPMX MASTER'?{canonical}:name==='OPURO — Subir HERO'?{id:101}:{id:102}})});
+ const hero={$json:{id:101,media_type:'image',source_url:'https://example.test/hero',alt_text:'alt',title:{raw:'título'},caption:{raw:'leyenda'},description:{raw:'descripción'}}};
+ const featured={$json:{id:102,media_type:'image',source_url:'https://example.test/featured',alt_text:'miniatura'}};
+ const checkHero=Function('$json','$',byName['OPURO — Verificar Hero'].parameters.jsCode);
+ const checkFeatured=Function('$json','$',byName['OPURO — Verificar destacada'].parameters.jsCode);
+ assert.equal(checkHero(hero.$json,lookup)[0].json.status,'HERO_VERIFICADO');
+ assert.equal(checkFeatured(featured.$json,lookup)[0].json.status,'DESTACADA_VERIFICADA');
+ assert.throws(()=>checkHero({...hero.$json,caption:{raw:''}},lookup),/conciliación/);
+ assert.throws(()=>checkFeatured({...featured.$json,id:101},lookup),/conciliación/);
+ assert.throws(()=>checkFeatured({...featured.$json,media_type:'file'},lookup),/conciliación/);
 });
