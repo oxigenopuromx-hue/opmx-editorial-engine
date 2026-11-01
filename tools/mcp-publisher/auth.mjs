@@ -14,7 +14,7 @@ export function createAuthenticator({endpoint, clientId, clientSecret, issuer, a
     let data;try{const text=await response.text();if(text.length>32000)throw Error();data=JSON.parse(text)}catch{throw new Error('No autorizado')}
     const audiences=Array.isArray(data.aud)?data.aud:[data.aud];
     const scopes=typeof data.scope==='string'?data.scope.split(/\s+/):[];
-    if(data.active!==true || data.iss!==issuer || !audiences.includes(audience) || !scopes.includes(scope) || typeof data.sub!=='string' || !data.sub || !Number.isFinite(data.exp) || data.exp*1000<=now()) throw new Error('No autorizado');
+    if(data.active!==true || data.iss!==issuer || !audiences.includes(audience) || !scopes.includes(scope) || typeof data.sub!=='string' || !data.sub || !Number.isFinite(data.exp) || data.exp*1000<=now() || (data.nbf!==undefined && (!Number.isFinite(data.nbf) || data.nbf*1000>now()))) throw new Error('No autorizado');
     return data.sub;
   };
 }
