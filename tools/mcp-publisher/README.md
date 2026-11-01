@@ -34,7 +34,7 @@ Se agregó `mariadb-ledger.mjs` para una base dedicada: usa clave primaria y cam
 
 ## Avance de ejecución asíncrona — 2026-11-01
 
-Se agregó un contrato interno de inicio y consulta de ejecución (`async-jobs.mjs`), un adaptador experimental para un cliente MCP de n8n ya autenticado (`n8n-mcp.mjs`) y estados persistidos `sent`, `accepted` y `complete`. La confirmación requiere resultado DRAFT para todos los destinos solicitados. Si falla la respuesta de inicio o la persistencia tras iniciar, queda `needs_reconciliation` y no se reinicia automáticamente. Una consulta de estado no vuelve a crear la nota. La prevención sólo cubre repetir el mismo request_id; un ID distinto para la misma nota requiere controles adicionales.
+Se agregó un contrato interno de inicio y consulta de ejecución (`async-jobs.mjs`), un adaptador experimental para un cliente MCP de n8n ya autenticado (`n8n-mcp.mjs`) y estados persistidos `sent`, `accepted` y `complete`. La confirmación requiere resultado DRAFT para todos los destinos solicitados. Si falla la respuesta de inicio o la persistencia tras iniciar, queda `needs_reconciliation` y no se reinicia automáticamente. Una consulta de estado no vuelve a crear la nota. El prototipo también reserva cada combinación de destino y slug de manera atómica para bloquear otro request_id con destinos solapados. Esto sólo cubre solicitudes registradas por esta integración: no comprueba publicaciones que ya existan en WordPress, variaciones de slug ni notas creadas por otros flujos. Las reservas se conservan tras iniciar incluso ante resultados ambiguos; las actualizaciones o liberaciones deben tratarse mediante un procedimiento explícito de reconciliación aún no implementado.
 
 Las pruebas son locales y usan dobles simulados para el cliente MCP, OAuth y MariaDB. No se verificaron compatibilidad de la sesión MCP real, selección de herramientas, seguridad de la credencial, tiempo de ejecución ni readback en WordPress. Antes de operar, usar SDK oficial y configurar acceso mínimo.
 
@@ -43,3 +43,5 @@ Hostinger desplegó un sitio de mantenimiento en `publisher.oxigenopuro.com.mx` 
 ### Prueba MCP real de rechazo seguro
 
 Se ejecutó manualmente el workflow inactivo `OPMX — Publisher MCP · borrador de integración` mediante el conector MCP existente, con MASTER sintético y sin imágenes. `execute_workflow` devolvió el ID 22 inmediatamente; `get_workflow_execution` confirmó estado `error` en `Preparar MASTER y binarios` por ausencia de `hero_file`. La validación ocurrió antes de llegar a WordPress. Esta prueba valida el comportamiento de inicio/consulta del conector existente, no el cliente SDK nuevo, OAuth del nuevo servidor, carga real de imágenes ni publicación.
+
+Las reservas se prueban con SQLite local; el adaptador de transacciones MariaDB aún no se ha probado en una base real. La tabla de destinos es independiente de la tabla de solicitudes y debe crearse en una base de prueba dedicada, nunca en la base de WordPress.
