@@ -5,6 +5,8 @@ Esta variante no depende de la función de pago **Variables** de n8n.
 ## Importación
 
 1. Importa `OPMX_Publisher_MEDIA_v1.3.5_GUTENBERG_COMMUNITY.json`.
+
+Para corregir únicamente un Gutenberg enriquecido ya publicado, importa `OPMX_OPURO_UPDATE_GUTENBERG_ENRIQUECIDO_v1.1_COMMUNITY.json`; también evita `$vars` y usa la misma credencial Bearer.
 2. Asigna la credencial Basic Auth de WordPress a los nodos OPURO.
 3. Asigna la credencial Basic Auth de OXígeno Político a sus nodos correspondientes, si se publica también en OPOL.
 4. Crea y asigna la credencial de revalidación descrita abajo.
