@@ -1,0 +1,385 @@
+{
+  "name": "OPMX OPURO — Actualizar Gutenberg enriquecido v1.1 Community",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "OPURO — Actualizar Gutenberg enriquecido",
+        "formDescription": "Actualiza únicamente el contenido Gutenberg enriquecido de un post OPURO existente. No crea entradas ni modifica imágenes, destacada, autor, categorías, etiquetas, SEO, slug, fecha o estado. El paquete debe incluir OPURO_POST_ID (o PUBLICACION.POST_ID / PUBLICACION.WP_POST_ID).",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "json",
+              "fieldType": "textarea",
+              "fieldName": "json",
+              "placeholder": "Pega el MASTER JSON completo, o deja vacío y sube el archivo .json."
+            },
+            {
+              "fieldLabel": "Archivo JSON",
+              "fieldType": "file",
+              "fieldName": "json_file",
+              "multipleFiles": false,
+              "acceptFileTypes": "application/json,.json"
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "52b9940b-a6be-47c4-9c04-5c7610a714df",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -1240,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const envelope=$json.body ?? $json;\nconst pasted=typeof envelope.json==='string' ? envelope.json.trim() : '';\nconst binary=$input.item.binary ?? {};\nconst fileKey=binary.json_file ? 'json_file' : null;\nif(pasted && fileKey) throw new Error('Entrega el MASTER de una sola forma: pega el JSON o sube un archivo .json, no ambos.');\nif(!pasted && !fileKey) throw new Error('Falta el MASTER JSON. Pégalo o sube un archivo .json.');\nlet raw=pasted;\nif(fileKey){\n  const meta=binary[fileKey] ?? {};\n  if(meta.fileName && !/\\.json$/i.test(String(meta.fileName))) throw new Error('El archivo subido debe tener extensión .json.');\n  raw=(await this.helpers.getBinaryDataBuffer(0,fileKey)).toString('utf8').replace(/^\\uFEFF/,'').trim();\n}\nlet master;\ntry { master=JSON.parse(raw); } catch(error) { throw new Error(`El MASTER no contiene JSON válido: ${error.message}`); }\nif(typeof master==='string'){ try { master=JSON.parse(master.trim()); } catch(error) { throw new Error(`El JSON anidado no es válido: ${error.message}`); } }\nconst str=value=>value===null||value===undefined?'':String(value).trim();\nconst control=str(master?.CONTROL_EDITORIAL?.ESTADO ?? master?.control_editorial?.estado).toUpperCase();\nif(control!=='LISTO') throw new Error(`CONTROL_EDITORIAL.ESTADO debe ser LISTO; se recibió: ${control||'(vacío)'}.`);\nconst content=str(master.GUTENBERG_ENRIQUECIDO_FINAL ?? master.gutenberg_enriquecido_final);\nif(!content) throw new Error('Falta GUTENBERG_ENRIQUECIDO_FINAL.');\nconst forbidden=[/opmx-editorial/i,/data-opmx/i,/<!--\\s*wp:html/i,/<\\/?(?:article|header|footer)\\b/i,/<h1\\b/i,/\\{\\{OPMX:/i];\nif(forbidden.some(rx=>rx.test(content))) throw new Error('GUTENBERG_ENRIQUECIDO_FINAL contiene wrappers, marcadores o tokens MEDIA no permitidos.');\nconst names=[...content.matchAll(/<!--\\s*\\/?wp:([a-z0-9/-]+)/gi)].map(m=>m[1].replace(/^core\\//,''));\nconst allowed=new Set(['paragraph','heading','list','quote','image']);\nif(!names.length || names.some(name=>!allowed.has(name))) throw new Error(`GUTENBERG_ENRIQUECIDO_FINAL usa bloques no autorizados: ${[...new Set(names.filter(name=>!allowed.has(name)))].join(', ')||'(sin bloques)'}.`);\nif(/<!--\\s*wp:image/i.test(content) && (!/\\bwp-image-\\d+\\b/i.test(content) || !/\\balt=(['\"]).*?\\1/i.test(content))) throw new Error('Cada core/image debe enlazar un adjunto nativo wp-image-{id} y conservar ALT literal.');\nconst rawId=master.OPURO_POST_ID ?? master.POST_ID ?? master?.PUBLICACION?.WP_POST_ID ?? master?.PUBLICACION?.POST_ID ?? master?.OPURO_UPDATE?.POST_ID;\nconst post_id=Number(rawId);\nif(!Number.isInteger(post_id)||post_id<=0) throw new Error('Falta un post_id válido. Añade OPURO_POST_ID al MASTER (o PUBLICACION.POST_ID / PUBLICACION.WP_POST_ID). No se hará ninguna escritura.');\nconst expected_slug=str(master?.SEO?.SLUG ?? master?.seo?.slug);\nif(expected_slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(expected_slug)) throw new Error('SEO.SLUG no es válido para usarlo como blindaje del post destino.');\nreturn {json:{post_id,expected_slug,gutenberg_enriquecido_final:content,master_title:str(master?.SEO?.TITULO_SEO ?? master?.TEXTO_EDITORIAL?.TITULO),contract_state:control},binary};"
+      },
+      "id": "db2e2548-969f-47cd-92b2-f65bd31f59b0",
+      "name": "OPURO — Validar paquete de actualización",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -980,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://cms.oxigenopuro.com.mx' + '/wp-json/wp/v2/posts/' + $json.post_id + '?context=edit' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "id": "4a750875-3292-48e7-8841-4cb9fd1262e8",
+      "name": "OPURO — Leer post antes de actualizar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        160
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const packageData=$('OPURO — Validar paquete de actualización').first().json;\nconst post=$json;\nif(Number(post?.id)!==Number(packageData.post_id)) throw new Error('El CMS devolvió un post distinto al post_id solicitado.');\nif(post?.type!=='post') throw new Error('El destino no es una entrada estándar de WordPress.');\nif(!['draft','publish','pending','future','private'].includes(String(post?.status??''))) throw new Error(`Estado no actualizable: ${post?.status??'(vacío)'}.`);\nconst currentSlug=String(post?.slug??'').trim();\nif(!currentSlug) throw new Error('El post destino no tiene slug.');\nif(packageData.expected_slug && currentSlug!==packageData.expected_slug) throw new Error(`Blindaje anti-destino equivocado: el paquete indica slug ${packageData.expected_slug} y el post ${post.id} tiene ${currentSlug}.`);\nconst snapshot={id:Number(post.id),slug:currentSlug,status:String(post.status),author:Number(post.author),date:String(post.date??''),categories:Array.isArray(post.categories)?post.categories.map(Number).sort((a,b)=>a-b):[],tags:Array.isArray(post.tags)?post.tags.map(Number).sort((a,b)=>a-b):[],featured_media:Number(post.featured_media??0)};\nreturn {json:{...packageData,before:snapshot}};"
+      },
+      "id": "e6320302-e4fe-462e-bde5-6806f1ab8acd",
+      "name": "OPURO — Blindaje preactualización",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://cms.oxigenopuro.com.mx' + '/wp-json/wp/v2/posts/' + $json.post_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { content: $json.gutenberg_enriquecido_final } }}",
+        "options": {}
+      },
+      "id": "c6cb7606-38b6-4c79-9568-ea4a3fbfb9da",
+      "name": "OPURO — Actualizar sólo contenido Gutenberg enriquecido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -180,
+        160
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ 'https://cms.oxigenopuro.com.mx' + '/wp-json/wp/v2/posts/' + $('OPURO — Blindaje preactualización').first().json.post_id + '?context=edit' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "id": "a44923d6-14b2-4ff7-872b-30ad5fa4b9e0",
+      "name": "OPURO — Leer post actualizado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        100,
+        160
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "ptObxLykxpNJ4V4k",
+          "name": "Credencial Oxígeno Puro"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const context=$('OPURO — Blindaje preactualización').first().json;\nconst post=$json;\nconst before=context.before;\nconst normalized=value=>String(value??'').replace(/\\r\\n/g,'\\n').trim();\nif(Number(post?.id)!==before.id) throw new Error('Readback inválido: cambió el ID.');\nconst after={slug:String(post?.slug??''),status:String(post?.status??''),author:Number(post?.author),date:String(post?.date??''),categories:Array.isArray(post.categories)?post.categories.map(Number).sort((a,b)=>a-b):[],tags:Array.isArray(post.tags)?post.tags.map(Number).sort((a,b)=>a-b):[],featured_media:Number(post.featured_media??0)};\nfor(const key of ['slug','status','author','date','categories','tags','featured_media']){ if(JSON.stringify(after[key])!==JSON.stringify(before[key])) throw new Error(`Readback rechazado: cambió ${key}, que este Publisher no tiene autorización para modificar.`); }\nconst stored=normalized(post?.content?.raw);\nconst intended=normalized(context.gutenberg_enriquecido_final);\nif(stored!==intended) throw new Error('Readback rechazado: WordPress no conservó exactamente el Gutenberg enriquecido esperado.');\nreturn {json:{...context,post_status:after.status,slug:after.slug,public_url:after.status==='publish'?`https://oxigenopuro.com.mx/${encodeURIComponent(after.slug)}/`:null,edit_url:`${'https://cms.oxigenopuro.com.mx'}/wp-admin/post.php?post=${before.id}&action=edit`}};"
+      },
+      "id": "ddce91a5-748c-4e06-8d1d-72c593e74d0d",
+      "name": "OPURO — Verificar actualización content-only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ea87c509-420a-4a22-a4a4-c2dafb4376d7",
+              "leftValue": "={{ $json.post_status }}",
+              "rightValue": "publish",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ff4352db-d248-4fe2-af64-11200ddd8849",
+      "name": "¿OPURO publicado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const payload={scope:'story',slug:$json.slug,categories:[]};\nconst revalidation_body=JSON.stringify(payload);\nreturn {json:{...$json,revalidation_body}};"
+      },
+      "id": "76850c0f-e280-4982-8e4c-3e72cb79ae58",
+      "name": "OPURO — Preparar revalidación de nota v1.1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://oxigenopuro.com.mx/api/revalidate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.revalidation_body }}",
+        "options": {}
+      },
+      "id": "9bf2e68a-5b64-4ca7-9b02-9d7182034a6a",
+      "name": "OPURO — Invalidar caché de nota Bearer v1.1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1420,
+        60
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "OPURO — Revalidación Bearer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const context=$('OPURO — Verificar actualización content-only').first().json;\nconst revalidation=$('OPURO — Invalidar caché de nota Bearer v1.1').first().json;\nreturn {json:{status:'SUCCESS',workflow:'OPMX OPURO Content Update v1.1 Community',target:'oxigenopuro',post_id:context.post_id,post_status:context.post_status,slug:context.slug,public_url:context.public_url,edit_url:context.edit_url,content_updated:true,unchanged:['slug','status','author','date','categories','tags','featured_media','SEO','media'],cache_revalidation:{status:revalidation?.revalidated===true?'SUCCESS':'NOT_CONFIRMED',tags:revalidation?.tags??[],paths:revalidation?.paths??[]},warnings:[]}};"
+      },
+      "id": "f04a5771-d842-4b8e-b45c-8039e764f302",
+      "name": "Resultado — publicado y revalidado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {json:{status:'SUCCESS',workflow:'OPMX OPURO Content Update v1.1 Community',target:'oxigenopuro',post_id:$json.post_id,post_status:$json.post_status,slug:$json.slug,public_url:null,edit_url:$json.edit_url,content_updated:true,unchanged:['slug','status','author','date','categories','tags','featured_media','SEO','media'],cache_revalidation:{status:'SKIPPED_NOT_PUBLISHED',tags:[],paths:[]},warnings:[]}};"
+      },
+      "id": "e6f8e6a2-01e5-4f1b-b75e-b4435d52c43a",
+      "name": "Resultado — no publicado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Validar paquete de actualización",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Validar paquete de actualización": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Leer post antes de actualizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Leer post antes de actualizar": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Blindaje preactualización",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Blindaje preactualización": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Actualizar sólo contenido Gutenberg enriquecido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Actualizar sólo contenido Gutenberg enriquecido": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Leer post actualizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Leer post actualizado": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Verificar actualización content-only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Verificar actualización content-only": {
+      "main": [
+        [
+          {
+            "node": "¿OPURO publicado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿OPURO publicado?": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Preparar revalidación de nota",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado — no publicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Preparar revalidación de nota v1.1": {
+      "main": [
+        [
+          {
+            "node": "OPURO — Invalidar caché de nota Bearer v1.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPURO — Invalidar caché de nota Bearer v1.1": {
+      "main": [
+        [
+          {
+            "node": "Resultado — publicado y revalidado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "opmx-editorial-engine"
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "versionId": "f0a1d2f9-0d2c-4f0f-8eef-3a0809e27910",
+  "tags": []
+}
