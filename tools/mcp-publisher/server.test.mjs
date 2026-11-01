@@ -22,5 +22,9 @@ test('MCP local: exige autorización, recibe archivos y evita duplicados',async 
  const invoke=request('tools/call',{name:'preparar_borrador_opmx',arguments:args});
  result=await (await call(invoke)).json();assert.equal(result.result.structuredContent.status,'complete');
  result=await (await call(invoke)).json();assert.equal(result.result.structuredContent.replay,true);assert.equal(submitted,1);
+ const check=request('tools/call',{name:'consultar_borrador_opmx',arguments:{request_id:args.request_id}});
+ result=await (await call(check)).json();assert.equal(result.result.structuredContent.status,'complete');assert.equal(submitted,1);
+ const missing=request('tools/call',{name:'consultar_borrador_opmx',arguments:{request_id:'not_found_request_01'}});
+ result=await (await call(missing)).json();assert.equal(result.result.structuredContent.status,'not_found');
 });
 test('el servidor no admite configuración sin autenticación',()=>assert.throws(()=>createMcpServer({ledger:{},submit:()=>{}}),/autenticación/));
