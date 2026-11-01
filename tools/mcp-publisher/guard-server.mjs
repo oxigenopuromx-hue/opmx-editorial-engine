@@ -5,7 +5,7 @@ import {beginTargetWrite,recordTargetPost,inspectTargetProgress} from './target-
 import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-progress.mjs';
 
 const MAX_BODY=4096;
-export function createGuard({pool,secret}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
   const expected=Buffer.from('Bearer '+secret);
   let windowStart=Date.now(), requestCount=0;
@@ -45,6 +45,13 @@ export function createGuard({pool,secret}) {
       if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='destinations,fingerprint,requestId,slug') return end(400,{error:'invalid_request'});
       const result=await reserveDirectPublication(pool,input);
       return end(result.status==='claimed'?201:409,result);
-    } catch(error) {return end(error.message==='Solicitud inválida'||error instanceof SyntaxError?400:503,{error:'not_confirmed'});}
+    } catch(error) {
+      if (error?.message === 'Inicio de medio no confirmado') {
+        const allowed = ['ER_LOCK_WAIT_TIMEOUT', 'ER_LOCK_DEADLOCK', 'PROTOCOL_CONNECTION_LOST', 'ETIMEDOUT', 'ECONNREFUSED', 'OTHER'];
+        const diagnostic = allowed.includes(error.diagnostic) ? error.diagnostic : 'OTHER';
+        try { diagnosticLogger(`guard.media.begin: ${diagnostic}`); } catch { /* logging must not change fail-closed behavior */ }
+      }
+      return end(error.message==='Solicitud inválida'||error instanceof SyntaxError?400:503,{error:'not_confirmed'});
+    }
   });
 }
