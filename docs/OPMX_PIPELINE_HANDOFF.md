@@ -1,10 +1,16 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance — identificador estable en preflight aislado (2026-11-01)
+
+La copia inactiva sin nodos de escritura exige ahora `request_id` suministrado por el cliente antes de recibir el MASTER. Ejecución manual 38 rechazó su ausencia antes de consultar WordPress o reservar. Ejecución 39 completó el recorrido de preflight con MASTER y dos imágenes y devolvió ese identificador y la huella; se utilizó una copia transitoria y slug sintético, sin aprobar editorialmente ni publicar la nota. El cliente debe guardar el ID antes del envío. La referencia sanitizada está en `workflows/publisher/OPMX_PREFLIGHT_AISLADO_ID_ESTABLE_REFERENCIA_NO_ACTIVAR.json`: credenciales y webhookId retirados, no se ha probado su importación.
+
+Se amplió el prototipo local de consulta de reserva para permitir búsqueda sólo por ID si se perdió la respuesta. En ese caso indica identidad no verificada y requiere reconciliación manual; con huella puede verificar coincidencia. La respuesta nunca autoriza reintentar ni libera una reserva. 39 pruebas locales pasan. Esta mejora sigue sin desplegar ni probar contra la base real. La huella del preflight actual no incorpora los bytes de las imágenes; no usarla como identidad completa del paquete. Falta registro durable de avances por destino, conciliación de resultados inciertos, integración Publisher y prueba de borrador. El workflow de prueba está inactivo pero disponible por MCP; Publisher activo intacto.
+
 ## Avance de recuperación de reservas — 2026-11-01
 
 Preparada en la rama del PR una consulta autenticada de estado por identificador y huella en `POST /v1/reservations/status`. Sólo lee la base; devuelve reconciliación manual tanto si encuentra la reserva como si falta o la identidad no coincide. Nunca libera reservas, reintenta escrituras ni demuestra por sí sola que sea seguro volver a publicar. Se verificaron 39 pruebas locales Node, incluidas autenticación, consulta sin escritura y validación; no hay prueba con MariaDB o n8n reales de esta revisión. Los cambios no están desplegados.
 
-Antes de una prueba de borrador, quedan por resolver y probar un identificador estable que el cliente conozca incluso tras un timeout, registro durable de avance y resultados por destino, reconciliación de WordPress y ejecución n8n terminada, y protección contra carreras y otros flujos. No usar `not_found` como autorización para reenviar. El Publisher activo no se cambió. La prueba aislada anterior sigue limitada a preflight OPURO y no prueba creación de borradores.
+Antes de una prueba de borrador, quedan por integrar el identificador estable en el cliente del Motor y el Publisher real, registro durable de avance y resultados por destino, reconciliación de WordPress y ejecución n8n terminada, y protección contra carreras y otros flujos. No usar `not_found` como autorización para reenviar. El Publisher activo no se cambió. La prueba aislada anterior sigue limitada a preflight OPURO y no prueba creación de borradores.
 
 ## Estado más reciente — preflight aislado OPURO (2026-11-01)
 
