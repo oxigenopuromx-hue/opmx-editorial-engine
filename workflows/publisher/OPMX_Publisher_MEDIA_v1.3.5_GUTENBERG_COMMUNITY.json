@@ -1,10 +1,9 @@
-{"vars":0,"hmac":false,"nodes":68,"missing":[],"opuroBasicIds":["KItac8AMmbUVUbWY"],"revalidationCredential":"OPURO — Revalidación Bearer"}
 {
   "name": "OPMX Publisher MEDIA v1.3.5 — Gutenberg + revalidación Community",
   "nodes": [
     {
       "parameters": {
-        "content": "## Revalidación pública OPURO · Community\n\nEste flujo usa la credencial HTTP Header Auth `OPURO — Revalidación Bearer` con `Authorization: Bearer <REVALIDATION_SECRET>`. No usa `$vars` ni almacena el secreto en el workflow.",
+        "content": "## Revalidación pública OPURO · Community\n\nUsa la credencial HTTP Header Auth `OPURO — Revalidación Bearer`, configurada como `Authorization: Bearer <REVALIDATION_SECRET>`. No almacena secretos ni referencias a Variables de n8n.",
         "height": 240,
         "width": 680
       },
@@ -50,7 +49,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const post=$('OPURO — Readback público').first().json;\nconst category=$('OPURO — Resolver categoría').first().json;\nif(post?.status!=='publish') throw new Error('La revalidación pública sólo puede ejecutarse después de confirmar un post OPURO publicado.');\nconst slug=String(post?.slug??'').trim();\nif(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('No fue posible resolver un slug OPURO publicable para revalidar.');\nconst categorySlug=String(category?.category_slug??'').trim();\nconst categories=categorySlug&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(categorySlug)?[categorySlug]:[];\nconst payload={scope:'story',slug,categories};\nreturn {json:{...post,revalidation_body:JSON.stringify(payload)}};"
+        "jsCode": "const post=$('OPURO — Readback público').first().json;\nconst category=$('OPURO — Resolver categoría').first().json;\nif(post?.status!=='publish') throw new Error('La revalidación pública sólo puede ejecutarse después de confirmar un post OPURO publicado.');\nconst slug=String(post?.slug??'').trim();\nif(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('No fue posible resolver un slug OPURO publicable para revalidar.');\nconst categorySlug=String(category?.category_slug??'').trim();\nconst categories=categorySlug&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(categorySlug)?[categorySlug]:[];\nreturn {json:{...post,revalidation_body:JSON.stringify({scope:'story',slug,categories})}};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
