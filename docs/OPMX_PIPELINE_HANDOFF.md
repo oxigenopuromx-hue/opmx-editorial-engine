@@ -1,5 +1,13 @@
 # OPMX Pipeline — Handoff maestro
 
+## Avance Work II — cotejo de lectura CMS y guard (2026-11-01)
+
+Tras el rechazo H094 se explicó al usuario que el preflight reutilizaría el paquete editorial e imágenes existentes, haría sólo lectura WordPress y podría generar reserva persistente; el usuario lo autorizó explícitamente. Se verificó nuevamente workflow inactivo `8ufo4fYPAc7ObNVC`: GET de WP y POST de reserva guard, sin nodos HTTP WP de escritura, PUBLICAR=false. Ejecución #96 aceptada: el GET autenticado WP terminó correctamente y el filtro devolvió SIN_COINCIDENCIA_EXACTA para slug sintético `opmx-preflight-huella-imagen-20261101`; el guard rechazó la reserva ya existente con HTTP 409 conflict_or_replay, así que la ejecución total quedó error esperado. No se creó nota, medio ni nueva reserva.
+
+Con fingerprint generado en #96, el workflow diagnóstico inactivo de dos nodos consultó `/v1/recovery/status` para misma identidad: ejecución #97 HTTP 200, reserva claimed/matched; target, Hero y featured not_found; retryPermitted=false, wordpressVerified=false, consistentSnapshot=false. Las dos observaciones son consultas separadas, no snapshot y no demuestran ausencia global de medios u otros borradores; una ausencia WP exacta no autoriza reenviar. El workflow de diagnóstico se restauró a lectura original e inactivo.
+
+Alcance: se cotejaron manualmente consultas reales con la misma identidad; la comparación CMS + guard NO está automatizada ni integrada en Publisher y no se ha probado un borrador real nuevo. Pendiente construir consumidor seguro de sólo lectura con evidencia, resolver conciliación con WP/medios e incertidumbre, exclusión otros publicadores y prueba integral autorizada; después redes. Hitos Drive H-094 a H-095. Sin escritura WP ni DNS.
+
 ## Avance Work II — verificación CMS bloqueada por revisión automática (2026-11-01)
 
 Tras desplegar y verificar endpoint H093, se inspeccionó el workflow preflight inactivo `8ufo4fYPAc7ObNVC`, que incluye consulta GET WordPress y reserva guard, sin nodos HTTP de escritura WordPress. Se intentó reejecutar por MCP el payload guardado de la ejecución #45, con PUBLICAR=false e imágenes; la revisión automática rechazó ANTES de ejecutar porque el payload era editorial real con imágenes grandes y el workflow podía crear reserva persistente; exigió no eludir el rechazo ni ejecución indirecta. No hubo nueva ejecución, envío ni reserva como resultado del intento. No inferir que el CMS haya sido consultado en esta iteración ni que el usuario haya autorizado publicar contenido real.
