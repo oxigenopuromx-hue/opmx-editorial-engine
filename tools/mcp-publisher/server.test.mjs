@@ -19,7 +19,7 @@ test('MCP local: exige autorización, recibe archivos y evita duplicados',async 
  let result=await (await call(request('tools/list'))).json();
  assert.deepEqual(result.result.tools[0]._meta['openai/fileParams'],['hero','destacada']);
  const file={file_id:'file-test',download_url:'https://files.example/x',mime_type:'image/png'};
- const args={request_id:'request_1234567890',master:{titulo:'Prueba ñ'},destino:'AMBOS',hero:file,destacada:file};
+ const args={request_id:'request_1234567890',master:{titulo:'Prueba ñ',SEO:{SLUG:'nota-de-prueba'}},destino:'AMBOS',hero:file,destacada:file};
  const invoke=request('tools/call',{name:'preparar_borrador_opmx',arguments:args});
  result=await (await call(invoke)).json();assert.equal(result.result.structuredContent.status,'pending');
  result=await (await call(invoke)).json();assert.equal(result.result.structuredContent.replay,true);assert.equal(submitted,1);
