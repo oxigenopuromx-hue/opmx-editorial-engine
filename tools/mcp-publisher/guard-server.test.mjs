@@ -25,7 +25,8 @@ test('consulta de estado exige autenticación y no libera ni reintenta reservas'
  const input={requestId:payload.requestId,fingerprint:payload.fingerprint};
  assert.equal((await call('incorrect',input)).status,401);assert.equal(queries,0);
  assert.equal((await call(secret,{...input,extra:true})).status,400);
- const response=await call(secret,input);assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'claimed',action:'manual_reconciliation'});assert.equal(queries,1);
+ const response=await call(secret,input);assert.equal(response.status,200);assert.deepEqual(await response.json(),{status:'claimed',identity:'matched',action:'manual_reconciliation'});
+ const timeout=await call(secret,{requestId:input.requestId});assert.equal(timeout.status,200);assert.deepEqual(await timeout.json(),{status:'claimed',identity:'unverified',action:'manual_reconciliation'});assert.equal(queries,2);
  } finally {server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
 test('limita la frecuencia incluso cuando falla la autenticación',async()=>{
