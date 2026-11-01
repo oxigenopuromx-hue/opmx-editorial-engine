@@ -6,10 +6,14 @@ const MAX_BODY=4096;
 export function createGuard({pool,secret}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
   const expected=Buffer.from('Bearer '+secret);
+  let windowStart=Date.now(), requestCount=0;
   return createServer(async(req,res)=>{
     res.setHeader('Cache-Control','no-store');
     res.setHeader('Content-Type','application/json; charset=utf-8');
     const end=(status,value)=>{if(!res.headersSent)res.writeHead(status);res.end(JSON.stringify(value));};
+    const now=Date.now();
+    if(now-windowStart>=60000){windowStart=now;requestCount=0;}
+    if(++requestCount>120){req.resume();res.setHeader('Retry-After','60');return end(429,{error:'rate_limited'});}
     const given=Buffer.from(req.headers.authorization??'');
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
     if(req.method!=='POST'||req.url!=='/v1/reservations') {req.resume();return end(404,{error:'not_found'});}
