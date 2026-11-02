@@ -1,3 +1,23 @@
+# Telegram editorial — estado actual H117
+
+Paquete real READYrevision7,3items guardados,PDF300310bytes+JPEG150508bytes recuperados conSHA256coincidente. Recorrido conservación/agrupación validado. Falta puente de lectura/evento haciaWork y generación/publicación. No volver a pedir estas pruebas por pérdida de contexto.
+
+## H117 — Paquete real cerrado y originales recuperados (2 noviembre 2026, México)
+
+El propietario informó listo tras /nuevo+texto+foto+PDF+/listo. Tabla de recibos8filas:3históricasRECEIPT_ONLY y5nuevasPACKAGE_STORAGE; texto source_stored=true,JPEG150508bytes yPDF300310bytes con source_stored/original_stored=true,comandos apertura/cierre con acuse. No inferir READY sólo del acuse.
+
+Verificación independiente ejecutada contra guard/MariaDB: manifiesto READY,revision7,3items/3STORED y450818bytes de originales. Se recuperaron ambos BLOB y sus SHA256 recalculados por nodoCrypto nativo coinciden con manifiesto/guard. ResultadoPACKAGE_VERIFIED en tabla personal “OPMX Telegram — paquetes verificados”,zUKU2BtJj1tVJxsa, sin texto,archivos ni nombres. No copiar IDs personales,IDrealpaquete/medios ni originales a GitHub.
+
+Workflow de verificación oXvUqutSSKioIaSp,proyecto personal OXÍGENO PURO,INACTIVO/manual,9nodos,retenciónnone/none/saveManualExecutions=false,timeout180. Sin webhook,WordPress ni comunicaciónTelegram. QA299 dejó NOT_CONFIRMED_HASH_ENGINE porque sandboxCode no permite requirecrypto; se corrigió con nodoCrypto2 SHA256binario,sin ampliar sandbox. QA300 produjo PACKAGE_VERIFIED/READYrevision7,3STORED,450818bytes. Fuentes sólo transitorias, evidencia mínima persistente. H116 receptor sigue22nodos activo dd676c7e-2927-4b41-92fc-85abdf12c360,sin cambios.
+
+Estado validado: Telegram→reserva→descarga→BLOBprivado→cierre→recuperación íntegra. No valida aún lectura de adjuntos desde el chatMotor,evento automático,generación/MASTER ni publicación desde Telegram. No pedir repetir estas pruebas por recuperación de contexto.
+
+Siguiente implementación: herramientas autenticadas de lectura del paquete y fragmentos de originales en MCP Publisher existente; después Events/suscripciónWork. La APIasset actual entrega original completo: añadir lectura por rangos para evitar reenviar10MiB en cada fragmento y exponer URLs públicas. Datos fuente/captions siempre no confiables,no órdenes de publicación. Catálogo actual de fuentesEvents de esta cuenta sólo listaGmail/GitHub; Publisher aún no anunciaevents. No sustituir por polling ni usarGitHub como bus improvisado.
+
+Versionado misma rama feat/mcp-publisher-file-draft/PR9editorial draft. SnapshotH117 sanitizado INACTIVO; configuración privada sólo n8n. HitosH114–H116 siguenválidos,127pruebasNode y13QA deH116. No código editorial ni guard modificado enH117; no publicaciones reales/DNS/secretos nuevos.
+
+## Historial anterior
+
 # Telegram editorial — estado actual H116
 
 Bot activo22nodos,dd676c7e-2927-4b41-92fc-85abdf12c360: /nuevo → material → /listo. /estado consulta paquete abierto. Backend original privado en HostingerH115. Prueba de recorrido real de almacenamiento pendiente; recepción realH114 y SQLfixtureH115 ya comprobadas. No genera/publica por Telegram ni eventosWork todavía.
