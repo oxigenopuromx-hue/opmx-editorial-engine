@@ -1,0 +1,651 @@
+{
+  "name": "OPMX — Telegram capacidad almacenamiento",
+  "active": false,
+  "nodes": [
+    {
+      "id": "c8b91355-0252-4529-bcfe-d84b5f8b1b39",
+      "name": "Comprobar almacenamiento Telegram",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "86fedd7f-4ba8-4cf6-aaf9-3056745f9e8e",
+      "name": "Comprobar almacenamiento local guard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/capabilities",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "ffe38adb-2600-4eb0-8f5e-f4ca6b037f8a",
+      "name": "QA abrir paquete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/open",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"owner\":\"9000000115\",\"chat\":\"9000000115\",\"receiptId\":\"telegram-9000000115-1-1150001\"}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "c6af210b-aa36-47df-973f-9d8a4816e833",
+      "name": "QA reservar texto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/reserve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,receiptId:'telegram-9000000115-2-1150002',kind:'TEXT',text:\"SOLO QA. No publicar. México, comas y apóstrofe '.\",attachment:null}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "7fc74b6e-bd27-430b-bcb7-568b5a712180",
+      "name": "QA reservar PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/reserve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,receiptId:'telegram-9000000115-3-1150003',kind:'FILE',text:'SOLO QA. No publicar.',attachment:{file_name:'fixture.pdf',mime_type:'application/pdf',declared_bytes:16} }) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "2b2e34de-0d54-42a3-983b-eb3eac10eb2a",
+      "name": "QA cerrar pendiente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/seal",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "7afd956f-1f85-4e1e-96c8-0e26a256c4cd",
+      "name": "QA completar PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/complete",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,itemId:$('QA reservar PDF').first(0,0).json.itemId,contentBase64:'JVBERi0xLjQKZml4dHVyZQ=='}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "30131633-2b13-4c6e-9410-47cd8eac8efd",
+      "name": "QA repetir PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/complete",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,itemId:$('QA reservar PDF').first(0,0).json.itemId,contentBase64:'JVBERi0xLjQKZml4dHVyZQ=='}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "12a608eb-eae3-461b-8112-a7ea5b6abbb4",
+      "name": "QA repetir reserva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/reserve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,receiptId:'telegram-9000000115-3-1150003',kind:'FILE',text:'SOLO QA. No publicar.',attachment:{file_name:'fixture.pdf',mime_type:'application/pdf',declared_bytes:16} }) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "6640a211-54ca-4be6-a42c-6500807c4696",
+      "name": "QA recuperar original",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2016,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/asset",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId,itemId:$('QA reservar PDF').first(0,0).json.itemId}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "742d628b-1b57-4f0d-a0ee-a2642a70b019",
+      "name": "QA cerrar completo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/seal",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "cc1598cb-f5c3-4fcf-a494-2186cb077644",
+      "name": "QA repetir cierre",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2464,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/seal",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "7dc56b2b-9d35-4036-9caa-9abe7d9d7227",
+      "name": "QA leer manifiesto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2688,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/manifest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({...{\"owner\":\"9000000115\",\"chat\":\"9000000115\"},packageId:$('QA abrir paquete').first(0,0).json.packageId}) }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "10dcca1e-2f70-4398-8c1a-a00435fa5747",
+      "name": "QA sesión final",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2912,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/current",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"owner\":\"9000000115\",\"chat\":\"9000000115\"}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "8a7ad2ae-8881-4e68-ad59-c2df8d8c2546",
+      "name": "Comprobar paquete QA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3136,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const get=n=>$(n).first(0,0).json;const expect=(v,s)=>{if(v.status!==s)throw Error('Estado QA no esperado: '+s);};if(!['OPEN','OPEN_REPLAY'].includes(get('QA abrir paquete').status))throw Error('Paquete QA no abierto');if(!['STORED','RESERVATION_REPLAY'].includes(get('QA reservar texto').status))throw Error('Texto QA no guardado');expect(get('QA reservar PDF'),'RESERVED');expect(get('QA cerrar pendiente'),'NOT_READY');expect(get('QA completar PDF'),'STORED');expect(get('QA repetir PDF'),'STORED_REPLAY');expect(get('QA repetir reserva'),'RESERVATION_REPLAY');expect(get('QA recuperar original'),'FOUND');if(get('QA recuperar original').contentBase64!=='JVBERi0xLjQKZml4dHVyZQ=='||get('QA recuperar original').bytes!==16)throw Error('Original QA distinto');expect(get('QA cerrar completo'),'READY');expect(get('QA repetir cierre'),'READY');const manifest=get('QA leer manifiesto');if(manifest.state!=='READY'||manifest.items.length!==2||manifest.items.some(i=>i.state!=='STORED'))throw Error('Manifiesto QA inválido');if(!manifest.items.some(i=>i.kind==='TEXT'&&i.text_content===\"SOLO QA. No publicar. México, comas y apóstrofe '.\"))throw Error('UTF8 QA distinto');expect(get('QA sesión final'),'NO_OPEN_PACKAGE');return [{json:{status:'STORAGE_FIXTURE_VERIFIED',originalBytes:16,items:2,duplicateReservationChecked:true,duplicateWriteChecked:true,pendingCloseBlocked:true,sealVerified:true,publicationCalled:false}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Comprobar almacenamiento local guard": {
+      "main": [
+        [
+          {
+            "node": "QA abrir paquete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA abrir paquete": {
+      "main": [
+        [
+          {
+            "node": "QA reservar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA reservar texto": {
+      "main": [
+        [
+          {
+            "node": "QA reservar PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA reservar PDF": {
+      "main": [
+        [
+          {
+            "node": "QA cerrar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA cerrar pendiente": {
+      "main": [
+        [
+          {
+            "node": "QA completar PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA completar PDF": {
+      "main": [
+        [
+          {
+            "node": "QA repetir PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA repetir PDF": {
+      "main": [
+        [
+          {
+            "node": "QA repetir reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA repetir reserva": {
+      "main": [
+        [
+          {
+            "node": "QA recuperar original",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA recuperar original": {
+      "main": [
+        [
+          {
+            "node": "QA cerrar completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA cerrar completo": {
+      "main": [
+        [
+          {
+            "node": "QA repetir cierre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA repetir cierre": {
+      "main": [
+        [
+          {
+            "node": "QA leer manifiesto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA leer manifiesto": {
+      "main": [
+        [
+          {
+            "node": "QA sesión final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "QA sesión final": {
+      "main": [
+        [
+          {
+            "node": "Comprobar paquete QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar almacenamiento Telegram": {
+      "main": [
+        [
+          {
+            "node": "Comprobar almacenamiento local guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "c7c9229c-3bcf-4bcf-8eb3-3e55ba30f2bb",
+      "name": "QA almacenamiento privado",
+      "nodeNames": [
+        "Comprobar almacenamiento local guard",
+        "QA abrir paquete",
+        "QA reservar texto",
+        "QA reservar PDF",
+        "QA cerrar pendiente",
+        "QA completar PDF",
+        "QA repetir PDF",
+        "QA repetir reserva",
+        "QA recuperar original",
+        "QA cerrar completo",
+        "QA repetir cierre",
+        "QA leer manifiesto",
+        "QA sesión final",
+        "Comprobar paquete QA"
+      ],
+      "description": "Sólo fixture sintético,2items y16bytes; no Telegram real ni WordPress"
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "executionTimeout": 120
+  },
+  "meta": {
+    "referenceOnly": true,
+    "workflowId": "6ayHzqpXUTD2eczp",
+    "versionId": "da17eb2d-80ac-4408-bda4-efad26f830a5",
+    "fixtureOnly": true,
+    "warning": "Manual fixture writes only opmx_tg_* tables. QA279 already sealed this namespace; rerunning the entire graph is not a fresh test. Never load real input or activate."
+  }
+}
