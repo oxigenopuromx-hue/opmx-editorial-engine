@@ -1,5 +1,37 @@
 # Entrada automática OPURO / OPOL — operación v2
 
+## H108 — Publicación explícita desde el Motor implementada y activa (2 noviembre 2026, México)
+
+Estado: IMPLEMENTADO Y DESPLEGADO; 105 pruebas locales y QA simulada pasan. Primera publicación real por estas acciones aún no validada en esta sesión. No se usaron notas reales como prueba.
+
+### Acciones disponibles en el mismo Motor
+- “Publícala en OPURO / OPOL / ambos”: publicar_nota_opmx recibe MASTER LISTO y los archivos originales, request_id estable y confirmar_publicacion=PUBLICAR. Reutiliza Publisher protegido para crear y verificar los borradores antes de publicar.
+- Si ya se entregaron borradores: publicar_borradores_opmx recibe request_id, slug e IDs originales. NO vuelve a crear notas ni medios. Consulta el guard /v1/targets/status y exige reported/postId exacto para cada destino.
+- preparar_borrador_opmx conserva su comportamiento sólo draft; validar_archivos_opmx sigue siendo lectura. No cambiar MASTER ni inventar IDs/URLs/Base64 para habilitar publicación.
+- Ambas herramientas de publicación declaran readOnlyHint=false, destructiveHint=true, openWorldHint=true y requieren orden explícita del usuario. No se cambiaron permisos de ChatGPT ni OAuth workflow:execute.
+
+### Ejecución y controles
+Mismo adaptador bnzVMNkZuGO1GQCZ,60nodos, activo cc976feb-b414-4a7b-9b8c-f1b1a787ec38. Publisher hijo91nodos c29101d9-afaa-45b9-990e-1047ce2a19a9 sin cambios. El grafo nuevo está agrupado y la validación n8n final no reporta warnings. Rollback anterior a H108: d2f6af0b-91e9-4e9b-83c0-847c93284336 (H107 más anotación técnica, sin publicación).
+
+Todos los destinos solicitados deben superar guard y preflight WordPress antes del primer POST de publicación: identidad, estado, Gutenberg, Hero OPURO, destacada, autor, categorías y SEO. Después sólo se envía {status:publish}; otro GET autenticado coteja el contenido y metadata editorial con la lectura previa. No sobrescribe contenido. Una respuesta POST perdida se resuelve mediante lectura, no repitiendo POST. En borradores existentes, destinos ya publish se verifican sin reenviar POST. Si OPURO queda incierto no se intenta OPOL. No hay transacción atómica entre los dos CMS: se informa PARTIAL_SUCCESS o UNCERTAIN con IDs y retryPermitted=false.
+
+URLs OPURO planas; OPOL usa categoría primaria obtenida de WordPress, igual que el Publisher vigente. Se invalida caché OPURO con credencial existente y se lee cada frontend sin credenciales. Sólo SUCCESS con estado publish, contenido conservado y canonical público exacto en todos los destinos. Si CMS confirma publicación pero la web no está vigente: PUBLISHED_VISIBILITY_PENDING, no duplicar/recrear. Un rechazo preflight conserva request_id,slug,post_ids y publicationWritesStarted=false; drafts pueden existir. QA179 corrigió acceso a salida0/run0 en la rama de error.
+
+Guard evita duplicar creación de notas y vincula IDs. NO existe todavía un claim atómico específico del POST de cambio de estado para dos órdenes de publicación simultáneas del mismo borrador; podrían repetir hooks de WordPress aunque actualicen el mismo ID. No afirmar exactamente una invocación ni habilitar social sobre esos hooks sin cerrar esa concurrencia. Las órdenes normales se procesan secuencialmente por destino y no se reenvían automáticamente.
+
+### Evidencia
+105 pruebas Node PASS (protocolo, guard, borradores y publicación). QA inactivo s7h6AbZ4nvJjMAdf,42nodos, todos los HTTP example.invalid y sin credenciales. test_workflow usa respuestas sintéticas fijadas; no son pruebas de escritura real:
+162 nueva AMBOS SUCCESS;163 SEO inválido PUBLICATION_REJECTED sin POST;164 guard/ID incorrecto rechazado sin POST;165 incertidumbre OPURO deja OPOL NOT_ATTEMPTED;166 PARTIAL_SUCCESS;167 visibilidad pendiente;168 ya publicados sin POST ni ejecución del hijo;169 existentes AMBOS sin recrear;170 existentes OPOL sólo ese destino;171 nueva OPURO sólo ese destino;172 regresión draft sin POST de publicación.179 rechazo con IDs preservados.
+Artefactos: workflows/publisher/OPMX_PUBLICACION_QA_H108_NO_ACTIVAR.json y fixtures/mcp-publication-h108-pins.json. Nunca activar la QA ni ejecutar esos IDs ficticios contra WordPress.
+
+El catálogo del conector ChatGPT se actualizó y se comprobó visualmente: Write3 (preparar_borrador_opmx, publicar_borradores_opmx, publicar_nota_opmx),Read1(validar_archivos_opmx). También se actualizó descripción a validación/borradores/publicación explícita. Mismo app/plugin_asdk_app_6ae7e85c83b481919008919407f25779, OAuth y permisos sin cambios. No fue necesario conectar otra cuenta.
+
+### Versionado, límites y siguiente paso
+Repositorio editorial, rama feat/mcp-publisher-file-draft, PR9 sigue draft. Commits principales: dea0b2c protocolo inicial,1586da6 funciones,87100fe pruebas,2030986 builder,4627849/01e8086/8963353 separan generador base draft del grafo de publicación,073ddb4 retorno de IDs en errores. Base H104 debe conservar publicationEnabled=false; H108 se aplica después de instalar su grafo. No reaplicar generadores sobre el vivo a ciegas.
+Retención del adaptador sigue none/none/saveManualExecutions=false; no se guardan URLs temporales. No secretos nuevos, no DNS ni cambios frontend. H10660s sigue activo y su PR frontend separado continúa pendiente E2E por conflicto previo de rutas. No merge automático de la rama editorial acumulada.
+Siguiente validación operativa: una nota concreta aprobada desde el mismo Motor, orden explícita y destino, comprobando estados y URLs devueltos. No elegir ni publicar una nota real como fixture. Redes sociales aún no están integradas.
+
+
 ## H107 — Transferencia nativa comprobada desde el mismo Motor (2 noviembre 2026 UTC / 1 noviembre México)
 
 El conector “OPMX Publisher — Archivos” quedó instalado y autenticado en ChatGPT con OAuth nativo de n8n. Consentimiento limitado a workflow:execute para el adaptador bnzVMNkZuGO1GQCZ; no se conservó la selección amplia de scopes de n8n. App: https://chatgpt.com/plugins/plugin_asdk_app_6ae7e85c83b481919008919407f25779 . Chat de prueba: https://chatgpt.com/g/g-p-6ab4aab3beac8191af830472b29869d0-motor-editorial-opmx/c/6ae578e9-66a4-83e8-a7a1-eccbee0a5c8c .
