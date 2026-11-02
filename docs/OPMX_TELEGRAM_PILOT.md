@@ -1,3 +1,25 @@
+# Telegram editorial — estado actual H121
+
+Recepción automática en Work comprobada: un evento entregado, tres fuentes íntegras, incoherencia temática detectada. Falta retorno por Telegram, generación y borradores automáticos. Sin publicación de prueba.
+
+## H121 — Telegram despierta al Motor y recupera fuentes automáticamente (2 noviembre 2026, México)
+
+Quedó creada exactamente una automatización de evento, “Motor — recepción Telegram”, dentro de una conversación Work nueva del proyecto Motor Editorial OPMX. Se usó el catálogo descubierto en una ejecución nueva de ese chat; no polling, horarios, otro conector ni API de IA de pago. Filtro opmx.package.ready / queue_id=telegram-editorial. La automatización exige READY y revisión coincidente, recupera todas las fuentes con las dos lecturas privadas, comprueba fragmentos/tamaños/SHA256 y revisa coherencia temática. Modo actual sólo validación, sin generar MASTER, borradores, publicaciones, redes ni cambiar infraestructura.
+
+Evidencia real: QA364 del guard confirmó una sola suscripción ACTIVE. Esto implica desafío HTTPS firmado/eco aceptado antes de registrar, conforme al backend H120; no se leyó ni copió callback/secret. QA365 emitió una vez el paquete de transporte READY ya existente y confirmó EVENT_QUEUED_VERIFIED. QA366 confirmó una sola entrega SENT y una suscripción ACTIVE. Worker persistente entregó al callback con respuesta 2xx. No se reenviaron originales ni se pidió repetir Telegram.
+
+La ejecución automática del Motor fue recorded_status=completed: empezó 22:08:41 UTC y terminó 22:09:50 UTC. Resultado registrado y visible en el chat: READY/revisión7 coincidente,3 fuentes, fragmentos/offsets/tamaños y SHA256 total correctos en las tres; coherencia temática NO aprobada porque texto/PDF/fotografía son asuntos distintos. No generó ni publicó una nota. Se comprobó así Telegram→almacenamiento privado→evento→Work Motor→lectura nativa/verificación. La entrega usada fue reconciliación explícita de un READY previo; el cierre transaccional nuevo se validó aparte con QA353. No atribuir este hito a una nueva recepción Telegram ni afirmar generación/publicación terminadas.
+
+El identificador de automatización y chat se conservan en el registro privado de Work. Chat del listener:
+https://chatgpt.com/g/g-p-6ab4aab3beac8191af830472b29869d0-motor-editorial-opmx/c/6ae90921-bd24-83e8-bca3-dfce7501d350
+No exponer propietario/IDs de paquetes reales, URLs de callback, claves u originales en GitHub.
+
+Se corrigieron mensajes del bot: ayuda y cierre ahora indican validación automática y resultado en Work. Un acuse perdido del cierre ya NO afirma “No se envió al Motor”: podría haberse confirmado la transacción antes del timeout. Conserva identificador y pide revisar antes de reenviar. El resultado del receptor deja work_event_sent=null porque ese nodo no observa el worker; no inventa entrega ni fracaso. Bot conserva 22 nodos y autorización individual; activo 54b708f3-3512-43c8-9621-3f8e1619c166. MCP66 sigue 6a038dff-528a-450d-a7a9-857c14c5992f; guard H120 sin cambios. Diagnóstico temporal restaurado a su grafo/fixture original,15 nodos/manual/inactivo/sin warnings.
+
+150 pruebas Node PASS tras el ajuste, incluyendo incertidumbre del cierre. Código: 8c8c9de426e7e2ad16a210dfa4d63560231c487b, fbc16af7f5694062dfa41c8d158dfa093b7161ad, 685f4ea23c196d8fd14e66e7dc825c5668f489cd. Misma rama feat/mcp-publisher-file-draft / PR9 draft, sin merge.
+
+Siguiente seguro: retorno de estado desde el Motor al mismo usuario Telegram con herramienta acotada y deduplicación; después generación automática y preparación de borrador con los maestros vigentes y un fixture coherente. Se encontró manifest.json atrasado: apunta prompt4.7/contrato1.3/instrucción1.0, pero masters contiene4.8/1.4/1.1; la regla semántica exige resolver versiones máximas, no seguir esos punteros viejos. Archivos nuevos ya recuperados, no reconstruir. Antes de generar confirmar disponibilidad/coincidencia con fuentes del Project. No publicar material real de prueba. H108 concurrencia de publicación y Social siguen pendientes.
+
 # Telegram editorial — estado actual H120
 
 Backend y catálogo Events desplegados. Suscripción real y aviso automático al Motor pendientes de validación. 150 pruebas locales y QA353/354 confirmadas. No publicar paquetes de prueba.
