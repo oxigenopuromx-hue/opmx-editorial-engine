@@ -22,7 +22,10 @@ export function classifyFileMcp(envelope) {
  if(message.params.name===draft.name&&(typeof a.request_id!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(a.request_id)))return fail(-32602,'Falta request_id estable válido');
  const roles=a.destino==='OPOL'?['master_file','destacada']:['master_file','hero','destacada'];
  const files={};
- for(const role of roles){const f=a[role];if(!f||typeof f!=='object'||typeof f.file_id!=='string'||!/^[A-Za-z0-9_-]{1,256}$/.test(f.file_id)||typeof f.download_url!=='string'||f.download_url.length>16384)return reply({content:[{type:'text',text:'Falta referencia transferible del archivo '+role+'. Adjunta el archivo a esta herramienta; no inventar URLs ni Base64.'}],isError:true});
+ for(const role of roles){const f=a[role];if(!f||typeof f!=='object'||typeof f.file_id!=='string'||!f.file_id.trim()||f.file_id.length>4096||typeof f.download_url!=='string'||f.download_url.length>16384){
+  const diagnostic={status:'FILE_REFERENCE_REJECTED',role,kind:typeof f,keys:f&&typeof f==='object'?Object.keys(f).sort():[],file_id_type:typeof f?.file_id,file_id_length:typeof f?.file_id==='string'?f.file_id.length:null,file_id_length_valid:typeof f?.file_id==='string'&&Boolean(f.file_id.trim())&&f.file_id.length<=4096,download_url_type:typeof f?.download_url,download_url_length:typeof f?.download_url==='string'?f.download_url.length:null,writesStarted:false};
+  return reply({content:[{type:'text',text:JSON.stringify(diagnostic)}],structuredContent:diagnostic,isError:true});
+ }
   const match=/^https:\/\/([a-zA-Z0-9.-]+)(\/[^\s#]*)$/.exec(f.download_url);const host=match?.[1]?.toLowerCase();
   if(!host||!(host==='files.oaiusercontent.com'||/^oais(?:dmntpr|dsorpr)[a-z0-9-]*\.blob\.core\.windows\.net$/.test(host)||/^oaisdmntpr[a-z0-9-]*aws\.s3\.[a-z0-9-]+\.amazonaws\.com$/.test(host)||/^sdmntpr[a-z0-9-]*\.oaiusercontent\.com$/.test(host)))return fail(-32602,'Origen de archivo no autorizado');
   files[role]={download_url:f.download_url,file_id:f.file_id,mime_type:f.mime_type??null,file_name:f.file_name??null};
