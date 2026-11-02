@@ -5,7 +5,7 @@ import {beginTargetWrite,recordTargetPost,inspectTargetProgress} from './target-
 import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-progress.mjs';
 
 const MAX_BODY=4096;
-export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null,telegramEvents=null}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
   const expected=Buffer.from('Bearer '+secret);
   let windowStart=Date.now(), requestCount=0;
@@ -19,14 +19,16 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
     const given=Buffer.from(req.headers.authorization??'');
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
     const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capabilities|current|open|reserve|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!telegramAction&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    const eventAction=telegramEvents&&/^\/v1\/telegram\/events\/(subscribe|unsubscribe|status|emit)$/.exec(req.url)?.[1];
+    if(req.method!=='POST'||(!eventAction&&!telegramAction&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(telegramAction) {
+      if(telegramAction||eventAction) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(eventAction)return end(200,await telegramEvents.run(eventAction,input));
         if(telegramAction==='capabilities') {
           if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)return end(400,{error:'invalid_request'});
           return end(200,await telegramStore.capabilities());
