@@ -1,3 +1,28 @@
+# Telegram editorial — estado actual H118
+
+ConservaciónrealvalidadaH117. GuardH118conlecturaporfragmentosdesplegadoySQLrangosrealesverificados. MCP63nodos/6accionesactivo b0d9fc47-5c82-4cf3-a500-f7024398d5ce;UIChatGPTWrite3/Read3confirmada. Esta ejecuciónaúnsóloexpone4accionesviejas,porloquelecturanativaWorkpendiente. No reenviarmaterialni declararpublicaciónTelegram lista. Próximaprueba:2lecturasnuevas conpaqueteexistente; despuésEvents/Motor.
+
+## H118 — Lectura privada de Telegram en MCP Publisher (2 noviembre 2026, México)
+
+Backend guard actualizado enHostinger a opmx-guard-telegram-read-h118.zip (“Se ha completado/Actual”,14:49:08México). H115ZIPyH092ZIP conservados como rollback. No DNS,variables,secretos,credenciales ni WordPress modificados. Se añade sólo acción autenticada POST /v1/telegram/packages/chunk; APIsanteriores siguen. Lectura SQLSUBSTRING del BLOB conoffset1-based preparado,64KiBmáximo,owner/paquete/item/estadoSTORED vinculados; no transfiere original entero por fragmento. Streamtext recupera texto/caption comoUTF8; original recuperaBLOB. Devuelveoffset,total,bytes,eof,nextOffset,hashdeloriginalyhashdefragmento. Rangoentero/no negativo ylongitud1–65536; nunca URL externa/pública.
+
+MCP existente bnzVMNkZuGO1GQCZ creció60→63nodos,ACTIVO b0d9fc47-5c82-4cf3-a500-f7024398d5ce,sameAsDraft. Dos herramientasreadonly nuevas: leer_paquete_telegram_opmx (inventario sintexto/captions) y leer_fuente_telegram_opmx (fragmentosBase64text/original,64KiB). Identidad se inyecta desde configuraciónprivada, no desde argumentos del cliente; rechazaowner/URL/propiedadesextra. Rama de lectura antes de rutas de escritura, sin llamarPublisher/WordPress. Cuatro acciones anteriores ycontratos editoriales/fileParams preservados. OAuthwebhook/requireExecuteAccess/credenciales intactos,retenciónnone/none/saveManualfalse. No se anuncianevents aún.
+
+137testsNodePASS: límites,propietario,rangos,byte/Base64,fragmentosfaltantes/mezclados/SHAincorrecto,UTF8dividido ydelegación de controles depublicación. Helper assemble-source.mjs reúnebytes y exigehashdefragmentos/original y secuenciacompleta; no usa nombres de fuentes como rutas.
+QA301–304n8nconHTTPfijado/ResponderMCPfijado y aserciones temporales: inventario,fragmento,notfound,rangoincoherente;4success,sin escrituras. Aserciones retiradas antes de activar. Primera agrupación parcial invalidógrupo anterior: corregido agrupando59nodosdelprotocolo/lectura/publicación en único grupo; validación finalsinwarnings.
+
+Guard/MySQL real: verificadorprivado oXvUqutSSKioIaSp actualizado11nodos,inactivo/manual,retenciónnone,5HTTP+CryptoSHA256nativo. Prueba310 no dejó evidencia por política sinretención; no seusa comoPASS ni seatribuyecausa. Se instrumentaron fallos mínimos sinfuentes y311 confirmó PACKAGE_VERIFIED/READYrevision7,3STORED,450818bytes yrange_reads_verified=true. ComparafragmentoPDF de100bytes desdeoffset31conoriginalcompleto; recuperatexto igualalmanifiesto;4SHA256nativos (2originales+2streams) coinciden. Tabla zUKU2BtJj1tVJxsa sóloevidenciametadatos; noPDF/foto/texto. No reenviar archivos del propietario para repetirH117.
+
+ConectorChatGPT “OPMX Publisher — Archivos” refrescado enAdministrar→Actualizarherramientas. VerificaciónvisualpositivaWrite3/Read3: aparecenlas2lecturasnuevas yvalidar_archivos_opmx,ademásde3escrituras existentes. Sin cambiosdepermisosOAuth/globales ni instalaciónnueva. URLapp https://chatgpt.com/plugins/plugin_asdk_app_6ae7e85c83b481919008919407f25779 .
+
+Límite actual de acceso: ALL_TOOLS de esta ejecución conserva sólo4accionesviejasdelconector;las2lecturas nuevas NO estánexpuestas todavía a esteejecutor aunque laUIcatalogo ya lasmuestra. No inventar nombres/herramientas niactivarretención de fuentes paraeludirlo. Prueba nativa Work→MCP→fragmentos→archivoslocales PENDIENTE hasta que otraejecución reciba catálogoactualizado. Evidencia actual separaRPCpinned,backendrangoSQLreal ycatálogoUI; no afirmar que Work yaabrióelPDF. No haylector/listener automático ni generación/publicaciónTelegramterminados.
+
+Código enrama feat/mcp-publisher-file-draft/PR9editorial draft: a409b54(storechunk),8003721(guardroute),eda5511(ZIPh118),5f93358(router/formatterMCP),5b76c89(tests),511fa79(assembler),974a082(testassembler),3e65568(builder). Snapshots26f1721(verificadorH118sanitizado),46499c8(MCP63nodosinactivo). No guardarowner,paquete,itemIDsreales ni originales enGitHub. H117 snapshot9549815,handoffa8b192b,guíafc48b8a ya documentados.
+
+Siguiente seguro: cuando nuevas herramientas estén disponibles, leer inventario del paquete real existente ydescargar3streams(5fragmentosPDF,3JPEG,1texto normalmente);ensamblarverificandoSHAconhelper yabrirfuentes enWork. Obtenercontrato/maestrosvigentesdelrepoantesdegenerar. Después implementarMCPEvents(concallbacksfirmados,verificaciónHTTPS,persistencia/outbox y suscripciónWorkdentrodelproyectoMotor),aprobareditorialmente,draftfixture ypublicaciónconordenexplícita. NoAPIdeIA de pago por sustitución, no publicar notas reales como pruebas. Social posterior ypendientesH108/CIfrontend conservados.
+
+## Historial anterior
+
 # Telegram editorial — estado actual H117
 
 Paquete real READYrevision7,3items guardados,PDF300310bytes+JPEG150508bytes recuperados conSHA256coincidente. Recorrido conservación/agrupación validado. Falta puente de lectura/evento haciaWork y generación/publicación. No volver a pedir estas pruebas por pérdida de contexto.
