@@ -8,6 +8,17 @@ const nodes=Object.fromEntries(w.nodes.map(n=>[n.name,n]));
 const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
 const validate=new AsyncFunction('$json','$input',nodes['Validar y normalizar OPMX MASTER'].parameters.jsCode);
 const content='<!-- wp:paragraph --><p>Prueba sintética.</p><!-- /wp:paragraph -->';
+test('webhook y llamada interna conservan la misma huella sin leer el trigger',async()=>{
+ const prepare=new AsyncFunction('$json',nodes['Preparar MASTER y binarios'].parameters.jsCode);
+ const image=Buffer.from([255,216,255,0]).toString('base64');
+ const input={request_id:'qa_request_1234567',CREAR_EN:'AMBOS',PUBLICAR:false,master:{SEO:{SLUG:'fixture'}},hero_file:{base64:image},featured_file:{base64:image}};
+ const helpers={prepareBinaryData:async()=>({})};
+ const a=await prepare.call({helpers},input),b=await prepare.call({helpers},{body:input});assert.deepEqual(a,b);
+ const canonical={slug:'fixture'};const hash=Function('$','return ('+nodes['OPMX — Generar huella de prueba'].parameters.value.slice(3,-2)+');');
+ const actual=hash(n=>({first:()=>({json:n==='Preparar MASTER y binarios'?a.json:{canonical}})}));
+ assert.equal(actual,JSON.stringify({canonical,hero_base64:image,featured_base64:image}));
+ assert.equal(nodes['Entrada desde MCP archivos'].parameters.inputSource,'passthrough');
+});
 const master={CONTROL_EDITORIAL:{ESTADO:'LISTO'},SEO:{TITULO_SEO:'QA destinos',SLUG:'qa-destinos',CATEGORIA:'Uncategorized',EXTRACTO:'QA',METADESCRIPCION:'QA',KEYWORD_PRINCIPAL:'QA',ETIQUETAS:['QA']},CATEGORIAS:{OPURO:{PRINCIPAL:'Uncategorized'},OPOL:{PRINCIPAL:'TECNOLOGÍA'}},GUTENBERG_ENRIQUECIDO_FINAL:content,GUTENBERG_FINAL:content,IMAGENES:{HERO_OPURO:{URL:'{{OPMX:HERO_OPURO}}',ALT:'QA Hero'},DESTACADA_OPURO:{URL:'{{OPMX:DESTACADA_OPURO}}',ALT:'QA destacada'},DESTACADA_OPOL:{URL:'{{OPMX:DESTACADA_OPOL}}',ALT:'QA OPOL'}}};
 function reachable(block=[]){const seen=new Set(),queue=['Entrada automática protegida'];while(queue.length){const name=queue.shift();if(seen.has(name)||block.includes(name))continue;seen.add(name);for(const outputs of Object.values(w.connections[name]??{}))for(const es of outputs??[])for(const e of es??[])queue.push(e.node);}return seen;}
 test('valida cada destino y OPOL con una sola imagen sin confundirla con JSON',async()=>{
