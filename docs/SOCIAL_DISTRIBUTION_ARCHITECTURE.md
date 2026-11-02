@@ -116,3 +116,15 @@ Cada evento usa `correlation_id` y emite un resultado por plataforma con: estado
 ## Seguridad
 
 Las credenciales, IDs de cuenta, URLs internas, tokens y secret keys viven en n8n/gestor de secretos. El repositorio sólo contiene nombres lógicos de credenciales, contratos y workflows importables.
+
+## Alcance solicitado el 2 noviembre 2026 — posterior a Telegram (H110)
+
+Prioridad: terminar primero el canal Telegram→Motor→Publisher. Esta sección es backlog; no amplía los permisos ni activa el motor v1.0.1.
+
+- Instagram y Facebook: experiencia de envío coordinado “en combo”, como Business Manager, manteniendo verificación y resultados por destino.
+- Segundo destino Facebook específico: compartir la liga de oxigenopuro.com.mx, separado del Facebook del combo. Cuenta/página/perfil por identificar; no se asume compatibilidad API de un perfil personal.
+- Después: TikTok, LinkedIn, Google Business Profile, YouTube, X y Threads. Formatos y cuentas se revalidarán con sus APIs; no se promete que cada red publique una liga clicable de la misma forma.
+- YouTube: formato pendiente; la limitación histórica de Community no define por sí sola el alcance futuro de videos/Shorts.
+- El contrato actual tiene un target Facebook y asset social manual independiente. Los nuevos destinos y cualquier cambio de producción de assets requieren evolución de contrato; no modificar payloads históricos sin versionarlos.
+
+Ver docs/OPMX_TELEGRAM_PILOT.md y el handoff H110. Ninguna publicación Social real se ha probado en esta revisión.
