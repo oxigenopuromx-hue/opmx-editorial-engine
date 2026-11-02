@@ -54,7 +54,7 @@ const schema=[
   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
 ];
 
-export function createTelegramPackageStore(pool) {
+export function createTelegramPackageStore(pool,{events=null}={}) {
   let ready;
   const initialize=()=>ready??=(async()=>{
     const c=await pool.getConnection();try {for(const sql of schema)await c.execute(sql);}finally{c.release();}
@@ -68,7 +68,8 @@ export function createTelegramPackageStore(pool) {
     },
     async run(action,input) {
       const {ownerKey,bytes}=validatePackageRequest(action,input);
-      await initialize();const c=await pool.getConnection();let committed=false;
+      await initialize();if(action==='seal'&&events)await events.initialize();
+      const c=await pool.getConnection();let committed=false;
       try {
         await c.beginTransaction();
         // A single pilot quota lock also serializes session transitions and duplicate receipts.
@@ -127,6 +128,7 @@ export function createTelegramPackageStore(pool) {
           if(!Number(counts[0].stored)||Number(counts[0].pending))return await finish({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
           await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[ownerKey,input.packageId]);
+          if(events)await events.enqueue(c,{owner:ownerKey,packageId:pack.package_id,revision:Number(pack.revision)+1,itemCount:Number(counts[0].stored),timestamp:new Date().toISOString()});
           return await finish({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1});
         }
         if(pack.state!=='OPEN' && action!=='complete')return await finish({status:'PACKAGE_CLOSED'});
