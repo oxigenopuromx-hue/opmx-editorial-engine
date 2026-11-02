@@ -1,5 +1,18 @@
 # OPMX Pipeline — Handoff maestro
 
+## H105 — Hotfix list-item desplegado en Publisher operativo (2026-11-01 México)
+
+El usuario reportó un formulario con error `GUTENBERG_ENRIQUECIDO_FINAL usa bloques no autorizados: list-item. [line 259]`. Ejecución126 terminó con error capturado por el formulario: el normalizador emitió por su salida de error antes de subir medios/crear notas. Fue una omisión de la allowlist de listas nativas en el contrato y en el validador. Se añadió core/list-item a contrato enriquecido v1.0, salida v1.4 e instrucción v1.1, y a ambos validadores. No se elimina contenido ni se transforma a HTML libre. HTML y bloques custom siguen bloqueados.
+
+ACTIVO/VERIFICADO: formulario Mt7ts2EGPbyaTC2o versión4d477bfd-ab9d-46f9-b174-7f9a7b923e8a,68nodos; entrada automática4o7K5TmKc7joScqB versiónc29101d9-afaa-45b9-990e-1047ce2a19a9,91nodos. Draft y versión publicada cotejados. Advertencias de defaultValue del formulario y disposición preexistentes sin modificar; sin advertencias nuevas. Prueba n8n128 ejecutó los dos normalizadores exactos con fixture sintético:6comprobaciones, listas anidadas preservadas y HTML/custom rechazados,0escrituras. 95 pruebas locales pasan, incluidas4nuevas para ambos validadores y serialización core/list-item con/sin namespace. Referencias regeneradas coherentes; nueva exportación sanitizada OPMX_Publisher_MEDIA_v1.3.5_H105_LISTAS.json. No reenviar la nota Chrome#119 ya existente.
+
+Commits29fc722,d433953,7195af2,25105fe,19bf644,648578f,3e5d92a,dda6929,4db1a29,1eb4d67, rama/PR9 editorial existentes. H105 y D-033 en Drive. No DNS, publicaciones ni nuevas cargas CMS en este hotfix.
+
+Tareas paralelas aún pendientes: usuario exigió portada60s (15min rechazados). CMS público QA127 entrega Chrome9697 como primer Hero y latest; fetchVercel al consultar0051UTC ya lo contiene, mientras lector web anterior mostraba caché vieja. Datos home900s contradicen layoutISR60s y documento guardrails60s. PR9 DEL REPO FRONTEND (no confundir con PR9 editorial), rama fix/home-publication-freshness, head9b98727: home60s/resto900s; expira tags con expire0 al publicar y retira cabeceraCDN adicional de portada. CI en curso antes de merge/despliegue; no afirmar todavía corregido en producción. El usuario priorizó primero este hotfix Publisher.
+
+MCP archivos H104 sigue pendiente de conexión única: autenticación segura ChatGPT eligió Google; navegador en MFA de OpenAI/clave de acceso. Sin sesión completada ni prueba nativa de archivos. No confundir hotfix del formulario con cierre de la experiencia desde Motor. Publicación pública automática y redes siguen pendientes.
+
+
 ## H104 — Archivos nativos desde el mismo Motor (2026-11-01 México)
 
 El usuario rechazó el puente Motor → Work de H103 como experiencia final: requiere generar la nota y pedir su envío en EL MISMO CHAT. H103 permanece como evidencia de entrega; no es el flujo de uso aceptado. No pedir mover archivos a otro chat ni usar el formulario manual.
