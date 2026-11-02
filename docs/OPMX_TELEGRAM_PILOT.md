@@ -1,3 +1,28 @@
+# Telegram editorial — estado actual H113
+
+Bot @opmxpublisherbot; chat propietario autorizado. Receptor activo12nodos versión d8ffd9a9-bb23-48d6-bb95-a061316f5fff.
+Tabla de comprobación: T7kVEMKmX1w2viLz (proyecto personal WyiSsL1U3KChdMw1). Consultar receipt_id/status/kind/mime_type/bytes_received/mode/observed_at tras envío.
+No solicitar token ni copiar IDs. Reenviar texto,foto,PDF/DOCX para comprobar recepción con evidencia mínima. No se guarda contenido ni originales, no genera/publica todavía.
+
+## H113 — Evidencia mínima de recepción Telegram (2 noviembre 2026, México)
+
+El propietario informó que ya envió texto/foto/documento. La consulta de ejecuciones de OSi8AcnzLlI0csRu después de /id devolvió0 registros porque el piloto conserva saveDataSuccessExecution=none,saveDataErrorExecution=none,saveManualExecutions=false. Por ello los envíos reportados NO se declaran verificados desde n8n ni fallidos: el resultado anterior no puede reconstruirse con las herramientas disponibles. Se explicó la limitación y se pidió reenviar las pruebas después de instrumentar evidencia mínima.
+
+Cambio: tabla personal “OPMX Telegram — recepciones verificables”,T7kVEMKmX1w2viLz, columnasreceipt_id,status,kind,mime_type,bytes_received,mode,observed_at. Sin texto,caption,nombre de archivo,file_id,URL,token ni binario. receipt_id incluye IDs de Telegram por diseño existente y sólo persiste en n8n. No se guardan datos personales de recepción reales en GitHub. Un DataTableupsert después del resultado conserva el estado final; esto permite verificar bytes y acuse sin activar retención general. El upsert es por receipt_id y NO demuestra exclusión atómica ni evita repetir acuses ante updates duplicados.
+
+Resultado piloto ahora incluye MIME. El nodo de acuse usa continueRegularOutput sin retry para que un fallo de Telegram llegue al clasificador RECEIPT_NOT_CONFIRMED y su evidencia. Fallos anteriores al resultado o en la propia tabla siguen sin registro persistente; no es un monitor exhaustivo ni almacenamiento de originales. Los archivos sólo se comprueban en memoria; Publisher/Motor no llamados.
+
+QA269PDF sintético16bytes+acuse,270texto+acuse,271texto+fallo de acuse,272remitente no autorizado:4ejecuciones success con Telegram fijado y DataTabledryRun=true. La ejecución success del caso271 no significa acuse confirmado: el código clasifica error de transporte como RECEIPT_NOT_CONFIRMED. Consulta posterior tabla0filas; ninguna prueba ficticia persistida. Se restauraron allowlists reales y dryRun=false antes de publicar; nunca se publicó la configuración QA1001. Suite local112PASS. No se enviaron mensajes reales desde QA.
+
+Live:12nodos,versiónd8ffd9a9-bb23-48d6-bb95-a061316f5fff,active=true,sameAsDraft=true; credencial existente y retenciónnone/binaryModeseparate/timeout90 preservados,validación sin warnings. Tabla vacía antes de activar evidencia. La recepción real de los adjuntos con esta versión sigue pendiente. Reenviar texto,foto y PDF/DOCX≤10MiB para comprobar resultados mediante tabla.
+
+Snapshot sanitizado workflows/telegram/OPMX_TELEGRAM_RECEPCION_H113_REFERENCIA.json,commit5bb3fbd42eafa346a307a6a9901681d7b1b6cf41. Contiene allowlists vacías y sin credenciales/webhookIds,active=false como referencia,NO desplegar directamente sobre el receptor. Misma rama feat/mcp-publisher-file-draft,PR9editorial draft. H110builder histórico y H111snapshot ya no representan el grafo actual.
+
+Pendientes después de recepción: paquetes/originales durables,agrupación/versionado,lecturas autenticadas,MCP Events y suscripción Work,MASTER y fixture draft; cierre de concurrencia publicaciónH108 y CIfrontend antes de Social. No se conecta API de IA de pago ni se publican notas como prueba. Siguiente acción: consultar tabla tras reenvío real; no afirmar transporteTelegram→Motor funcional por este hito.
+
+
+## Historial anterior (no usar como configuración actual)
+
 # Telegram editorial — estado actual H112
 
 Bot: @opmxpublisherbot. Chat privado del propietario autorizado tras /id real y confirmación en Work.
