@@ -1422,7 +1422,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "let p={};try{p=$('Conservar plan publicación').first().json}catch{}const r={status:'PUBLICATION_REJECTED',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug??$('Protocolo MCP archivos').first().json.request.slug??null,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),publicationWritesStarted:false,draftsMayExist:true,retryPermitted:false,message:'No se efectuaron cambios de publicación: los borradores no superaron el preflight conjunto. No reenviar el paquete; revisar los IDs existentes.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
+        "jsCode": "let p={};try{p=$('Conservar plan publicación').first(0,0).json}catch{}const r={status:'PUBLICATION_REJECTED',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug??$('Protocolo MCP archivos').first().json.request.slug??null,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),publicationWritesStarted:false,draftsMayExist:true,retryPermitted:false,message:'No se efectuaron cambios de publicación: los borradores no superaron el preflight conjunto. No reenviar el paquete; revisar los IDs existentes.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
       }
     },
     {
@@ -1436,7 +1436,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "let p={};for(const name of ['Conservar visibilidad OPURO','Conservar publicación OPOL','Conservar publicación OPURO','Preflight conjunto publicación','Preparar publicación verificada']){try{p=$(name).first().json;break}catch{}}const r={status:'UNCERTAIN',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),retryPermitted:false,message:'Revisar WordPress y los estados de estos IDs antes de cualquier reenvío. No se confirma la publicación completa.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
+        "jsCode": "let p={};for(const name of ['Conservar visibilidad OPURO','Conservar publicación OPOL','Conservar publicación OPURO','Preflight conjunto publicación','Conservar plan publicación','Preparar publicación verificada','Preparar publicación existente']){try{p=$(name).first(0,0).json;break}catch{}}const r={status:'UNCERTAIN',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),retryPermitted:false,message:'Revisar WordPress y los estados de estos IDs antes de cualquier reenvío. No se confirma la publicación completa.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
       }
     }
   ],
@@ -2373,7 +2373,7 @@
   "tags": [],
   "meta": {
     "sourceWorkflowId": "bnzVMNkZuGO1GQCZ",
-    "sourceActiveVersion": "aab7fa69-e637-471c-9720-2f544cf8957b",
-    "note": "Sanitized reference for review, not an import over the live workflow. Credentials removed; retain the existing n8n OAuth and credentials. Live version is active; this reference intentionally is not."
+    "sourceActiveVersion": "cc976feb-b414-4a7b-9b8c-f1b1a787ec38",
+    "note": "Sanitized review reference. Live version active; reference intentionally inactive. Credentials removed; never import over live workflow."
   }
 }
