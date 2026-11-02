@@ -1,0 +1,342 @@
+{
+  "notice": "Synthetic only. Never execute these IDs or URLs against live WordPress. Use QA example.invalid workflow with test_workflow.",
+  "fixture": {
+    "request": {
+      "id": 108,
+      "operation": "publicar_nota_opmx",
+      "confirmar_publicacion": "PUBLICAR",
+      "request_id": "opmx-fixture-publish-20261102",
+      "destino": "AMBOS"
+    },
+    "receipt": {
+      "status": "SUCCESS",
+      "mode": "DRAFT",
+      "request_id": "opmx-fixture-publish-20261102",
+      "post_id_opuro": 900001,
+      "post_id_opol": 900002,
+      "targets": {
+        "oxigenopuro": {
+          "status": "DRAFT",
+          "post_id": 900001,
+          "slug": "opmx-fixture-no-publicar"
+        },
+        "oxigenopolitico": {
+          "status": "DRAFT",
+          "post_id": 900002,
+          "slug": "opmx-fixture-no-publicar"
+        }
+      }
+    },
+    "posts": {
+      "OPURO": {
+        "id": 900001,
+        "slug": "opmx-fixture-no-publicar",
+        "status": "draft",
+        "type": "post",
+        "title": {
+          "raw": "Fixture sintético; no publicar"
+        },
+        "content": {
+          "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+        },
+        "excerpt": {
+          "raw": "Fixture"
+        },
+        "author": 2,
+        "featured_media": 900003,
+        "categories": [
+          9
+        ],
+        "tags": [
+          7,
+          8
+        ],
+        "meta": {
+          "rank_math_title": "Fixture",
+          "rank_math_description": "Fixture",
+          "rank_math_focus_keyword": "fixture",
+          "oxpuro_hero_media_id": 900004,
+          "oxpuro_editorial": {
+            "subtitle": "Fixture",
+            "photo_credit": "Fixture"
+          }
+        }
+      },
+      "OPOL": {
+        "id": 900002,
+        "slug": "opmx-fixture-no-publicar",
+        "status": "draft",
+        "type": "post",
+        "title": {
+          "raw": "Fixture sintético; no publicar"
+        },
+        "content": {
+          "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+        },
+        "excerpt": {
+          "raw": "Fixture"
+        },
+        "author": 2,
+        "featured_media": 900003,
+        "categories": [
+          9
+        ],
+        "tags": [
+          7,
+          8
+        ],
+        "meta": {
+          "rank_math_title": "Fixture",
+          "rank_math_description": "Fixture",
+          "rank_math_focus_keyword": "fixture",
+          "opmx_editorial": {
+            "primary_category": 9,
+            "subtitle": "Fixture"
+          }
+        }
+      }
+    }
+  },
+  "pinData": {
+    "Iniciar diagnóstico MCP": [
+      {
+        "json": {}
+      }
+    ],
+    "Publicación — Preflight OPURO": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "id": 900001,
+            "slug": "opmx-fixture-no-publicar",
+            "status": "draft",
+            "type": "post",
+            "title": {
+              "raw": "Fixture sintético; no publicar"
+            },
+            "content": {
+              "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+            },
+            "excerpt": {
+              "raw": "Fixture"
+            },
+            "author": 2,
+            "featured_media": 900003,
+            "categories": [
+              9
+            ],
+            "tags": [
+              7,
+              8
+            ],
+            "meta": {
+              "rank_math_title": "Fixture",
+              "rank_math_description": "Fixture",
+              "rank_math_focus_keyword": "fixture",
+              "oxpuro_hero_media_id": 900004,
+              "oxpuro_editorial": {
+                "subtitle": "Fixture",
+                "photo_credit": "Fixture"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Publicación — Publicar OPURO": [
+      {
+        "json": {
+          "error": "Simulación: respuesta POST perdida"
+        }
+      }
+    ],
+    "Publicación — Confirmar OPURO": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "id": 900001,
+            "slug": "opmx-fixture-no-publicar",
+            "status": "publish",
+            "type": "post",
+            "title": {
+              "raw": "Fixture sintético; no publicar"
+            },
+            "content": {
+              "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+            },
+            "excerpt": {
+              "raw": "Fixture"
+            },
+            "author": 2,
+            "featured_media": 900003,
+            "categories": [
+              9
+            ],
+            "tags": [
+              7,
+              8
+            ],
+            "meta": {
+              "rank_math_title": "Fixture",
+              "rank_math_description": "Fixture",
+              "rank_math_focus_keyword": "fixture",
+              "oxpuro_hero_media_id": 900004,
+              "oxpuro_editorial": {
+                "subtitle": "Fixture",
+                "photo_credit": "Fixture"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Publicación — Web OPURO": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": "<link rel=\"canonical\" href=\"https://oxigenopuro.com.mx/opmx-fixture-no-publicar/\">"
+        }
+      }
+    ],
+    "Publicación — Preflight OPOL": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "id": 900002,
+            "slug": "opmx-fixture-no-publicar",
+            "status": "draft",
+            "type": "post",
+            "title": {
+              "raw": "Fixture sintético; no publicar"
+            },
+            "content": {
+              "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+            },
+            "excerpt": {
+              "raw": "Fixture"
+            },
+            "author": 2,
+            "featured_media": 900003,
+            "categories": [
+              9
+            ],
+            "tags": [
+              7,
+              8
+            ],
+            "meta": {
+              "rank_math_title": "Fixture",
+              "rank_math_description": "Fixture",
+              "rank_math_focus_keyword": "fixture",
+              "opmx_editorial": {
+                "primary_category": 9,
+                "subtitle": "Fixture"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Publicación — Publicar OPOL": [
+      {
+        "json": {
+          "error": "Simulación: respuesta POST perdida"
+        }
+      }
+    ],
+    "Publicación — Confirmar OPOL": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "id": 900002,
+            "slug": "opmx-fixture-no-publicar",
+            "status": "publish",
+            "type": "post",
+            "title": {
+              "raw": "Fixture sintético; no publicar"
+            },
+            "content": {
+              "raw": "<!-- wp:paragraph --><p>Fixture de pruebas.</p><!-- /wp:paragraph -->"
+            },
+            "excerpt": {
+              "raw": "Fixture"
+            },
+            "author": 2,
+            "featured_media": 900003,
+            "categories": [
+              9
+            ],
+            "tags": [
+              7,
+              8
+            ],
+            "meta": {
+              "rank_math_title": "Fixture",
+              "rank_math_description": "Fixture",
+              "rank_math_focus_keyword": "fixture",
+              "opmx_editorial": {
+                "primary_category": 9,
+                "subtitle": "Fixture"
+              }
+            }
+          }
+        }
+      }
+    ],
+    "Publicación — Web OPOL": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": "<link rel=\"canonical\" href=\"https://oxigenopolitico.com.mx/tecnologia/opmx-fixture-no-publicar/\">"
+        }
+      }
+    ],
+    "Publicación — Categoría OPOL": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "id": 9,
+            "slug": "tecnologia"
+          }
+        }
+      }
+    ],
+    "Publicación — Revalidar OPURO": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "revalidated": true
+          }
+        }
+      }
+    ],
+    "Publicación — Guard OPURO": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "status": "reported",
+            "postId": "900001"
+          }
+        }
+      }
+    ],
+    "Publicación — Guard OPOL": [
+      {
+        "json": {
+          "statusCode": 200,
+          "body": {
+            "status": "reported",
+            "postId": "900002"
+          }
+        }
+      }
+    ]
+  }
+}
