@@ -1,6 +1,28 @@
 # OPMX Pipeline — Handoff maestro
 
-## ESTADO VIGENTE H103 — primera entrega REAL desde Library mediante Work (2026-11-01 México)
+## H104 — Archivos nativos desde el mismo Motor (2026-11-01 México)
+
+El usuario rechazó el puente Motor → Work de H103 como experiencia final: requiere generar la nota y pedir su envío en EL MISMO CHAT. H103 permanece como evidencia de entrega; no es el flujo de uso aceptado. No pedir mover archivos a otro chat ni usar el formulario manual.
+
+Implementación desplegada, conexión ChatGPT pendiente:
+- MCP OAuth: https://n8n.oxigenopuro.com.mx/webhook/opmx-publisher-files-mcp
+- Workflow bnzVMNkZuGO1GQCZ, 22 nodos, activo 7014f00e-be78-4292-bef0-09a148b4151b. Herramientas validar_archivos_opmx (lectura) y preparar_borrador_opmx (escritura de drafts). Declaran openai/fileParams de nivel superior: master_file, hero, destacada. ChatGPT debe aportar referencias transferibles; nunca inventar URLs o Base64.
+- Recibe destino OPURO/OPOL/AMBOS; la herramienta de escritura exige request_id estable. Descarga MASTER y destacada; Hero obligatorio para OPURO/AMBOS. Comprueba JSON, LISTO al escribir, firma/MIME y límites de 2 MiB MASTER / 10 MiB por imagen. HTTPS con orígenes OpenAI permitidos, sin redirecciones; sin credenciales de descarga. Los límites se comprueban después de recibir bytes: no es un límite de memoria del transporte.
+- Llama al Publisher existente 4o7K5TmKc7joScqB mediante Execute Sub-workflow; nueva entrada passthrough y callerPolicy restringida al adaptador. Versión activa 28737376-bc88-4b6b-8178-1f4fc1a6e494, 91 nodos. Webhook anterior conservado. Se corrigió la huella: imágenes fuente se leen del preparador común y no de un trigger que puede no haberse ejecutado. Se conserva exactamente el JSON de huella anterior.
+- Fuerza PUBLICAR=false; contrato Gutenberg/SEO/medios vigente, guard y readbacks existentes. Fallo/resultado parcial no permite reenvío automático. Respuesta incierta incluye execution_id para conciliación. El adaptador no guarda ejecuciones manuales ni de éxito/error; el hijo mantiene su política previa y recibe bytes, sin enlaces temporales.
+
+Evidencia: 91 pruebas locales pasan, incluidos siete casos nuevos; nueve nodos Code del adaptador compilan. Configuraciones n8n sin advertencias. QA #124 descargó metadata OAuth pública como binario y verificó helper de bytes, descriptor fileParams y rechazo de escritura inválida; cero escrituras. #125 comprobó POST anónimo HTTP401 y challenge OAuth en versión publicada. #120/121 verificaron challenge y metadata antes de ampliar el endpoint. #122/123 no conservan resultados por política sin retención; no se usan como evidencia de éxito. NO se validó aún handshake autenticado del cliente ChatGPT, binding real de archivos ni la ruta MCP→draft integral. No afirmar terminado.
+
+Conexión única pendiente: crear/conectar plugin MCP específico OAuth con URL anterior en ChatGPT y habilitarlo en Motor. El plugin genérico n8n execute_workflow no declara fileParams. No hay herramienta de gestión que cree esa conexión personalizada; se abrió ChatGPT en el navegador disponible y muestra Iniciar sesión. Requiere autenticación segura del usuario antes de completar configuración. La referencia OAuth publicada anuncia resource con ?method=POST; comprobar compatibilidad/audience al conectar, sin desactivar autenticación. Primera prueba desde Motor: validar_archivos_opmx con el paquete Chrome ya existente, SOLO LECTURA. No reenviar Chrome: #119 ya creó drafts9697/2787. Después probar nuevo fixture aprobado mediante preparar_borrador_opmx en ambos destinos.
+
+Revisión automática rechazó temporalmente habilitar saveManualExecutions=true por retención de archivos/URLs. No aplicado ni eludido: las pruebas seguras usaron diagnóstico separado con sólo metadata pública y funciones sintéticas. La operación inválida setNodeParameter path=jsCode también se rechazó sin mutación; se corrigió mediante updateNodeParameters.
+
+Código en feat/mcp-publisher-file-draft, PR #9 aún draft. Commits 06c291a protocolo, acc1a26 generador adaptador, 3cffb05 pruebas, 7410c1c referencia MCP, c3da4a9 generador v2, a716149 prueba huella, 6704e12 referencia v2. main/CI remoto sin verificación en este hito. Sin DNS ni escrituras WordPress en H104. Publicación pública automática y redes continúan pendientes.
+
+Fuentes técnicas: https://developers.openai.com/plugins/reference (fileParams), https://developers.openai.com/plugins/build/auth (OAuth), https://developers.openai.com/api/docs/guides/custom-mcp-server (conexión). Parámetros n8n cotejados con tipos de esta instancia.
+
+
+## HISTÓRICO H103 — primera entrega REAL desde Library mediante Work (2026-11-01 México)
 
 El usuario compartió un reporte del Motor: MASTER Chrome e imágenes localizados, pero envío no iniciado por falta de capacidad para transferir bytes; identificador previsto opmx-chrome-319-c4419b28487cdaff. Se comprobó que no había ejecución nueva en la entrada. Work leyó el MASTER vigente (CONTROL_EDITORIAL=LISTO) y materializó mediante Library los JPG Hero250281bytes/1448x1086 y destacada95083bytes/1200x630, preservando su metadata. No se modificó el paquete editorial ni se cambió el identificador.
 
