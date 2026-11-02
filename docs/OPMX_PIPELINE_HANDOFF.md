@@ -1,5 +1,22 @@
 # OPMX Pipeline — Handoff maestro
 
+## H106 — Frescura de ediciones WordPress a 60 segundos, PRODUCCIÓN (1 noviembre 2026, México)
+
+Usuario rechazó15min y pidió editar WordPress y ver cambios con ventana30–60s, incluyendo /ni-ingenuos-ni-populistas-mexico-en-la-era-de-la-ia/. Diagnóstico: layoutISR60s pero cliente WordPressdatos900s y reglasCDN editoriales adicionales900s; edición manual no llama invalidación de Publisher. Chrome9697 sí estaba primero en APIhome; portada vieja correspondía a caché. No se alteró contenido de notas.
+
+Desplegado en proyecto correcto oxigeno-puro-com-mx, prj_2VETh50RkVNY5Rmpx3EHVlAzXoDB, equipo team_sVtKADMiX547FdpceiUUMbb1: producción dpl_CYaYKnNThrEnn4uRDumSx4x1m19y READY, alias oxigenopuro.com.mx/www asignados por Vercel sin DNS. Commit a1c7a848028fc5e9d5a8ffd6af2d4d601ec6deb6, rama fix/home-publication-freshness, PR9 DEL REPO FRONTEND (no confundir con PR9 editorial). Main frontend sigue aa30ce8; no merge mientras CI de navegador no cierre. Producción fue desplegada desde la rama de hotfix con entorno production; no se promovió un preview noindex.
+
+Todas las consultas editoriales home/artículos/categorías usan60s. Se retiraron reglasCDN extra900s y se usa caché nativa Next; layoutISR60s preservado. Invalidación autenticada Publisher cambia revalidateTag(max) por revalidateTag({expire:0}) para no regenerar con datos marcados stale. Cachés de imágenes/sitemaps y límites de gasto no cambiaron. Son60s bajo demanda, con posible primera respuesta stale durante regeneración; no es push ni recarga automática de pestañas abiertas. Recargar consulta la revisión; no prometer tiempo cero o máximo rígido ante fallos de origen. No se introdujo flag experimental staleTimes de cliente (sigue comportamiento de navegación de Next).
+
+Evidencia: preview final dpl_AU4muJtJ18EJKTvcsrguQJp8pdLw READY,200/nota vigente/noindex. Producción200 en / y nota, data-dpl-id confirmado, sin noindex de preview. Nota9701 revisiónCMS2026-11-02T01:23:12Z: coincide dateModified y cuerpo HTML literal con respuesta pública19:25MX. QA130 leyó revisión previa01:14;132 invalidó sólo caché vía credencial existente (HTTP200,tags/rutas correctos,0escrituras contenido);133 leyó revisión más reciente y se cotejó con frontend. Diagnóstico restaurado a GET público sin credenciales, inactivo.
+
+CI head a1c7a84: lint,TypeScript,56unitarias y build PASS; WordPress6.6/latest PASS run41371809638. E2E sigue sin aprobar: next start detecta conflicto PREEXISTENTE de carpetas dinámicas app/[category]/… y app/[slug]/… ('category' !== 'slug'); identificado en logs del run41370100765, no causado por TTL. PR queda abierto; no declararCI completoverde. Preview y producción Vercel fueron verificados por su runtime, distinto de next start del runner. Se alinearon pruebas antiguas de marca,tags,URLs; catálogo agregado elimina5slugs repetidos conservando primera entrada, sin cambiar menús; fixturePHP aparta a draft el post de ejemplo inicial sólo en base explícitamente desechable.
+
+Dos erroresTLS ECONNRESET hacia CMS observados en precargas /suscribete y /category/noticias tras despliegue; / y nota objetivo200 y cuerpo vigente. Sin reintentos globales ni reactivación de Observability. Registrar seguimiento de origen; no confundir con error list-item ya cerradoH105.
+
+Siguiente: cerrar conflicto de rutas y CI en cambio acotado antes de merge; conservar hotfix vivo al hacerlo. Continuar conexión nativa MotorH104: sesión ChatGPT ya autenticada; formulario MCP preparado, OAuth/DCR detectado y recurso POST correcto. Se están retirando scopes administrativos; conector AÚN NO CREADO ni autorizado. No afirmar binding real de archivos. Hotfixlist-itemH105 continúa activo (formulario4d477bfd…, automática c29101d9…). Redes y publicación automática pública siguen pendientes.
+
+
 ## H105 — Hotfix list-item desplegado en Publisher operativo (2026-11-01 México)
 
 El usuario reportó un formulario con error `GUTENBERG_ENRIQUECIDO_FINAL usa bloques no autorizados: list-item. [line 259]`. Ejecución126 terminó con error capturado por el formulario: el normalizador emitió por su salida de error antes de subir medios/crear notas. Fue una omisión de la allowlist de listas nativas en el contrato y en el validador. Se añadió core/list-item a contrato enriquecido v1.0, salida v1.4 e instrucción v1.1, y a ambos validadores. No se elimina contenido ni se transforma a HTML libre. HTML y bloques custom siguen bloqueados.
