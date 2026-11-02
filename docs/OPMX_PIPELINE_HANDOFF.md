@@ -1,5 +1,20 @@
 # OPMX Pipeline — Handoff maestro
 
+## H107 — Transferencia nativa comprobada desde el mismo Motor (2 noviembre 2026 UTC / 1 noviembre México)
+
+El conector “OPMX Publisher — Archivos” quedó instalado y autenticado en ChatGPT con OAuth nativo de n8n. Consentimiento limitado a workflow:execute para el adaptador bnzVMNkZuGO1GQCZ; no se conservó la selección amplia de scopes de n8n. App: https://chatgpt.com/plugins/plugin_asdk_app_6ae7e85c83b481919008919407f25779 . Chat de prueba: https://chatgpt.com/g/g-p-6ab4aab3beac8191af830472b29869d0-motor-editorial-opmx/c/6ae578e9-66a4-83e8-a7a1-eccbee0a5c8c .
+
+Se ejecutó validar_archivos_opmx desde ese Motor con los archivos originales, sin Work como puente, reconstrucción de JSON ni Base64 manual. Primeros dos intentos de sólo lectura revelaron que fileParams SÍ entregaba download_url, file_id, file_name y mime_type; nuestra regex rechazaba un identificador opaco de 48 caracteres. Se corrigió a cadena no vacía de hasta4096 caracteres; nunca se usa como ruta ni autorización. Se mantienen HTTPS, lista de orígenes, sin redirecciones, firma/MIME y tamaños. Diagnóstico sólo tipos/claves/longitudes, sin valores de identificador o URL.
+
+Tercer intento, una sola llamada de lectura: FILES_VALIDATED, bytesVerified=true, destino AMBOS, estado LISTO, slug guadalupe-taddei-ramirez-cuellar-investigacion-ine-2026. MASTER45567bytes, Hero97824bytes y destacada70997bytes; total214388. No reservas, medios, borradores ni publicaciones. Esto valida transporte nativo hasta bytes y parsing; NO afirmar que este paquete pasó por la herramienta de escritura. El subflujo de borradores ya tiene entrega real previa H103/execution119; falta probar una solicitud nueva íntegra desde preparar_borrador_opmx con un paquete aprobado sin duplicados o fixture. No reenviar Chrome: usuario ya publicó9697/2787.
+
+Adaptador activo a196b354-f72a-487e-8a65-6a84e4d45885,22nodos. Publisher hijo activo c29101d9-afaa-45b9-990e-1047ce2a19a9,91nodos, con list-item H105. Guard y recuperación no cambiaron. PUBLICAR=false y resultados inciertos requieren reconciliación, nunca reenvío automático. Retención de ejecuciones del adaptador continúa desactivada para proteger URLs temporales; no intentar eludir el rechazo de activar guardado manual de H104.
+
+96pruebas locales PASS. Commits editorial rama feat/mcp-publisher-file-draft: 5021147 receptor, f344043 regresión de ID opaco, 4633ea1 snapshot sanitizado. PR9 editorial sigue draft: https://github.com/oxigenopuromx-hue/opmx-editorial-engine/pull/9 . H106 frontend sigue en producción60s; PR9 frontend separado y pendiente E2E por conflicto preexistente de parámetros de rutas, no merge ciego.
+
+Siguiente paso seguro: usar preparar_borrador_opmx desde el Motor para una solicitud nueva aprobada en destino indicado y comprobar IDs/enlaces/readbacks; no hace falta llevar archivos a Work ni usar formulario manual. Publicación pública y redes sociales siguen pendientes de su flujo específico; no confundir borrador con publicación.
+
+
 ## H106 — Frescura de ediciones WordPress a 60 segundos, PRODUCCIÓN (1 noviembre 2026, México)
 
 Usuario rechazó15min y pidió editar WordPress y ver cambios con ventana30–60s, incluyendo /ni-ingenuos-ni-populistas-mexico-en-la-era-de-la-ia/. Diagnóstico: layoutISR60s pero cliente WordPressdatos900s y reglasCDN editoriales adicionales900s; edición manual no llama invalidación de Publisher. Chrome9697 sí estaba primero en APIhome; portada vieja correspondía a caché. No se alteró contenido de notas.
