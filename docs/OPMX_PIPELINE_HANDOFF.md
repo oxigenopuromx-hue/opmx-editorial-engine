@@ -1,5 +1,18 @@
 # OPMX Pipeline — Handoff maestro
 
+## H119 — Lectura nativa Work de fuentes Telegram comprobada (2 noviembre 2026, México)
+
+En el nuevo turno las2herramientasH118 sí quedaron disponibles. Se llamó leer_paquete_telegram_opmx directamente desde Work: PACKAGE_FOUND/READY/revision7,3itemsSTORED. Luego leer_fuente_telegram_opmx obtuvo9fragmentos reales:1texto2736bytes,3JPEG150508bytes,5PDF300310bytes; total453554bytes. Sin Workflows puente,logging de fuentes ni URLs públicas.
+
+Los fragmentos se materializaron en carpeta privada temporal de Work,fuera del árbolGit,y se ensamblaron con tools/telegram/assemble-source.mjs. Verificados porfragmento: identidad/orden/rango/Base64/sha; verificadoSHA256completo contra manifiesto para3streams. Texto UTF8abierto2624caracteres,JPEG960x1280abierto,PDF2páginas/nocifrado/3840caracteresextraíbles yprimerapáginavisualmente legible. pypdf informó2objetosxref conapuntadorincorrecto y logrólectura; bytes originales intactos yhashcoincidente, no se reparó/sobrescribió la fuente. No guardaroriginales/textos/IDsreales enGitHub ni incluirlos en registro.
+
+Este hito cierra transporte Telegram→paqueteprivado→MCPautenticado→fuentes reales enWork. No equivale aarranqueautomático,calidadeditorial,generaciónMASTER ni publicaciónTelegram. Materiales de prueba no se convirtieron ennota ni sepublicaron. Revisióneditorialdebefijarcoherenciatemática,roles/créditos ycontratovigente antes degenerar; no asumirque foto/PDF/texto tratan un mismotema.
+
+Sin cambiosdecódigo/configuración/credenciales/DNS enH119. Receptor22nodosdd676c7e yMCP63nodosb0d9fc47 siguenactivos;guardZIPH118sigueactual.137testsanterioresvigentes. Próximo: implementarMCPEvents enmismoendpointOAuth,callbackHTTPSfirmado/verificado,almacenamientosuscripciones/outbox,y suscripciónWorkenproyectoMotor. NoAPIdepago deIA. Ruta oficialMCPEvents yStandardWebhookrevisada;seguirámodo sinpublicaciónpública de pruebas.
+
+Versionado: rama feat/mcp-publisher-file-draft/PR9editorial draft,actualización documentalH119. No pedir reenvíos porpérdida decontexto: fuentespersisten enHostinger ysepueden recuperarconlos2lectores.
+
+
 ## H118 — Lectura privada de Telegram en MCP Publisher (2 noviembre 2026, México)
 
 Backend guard actualizado enHostinger a opmx-guard-telegram-read-h118.zip (“Se ha completado/Actual”,14:49:08México). H115ZIPyH092ZIP conservados como rollback. No DNS,variables,secretos,credenciales ni WordPress modificados. Se añade sólo acción autenticada POST /v1/telegram/packages/chunk; APIsanteriores siguen. Lectura SQLSUBSTRING del BLOB conoffset1-based preparado,64KiBmáximo,owner/paquete/item/estadoSTORED vinculados; no transfiere original entero por fragmento. Streamtext recupera texto/caption comoUTF8; original recuperaBLOB. Devuelveoffset,total,bytes,eof,nextOffset,hashdeloriginalyhashdefragmento. Rangoentero/no negativo ylongitud1–65536; nunca URL externa/pública.
