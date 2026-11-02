@@ -1,7 +1,7 @@
 const validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);
 const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-const help='Para una nota: envía /nuevo, después texto, fotos y documentos, y termina con /listo. /estado muestra el paquete. Esta etapa guarda material; todavía no genera ni publica notas.';
+const help='Para una nota: envía /nuevo, después texto, fotos y documentos, y termina con /listo. /estado muestra el paquete abierto. Al cerrar, el Motor valida las fuentes automáticamente; el resultado aparece en su chat Work. Esta etapa todavía no genera ni publica notas.';
 const who=x=>({owner:x.user_id,chat:x.chat_id});
 const response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});
 
@@ -35,9 +35,9 @@ export function resolvePackageSession(intent,result) {
 
 export function confirmPackageOperation(context,result) {
  if(context.package_operation==='SEAL') {
-  if(result?.status==='READY'&&result.packageId===context.packageId&&Number.isSafeInteger(result.revision))return response(context,`Paquete cerrado: <code>${context.packageId}</code>, versión ${result.revision}. Material guardado; la conexión con el Motor sigue en desarrollo. No se ha generado ni publicado una nota.`,{package_state:'READY',package_revision:result.revision});
+  if(result?.status==='READY'&&result.packageId===context.packageId&&Number.isSafeInteger(result.revision))return response(context,`Paquete cerrado: <code>${context.packageId}</code>, versión ${result.revision}. Material guardado y listo para validación automática en el Motor. Consulta el resultado en su chat Work. No se ha generado ni publicado una nota.`,{package_state:'READY',package_revision:result.revision});
   if(result?.status==='NOT_READY')return response(context,`Aún no puedo cerrar: ${Number(result.pending)||0} archivo(s) pendiente(s), ${Number(result.stored)||0} elemento(s) guardado(s). Espera sus confirmaciones y vuelve a usar /listo.`);
-  return response(context,'No pude confirmar el cierre del paquete. No se envió al Motor.');
+  return response(context,`No pude confirmar el cierre. Conserva el identificador <code>${escape(context.packageId)}</code> para revisar el resultado antes de reenviar este material.`);
  }
  if(context.package_operation==='STATUS') {
   if(result?.status!=='FOUND'||result.packageId!==context.packageId||!Array.isArray(result.items))return response(context,'No pude confirmar el estado del paquete.');
