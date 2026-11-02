@@ -1,3 +1,28 @@
+# Telegram editorial — estado actual H112
+
+Bot: @opmxpublisherbot. Chat privado del propietario autorizado tras /id real y confirmación en Work.
+Workflow activo: https://n8n.oxigenopuro.com.mx/workflow/OSi8AcnzLlI0csRu
+
+## Prueba real pendiente
+
+Enviar al bot un texto corto, una foto y un PDF o DOCX de prueba de hasta10MiB por archivo. El bot debe confirmar cada recepción. No hace falta copiar IDs ni compartir token.
+Este piloto recibe y comprueba bytes; todavía no agrupa paquetes, almacena originales, genera ni publica notas.
+
+## H112 — Identidad Telegram real autorizada (2 noviembre 2026, México)
+
+El propietario confirmó “listo” después de enviar /id a @opmxpublisherbot. Consulta de la tabla personal de candidaturas: una sola identidad privada, con user_id=chat_id, observada el 2 noviembre2026 a las13:54:57 de México. No hubo ambigüedad ni autorización del primer remitente sin confirmación. Los IDs personales quedan sólo en n8n; no se incluyen en repositorio ni este registro.
+
+Se configuraron allowedUserIds y allowedChatIds exclusivamente con esa identidad y se publicó OSi8AcnzLlI0csRu,11nodos,versión4add8a03-d554-49d6-a214-03d43772b1b6. Readback: active=true,activeVersion.sameAsDraft=true,ambas allowlists correctas. Credencial existente preservada,retenciónnone/none/saveManualExecutions=false,binaryMode=separate,timeout90s. Actualización1operación,sin warnings. La llegada real de /id queda comprobada por el registro del trigger; la prueba real de descarga de archivos sigue pendiente.
+
+Verificación local:112PASS,0FAIL,ejecutando desde la raíz recovery-pr9. Primer intento desde el directorio padre falló por rutas relativas de fixtures; repetido desde la raíz correcta pasó sin modificar código. No se generaron notas ni se llamó Publisher/WordPress/Social. No se almacenaron originales ni se implementaron eventos Work en este hito.
+
+Siguiente prueba del propietario: enviar al mismo bot un texto corto, una foto y un PDF o DOCX de prueba (cada archivo≤10MiB). Se espera acuse individual; aún RECEIPT_ONLY, sin agrupación,generación ni publicación. Después implementar paquetes y originales durables, lecturas autenticadas, MCP Events/Work y fixture draft con el contrato existente. No reutilizar el adaptador OpenAI con URLs Telegram. Social posterior; limitacionesH108 y CI frontend permanecen.
+
+Versionado: rama existente feat/mcp-publisher-file-draft,PR9editorial draft. El grafo H111 sanitizado sigue siendo referencia: no cambia el grafo, sólo configuración privada de identidad. No sustituir configuración live por el snapshot de referencia con allowlists vacías.
+
+
+## Registro histórico H111
+
 # Telegram editorial — estado actual H111
 
 Bot: @opmxpublisherbot. Credencial existente conectada. Receptor n8n activo: https://n8n.oxigenopuro.com.mx/workflow/OSi8AcnzLlI0csRu .
@@ -70,4 +95,5 @@ node --test tools/telegram/*.test.mjs
 node tools/telegram/build-intake.mjs
 
 El generador produce SDK en /tmp/opmx-telegram-intake-sdk.js. Validar con validate_workflow antes de crear. El workflow ya existe: no crearlo nuevamente. Export inactivo: workflows/telegram/OPMX_TELEGRAM_RECEPCION_PILOTO_H110_NO_ACTIVAR.json. No contiene credenciales.
+
 
