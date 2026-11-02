@@ -32,7 +32,7 @@
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const data = $json.body ?? $json;\nif (typeof data.request_id !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(data.request_id)) throw new Error('Falta request_id estable y válido');\nif (!data.master || typeof data.master !== 'object' || Array.isArray(data.master)) throw new Error('Falta MASTER como objeto JSON');\nconst destination = String(data.CREAR_EN ?? '').toUpperCase();\nif (!['OPURO','OPOL','AMBOS'].includes(destination)) throw new Error('CREAR_EN inválido');\nif (data.PUBLICAR !== false) throw new Error('Esta prueba sólo admite PUBLICAR=false');\nconst binary = {};\nfor (const [key, required] of [['hero_file', destination !== 'OPOL'], ['featured_file', true]]) {\n  const file = data[key];\n  if (!file && !required) continue;\n  if (!file || typeof file.base64 !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(file.base64) || !file.base64.length || file.base64.length > 14000000) throw new Error('Imagen inválida o ausente: '+key);\n  const buf = Buffer.from(file.base64, 'base64');\n  let mime, ext;\n  if (buf.length >= 8 && buf.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) { mime='image/png'; ext='png'; }\n  else if (buf.length >= 3 && buf[0]===255 && buf[1]===216 && buf[2]===255) { mime='image/jpeg'; ext='jpg'; }\n  else if (buf.length >= 12 && buf.subarray(0,4).toString()==='RIFF' && buf.subarray(8,12).toString()==='WEBP') { mime='image/webp'; ext='webp'; }\n  else throw new Error('Formato no admitido: '+key);\n  binary[key] = await this.helpers.prepareBinaryData(buf, key+'.'+ext, mime);\n}\nreturn {json:{json: JSON.stringify(data.master), CREAR_EN:destination, PUBLICAR:false, request_id:data.request_id}, binary};"
+        "jsCode": "const data = $json.body ?? $json;\nif (typeof data.request_id !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(data.request_id)) throw new Error('Falta request_id estable y válido');\nif (!data.master || typeof data.master !== 'object' || Array.isArray(data.master)) throw new Error('Falta MASTER como objeto JSON');\nconst destination = String(data.CREAR_EN ?? '').toUpperCase();\nif (!['OPURO','OPOL','AMBOS'].includes(destination)) throw new Error('CREAR_EN inválido');\nif (data.PUBLICAR !== false) throw new Error('Esta prueba sólo admite PUBLICAR=false');\nconst binary = {};\nfor (const [key, required] of [['hero_file', destination !== 'OPOL'], ['featured_file', true]]) {\n  const file = data[key];\n  if (!file && !required) continue;\n  if (!file || typeof file.base64 !== 'string' || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(file.base64) || !file.base64.length || file.base64.length > 14000000) throw new Error('Imagen inválida o ausente: '+key);\n  const buf = Buffer.from(file.base64, 'base64');\n  let mime, ext;\n  if (buf.length >= 8 && buf.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) { mime='image/png'; ext='png'; }\n  else if (buf.length >= 3 && buf[0]===255 && buf[1]===216 && buf[2]===255) { mime='image/jpeg'; ext='jpg'; }\n  else if (buf.length >= 12 && buf.subarray(0,4).toString()==='RIFF' && buf.subarray(8,12).toString()==='WEBP') { mime='image/webp'; ext='webp'; }\n  else throw new Error('Formato no admitido: '+key);\n  binary[key] = await this.helpers.prepareBinaryData(buf, key+'.'+ext, mime);\n}\nreturn {json:{json: JSON.stringify(data.master), CREAR_EN:destination, PUBLICAR:false, request_id:data.request_id,source_images:{hero_base64:data.hero_file?.base64??null,featured_base64:data.featured_file.base64}}, binary};"
       }
     },
     {
@@ -99,7 +99,7 @@
       "parameters": {
         "action": "hash",
         "type": "SHA256",
-        "value": "={{ JSON.stringify({canonical:$('Validar y normalizar OPMX MASTER').first().json.canonical,hero_base64:($('Entrada automática protegida').first().json.body ?? $('Entrada automática protegida').first().json).hero_file?.base64 ?? null,featured_base64:($('Entrada automática protegida').first().json.body ?? $('Entrada automática protegida').first().json).featured_file.base64}) }}",
+        "value": "={{ JSON.stringify({canonical:$('Validar y normalizar OPMX MASTER').first().json.canonical,hero_base64:$('Preparar MASTER y binarios').first().json.source_images.hero_base64,featured_base64:$('Preparar MASTER y binarios').first().json.source_images.featured_base64}) }}",
         "dataPropertyName": "fingerprint",
         "encoding": "hex"
       }
@@ -1942,6 +1942,18 @@
         "mode": "runOnceForAllItems",
         "jsCode": "let postId=null;try{postId=$('OPOL — Crear borrador mínimo').first().json.id??null}catch{}return [{json:{status:'NEEDS_RECONCILIATION',target:'oxigenopolitico',post_id:postId,retryPermitted:false,warnings:['OPOL no confirmado; revisar guard y WordPress antes de reenviar.']}}];"
       }
+    },
+    {
+      "name": "Entrada desde MCP archivos",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        1400
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
     }
   ],
   "connections": {
@@ -3213,13 +3225,26 @@
           }
         ]
       ]
+    },
+    "Entrada desde MCP archivos": {
+      "main": [
+        [
+          {
+            "node": "Preparar MASTER y binarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "nodeGroups": [],
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromAList",
+    "callerIds": "bnzVMNkZuGO1GQCZ"
   },
   "tags": []
 }
