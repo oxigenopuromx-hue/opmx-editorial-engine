@@ -1,3 +1,32 @@
+# Telegram editorial — estado actual H115
+
+Backend de paquetes privado desplegado y fixtureSQL validado. Bot aún RECEIPT_ONLY; falta conectar reserva/almacenamiento antes de Motor. Recepción realH114 ya validada: no repetir por contexto perdido.
+
+## H115 — Almacenamiento privado de paquetes desplegado y validado (2 noviembre 2026, México)
+
+H114 confirmó recepción real de3mensajes: texto,JPEG150508bytes,PDF300310bytes. Ahora se añadió el almacenamiento backend; todavía NO está conectado al receptor Telegram. Éste continúaH113/12nodos/d8ffd9a9-bb23-48d6-bb95-a061316f5fff en RECEIPT_ONLY. No se pide repetir la prueba H114 ni se afirma que aquellos originales se conservaron.
+
+Infraestructura: credencial MySQL existente rw21TkrAUdcLF27k rechazada en consulta sólo lectura desde n8n (QA276,ER_ACCESS_DENIED_ERROR). No se cambió contraseña ni se abrió MySQL remoto/IP. No hay credencial GoogleDriveOAuth en n8n. Se reutiliza guardNode de Hostinger, que ya accede localmente a MariaDB mediante las variables existentes. Sesión hPanel válida; al entrar apareció registro de dominio pendiente ajeno al proyecto, se salió sin registrar ni modificarlo. Publisherguard tenía desplegado opmx-guard-recuperacion-h092.zip; respaldado y conservado como rollback.
+
+Actualización en publisher.oxigenopuro.com.mx: opmx-guard-telegram-storage-h115.zip,Hostinger “Se ha completado/Actual” a14:13:50México. No DNS,cuentas,secretos,permisos ni variables modificadas. Mismo mysql2 3.24.6; siguen intactos direct-claim,target-progress,media-progress. server.js importa el guard desde tools/mcp-publisher para mantener rutas relativas de módulos. Nuevas tablas InnoDB separadas opmx_tg_quota_v1,opmx_tg_packages_v1,opmx_tg_sessions_v1,opmx_tg_items_v1; inicialización perezosa sólo al acceder a endpoints Telegram. Fallo de inicialización no impide arrancar las rutas históricas del guard.
+
+API privada POST /v1/telegram/packages/{capabilities,current,open,reserve,complete,manifest,asset,seal,discard}, con la MISMA autenticación HeaderAuth del guard, sin URLs públicas de originales. owners/chats privados deben coincidir y normalizador n8n debe aplicar allowlist antes de llamar. El guard no es un servidor multitenant: el cliente autenticado es el operador del pipeline y aporta owner/chat. La API no interpreta ni publica texto.
+
+Paquetes/sesión durables y IDs opacos derivados de identidad+recibo. Una reserva captura paquete y recibo ANTES de descargar. Texto se guarda directamente; archivos quedan PENDING y se completan con bytesBase64 canónicos, MIME/firma básica,tamaño exacto declarado y SHA256. SQL parametrizado y BLOB, sin rutas construidas de nombres. Reenvío de reserva/archivo devuelve replay o conflicto; cierre se bloquea con PENDING y fija READY+revisión al terminar. Manifest/asset verifican dueño/paquete; asset vuelve a comprobar hash. discard sólo marca PENDING sin original, conserva registro. No hay borrado automático de originales ni callback/evento Work.
+
+Límites de piloto:10MiBarchivo,25MiBpaquete,20items/paquete,128MiBglobal y100paquetes acumulados. Cuota/reservas/sesión/cierre serializados en transacciones mediante fila cuota FOR UPDATE; no afirmar ensayo concurrente real aún. Paquetes READY inmutables y repetición de completar con hashigual permitida como lectura/replay. Captions son datos; no autorización editorial. JSONcomplete≤14MiB,resto64KiB; rutas antiguasconservan4KiB; timeoutservidor60s para cargas. Corpuscompleto/máximo10MiB a través del proxy Hostinger todavía no validado: sólo validador local máximo y fixtureSQL16bytes.
+
+Pruebas:119NodePASS (112anteriores+7almacenamiento), sin cambio de rutas editoriales. QA277 STORAGE_READY,max_allowed_packet1073741824preexistente,publicationEnabled=false. Workflowdiagnóstico6ayHzqpXUTD2eczp en proyecto personal OXÍGENO PURO,INACTIVO,15nodos,versiónda17eb2d-80ac-4408-bda4-efad26f830a5,manual,sin webhook. Contiene sólo fixtures estáticos; nunca cargar datos reales con retención por defecto.
+QA278 falló al parsear expresión n8n de objeto anidado, después de guardar sólo texto de fixture. Se espaciaron cierres de objeto y se reusó la misma identidad, sin duplicar paquete/texto.
+QA279 SUCCESS/STORAGE_FIXTURE_VERIFIED: paquete de2items,textoUTF8/apóstrofe yPDF16bytes recuperado idéntico; cierre pendiente NOT_READY(pending1/stored1); completar STORED,duplicadoSTORED_REPLAY; reserva repetidaRESERVATION_REPLAY; READYrevision5 y cierre repetidoREADY; manifiesto2STORED y sesión vacía. No notas ni medios WordPress.
+QA280 canarydeguardhistórico,sólo/v1/targets/status para solicitudChrome existente: reported/postId9697, sin escribir/republicar. Se retiró el nodo temporal de canary y restauró grafo15nodos,sin warnings.
+
+Versionado en feat/mcp-publisher-file-draft/PR9editorial draft:881af9a(store),b371cba(tests),cb53833(builderZIP),ab2dc9b(guardserver),1f770d0(start),acd7073(QAJSONinactivo). Archivo reproducible mediante node tools/telegram/build-guard-storage.mjs. Snapshot workflows/telegram/OPMX_TELEGRAM_STORAGE_QA_H115_NO_ACTIVAR.json sin credenciales; fixture ya cerrado, no considerar rerun completo una prueba nueva. No merge a main.
+
+Siguiente: conectar receptor al backend mediante comandos de paquete y reserva antes de descarga; conservar allowlist real y retenciónnone. Validar transporte bot→BLOB+manifiesto sin notas reales. Después MCP Events/suscripción Work/lectura de originales,MASTER y fixture draft. Sigue pendiente cierre concurrencia publicaciónH108 y CIfrontend antes de Social. H115 no significa que Telegram→Motor→publicación esté terminado.
+
+## Historial anterior
+
 # Telegram editorial — estado actual H114
 
 Recepción real validada: texto,JPEG150508bytes,PDF300310bytes; todos RECEIPT_CONFIRMED. Ya no se requiere repetir esas tres pruebas para validar el pilotoH113. No conservaron originales.
