@@ -14,8 +14,8 @@ test('native file IDs are opaque strings, never filesystem paths or authorizatio
  assert.doesNotMatch(JSON.stringify(bad),/sig=test|native:opaque/);
 });
 test('native file binding declares every file property and only transport fields required',()=>{
- const tools=call('tools/list').response.result.tools;assert.equal(tools.length,2);
- for(const t of tools){for(const key of t._meta['openai/fileParams']){const s=t.inputSchema.properties[key];assert.deepEqual(Object.keys(s.properties),['download_url','file_id','mime_type','file_name']);assert.deepEqual(s.required,['download_url','file_id']);}}
+ const tools=call('tools/list').response.result.tools;assert.equal(tools.length,4);
+ for(const t of tools){for(const key of t._meta?.['openai/fileParams']??[]){const s=t.inputSchema.properties[key];assert.deepEqual(Object.keys(s.properties),['download_url','file_id','mime_type','file_name']);assert.deepEqual(s.required,['download_url','file_id']);}}
 });
 test('both destinations need all three file refs; OPOL needs only MASTER and featured',()=>{
  assert.equal(call('tools/call',{name:'preparar_borrador_opmx',arguments:args}).route,'files');
