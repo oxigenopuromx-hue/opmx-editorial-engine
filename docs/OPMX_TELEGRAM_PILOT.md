@@ -1,3 +1,21 @@
+# Telegram editorial — estado actual H114
+
+Recepción real validada: texto,JPEG150508bytes,PDF300310bytes; todos RECEIPT_CONFIRMED. Ya no se requiere repetir esas tres pruebas para validar el pilotoH113. No conservaron originales.
+Siguiente: almacenamiento y paquetes antes de Motor. No declarar generación/publicación por Telegram todavía.
+
+## H114 — Recepción real Telegram validada (2 noviembre 2026, México)
+
+Propietario informó “listo” tras reenviar. Consulta de tablaT7kVEMKmX1w2viLz devolvió3recibos reales del chat autorizado: TEXT, JPEG150508bytes y PDF300310bytes, todosRECEIPT_CONFIRMED y RECEIPT_ONLY. Fechas14:05:16–14:05:17México. Se comprobaron descarga, firma básica,bytes y acuse al chat original; no sólo ejecución exitosa. No se incluyen receipt_id/IDs personales reales ni contenido en GitHub. Workflow12nodos activo d8ffd9a9-bb23-48d6-bb95-a061316f5fff.
+
+Este hito valida Telegram→n8n→verificación→acuse. No valida conservación de originales,agrupación,lectura por Work,eventos,Máster ni publicación. El piloto sigue descartando originales tras comprobarlos y guarda sólo metadatos mínimos. No reenvío de contenido a WordPress ni publicación de pruebas.
+
+Siguiente acción autorizada: implementar persistencia y paquetes antes del puente al Motor. Inventario de credencialesn8n: Telegram existente y MySQL disponible; GoogleDriveOAuth0. Evaluar baseMySQL existente para metadatos y originales con límites/cuotas/queries preparadas, sin mezclar tablas del guard ni habilitar logging de archivos. Si la conexión no funciona, reportar bloqueo concreto; no tratar file_id Telegram como almacenamiento durable de originales.
+
+Versionado: misma rama feat/mcp-publisher-file-draft/PR9editorial draft. Cambio documental; código/grafoH113 sin cambios. H113112tests yQA269–272 permanecen como evidencia sintética adicional; los3recibos reales son la evidencia nueva. Social posterior. No DNS,secretos nuevos ni publicaciones reales.
+
+
+## Registro histórico anterior
+
 # Telegram editorial — estado actual H113
 
 Bot @opmxpublisherbot; chat propietario autorizado. Receptor activo12nodos versión d8ffd9a9-bb23-48d6-bb95-a061316f5fff.
