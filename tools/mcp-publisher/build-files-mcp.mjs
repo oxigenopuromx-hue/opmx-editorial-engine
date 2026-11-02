@@ -8,7 +8,9 @@ const link=(source,target,sourceIndex=0)=>operations.push({type:'addConnection',
 const branch=(name,condition)=>add(name,'if',2.2,{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict'},conditions:[{leftValue:'={{ '+condition+' }}',rightValue:true,operator:{type:'boolean',operation:'true',singleValue:true}}],combinator:'and'},options:{}});
 const req="$('Protocolo MCP archivos').first().json.request";
 const download=(name,role)=>add(name,'httpRequest',4.2,{method:'GET',url:'={{ '+req+'.files.'+role+'.download_url }}',authentication:'none',options:{timeout:10000,redirect:{redirect:{followRedirects:false}},response:{response:{responseFormat:'file',outputPropertyName:'asset'}}}});
-operations.push({type:'updateNodeParameters',nodeName:'Protocolo MCP archivos',parameters:{mode:'runOnceForAllItems',jsCode:classifyFileMcp.toString()+'\nreturn [{json:classifyFileMcp($input.first().json)}];'}});
+// H104 base remains draft-only. Apply build-publication-mcp AFTER this base to
+// install the publication graph and expose its tools together (H108).
+operations.push({type:'updateNodeParameters',nodeName:'Protocolo MCP archivos',parameters:{mode:'runOnceForAllItems',jsCode:classifyFileMcp.toString()+'\nreturn [{json:classifyFileMcp($input.first().json,{publicationEnabled:false})}];'}});
 operations.push({type:'updateNodeParameters',nodeName:'MCP Publisher GET',replace:true,parameters:{httpMethod:'GET',path:'opmx-publisher-files-mcp',authentication:'none',responseMode:'responseNode',options:{}}});
 operations.push({type:'removeConnection',source:'¿Notificación MCP?',target:'Responder MCP',sourceIndex:1,targetIndex:0});
 branch('¿Solicitud con archivos?',"$json.route === 'files'");
