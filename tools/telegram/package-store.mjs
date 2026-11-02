@@ -17,10 +17,11 @@ const receiptId = value => {if (typeof value !== 'string' || !/^telegram-[1-9][0
 
 export function validatePackageRequest(action, input) {
   const base=['owner','chat'];
-  const keys={current:base,open:[...base,'receiptId'],reserve:[...base,'packageId','receiptId','kind','text','attachment'],complete:[...base,'packageId','itemId','contentBase64'],manifest:[...base,'packageId'],asset:[...base,'packageId','itemId'],seal:[...base,'packageId'],discard:[...base,'packageId','itemId']};
+  const keys={current:base,open:[...base,'receiptId'],reserve:[...base,'packageId','receiptId','kind','text','attachment'],complete:[...base,'packageId','itemId','contentBase64'],manifest:[...base,'packageId'],asset:[...base,'packageId','itemId'],chunk:[...base,'packageId','itemId','stream','offset','length'],seal:[...base,'packageId'],discard:[...base,'packageId','itemId']};
   if (!keys[action]) bad(); exact(input, keys[action]); const ownerKey=identity(input);
   if (!['open','current'].includes(action)) packageId(input.packageId);
-  if (['complete','asset','discard'].includes(action)) itemId(input.itemId);
+  if (['complete','asset','chunk','discard'].includes(action)) itemId(input.itemId);
+  if(action==='chunk'&&(!['text','original'].includes(input.stream)||!Number.isSafeInteger(input.offset)||input.offset<0||input.offset>PACKAGE_LIMITS.fileBytes||!Number.isSafeInteger(input.length)||input.length<1||input.length>65536))bad();
   if (['open','reserve'].includes(action)) {
     receiptId(input.receiptId);
     if (!input.receiptId.startsWith(`telegram-${input.chat}-`)) bad();
@@ -62,7 +63,7 @@ export function createTelegramPackageStore(pool) {
     async capabilities() {
       await initialize();const c=await pool.getConnection();try {
         const [r]=await c.execute('SELECT @@max_allowed_packet AS max_packet');
-        return {status:'STORAGE_READY',version:1,limits:PACKAGE_LIMITS,maxPacket:Number(r[0].max_packet),publicationEnabled:false};
+        return {status:'STORAGE_READY',version:1,limits:PACKAGE_LIMITS,maxPacket:Number(r[0].max_packet),chunkRead:true,chunkBytes:65536,publicationEnabled:false};
       }finally{c.release();}
     },
     async run(action,input) {
@@ -103,6 +104,22 @@ export function createTelegramPackageStore(pool) {
           const item=items[0],blob=Buffer.from(item.content_blob);
           if(digest(blob)!==item.sha256)throw Error('Integridad no confirmada');
           return await finish({status:'FOUND',packageId:pack.package_id,itemId:input.itemId,sha256:item.sha256,bytes:blob.length,attachment:JSON.parse(item.attachment_json),contentBase64:blob.toString('base64')});
+        }
+        if(action==='chunk') {
+          let chunk,total,sha,mime;
+          if(input.stream==='text') {
+            const [items]=await c.execute("SELECT text_content FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=? AND state='STORED'",[input.itemId,input.packageId,ownerKey]);
+            if(!items.length)return await finish({status:'NOT_FOUND'});
+            const all=Buffer.from(items[0].text_content,'utf8');total=all.length;sha=digest(all);mime='text/plain';chunk=all.subarray(input.offset,input.offset+input.length);
+          }else {
+            const [items]=await c.execute("SELECT content_bytes,OCTET_LENGTH(content_blob) AS blob_bytes,sha256,attachment_json,SUBSTRING(content_blob,?,?) AS chunk_blob FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=? AND state='STORED' AND kind='FILE'",[input.offset+1,input.length,input.itemId,input.packageId,ownerKey]);
+            if(!items.length)return await finish({status:'NOT_FOUND'});
+            const item=items[0];total=Number(item.content_bytes);sha=item.sha256;mime=JSON.parse(item.attachment_json).mime_type;chunk=Buffer.from(item.chunk_blob??[]);
+            if(total!==Number(item.blob_bytes)||total<1||total>PACKAGE_LIMITS.fileBytes||! /^[a-f0-9]{64}$/.test(sha))throw Error('Integridad no confirmada');
+          }
+          if(input.offset>total)return await finish({status:'OUT_OF_RANGE'});
+          if(chunk.length!==Math.min(input.length,total-input.offset))throw Error('Rango no confirmado');
+          return await finish({status:'FOUND',packageId:pack.package_id,itemId:input.itemId,stream:input.stream,mime_type:mime,totalBytes:total,offset:input.offset,bytes:chunk.length,sha256:sha,chunkSha256:digest(chunk),contentBase64:chunk.toString('base64'),nextOffset:input.offset+chunk.length,eof:input.offset+chunk.length===total});
         }
         if(action==='seal') {
           if(pack.state==='READY')return await finish({status:'READY',packageId:pack.package_id,revision:pack.revision});
