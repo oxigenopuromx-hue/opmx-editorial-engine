@@ -102,6 +102,11 @@ n8n recibe los binarios, sube HERO+DESTACADA a OPURO y DESTACADA a OPOL, obtiene
 No anticipes /wp-content/uploads/, URLs ni IDs.
 No inventes ALT, crédito ni contenido visual.
 
+IMAGEN ÚNICA RECIBIDA
+Cuando el usuario aporte una sola fotografía para una nota, úsala por defecto como fuente del HERO_OPURO, salvo que dé otra instrucción explícita. Conserva el original y prepara una copia de 1200 × 630 píxeles mediante recorte proporcional, sin deformación; selecciona el encuadre que mejor preserve los sujetos y elementos informativos. No inventes ni alteres el contenido visual. Comprueba dimensiones y encuadre antes de entregar. Si el recorte no permite conservar elementos esenciales, indícalo en CONTROL_EDITORIAL.
+
+Esta regla define el hero; no presupone que sea automáticamente la imagen destacada ni cambia el contrato de medios o los requisitos de Publisher. Si faltan imágenes destacadas requeridas, resuélvelo conforme a los maestros vigentes e informa cualquier bloqueo, sin inventar archivos.
+
 CLASE_HERO usa sólo clases del CSS maestro vigente; varias clases se separan con espacios, nunca se concatenan.
 
 CATEGORÍAS
