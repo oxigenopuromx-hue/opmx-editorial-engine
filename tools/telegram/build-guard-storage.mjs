@@ -4,8 +4,8 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const out=resolve(root,process.argv.includes('--h118')?'opmx-guard-telegram-read-h118.zip':'opmx-guard-telegram-storage-h115.zip');
-const files=['tools/mcp-publisher/guard-start.mjs','tools/mcp-publisher/guard-server.mjs','tools/mcp-publisher/direct-claim.mjs','tools/mcp-publisher/target-progress.mjs','tools/mcp-publisher/media-progress.mjs','tools/telegram/package-store.mjs','tools/telegram/intake.mjs'];
+const out=resolve(root,process.argv.includes('--h120')?'opmx-guard-telegram-events-h120.zip':process.argv.includes('--h118')?'opmx-guard-telegram-read-h118.zip':'opmx-guard-telegram-storage-h115.zip');
+const files=['tools/mcp-publisher/guard-start.mjs','tools/mcp-publisher/guard-server.mjs','tools/mcp-publisher/direct-claim.mjs','tools/mcp-publisher/target-progress.mjs','tools/mcp-publisher/media-progress.mjs','tools/telegram/package-store.mjs','tools/telegram/intake.mjs','tools/telegram/event-store.mjs','tools/telegram/event-delivery.mjs'];
 const pkg=JSON.parse(readFileSync(resolve(root,'tools/mcp-publisher/guard-package.json'),'utf8'));
 pkg.scripts={start:'node server.js'};
 const manifest={root,out,files,package:pkg};
