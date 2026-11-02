@@ -24,7 +24,8 @@ No inventes viñetas, cierre, fuentes, URLs ni créditos. Si `FUENTES` está vac
 ## Reglas técnicas
 
 - Emite Gutenberg serializado: comentarios `<!-- wp:* -->` y HTML de los bloques.
-- Sólo se permiten `core/paragraph`, `core/heading`, `core/list`, `core/quote` y `core/image`.
+- Sólo se permiten `core/paragraph`, `core/heading`, `core/list`, `core/list-item`, `core/quote` y `core/image`.
+- Cada elemento de una lista nativa se serializa como `core/list-item` dentro de `core/list`, también en listas anidadas. No eliminar esos comentarios ni convertir la lista a HTML libre.
 - Los headings son exclusivamente H2 o H3. Nunca emitas H1.
 - No incluyas masthead, título, subtítulo, metadatos, hero, imagen destacada, autor, etiquetas, botones de compartir, footer, wrappers `article/header/footer`, clases estructurales OPMX, `wp:html` ni placeholders `{{…}}`.
 - Las secciones `En breve`, `Cierre editorial` y `Fuentes` forman parte del cuerpo editorial OPURO; no son footer ni wrapper.
