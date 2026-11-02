@@ -5,6 +5,10 @@ import {imageType} from './prepare.mjs';
 const call=(method,params)=>classifyFileMcp({body:{jsonrpc:'2.0',id:1,method,params}});
 const file={download_url:'https://files.oaiusercontent.com/test.jpg?sig=test',file_id:'file_test',mime_type:'image/jpeg'};
 const args={master_file:file,hero:file,destacada:file,destino:'AMBOS',request_id:'opmx-fixture-123456'};
+test('base draft builder cannot expose publication tools before their graph is installed',()=>{
+ const r=classifyFileMcp({jsonrpc:'2.0',id:1,method:'tools/list'},{publicationEnabled:false});assert.deepEqual(r.response.result.tools.map(t=>t.name),['validar_archivos_opmx','preparar_borrador_opmx']);
+ assert.equal(classifyFileMcp({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'publicar_nota_opmx',arguments:args}},{publicationEnabled:false}).response.error.code,-32601);
+});
 test('native file IDs are opaque strings, never filesystem paths or authorization',()=>{
  const native={...file,file_id:'native:opaque/reference?revision=1'};
  const r=call('tools/call',{name:'validar_archivos_opmx',arguments:{...args,master_file:native}});
