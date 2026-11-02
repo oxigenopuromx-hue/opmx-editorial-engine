@@ -5,6 +5,14 @@ import {imageType} from './prepare.mjs';
 const call=(method,params)=>classifyFileMcp({body:{jsonrpc:'2.0',id:1,method,params}});
 const file={download_url:'https://files.oaiusercontent.com/test.jpg?sig=test',file_id:'file_test',mime_type:'image/jpeg'};
 const args={master_file:file,hero:file,destacada:file,destino:'AMBOS',request_id:'opmx-fixture-123456'};
+test('native file IDs are opaque strings, never filesystem paths or authorization',()=>{
+ const native={...file,file_id:'native:opaque/reference?revision=1'};
+ const r=call('tools/call',{name:'validar_archivos_opmx',arguments:{...args,master_file:native}});
+ assert.equal(r.route,'files');
+ const bad=call('tools/call',{name:'validar_archivos_opmx',arguments:{...args,master_file:{...native,file_id:''}}});
+ assert.equal(bad.response.result.isError,true);
+ assert.doesNotMatch(JSON.stringify(bad),/sig=test|native:opaque/);
+});
 test('native file binding declares every file property and only transport fields required',()=>{
  const tools=call('tools/list').response.result.tools;assert.equal(tools.length,2);
  for(const t of tools){for(const key of t._meta['openai/fileParams']){const s=t.inputSchema.properties[key];assert.deepEqual(Object.keys(s.properties),['download_url','file_id','mime_type','file_name']);assert.deepEqual(s.required,['download_url','file_id']);}}
