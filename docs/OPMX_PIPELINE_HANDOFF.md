@@ -1,5 +1,31 @@
 # OPMX Pipeline — Handoff maestro
 
+## H109 — Factibilidad Telegram → Motor editorial (2 noviembre 2026, México)
+
+Alcance autorizado: evaluación de factibilidad previa a implementación. No se activaron bots, webhooks, suscripciones, tareas ni publicaciones. No se modificó código ni configuración de n8n/Publisher.
+
+Hallazgo documental confirmado: MCP Events permite que ChatGPT se suscriba a eventos de un servidor MCP y reciba avisos en el chat suscrito. Está documentado para Work web, Work desktop con Cloud y dots, sujeto a controles de cuenta/workspace. Un proyecto ChatGPT puede contener chats normales y Work y compartir archivos, instrucciones y fuentes; eso no equivale a compartir automáticamente todo el historial de otro chat. Por tanto, la hipótesis del listener tiene una vía oficial: un chat Work específico DENTRO del proyecto Motor Editorial, no una API supuesta para inyectar mensajes al chat normal existente.
+
+Arquitectura candidata A: Telegram bot → n8n agrupa fotos/documentos/texto por paquete → evento MCP con ID/resumen → chat Work del Motor recupera adjuntos por herramientas autenticadas y genera MASTER vigente → Publisher existente → estado/enlaces por Telegram. Eventos son avisos, no transporte de originales; máximo documentado256KiB por evento. Requiere implementar events/list,events/subscribe,events/unsubscribe, verificar callback, guardar suscripciones y renovación, y exponer lectura del paquete/medios. Aprobación editorial y publicación deben asociarse a un paquete/versión y usuario autorizado; el texto de documentos no debe convertirse en instrucciones de publicación.
+
+Arquitectura candidata B: Telegram → n8n → Responses API con maestros editoriales versionados → validación MASTER → Publisher → Telegram. Es una alternativa para ejecución independiente del chat. Responses admite PDF y documentos/texto; PDFs con modelo visual incluyen imágenes de página, DOC/DOCX se procesan como texto y sus imágenes embebidas requieren tratamiento separado. No se heredan automáticamente las instrucciones, memoria ni archivos del proyecto ChatGPT. No se eligió modelo ni se estimó coste en esta evaluación.
+
+Estado propio leído: adaptador bnzVMNkZuGO1GQCZ activo cc976feb-b414-4a7b-9b8c-f1b1a787ec38,60nodos,H108. initialize anuncia herramientas, no eventos; no implementa events/subscribe. Búsqueda por Telegram en nombres/descripciones de workflows devolvió0; esto no es auditoría exhaustiva de todos los nodos ni prueba de que no exista otro bot. El catálogo n8n sí dispone de Telegram Trigger1.5 y Telegram file/get, con descarga de adjuntos. No se accedió a tokens.
+
+Reutilización: conservar contratos/editorial/guard/WordPress. El adaptador fileParams actual sólo admite orígenes de archivos OpenAI; NO enviar URLs Telegram a ese adaptador ni ampliar su lista a ciegas. La nueva entrada necesita almacenar y entregar originales desde n8n y reutilizar la publicación común. El grafo H108 usa contexto de nodos MCP: hay adaptación de canal, no simple enchufar un listener. Sigue pendiente la concurrencia del POST de publicación señalada en H108.
+
+Prueba mínima propuesta, NO ejecutada: mensaje Telegram +foto+PDF/DOC/texto, paquete único, evento firmado aceptado en Work y lectura real de los adjuntos; generar MASTER y un borrador de fixture con el contrato vigente. Comprobar reenvíos, orden de llegada, asociación de archivos y respuesta Telegram. Publicación pública sólo con orden explícita sobre una nota concreta. Disponibilidad efectiva de eventos, permisos de acciones en background y calidad editorial deben comprobarse en la cuenta; factibilidad documental no equivale a validación end-to-end.
+
+Fuentes primarias consultadas2nov2026:
+https://developers.openai.com/plugins/build/mcp-events
+https://learn.chatgpt.com/docs/projects
+https://developers.openai.com/api/docs/guides/file-inputs
+https://docs.n8n.io/integrations/builtin/trigger-nodes/n8n-nodes-base.telegramtrigger/
+https://core.telegram.org/bots/api
+
+Recomendación para la siguiente decisión: probar primero A si se prioriza conservar el contexto del proyecto; B si se prioriza un servicio independiente del chat. No hay decisión de implementación tomada ni registro de aprobación nuevo.
+
+
 ## H108 — Publicación explícita desde el Motor implementada y activa (2 noviembre 2026, México)
 
 Estado: IMPLEMENTADO Y DESPLEGADO; 105 pruebas locales y QA simulada pasan. Primera publicación real por estas acciones aún no validada en esta sesión. No se usaron notas reales como prueba.
