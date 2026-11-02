@@ -1,0 +1,388 @@
+{
+  "name": "OPMX — Telegram verificar paquete privado",
+  "active": false,
+  "nodes": [
+    {
+      "id": "3bbff270-93cc-415e-88c0-ccf6c07bf59b",
+      "name": "Verificar paquete recibido",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "57d81dcb-ef85-4e2e-a96b-3ccc23047683",
+      "name": "Configurar paquete privado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"owner\":\"CONFIGURE_OWNER_PRIVATELY\",\"chat\":\"CONFIGURE_OWNER_PRIVATELY\",\"packageId\":\"tg_0000000000000000000000000000000000000000\",\"assets\":[{\"itemId\":\"ti_1111111111111111111111111111111111111111\",\"bytes\":300310,\"mime\":\"application/pdf\"},{\"itemId\":\"ti_2222222222222222222222222222222222222222\",\"bytes\":150508,\"mime\":\"image/jpeg\"}]}}];"
+      }
+    },
+    {
+      "id": "8f0d6bdf-cbda-4ccd-8f95-3253825039fa",
+      "name": "Leer manifiesto privado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/manifest",
+        "jsonBody": "{\"owner\":\"CONFIGURE_OWNER_PRIVATELY\",\"chat\":\"CONFIGURE_OWNER_PRIVATELY\",\"packageId\":\"tg_0000000000000000000000000000000000000000\"}"
+      }
+    },
+    {
+      "id": "1ebdd60f-b6e2-4d17-8323-29f2a070fcbc",
+      "name": "Recuperar original privado 0",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/asset",
+        "jsonBody": "{\"owner\":\"CONFIGURE_OWNER_PRIVATELY\",\"chat\":\"CONFIGURE_OWNER_PRIVATELY\",\"packageId\":\"tg_0000000000000000000000000000000000000000\",\"itemId\":\"ti_1111111111111111111111111111111111111111\"}"
+      }
+    },
+    {
+      "id": "84a0ef60-ca32-473a-aec9-2dd4882479cf",
+      "name": "Recuperar original privado 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/asset",
+        "jsonBody": "{\"owner\":\"CONFIGURE_OWNER_PRIVATELY\",\"chat\":\"CONFIGURE_OWNER_PRIVATELY\",\"packageId\":\"tg_0000000000000000000000000000000000000000\",\"itemId\":\"ti_2222222222222222222222222222222222222222\"}"
+      }
+    },
+    {
+      "id": "8cc34885-77ab-47f6-b4c0-6112e4242551",
+      "name": "Verificar estado y huellas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cfg=$('Configurar paquete privado').first(0,0).json,m=$('Leer manifiesto privado').first(0,0).json;const summary={package_id:cfg.packageId,status:'NOT_CONFIRMED',state:m.state??'UNKNOWN',revision:Number(m.revision)||0,item_count:0,stored_count:0,total_file_bytes:0,items_json:'[]',checked_at:$now.toISO()};const inputs=$input.all();if(inputs.length===2&&inputs.every(x=>x.json.computed_sha256===x.json.expected_sha256&&/^[a-f0-9]{64}$/.test(x.json.computed_sha256??''))){const items=inputs.map(x=>({itemId:x.json.itemId,mime:x.json.mime,bytes:x.json.bytes,sha256:x.json.computed_sha256}));summary.status='PACKAGE_VERIFIED';summary.item_count=m.items.length;summary.stored_count=m.items.filter(i=>i.state==='STORED').length;summary.total_file_bytes=items.reduce((n,i)=>n+i.bytes,0);summary.items_json=JSON.stringify(items);}return [{json:summary}];"
+      }
+    },
+    {
+      "id": "28b2dd8e-4dba-494e-ba84-83fdd3a1ae88",
+      "name": "Guardar evidencia sin fuentes",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "zUKU2BtJj1tVJxsa",
+          "cachedResultName": "OPMX Telegram — paquetes verificados"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "package_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.package_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "package_id": "={{ $json.package_id }}",
+            "status": "={{ $json.status }}",
+            "state": "={{ $json.state }}",
+            "revision": "={{ $json.revision }}",
+            "item_count": "={{ $json.item_count }}",
+            "stored_count": "={{ $json.stored_count }}",
+            "total_file_bytes": "={{ $json.total_file_bytes }}",
+            "items_json": "={{ $json.items_json }}",
+            "checked_at": "={{ $json.checked_at }}"
+          },
+          "schema": [
+            {
+              "id": "package_id",
+              "displayName": "package_id",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string"
+            },
+            {
+              "id": "state",
+              "displayName": "state",
+              "type": "string"
+            },
+            {
+              "id": "revision",
+              "displayName": "revision",
+              "type": "number"
+            },
+            {
+              "id": "item_count",
+              "displayName": "item_count",
+              "type": "number"
+            },
+            {
+              "id": "stored_count",
+              "displayName": "stored_count",
+              "type": "number"
+            },
+            {
+              "id": "total_file_bytes",
+              "displayName": "total_file_bytes",
+              "type": "number"
+            },
+            {
+              "id": "items_json",
+              "displayName": "items_json",
+              "type": "string"
+            },
+            {
+              "id": "checked_at",
+              "displayName": "checked_at",
+              "type": "date"
+            }
+          ]
+        },
+        "options": {
+          "dryRun": false
+        }
+      }
+    },
+    {
+      "id": "0dc3f430-ee9e-4225-9952-fb62d8ad0326",
+      "name": "Preparar originales para huella nativa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cfg=$('Configurar paquete privado').first(0,0).json,m=$('Leer manifiesto privado').first(0,0).json;if(m.status!=='FOUND'||m.packageId!==cfg.packageId||m.state!=='READY'||!Array.isArray(m.items)||m.items.length!==3||m.items.some(i=>i.state!=='STORED'))return [{json:{failed:true}}];return cfg.assets.map((expect,i)=>{const a=$('Recuperar original privado '+i).first(0,0).json,meta=m.items.find(x=>x.item_id===expect.itemId);if(a.status!=='FOUND'||a.packageId!==cfg.packageId||a.itemId!==expect.itemId||a.bytes!==expect.bytes||a.attachment?.mime_type!==expect.mime||meta?.sha256!==a.sha256)throw Error('Original no confirmado');const bytes=Buffer.from(a.contentBase64,'base64');if(bytes.length!==expect.bytes)throw Error('Tamaño no confirmado');return {json:{itemId:expect.itemId,mime:expect.mime,bytes:bytes.length,expected_sha256:a.sha256},binary:{data:{data:a.contentBase64,mimeType:expect.mime,fileName:'source'}}};});"
+      }
+    },
+    {
+      "id": "d4545a11-b70b-48ee-a9d7-e69d0e035374",
+      "name": "Comprobar SHA256 nativo",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "action": "hash",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "type": "SHA256",
+        "dataPropertyName": "computed_sha256",
+        "encoding": "hex"
+      }
+    }
+  ],
+  "connections": {
+    "Verificar paquete recibido": {
+      "main": [
+        [
+          {
+            "node": "Configurar paquete privado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configurar paquete privado": {
+      "main": [
+        [
+          {
+            "node": "Leer manifiesto privado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer manifiesto privado": {
+      "main": [
+        [
+          {
+            "node": "Recuperar original privado 0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recuperar original privado 0": {
+      "main": [
+        [
+          {
+            "node": "Recuperar original privado 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar estado y huellas": {
+      "main": [
+        [
+          {
+            "node": "Guardar evidencia sin fuentes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recuperar original privado 1": {
+      "main": [
+        [
+          {
+            "node": "Preparar originales para huella nativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar originales para huella nativa": {
+      "main": [
+        [
+          {
+            "node": "Comprobar SHA256 nativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar SHA256 nativo": {
+      "main": [
+        [
+          {
+            "node": "Verificar estado y huellas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "5779523d-b4a9-439d-8e19-233908c0ca0f",
+      "name": "Verificación privada sin retención de fuentes",
+      "nodeNames": [
+        "Configurar paquete privado",
+        "Leer manifiesto privado",
+        "Recuperar original privado 0",
+        "Recuperar original privado 1",
+        "Verificar estado y huellas",
+        "Guardar evidencia sin fuentes",
+        "Preparar originales para huella nativa",
+        "Comprobar SHA256 nativo"
+      ],
+      "description": "Manifiesto+originales sólo en tránsito; SHA256 nativo y resumen sin fuentes"
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 180
+  },
+  "meta": {
+    "referenceOnly": true,
+    "workflowId": "oXvUqutSSKioIaSp",
+    "versionId": "6170e131-3791-4d72-b584-e6d6f9850c04",
+    "notice": "H117 private read verification. Owner/package/source IDs replaced with placeholders. Configure privately in n8n; never activate or save source executions."
+  }
+}

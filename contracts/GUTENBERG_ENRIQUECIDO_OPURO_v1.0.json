@@ -11,10 +11,14 @@
       "core/paragraph",
       "core/heading",
       "core/list",
+      "core/list-item",
       "core/quote",
       "core/image"
     ],
-    "heading_levels": [2, 3],
+    "heading_levels": [
+      2,
+      3
+    ],
     "forbidden": [
       "core/html",
       "H1",

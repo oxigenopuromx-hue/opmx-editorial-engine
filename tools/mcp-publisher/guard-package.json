@@ -1,0 +1,1 @@
+{"name":"opmx-reservation-guard","private":true,"type":"module","engines":{"node":">=20"},"scripts":{"start":"node guard-start.mjs","test":"node --test guard-server.test.mjs direct-claim.test.mjs"},"dependencies":{"mysql2":"3.24.6"}}

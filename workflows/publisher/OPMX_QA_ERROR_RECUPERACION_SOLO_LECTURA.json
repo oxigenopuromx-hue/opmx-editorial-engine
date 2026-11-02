@@ -1,0 +1,133 @@
+{
+  "name": "OPMX — QA de error y recuperación sin escritura",
+  "active": false,
+  "nodes": [
+    {
+      "id": "0a7532ce-83d4-4cfa-9dca-fe08a03d55ca",
+      "name": "Iniciar",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "fe8a1e3b-c467-4546-ad7e-24df586165e6",
+      "name": "Identidad sintética",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{requestId:'opmx_dual_h088_20261101',slug:'opmx-prueba-dual-h088-20261101',destination:'OPURO',fingerprint:'d'.repeat(64)}}];"
+      }
+    },
+    {
+      "id": "bd45d3c3-634d-4d54-955e-5e8947899a33",
+      "name": "Simular fallo incierto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "throw new Error('Fallo sintético sin escritura');"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "7241f059-026f-473f-99f3-dcc8702201d0",
+      "name": "Preparar conciliación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$('Identidad sintética').first().json; return [{json:x}];"
+      }
+    },
+    {
+      "id": "752f4f5e-3c5e-4d09-9371-90ffe672c872",
+      "name": "Consultar conciliación",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "C4hk6fQQomueYC8f"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Iniciar": {
+      "main": [
+        [
+          {
+            "node": "Identidad sintética",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identidad sintética": {
+      "main": [
+        [
+          {
+            "node": "Simular fallo incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar conciliación": {
+      "main": [
+        [
+          {
+            "node": "Consultar conciliación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simular fallo incierto": {
+      "main": [
+        null,
+        [
+          {
+            "node": "Preparar conciliación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
