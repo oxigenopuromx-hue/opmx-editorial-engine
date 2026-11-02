@@ -72,6 +72,12 @@ const runtimeOpol=w.nodes.filter(n=>(n.name.startsWith('OPOL — ')||n.name.star
 for(const n of runtimeOpol)if(['n8n-nodes-base.httpRequest','n8n-nodes-base.code'].includes(n.type)){n.onError='continueErrorOutput';link(n.name,'OPOL — Requiere conciliación',1);}
 link('OPOL — Requiere conciliación','Resultado consolidado OPMX');link('Resultado OPOL — SKIPPED','Resultado consolidado OPMX');
 get('Resultado consolidado OPMX').parameters.jsCode="const opuro=$('OPMX — Conservar resultado OPURO').first().json,opol=$input.first().json;const execution=$('Validar y normalizar OPMX MASTER').first().json.execution;const requested=[execution.create_opuro?opuro:null,execution.create_opol?opol:null].filter(Boolean);const good=requested.filter(x=>x.status==='DRAFT').length;return [{json:{status:good===requested.length&&good>0?'SUCCESS':good>0?'PARTIAL_SUCCESS':'FAILED',mode:'DRAFT',request_id:$('Preparar MASTER y binarios').first().json.request_id,summary:{opuro:opuro.status,opol:opol.status},post_id_opuro:opuro.post_id??null,post_id_opol:opol.post_id??null,edit_url_opuro:opuro.edit_url??null,edit_url_opol:opol.edit_url??null,targets:{oxigenopuro:opuro,oxigenopolitico:opol},retryPermitted:false}}];";
+const prepare=get('Preparar MASTER y binarios');
+prepare.parameters.jsCode=prepare.parameters.jsCode.replace('request_id:data.request_id}, binary','request_id:data.request_id,source_images:{hero_base64:data.hero_file?.base64??null,featured_base64:data.featured_file.base64}}, binary');
+get('OPMX — Generar huella de prueba').parameters.value="={{ JSON.stringify({canonical:$('Validar y normalizar OPMX MASTER').first().json.canonical,hero_base64:$('Preparar MASTER y binarios').first().json.source_images.hero_base64,featured_base64:$('Preparar MASTER y binarios').first().json.source_images.featured_base64}) }}";
+w.nodes.push({name:'Entrada desde MCP archivos',type:'n8n-nodes-base.executeWorkflowTrigger',typeVersion:1.3,position:[0,1400],parameters:{inputSource:'passthrough'}});
+link('Entrada desde MCP archivos','Preparar MASTER y binarios');
+w.settings={...w.settings,callerPolicy:'workflowsFromAList',callerIds:'bnzVMNkZuGO1GQCZ'};
 for(const n of w.nodes){delete n.credentials;delete n.webhookId;}
 const output=root+'OPMX_ENTRADA_AUTOMATICA_DESTINOS_v2.json';const text=JSON.stringify(w,null,2)+'\n';
 if(process.argv.includes('--check')){if(readFileSync(output,'utf8')!==text)throw Error('Referencia v2 no coincide con generador');}else writeFileSync(output,text);
