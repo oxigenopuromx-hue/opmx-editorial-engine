@@ -1,0 +1,813 @@
+{
+  "name": "OPMX — Publisher archivos MCP",
+  "nodes": [
+    {
+      "id": "c62f553b-aac2-49c9-9fa5-c008aa4973bc",
+      "name": "MCP Publisher POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opmx-publisher-files-mcp",
+        "authentication": "n8nOAuth2",
+        "requireExecuteAccess": true,
+        "responseMode": "responseNode",
+        "options": {
+          "oauthClient": "bearer"
+        }
+      }
+    },
+    {
+      "id": "b306d5e0-5014-421c-a15f-71447352120f",
+      "name": "Protocolo MCP archivos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        224
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function classifyFileMcp(envelope) {\n let message=envelope.body??envelope;\n if(typeof message==='string'){try{message=JSON.parse(message);}catch{return {httpStatus:400,response:{jsonrpc:'2.0',id:null,error:{code:-32700,message:'Invalid JSON'}}};}}\n const id=message?.id??null;\n const reply=result=>({httpStatus:200,response:{jsonrpc:'2.0',id,result}});\n const fail=(code,text)=>({httpStatus:200,response:{jsonrpc:'2.0',id,error:{code,message:text}}});\n if(!message||Array.isArray(message)||message.jsonrpc!=='2.0')return fail(-32600,'Invalid Request');\n if(typeof message.method!=='string')return fail(-32600,'Invalid method');\n if(message.method?.startsWith('notifications/'))return {httpStatus:202,notification:true};\n if(!Object.hasOwn(message,'id'))return fail(-32600,'Missing request id');\n if(message.method==='initialize')return reply({protocolVersion:['2025-03-26','2025-06-18','2025-11-25'].includes(message.params?.protocolVersion)?message.params.protocolVersion:'2025-03-26',capabilities:{tools:{listChanged:false}},serverInfo:{name:'opmx-publisher-files',version:'1.0.0'},instructions:'Recibe archivos mediante fileParams. Sólo crea borradores. No inventar URLs ni Base64. Mantener request_id estable y comprobar el resultado.'});\n if(message.method==='ping')return reply({});\n const file={type:'object',properties:{download_url:{type:'string'},file_id:{type:'string'},mime_type:{type:'string'},file_name:{type:'string'}},required:['download_url','file_id'],additionalProperties:false};\n const schema={type:'object',properties:{master_file:file,hero:file,destacada:file,destino:{type:'string',enum:['OPURO','OPOL','AMBOS']}},required:['master_file','destacada','destino'],additionalProperties:false};\n const tool={name:'validar_archivos_opmx',title:'Validar archivos OPMX',description:'Descarga y comprueba MASTER y Hero/destacada de este chat mediante archivos nativos. No crea borradores ni reserva solicitudes.',inputSchema:schema,annotations:{readOnlyHint:true,destructiveHint:false,openWorldHint:false},_meta:{'openai/fileParams':['master_file','hero','destacada']}};\n const draft={name:'preparar_borrador_opmx',title:'Preparar borradores OPMX',description:'Envía el MASTER aprobado y sus archivos originales a OPURO, OPOL o AMBOS como borradores verificados. Usa esta herramienta desde el Motor. Mantén request_id estable. No publica notas.',inputSchema:{...schema,properties:{...schema.properties,request_id:{type:'string',minLength:16,maxLength:128,pattern:'^[A-Za-z0-9_-]+$'}},required:[...schema.required,'request_id']},annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:false},_meta:{'openai/fileParams':['master_file','hero','destacada']}};\n if(message.method==='tools/list')return reply({tools:[tool,draft]});\n if(message.method!=='tools/call'||![tool.name,draft.name].includes(message.params?.name))return fail(-32601,'Method not found');\n const a=message.params.arguments;\n if(!a||!['OPURO','OPOL','AMBOS'].includes(a.destino))return fail(-32602,'Destino inválido');\n if(message.params.name===draft.name&&(typeof a.request_id!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(a.request_id)))return fail(-32602,'Falta request_id estable válido');\n const roles=a.destino==='OPOL'?['master_file','destacada']:['master_file','hero','destacada'];\n const files={};\n for(const role of roles){const f=a[role];if(!f||typeof f!=='object'||typeof f.file_id!=='string'||!/^[A-Za-z0-9_-]{1,256}$/.test(f.file_id)||typeof f.download_url!=='string'||f.download_url.length>16384)return reply({content:[{type:'text',text:'Falta referencia transferible del archivo '+role+'. Adjunta el archivo a esta herramienta; no inventar URLs ni Base64.'}],isError:true});\n  const match=/^https:\\/\\/([a-zA-Z0-9.-]+)(\\/[^\\s#]*)$/.exec(f.download_url);const host=match?.[1]?.toLowerCase();\n  if(!host||!(host==='files.oaiusercontent.com'||/^oais(?:dmntpr|dsorpr)[a-z0-9-]*\\.blob\\.core\\.windows\\.net$/.test(host)||/^oaisdmntpr[a-z0-9-]*aws\\.s3\\.[a-z0-9-]+\\.amazonaws\\.com$/.test(host)||/^sdmntpr[a-z0-9-]*\\.oaiusercontent\\.com$/.test(host)))return fail(-32602,'Origen de archivo no autorizado');\n  files[role]={download_url:f.download_url,file_id:f.file_id,mime_type:f.mime_type??null,file_name:f.file_name??null};\n }\n return {httpStatus:200,route:'files',request:{id,operation:message.params.name,destino:a.destino,request_id:a.request_id??null,files}};\n}\nreturn [{json:classifyFileMcp($input.first().json)}];"
+      }
+    },
+    {
+      "id": "c7536b0a-fa02-41a0-a600-8b2593e146ac",
+      "name": "¿Notificación MCP?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        224
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.notification === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fb7fa093-a447-49b4-8c4d-6f03d9e9ca77",
+      "name": "Aceptar notificación",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        128
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "1bee4180-ed1c-4f1a-bc97-4d7fa0fc7fd0",
+      "name": "Responder MCP",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        320
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.response }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}",
+          "enableStreaming": false,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "b88b5910-cdb8-47d2-9af9-229592dcda64",
+      "name": "MCP Publisher GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        224
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "opmx-publisher-files-mcp",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "ff002994-caa5-4085-8d0c-ff9ff27ef92f",
+      "name": "Sin stream GET",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        224
+      ],
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 405,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Allow",
+                "value": "POST"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "954a956e-21fb-4cb3-89f5-0f7c6ef8a302",
+      "name": "¿Solicitud con archivos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        690,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.route === 'files' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "73b5cb23-1a3c-43b8-b954-38ba82504c10",
+      "name": "Descargar MASTER",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Protocolo MCP archivos').first().json.request.files.master_file.download_url }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "asset"
+            }
+          }
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "ae188d7b-9052-4760-b549-247adffbcc84",
+      "name": "Comprobar MASTER",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function parseMcpMaster(bytes,request) {\n if(bytes.length>2*1024*1024)throw Error('MASTER demasiado grande');\n const master=JSON.parse(bytes.toString('utf8').replace(/^\\uFEFF/,''));\n if(!master||typeof master!=='object'||Array.isArray(master)||typeof master.SEO?.SLUG!=='string')throw Error('MASTER inválido');\n if(request.operation==='preparar_borrador_opmx'&&master.CONTROL_EDITORIAL?.ESTADO!=='LISTO')throw Error('Paquete no aprobado');\n return {master,masterBytes:bytes.length};\n}\nconst bytes=await this.helpers.getBinaryDataBuffer(0,'asset');return [{json:parseMcpMaster(bytes,$('Protocolo MCP archivos').first().json.request)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "e3b97f1e-f9c9-45ae-ae94-6ab5ef4e301a",
+      "name": "Descargar destacada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Protocolo MCP archivos').first().json.request.files.destacada.download_url }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "asset"
+            }
+          }
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "4cbdab01-b7cd-4c74-a345-cf08bca297a4",
+      "name": "Comprobar destacada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        810,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function imageType(buffer) {\n  if (buffer.length >= 8 && buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return 'image/png';\n  if (buffer.length >= 3 && buffer[0] === 255 && buffer[1] === 216 && buffer[2] === 255) return 'image/jpeg';\n  if (buffer.length >= 12 && buffer.subarray(0,4).toString() === 'RIFF' && buffer.subarray(8,12).toString() === 'WEBP') return 'image/webp';\n  throw new Error('Formato de imagen no admitido');\n}\nfunction validateMcpImage(bytes,provided,mime) {\n if(bytes.length>10*1024*1024)throw Error('Imagen demasiado grande');\n if(provided.mime_type&&provided.mime_type!==mime)throw Error('Tipo de archivo inconsistente');\n return {base64:bytes.toString('base64')};\n}\nconst r=$('Protocolo MCP archivos').first().json.request;const b=await this.helpers.getBinaryDataBuffer(0,'asset');const m=$('Comprobar MASTER').first().json;return [{json:{payload:{request_id:r.request_id,CREAR_EN:r.destino,PUBLICAR:false,master:m.master,featured_file:validateMcpImage(b,r.files.destacada,imageType(b))},stats:{master:m.masterBytes,destacada:b.length}}}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "a6aaf756-cd7e-44a0-be32-868e85e9eb84",
+      "name": "¿Requiere Hero?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        840,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Protocolo MCP archivos').first().json.request.destino !== 'OPOL' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2507dbdb-068e-4c72-8ff8-30b934c3d742",
+      "name": "Descargar Hero",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        870,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Protocolo MCP archivos').first().json.request.files.hero.download_url }}",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "asset"
+            }
+          }
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "649ad740-1e34-49f6-a602-70025d77baef",
+      "name": "Comprobar Hero",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function imageType(buffer) {\n  if (buffer.length >= 8 && buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) return 'image/png';\n  if (buffer.length >= 3 && buffer[0] === 255 && buffer[1] === 216 && buffer[2] === 255) return 'image/jpeg';\n  if (buffer.length >= 12 && buffer.subarray(0,4).toString() === 'RIFF' && buffer.subarray(8,12).toString() === 'WEBP') return 'image/webp';\n  throw new Error('Formato de imagen no admitido');\n}\nfunction validateMcpImage(bytes,provided,mime) {\n if(bytes.length>10*1024*1024)throw Error('Imagen demasiado grande');\n if(provided.mime_type&&provided.mime_type!==mime)throw Error('Tipo de archivo inconsistente');\n return {base64:bytes.toString('base64')};\n}\nconst r=$('Protocolo MCP archivos').first().json.request;const b=await this.helpers.getBinaryDataBuffer(0,'asset');const p=$('Comprobar destacada').first().json;return [{json:{payload:{...p.payload,hero_file:validateMcpImage(b,r.files.hero,imageType(b))},stats:{...p.stats,hero:b.length}}}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "66395df7-1775-429d-96c4-b83871b438cc",
+      "name": "¿Crear borradores?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        930,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Protocolo MCP archivos').first().json.request.operation === 'preparar_borrador_opmx' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "17416be8-1a10-4b91-9680-d5fda69ed172",
+      "name": "Resultado validación archivos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function fileMcpResult(request,result,isError=false) {\n return {httpStatus:200,response:{jsonrpc:'2.0',id:request.id,result:{content:[{type:'text',text:isError?(result.writesStarted===false?'Archivos rechazados antes de enviar al Publisher. Revisa adjuntos, vigencia y formato.':'Solicitud no confirmada. No reenviar automáticamente; revisar la ejecución y los borradores.'):JSON.stringify(result)}],structuredContent:result,isError}}};\n}\nconst r=$('Protocolo MCP archivos').first().json.request;const p=$input.first().json;return [{json:fileMcpResult(r,{status:'FILES_VALIDATED',bytesVerified:true,destino:r.destino,slug:p.payload.master.SEO.SLUG,estado:p.payload.master.CONTROL_EDITORIAL?.ESTADO,bytes:p.stats})}];"
+      }
+    },
+    {
+      "id": "17d68af1-41fa-425b-aeae-7372d996a2dd",
+      "name": "Entregar paquete sin enlaces",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        990,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$input.first().json.payload}];"
+      }
+    },
+    {
+      "id": "4dc80b97-1638-47a6-a5ca-36875d4a5d9c",
+      "name": "Publisher protegido existente",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1020,
+        400
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "4o7K5TmKc7joScqB"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "0f857a6f-bad8-44b8-88b8-96d2eeec6c4f",
+      "name": "Resultado Publisher MCP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function fileMcpResult(request,result,isError=false) {\n return {httpStatus:200,response:{jsonrpc:'2.0',id:request.id,result:{content:[{type:'text',text:isError?(result.writesStarted===false?'Archivos rechazados antes de enviar al Publisher. Revisa adjuntos, vigencia y formato.':'Solicitud no confirmada. No reenviar automáticamente; revisar la ejecución y los borradores.'):JSON.stringify(result)}],structuredContent:result,isError}}};\n}\nconst r=$('Protocolo MCP archivos').first().json.request;const result=$input.first().json;return [{json:fileMcpResult(r,result,result.status!=='SUCCESS')}];"
+      }
+    },
+    {
+      "id": "079ea75d-5bb7-41fc-84ac-394cbe91bf7f",
+      "name": "Archivo rechazado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function fileMcpResult(request,result,isError=false) {\n return {httpStatus:200,response:{jsonrpc:'2.0',id:request.id,result:{content:[{type:'text',text:isError?(result.writesStarted===false?'Archivos rechazados antes de enviar al Publisher. Revisa adjuntos, vigencia y formato.':'Solicitud no confirmada. No reenviar automáticamente; revisar la ejecución y los borradores.'):JSON.stringify(result)}],structuredContent:result,isError}}};\n}\nreturn [{json:fileMcpResult($('Protocolo MCP archivos').first().json.request,{status:'FILES_REJECTED',writesStarted:false,message:'No fue posible validar los archivos. Revisa adjuntos, vigencia y formato.'},true)}];"
+      }
+    },
+    {
+      "id": "3ce4d33a-53be-4ccf-a35d-d99e3f0edcc9",
+      "name": "Publisher resultado incierto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1110,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function fileMcpResult(request,result,isError=false) {\n return {httpStatus:200,response:{jsonrpc:'2.0',id:request.id,result:{content:[{type:'text',text:isError?(result.writesStarted===false?'Archivos rechazados antes de enviar al Publisher. Revisa adjuntos, vigencia y formato.':'Solicitud no confirmada. No reenviar automáticamente; revisar la ejecución y los borradores.'):JSON.stringify(result)}],structuredContent:result,isError}}};\n}\nreturn [{json:fileMcpResult($('Protocolo MCP archivos').first().json.request,{status:'UNCERTAIN',request_id:$('Protocolo MCP archivos').first().json.request.request_id,execution_id:$execution.id,retryPermitted:false},true)}];"
+      }
+    }
+  ],
+  "connections": {
+    "MCP Publisher POST": {
+      "main": [
+        [
+          {
+            "node": "Protocolo MCP archivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Protocolo MCP archivos": {
+      "main": [
+        [
+          {
+            "node": "¿Notificación MCP?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Notificación MCP?": {
+      "main": [
+        [
+          {
+            "node": "Aceptar notificación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Solicitud con archivos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Publisher GET": {
+      "main": [
+        [
+          {
+            "node": "Sin stream GET",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Solicitud con archivos?": {
+      "main": [
+        [
+          {
+            "node": "Descargar MASTER",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar MASTER": {
+      "main": [
+        [
+          {
+            "node": "Comprobar MASTER",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar MASTER": {
+      "main": [
+        [
+          {
+            "node": "Descargar destacada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar destacada": {
+      "main": [
+        [
+          {
+            "node": "Comprobar destacada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar destacada": {
+      "main": [
+        [
+          {
+            "node": "¿Requiere Hero?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Requiere Hero?": {
+      "main": [
+        [
+          {
+            "node": "Descargar Hero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Crear borradores?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar Hero": {
+      "main": [
+        [
+          {
+            "node": "Comprobar Hero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar Hero": {
+      "main": [
+        [
+          {
+            "node": "¿Crear borradores?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Archivo rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Crear borradores?": {
+      "main": [
+        [
+          {
+            "node": "Entregar paquete sin enlaces",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado validación archivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Entregar paquete sin enlaces": {
+      "main": [
+        [
+          {
+            "node": "Publisher protegido existente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publisher protegido existente": {
+      "main": [
+        [
+          {
+            "node": "Resultado Publisher MCP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publisher resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado Publisher MCP": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado validación archivos": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archivo rechazado": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publisher resultado incierto": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "6dc0d365-d8eb-434e-bf40-624328310ab0",
+      "name": "Archivos y borradores",
+      "nodeNames": [
+        "Responder MCP",
+        "¿Solicitud con archivos?",
+        "Descargar MASTER",
+        "Comprobar MASTER",
+        "Descargar destacada",
+        "Comprobar destacada",
+        "¿Requiere Hero?",
+        "Descargar Hero",
+        "Comprobar Hero",
+        "¿Crear borradores?",
+        "Resultado validación archivos",
+        "Entregar paquete sin enlaces",
+        "Publisher protegido existente",
+        "Resultado Publisher MCP",
+        "Archivo rechazado",
+        "Publisher resultado incierto"
+      ],
+      "description": "Descarga archivos nativos, comprueba bytes y usa el Publisher protegido; siempre responde por MCP."
+    }
+  ],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 300
+  },
+  "tags": [],
+  "meta": {
+    "sourceWorkflowId": "bnzVMNkZuGO1GQCZ",
+    "sourceActiveVersion": "7014f00e-be78-4292-bef0-09a148b4151b",
+    "note": "Sanitized reference. Reuse native n8n OAuth; do not import over live workflow. Workflow child IDs are installation-specific."
+  }
+}
