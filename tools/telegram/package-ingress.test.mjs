@@ -38,7 +38,8 @@ test('no storage success from timeout, wrong item or byte count; Base64 never re
 test('pending or uncertain seal never claims delivery to Work',()=>{
  const c=resolvePackageSession(preparePackageIntent(text('/listo')),{status:'OPEN',packageId:pkg});
  for(const r of [{status:'NOT_READY',pending:1,stored:2},{error:'timeout'}])assert.equal(confirmPackageOperation(c,r).package_state,undefined);
- const ready=confirmPackageOperation(c,{status:'READY',packageId:pkg,revision:4});assert.equal(ready.package_state,'READY');assert.match(ready.reply_text,/sigue en desarrollo/);
+ const uncertain=confirmPackageOperation(c,{error:'timeout'});assert.equal(uncertain.reply_text.includes('No se envió'),false);assert.ok(uncertain.reply_text.includes(pkg));
+ const ready=confirmPackageOperation(c,{status:'READY',packageId:pkg,revision:4});assert.equal(ready.package_state,'READY');assert.match(ready.reply_text,/No se ha generado ni publicado/);
 });
 test('all embedded Code functions compile for n8n',()=>{
  for(const code of Object.values(packageIngressCode()))assert.doesNotThrow(()=>new Function('$input','$',code));
