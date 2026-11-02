@@ -23,7 +23,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "return [{json:{route:\"files\",request:{\"id\":108,\"operation\":\"preparar_borrador_opmx\",\"confirmar_publicacion\":\"PUBLICAR\",\"request_id\":\"opmx-fixture-publish-20261102\",\"destino\":\"AMBOS\",\"slug\":\"opmx-fixture-no-publicar\",\"post_id_opuro\":900001,\"post_id_opol\":900002}}}];"
+        "jsCode": "return [{json:{route:\"files\",request:{\"id\":108,\"operation\":\"publicar_nota_opmx\",\"confirmar_publicacion\":\"PUBLICAR\",\"request_id\":\"opmx-fixture-publish-20261102\",\"destino\":\"AMBOS\"}}}];"
       }
     },
     {
@@ -847,7 +847,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const r={status:'PUBLICATION_REJECTED',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,publicationWritesStarted:false,draftsMayExist:true,retryPermitted:false,message:'No se publicaron notas: los borradores no superaron el preflight conjunto. No reenviar el paquete; revisar borradores existentes.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
+        "jsCode": "let p={};try{p=$('Conservar plan publicación').first().json}catch{}const r={status:'PUBLICATION_REJECTED',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug??$('Protocolo MCP archivos').first().json.request.slug??null,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),publicationWritesStarted:false,draftsMayExist:true,retryPermitted:false,message:'No se efectuaron cambios de publicación: los borradores no superaron el preflight conjunto. No reenviar el paquete; revisar los IDs existentes.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
       }
     },
     {
