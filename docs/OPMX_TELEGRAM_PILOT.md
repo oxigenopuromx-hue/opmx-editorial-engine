@@ -1,3 +1,32 @@
+# Telegram editorial — estado actual H111
+
+Bot: @opmxpublisherbot. Credencial existente conectada. Receptor n8n activo: https://n8n.oxigenopuro.com.mx/workflow/OSi8AcnzLlI0csRu .
+
+## Única acción del propietario pendiente ahora
+
+Enviar /id al bot y avisar que respondió. No es necesario copiar los números: Work consulta la tabla mínima de candidaturas y confirmará qué identidad corresponde al propietario antes de autorizar adjuntos. Si aparece más de una candidatura no escoger automáticamente.
+
+No enviar token al chat ni volver a crear el bot/credencial. El piloto sólo confirma recepción; no agrupa paquetes, no envía eventos Work ni genera/publica notas.
+
+## H111 — @opmxpublisherbot conectado; identificación /id activa (2 noviembre 2026, México)
+
+El propietario confirmó credencial lista y bot @opmxpublisherbot. La credencial Telegram API “OPMX — Telegram editorial” existe en el proyecto personal correcto y ya estaba asociada por el propietario a trigger, descarga y acuse. Se reutilizó sin leer token ni crear otra credencial. Antes de tocar se leyó el estado real: versión92b2cd48-ff58-473b-bf67-fe056f45cfc8,binaryMode=separate,allowlists vacías,retenciónnone.
+
+Piloto OSi8AcnzLlI0csRu ahora ACTIVO,11nodos, versión9a45fd99-4ccf-490d-a6fb-ee77eaa9750a. n8n confirmó activación y lectura posterior active=true/sameAsDraft. Esto confirma configuración/activación, no recepción real de un mensaje Telegram: falta el /id del propietario. No se enviaron mensajes reales de prueba a terceros ni se generaron/publicaron notas.
+
+Para evitar pedir copiar números al chat, /id privado registra sólo bot_username,user_id,chat_id,last_update_id,last_message_id,observed_at en la tabla personal “OPMX Telegram — identidades candidatas”,1NHMjthWiPVcAMPB. Es una candidatura de identidad, NO una autorización automática ni elección del primer remitente. Se deberá confirmar al propietario en esta conversación y resolver ambigüedad si aparece más de una identidad; después llenar la allowlist. No guardar IDs personales reales en GitHub ni registrar cuerpos, tokens o archivos en esa tabla.
+
+Se añadieron IF de identificación, upsert con filtros bot+user+chat y restauración de contexto antes del acuse. Durante QA se usó dryRun=true y Telegram trigger/acuse/descarga fijados con datos sintéticos. QA263 success y consulta posterior tabla0filas: ninguna identidad ficticia persistida. Luego se cambió dryRun=false antes de activar; las allowlists reales siguen vacías. Retención none/none/saveManualExecutions=false,timeout90s y binaryMode separado se conservaron. Grafo agrupado,validación sin warnings. /id puede responder al remitente sus propios IDs; el resto del contenido no se descarga mientras no esté autorizado.
+
+Estado posterior a activar: consulta de candidaturas0filas. El usuario debe enviar /id al bot. Work podrá recuperar los IDs desde n8n, sin pedir token ni que el usuario copie números. Hasta confirmar esa recepción, no declarar probado transporte real de archivos.
+
+Siguen pendientes: autorización del chat, foto/PDF/DOC/texto reales de prueba, almacenamiento durable de paquetes y originales, agrupación/versiones, MCP Events y lectura por Work, generación de MASTER y draft fixture. PublisherH108 activo sin cambios; Social posterior. Esta tabla mínima no es almacenamiento de originales, idempotencia de publicación ni un listener Work.
+
+Versionado: misma rama feat/mcp-publisher-file-draft/PR9editorial. SnapshotH111 sanitizado, sin credenciales/webhook IDs; H110 queda como histórico inactivo. Guía docs/OPMX_TELEGRAM_PILOT.md actualizada. Siguiente paso seguro: /id real del propietario; confirmar identidad y permitir recepción sólo en su chat. No DNS,credenciales nuevas ni publicaciones de contenido.
+
+
+## Registro histórico H110
+
 # Telegram editorial — piloto de recepción H110
 
 ## H110 — Telegram priorizado; receptor piloto preparado (2 noviembre 2026, México)
@@ -41,3 +70,4 @@ node --test tools/telegram/*.test.mjs
 node tools/telegram/build-intake.mjs
 
 El generador produce SDK en /tmp/opmx-telegram-intake-sdk.js. Validar con validate_workflow antes de crear. El workflow ya existe: no crearlo nuevamente. Export inactivo: workflows/telegram/OPMX_TELEGRAM_RECEPCION_PILOTO_H110_NO_ACTIVAR.json. No contiene credenciales.
+
