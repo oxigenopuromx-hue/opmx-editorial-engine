@@ -34,8 +34,13 @@ La incorporación física de estos maestros al repositorio debe preservar exacta
 ## Flujo
 Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Engine n8n → redes.
 
-## Publisher vigente
-`workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json` es la versión operativa vigente y validada en ejecución real el 2026-10-23. Elimina la whitelist OPURO embebida y delega la existencia de categoría al lookup exacto contra WordPress. `v1.2.11` se conserva como rollback probado y `v1.2.10` como baseline histórico.
+## Publisher vigente — H108 · 2 noviembre 2026
+
+El despliegue actual está documentado en `docs/OPMX_PIPELINE_HANDOFF.md`: formulario v1.3.5 (listas H105), entrada automática protegida de borradores y adaptador MCP `bnzVMNkZuGO1GQCZ` con validación de archivos, borradores y publicación explícita desde el mismo Motor. El trabajo desplegado avanza en `feat/mcp-publisher-file-draft` / PR #9 y todavía no se ha fusionado a main; distinguir el baseline versionado de main del estado productivo registrado en el handoff.
+
+Acciones: `validar_archivos_opmx`, `preparar_borrador_opmx`, `publicar_nota_opmx` y `publicar_borradores_opmx`. Publicación sólo con orden explícita y comprobaciones del guard, WordPress y enlaces. 105 pruebas locales y QA sintética pasan; primera publicación real por las nuevas acciones aún pendiente. Ver `docs/OPMX_AUTOMATIC_DRAFT_RUNBOOK.md`. No activar la QA con fixtures ni reenviar resultados inciertos.
+
+La exportación v1.2.12 corresponde al estado histórico de octubre23, no al despliegue actual.
 
 ## Social vigente — 2026-10-25
 
