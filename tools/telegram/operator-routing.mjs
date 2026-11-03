@@ -26,3 +26,20 @@ export function ownerForRequest(rows, requestId) {
   if (keys.size !== 1) throw Error('Ambiguous request');
   return ownerForPackage(matches, matches[0].package_id, matches[0].revision);
 }
+
+// Only trusted intake rows supply the identity; event and source payloads never do.
+// A missing/ambiguous mapping must stop the caller rather than pick a recipient.
+export function ownerForMessage(rows, message) {
+  if (!message || message.method !== 'tools/call' || !message.params || typeof message.params !== 'object') throw Error('Invalid message');
+  const args = message.params.arguments;
+  if (!args || typeof args !== 'object' || Array.isArray(args)) throw Error('Invalid arguments');
+  if (typeof args.package_id === 'string') {
+    const revisions = [...new Set(rows.filter(r => r && r.package_id === args.package_id && ['QUEUED','ROUTING'].includes(r.stage) && r.chat_id != null).map(r => r.revision))];
+    if (!revisions.length) throw Error('Operator not found');
+    const owners = revisions.map(revision => ownerForPackage(rows,args.package_id,revision).owner);
+    if (new Set(owners).size !== 1) throw Error('Conflicting operators');
+    return {owner:owners[0],chat:owners[0]};
+  }
+  if (typeof args.request_id === 'string') return ownerForRequest(rows,args.request_id);
+  throw Error('Missing package association');
+}
