@@ -17,3 +17,9 @@ Se preparó el guard para que, sólo si se configura explícitamente un suscript
 Pasaron 23 pruebas locales del guard, firma, aislamiento y resolución de operadores y se construyó el paquete del servicio. No se desplegó el guard ni se configuró la variable. Faltan enrutamiento de lectura y avisos finales en MCP, pruebas integradas y acceso operativo al despliegue del guard de Hostinger; no usar esto como confirmación de funcionamiento.
 
 El supervisor registró ALERT_31 después de verificar la entrega del aviso de demora para el paquete de la segunda cuenta. Esto confirma el aviso de espera, no la entrega de un resultado editorial ni el inicio del Motor.
+
+## Enrutamiento MCP y compatibilidad n8n
+
+Se preparó `multi-operator-protocol.mjs`: las lecturas privadas se vinculan al propietario del paquete, y los avisos finales al request_id estable; sin asociación o ante conflicto, se rechaza la operación privada o se omite el aviso. Los datos editoriales no pueden escoger destinatario. Las pruebas locales cubren lectura, borrador y publicación para otro operador; la batería relevante pasó 27 pruebas. El módulo es código preparado, aún no conectado al flujo MCP productivo.
+
+Se comprobó que el nodo Code de la instancia no permite cargar `crypto` (ejecución sintética 1376); no copiar allí el módulo Node sin adaptación. El nodo Crypto nativo sí calcula SHA-256. La ejecución sintética 1378 verificó seis combinaciones de dos operadores y tres destinos y preservó su vínculo. El QA inactivo está en el proyecto personal OXÍGENO PURO. Pendiente implementar el registro de esos identificadores en el flujo, conectar las búsquedas y probar los avisos sin conexiones reales antes de publicar la actualización de MCP. Sigue pendiente desplegar el servicio guard en Hostinger y configurar la lista de operadores autorizados. No se ha procesado ni publicado el paquete de la segunda cuenta.
