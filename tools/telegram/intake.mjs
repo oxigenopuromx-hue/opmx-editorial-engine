@@ -11,6 +11,8 @@ export function normalizeTelegramUpdate(update,config={}) {
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
  // Only commands typed directly by the authenticated operator select mode.
  if(typeof m.text==='string' && /^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Para seleccionar publicación o borrador, escribe el comando directamente; no reenvíes ese comando.'};
+ if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
+ const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&/^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(m.text.trim());
  const maxBytes=config.maxBytes??10*1024*1024;
  if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
  let attachment=null;
@@ -29,7 +31,7 @@ export function normalizeTelegramUpdate(update,config={}) {
   return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};
  }
  if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};
- return {...identity,kind:'TEXT',has_file:false,text,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
+ return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
 }
 
 export function validateTelegramDownload(input,bytes) {
