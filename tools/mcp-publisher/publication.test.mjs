@@ -38,7 +38,7 @@ test('lost POST response is resolved only by an independent readback; editorial 
 });
 test('CMS publish is separate from public visibility, exact canonical required',()=>{
  let p=recordPublication(preflight(),'OPURO',published('OPURO'));p=recordPublication(p,'OPOL',published('OPOL'));
- assert.equal(summarizePublication(p).status,'PUBLISHED_VISIBILITY_PENDING');
+ assert.equal(summarizePublication(p).status,'SUCCESS');assert.equal(summarizePublication(p).public_visibility_check,'NOT_CHECKED');
  for(const d of p.requested){assert.equal(recordPublicVisibility(p,d,{statusCode:200,body:'<html>404 not found</html>'}).targets[d].public_verified,false);p=recordPublicVisibility(p,d,{statusCode:200,body:`<link rel="canonical" href="${p.targets[d].public_url}">`});}
  const r=summarizePublication(p);assert.equal(r.status,'SUCCESS');assert.equal(r.retryPermitted,false);assert.equal(JSON.stringify(r).includes('content'),false);
 });
