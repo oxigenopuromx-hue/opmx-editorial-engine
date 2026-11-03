@@ -19,14 +19,14 @@
       "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.8_MEDIA_GUTENBERG_EDITORIAL.txt"
     },
     "media_output_contract": {
-      "version": "1.4",
+      "version": "1.4.1",
       "variant": "MEDIA_GUTENBERG_EDITORIAL",
-      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4_MEDIA_GUTENBERG_EDITORIAL.json"
+      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.1_MEDIA_GUTENBERG_EDITORIAL.json"
     },
     "gutenberg_enriched_instruction": {
-      "version": "1.1",
+      "version": "1.1.1",
       "status": "ACTIVE",
-      "path": "masters/05_INSTRUCCION_GUTENBERG_ENRIQUECIDO_OPURO_v1.1.md"
+      "path": "masters/05_INSTRUCCION_GUTENBERG_ENRIQUECIDO_OPURO_v1.1.1.md"
     },
     "categories": {
       "schema_version": "1.2",
