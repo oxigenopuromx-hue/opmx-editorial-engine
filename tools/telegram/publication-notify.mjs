@@ -11,15 +11,16 @@ export function preparePublicationNotice(response,request,identity) {
   if(!t||!['PUBLISHED','UNCERTAIN','NOT_ATTEMPTED'].includes(t.status))return no;
   if(t.status==='PUBLISHED'){
    if(t.cms_verified!==true||!Number.isSafeInteger(t.post_id)||t.post_id<1)return no;
-   if(t.public_verified===true){
+   {
     const origin=site==='OPURO'?'https://oxigenopuro.com.mx/':'https://oxigenopolitico.com.mx/';
     const path=typeof t.public_url==='string'&&t.public_url.startsWith(origin)?t.public_url.slice(origin.length):'';
     if(!/^[a-z0-9-]+(?:\/[a-z0-9-]+)*\/?$/.test(path)||path.replace(/\/$/,'').split('/').at(-1)!==r.slug)return no;
-    lines.push(`${name}: ${t.public_url}`);
-   } else lines.push(`${name}: publicado en WordPress; visibilidad pública pendiente de confirmar.`);
+    lines.push(`${name}: publicado en WordPress\n${t.public_url}`);
+   }
   } else lines.push(`${name}: ${t.status==='UNCERTAIN'?'resultado incierto; revisar antes de repetir':'publicación no iniciada'}.`);
  }
- return {notify:true,chatId:identity.chat,text:`OPMX · Resultado de publicación\n\n${lines.join('\n')}\n\nNo vuelvas a enviarla si algún resultado está pendiente o incierto.`,response};
+ const warning=destinations.some(d=>r.targets[d].status!=='PUBLISHED')?'\n\nNo vuelvas a enviarla si algún resultado está pendiente o incierto.':'';
+ return {notify:true,chatId:identity.chat,text:`OPMX · Resultado de publicación\n\n${lines.join('\n\n')}${warning}`,response};
 }
 export function finishPublicationNotice(context,telegramResult){
  const m=telegramResult?.result??telegramResult,sent=String(m?.chat?.id)===context.chatId&&Number.isSafeInteger(m?.message_id)&&m.message_id>0;
