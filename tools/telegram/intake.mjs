@@ -13,7 +13,7 @@ export function normalizeTelegramUpdate(update,config={}) {
  if(typeof m.text==='string'&&!m.document&&!m.photo){
   const command=m.text.trim();
   const looksCommand=/^\/[a-z][a-z0-9_]*(?:@[a-z0-9_]+)?(?=\s|$)/i.test(command);
-  const valid=/^(?:\/(?:id|start|ayuda|nuevo|listo|estado)|\/descartar ti_[a-f0-9]{40}|\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?|\/imagen\s+generar)$/i.test(command);
+  const valid=/^\/(?:id|start|ayuda|nuevo|listo|estado)$/.test(command)||/^\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(command)||/^\/imagen\s+generar$/i.test(command);
   if(looksCommand&&!valid)return {...identity,kind:'REJECTED',has_file:false,reply_text:'Comando inválido. Usa /publicar ambos, /publicar opuro, /publicar opol o /borrador ambos. Escribe el comando correcto como mensaje aparte.'};
  }
  // Only commands typed directly by the authenticated operator select mode.
