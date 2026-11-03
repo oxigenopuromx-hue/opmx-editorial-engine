@@ -9,6 +9,8 @@ export function normalizeTelegramUpdate(update,config={}) {
  if(text.trim()==='/id'&&!m.document&&!m.photo)return {...identity,kind:'IDENTITY',has_file:false,reply_text:`Tu ID de usuario: <code>${identity.user_id}</code>\nID de este chat: <code>${identity.chat_id}</code>\nEste piloto sólo confirma recepción; no genera ni publica notas.`};
  const users=(config.allowedUserIds??[]).map(String),chats=(config.allowedChatIds??[]).map(String);
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
+ // Only commands typed directly by the authenticated operator select mode.
+ if(typeof m.text==='string' && /^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Para seleccionar publicación o borrador, escribe el comando directamente; no reenvíes ese comando.'};
  const maxBytes=config.maxBytes??10*1024*1024;
  if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
  let attachment=null;
@@ -26,7 +28,7 @@ export function normalizeTelegramUpdate(update,config={}) {
   if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 10 MiB o informa un tamaño inválido.'};
   return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};
  }
- if(!text.trim())return null;
+ if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};
  return {...identity,kind:'TEXT',has_file:false,text,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
 }
 
