@@ -12,7 +12,8 @@ export function chooseTelegramMode(inventory,sources) {
   const found=sources.filter(s=>s.item_id===item.item_id&&s.stream==='text');
   if(found.length!==1||!Buffer.isBuffer(found[0].bytes)||found[0].bytes.length!==item.text_bytes||digest(found[0].bytes)!==item.sha256)throw Error('Texto no verificado');
   const text=new TextDecoder('utf-8',{fatal:true}).decode(found[0].bytes).trim();
-  const match=/^\/(publicar|borrador)(?:\s+(ambos|opuro|opol))?$/i.exec(text);
+  const prefix='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n';
+  const match=text.startsWith(prefix)?/^\/(publicar|borrador)(?:\s+(ambos|opuro|opol))?$/i.exec(text.slice(prefix.length)):null;
   if(match)choice={mode:match[1].toLowerCase()==='publicar'?'PUBLISH':'DRAFT',destination:(match[2]??'ambos').toUpperCase(),explicit:true};
  }
  return choice;
