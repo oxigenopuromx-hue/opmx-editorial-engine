@@ -50,7 +50,7 @@ export function confirmPackageOperation(context,result) {
   if(result.state==='PENDING'&&context.kind==='FILE')return {...context,itemId:result.itemId,has_file:true};
   if(result.state==='STORED')return response(context,'Este mensaje ya estaba guardado en el paquete.',{itemId:result.itemId,source_stored:true,original_stored:context.kind==='FILE'});
  }
- if(result?.status==='STORED'&&context.kind==='TEXT'&&result.packageId===context.packageId&&validItem(result.itemId))return response(context,'Texto guardado en tu paquete. Sigue enviando material; termina con /listo.',{itemId:result.itemId,source_stored:true});
+ if(result?.status==='STORED'&&context.kind==='TEXT'&&result.packageId===context.packageId&&validItem(result.itemId)) {const mode=/^\/(publicar|borrador)(?:\s+(ambos|opuro|opol))?$/i.exec(context.text.trim());const reply=mode?'Instrucción '+mode[1].toUpperCase()+' registrada para '+(mode[2]??'ambos').toUpperCase()+'. Sigue enviando material o termina con /listo.':'Texto guardado en tu paquete. Sigue enviando material; termina con /listo.';return response(context,reply,{itemId:result.itemId,source_stored:true});}
  if(result?.status==='QUOTA_EXCEEDED')return response(context,'El paquete o el almacenamiento piloto alcanzó su límite. No se guardó este mensaje.');
  if(result?.status==='PACKAGE_CLOSED')return response(context,'El paquete ya se cerró. No añadí este mensaje; envía /nuevo para otra nota.');
  return response(context,'No pude confirmar la reserva de este mensaje. No lo descargué ni lo envié al Motor.');
