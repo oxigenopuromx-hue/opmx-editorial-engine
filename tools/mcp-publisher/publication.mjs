@@ -70,7 +70,7 @@ export function recordPublicVisibility(plan,destination,response) {
 export function summarizePublication(plan) {
  const targets=Object.fromEntries(plan.requested.map(d=>{const t=plan.targets[d];return [d,{post_id:t.post_id,status:t.status,cms_verified:t.cms_verified===true,public_verified:t.public_verified===true,public_url:t.status==='PUBLISHED'?t.public_url:null}];}));
  const rows=Object.values(targets),published=rows.filter(t=>t.status==='PUBLISHED').length;
- const all=published===rows.length&&rows.length>0;
- const status=all?(rows.every(t=>t.public_verified)?'SUCCESS':'PUBLISHED_VISIBILITY_PENDING'):published?'PARTIAL_SUCCESS':'UNCERTAIN';
- return {status,mode:'PUBLISH',request_id:plan.request_id,slug:plan.slug,destino:plan.destino,targets,retryPermitted:false,cache_revalidation:plan.cache_revalidation??'NOT_REQUESTED',message:status==='SUCCESS'?'Publicación y enlaces verificados.':all?'WordPress confirma publicación; falta confirmar visibilidad pública. No reenviar.':'Publicación no confirmada en todos los destinos. Revisar IDs y estados; no reenviar automáticamente.'};
+ const all=published===rows.length&&rows.length>0&&rows.every(t=>t.cms_verified);
+ const status=all?'SUCCESS':published?'PARTIAL_SUCCESS':'UNCERTAIN';
+ return {status,mode:'PUBLISH',request_id:plan.request_id,slug:plan.slug,destino:plan.destino,targets,retryPermitted:false,cache_revalidation:plan.cache_revalidation??'NOT_REQUESTED',public_visibility_check:'NOT_CHECKED',message:status==='SUCCESS'?'WordPress confirmó la publicación; enlaces previstos sin comprobar visibilidad pública.':'Publicación no confirmada en todos los destinos. Revisar IDs y estados; no reenviar automáticamente.'};
 }
