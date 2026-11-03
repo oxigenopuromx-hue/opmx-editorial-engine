@@ -15,3 +15,11 @@ El Publisher tiene aviso de publicación acotado a Telegram, que comunica sólo 
 El 3 de noviembre de 2026 pasaron pruebas locales de elección, integridad, rechazo de reenvíos y falsificación, y prueba sintética en n8n (ejecución 625). Al comprobar el 3 de noviembre, el receptor activo es versión 17b4e965-0cda-4973-b67d-efe65a7c780e y el Publisher activo 9d19ba18-7c1c-4155-b816-99989724a58c. Los avisos de bloqueo y el supervisor usan formato HTML para conservar los identificadores con guion bajo. La automatización usa el selector del commit 277ac645bb3b86ee4fba3add9a0ec36e7f869c13. No se hizo una publicación real de prueba: falta verificar con el siguiente paquete autorizado de principio a fin, incluidos ejecución del selector, publicación y entrega del aviso.
 
 La vista previa protegida con el mismo frontend de producción está pendiente. No asumir que noindex protege borradores.
+
+## Primera comprobación con nota real
+
+El paquete `tg_62753800d09095570fc5e44508e45b6ff06d87ce`, revisión 6, ordenó publicar en AMBOS. El Motor comunicó que WordPress confirmó ambas publicaciones pero que la verificación pública inicial quedó pendiente; se remitió además un aviso de incertidumbre. No se reenvió la operación de publicación.
+
+Una comprobación posterior de sólo lectura (ejecución n8n 759) obtuvo HTTP 200, el título de la nota y URL canónica coincidente en ambos sitios: [OXígeno Puro](https://oxigenopuro.com.mx/gaby-sanchez-jornadas-de-limpieza-puebla/), ID WordPress 9821, y [OXígeno Político](https://oxigenopolitico.com.mx/estados/gaby-sanchez-jornadas-de-limpieza-puebla/), ID 2967. Esta comprobación confirma visibilidad en el momento de la consulta; no demuestra por qué la validación inicial fue pendiente.
+
+Pendiente: implementar y probar una verificación posterior acotada que informe por Telegram cuando una publicación confirmada en WordPress pase de visibilidad pendiente a visible, sin volver a publicar y sin afirmar una causa no verificada.
