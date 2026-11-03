@@ -9,6 +9,13 @@ export function normalizeTelegramUpdate(update,config={}) {
  if(text.trim()==='/id'&&!m.document&&!m.photo)return {...identity,kind:'IDENTITY',has_file:false,reply_text:`Tu ID de usuario: <code>${identity.user_id}</code>\nID de este chat: <code>${identity.chat_id}</code>\nEste piloto sólo confirma recepción; no genera ni publica notas.`};
  const users=(config.allowedUserIds??[]).map(String),chats=(config.allowedChatIds??[]).map(String);
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
+ // Slash commands must be exact and independent messages; never save an invalid command as article text.
+ if(typeof m.text==='string'&&!m.document&&!m.photo){
+  const command=m.text.trim();
+  const looksCommand=/^\/[a-z][a-z0-9_]*(?:@[a-z0-9_]+)?(?=\s|$)/i.test(command);
+  const valid=/^(?:\/(?:id|start|ayuda|nuevo|listo|estado)|\/descartar ti_[a-f0-9]{40}|\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?|\/imagen\s+generar)$/i.test(command);
+  if(looksCommand&&!valid)return {...identity,kind:'REJECTED',has_file:false,reply_text:'Comando inválido. Usa /publicar ambos, /publicar opuro, /publicar opol o /borrador ambos. Escribe el comando correcto como mensaje aparte.'};
+ }
  // Only commands typed directly by the authenticated operator select mode.
  if(typeof m.text==='string' && /^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$|\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
  if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
