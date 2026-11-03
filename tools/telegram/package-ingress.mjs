@@ -1,7 +1,7 @@
 const validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);
 const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-const help='Para una nota: envía /nuevo, después texto, fotos y documentos, y termina con /listo. /estado muestra el paquete abierto. Al cerrar, el Motor valida las fuentes automáticamente; el resultado aparece en su chat Work. Esta etapa todavía no genera ni publica notas.';
+const help='Para una nota: envía /nuevo, después texto, fotos y documentos. Escribe /publicar ambos para solicitar publicación o /borrador ambos para revisión; también puedes elegir opuro u opol. Termina con /listo. Sin elección, se preparan borradores. El resultado se enviará a este chat cuando esté confirmado.';
 const who=x=>({owner:x.user_id,chat:x.chat_id});
 const response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});
 
@@ -29,7 +29,7 @@ export function resolvePackageSession(intent,result) {
  if(x.package_operation==='SEAL')action='seal';
  else if(x.package_operation==='STATUS')action='manifest';
  else if(x.package_operation==='DISCARD'){action='discard';body.itemId=x.discard_item_id;}
- else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
+ else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n'+x.text.trim():x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
  return {...x,next_action:action,next_body:body};
 }
 
