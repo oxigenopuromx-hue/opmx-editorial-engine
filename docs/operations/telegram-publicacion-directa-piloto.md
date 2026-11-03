@@ -59,3 +59,8 @@ Se recuperaron y verificaron los archivos originales; se consultaron el acuerdo 
 ## Segundo operador Telegram
 
 El 3 de noviembre de 2026 se confirmó la identidad de una segunda cuenta mediante `/id` en conversación privada y se autorizó su usuario y chat en el receptor activo `f863898b-500b-4b7e-ac6b-066195bdaec0`, conservando la cuenta anterior. Puede seleccionar borrador o publicación con los mismos comandos. La configuración activa se verificó; queda pendiente una prueba real de recepción y respuesta desde la nueva cuenta. Los identificadores no se publican en este documento.
+
+
+### Incidencia: segunda cuenta en cola
+
+El paquete `tg_2db165d8a863ec3d122dfc0709ee34d264be6e3c`, revisión 6, cerró y registró QUEUED. Al revisar sólo se observó esa etapa y la ejecución más reciente del Motor seguía siendo la anterior. El lector MCP, la suscripción de eventos, los avisos de resultado y el supervisor continúan ligados a la primera identidad; la autorización añadida al receptor no habilita el recorrido completo de la segunda cuenta. El lector devolvió SOURCE_NOT_CONFIRMED para este paquete. No se dispone de confirmación de borrador o publicación; no reenviar ni suponer resultado. La afirmación anterior de que la segunda cuenta podía completar el flujo debe entenderse limitada a recepción. Pendiente: diseñar y probar aislamiento por cuenta, suscripción de eventos, resolución segura del destinatario y reconciliación del paquete sin duplicar escrituras antes de activar el recorrido multiusuario.
