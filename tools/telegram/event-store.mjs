@@ -36,14 +36,28 @@ export function deliveryOutcome(status,attempt,now,retryAfter=null) {
  return {state:'RETRY',stop:false,next:now+Math.min(3600000,Math.max(5000*2**attempt,retry*1000))};
 }
 
-export function createMcpEventStore({pool,guardSecret,post=safeCallbackPost,now=Date.now,logger=()=>{}}) {
+export function sharedEventOwners(config) {
+ if(config==null)return null;
+ if(!config||typeof config!=='object'||Array.isArray(config)||typeof config.subscriber!=='string'||!Array.isArray(config.operators)||config.operators.length===0||config.operators.length>50)throw Error('Invalid shared event owners');
+ const ids=[config.subscriber,...config.operators];
+ if(ids.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Invalid shared event owner');
+ return {subscriber:ownerKey({owner:config.subscriber,chat:config.subscriber}),operators:new Set(config.operators.map(id=>ownerKey({owner:id,chat:id})))};
+}
+export function subscriptionOwnersForEvent(owner,shared) {
+ return shared?.operators.has(owner) && owner!==shared.subscriber ? [owner,shared.subscriber] : [owner];
+}
+export function mayDeliverEvent(subscriptionOwner,eventOwner,shared) {
+ return subscriptionOwner===eventOwner || Boolean(shared && subscriptionOwner===shared.subscriber && shared.operators.has(eventOwner));
+}
+export function createMcpEventStore({pool,guardSecret,post=safeCallbackPost,now=Date.now,logger=()=>{},sharedOperators=null}) {
+ const shared=sharedEventOwners(sharedOperators);
  const cipher=subscriptionCipher(guardSecret);let ready,running=false,timer,lastLog=0;
  const initialize=()=>ready??=(async()=>{const c=await pool.getConnection();try{for(const s of schema)await c.execute(s);}finally{c.release();}})().catch(e=>{ready=undefined;throw e;});
  const access=async(c,owner)=>{const [r]=await c.execute('SELECT package_id FROM opmx_tg_packages_v1 WHERE owner_key=? LIMIT 1',[owner]);if(!r.length)throw Object.assign(Error('Event access denied'),{rpcCode:-32001});};
  const enqueue=async(c,{owner,packageId,revision,itemCount,timestamp})=>{
   const event=readyEvent(owner,packageId,revision,itemCount,timestamp);
   await c.execute('INSERT IGNORE INTO opmx_tg_events_v1 (event_id,owner_key,package_id,revision,payload_json,created_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(6))',[event.eventId,owner,packageId,revision,JSON.stringify(event)]);
-  await c.execute("INSERT IGNORE INTO opmx_tg_deliveries_v1 (delivery_key,subscription_id,event_id,state,attempts,next_attempt_at) SELECT SHA2(CONCAT(subscription_id,':',?),256),subscription_id,?,'PENDING',0,UTC_TIMESTAMP(6) FROM opmx_tg_subscriptions_v1 WHERE owner_key=? AND state='ACTIVE' AND expires_at>UTC_TIMESTAMP(6)",[event.eventId,event.eventId,owner]);
+  for(const subscriberOwner of subscriptionOwnersForEvent(owner,shared))await c.execute("INSERT IGNORE INTO opmx_tg_deliveries_v1 (delivery_key,subscription_id,event_id,state,attempts,next_attempt_at) SELECT SHA2(CONCAT(subscription_id,':',?),256),subscription_id,?,'PENDING',0,UTC_TIMESTAMP(6) FROM opmx_tg_subscriptions_v1 WHERE owner_key=? AND state='ACTIVE' AND expires_at>UTC_TIMESTAMP(6)",[event.eventId,event.eventId,subscriberOwner]);
   return event.eventId;
  };
  const subscribe=async input=>{
@@ -81,7 +95,8 @@ export function createMcpEventStore({pool,guardSecret,post=safeCallbackPost,now=
    await c.execute("UPDATE opmx_tg_deliveries_v1 SET state='LEASED',attempts=attempts+1,claim_token=?,lease_until=DATE_ADD(UTC_TIMESTAMP(6),INTERVAL 30 SECOND) WHERE delivery_key=?",[job.claim_token,job.delivery_key]);await c.commit();
   }catch(e){try{await c.rollback();}catch{}throw e;}finally{c.release();}
   c=await pool.getConnection();let row;
-  try{const [r]=await c.execute("SELECT s.secret_envelope,s.owner_key,e.payload_json FROM opmx_tg_subscriptions_v1 s JOIN opmx_tg_events_v1 e ON e.event_id=? AND e.owner_key=s.owner_key JOIN opmx_tg_packages_v1 p ON p.package_id=e.package_id AND p.owner_key=e.owner_key AND p.revision=e.revision AND p.state='READY' WHERE s.subscription_id=? AND s.state='ACTIVE' AND s.expires_at>UTC_TIMESTAMP(6)",[job.event_id,job.subscription_id]);row=r[0];}finally{c.release();}
+  try{const [r]=await c.execute("SELECT s.secret_envelope,s.owner_key,e.owner_key event_owner,e.payload_json FROM opmx_tg_subscriptions_v1 s JOIN opmx_tg_events_v1 e ON e.event_id=? JOIN opmx_tg_packages_v1 p ON p.package_id=e.package_id AND p.owner_key=e.owner_key AND p.revision=e.revision AND p.state='READY' WHERE s.subscription_id=? AND s.state='ACTIVE' AND s.expires_at>UTC_TIMESTAMP(6)",[job.event_id,job.subscription_id]);row=r[0];}finally{c.release();}
+  if(row&&!mayDeliverEvent(row.owner_key,row.event_owner,shared))row=null;
   if(!row){await report(job,{state:'CANCELLED',stop:false,next:now()},0);return true;}
   job.envelope=row.secret_envelope;let response;
   try{const config=cipher.decrypt(row.secret_envelope,row.owner_key+':'+job.subscription_id);response=await signedCallbackPost({...config,id:job.subscription_id},JSON.parse(row.payload_json),{post,now});}catch{response={status:0};}
