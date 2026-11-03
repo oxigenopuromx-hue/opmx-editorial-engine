@@ -11,7 +11,7 @@ El supervisor n8n revisa cada cinco minutos eventos recientes y, después de die
 - Prueba sintética del protocolo y rechazo de identidades/versiones inválidas, ejecución n8n 626.
 - Prueba del supervisor y tabla con datos ficticios; la etapa con demora generó un único registro de aviso y el paquete terminado no generó aviso. Una segunda ejecución no duplicó el aviso (627 y 628). Telegram estuvo simulado.
 - La lectura real del inventario de un paquete existente fue correcta. El flujo aislado preparó correctamente el aviso de prueba sin enviarlo (642).
-- Un envío real de prueba devolvió FAILURE_UNCERTAIN; no se reintentó. No está confirmada su entrega ni el funcionamiento completo de los avisos de etapa y bloqueo. El supervisor está activo, pero su entrega real a Telegram tampoco se ha comprobado.
+- Un envío real de prueba devolvió FAILURE_UNCERTAIN; no se reintentó. Ese intento no confirmó la entrega; después se reprodujo el error y se corrigió el formato, como se documenta en la sección posterior. El aviso automático de demora y el recorrido completo siguen pendientes de una prueba real.
 - Una solicitud de activar guardado completo de ejecuciones del Publisher fue rechazada por revisión automática por posible exposición persistente de fuentes y datos sensibles; no se activó ni se intentó eludir la decisión.
 
 La etapa final puede no quedar registrada si el envío o el registro falla. El supervisor puede no avisar si la tabla o Telegram están inaccesibles. Los registros de seguimiento no contienen el contenido de las fuentes. Falta una prueba integral con paquete real y una confirmación de entrega; no declarar terminada esa validación hasta que exista evidencia.
@@ -23,3 +23,9 @@ El 3 de noviembre la ejecución programada 643 del supervisor terminó correctam
 1. Diagnosticar el resultado FAILURE_UNCERTAIN del aviso real sin habilitar retención completa de fuentes ni reenviar automáticamente el mismo aviso. Confirmar la entrega sólo con un acuse verificable.
 2. Comprobar el recorrido completo con un paquete real autorizado: recepción, elección de destino, fuentes, encuadre visual, validación, publicación o borrador, resultado y enlaces en Telegram. No publicar contenido de prueba y no reintentar una publicación incierta.
 3. Preparar vista previa protegida que use el frontend real. La ruta existente de revisión no debe considerarse privada sólo por noindex; verificar protección y autorización antes de usarla.
+
+## Corrección del formato de avisos
+
+El 3 de noviembre se aisló un error de Telegram: el formato Markdown implícito interpretaba el guion bajo del identificador de paquete como una entidad incompleta y rechazaba el mensaje. Se configuró `parse_mode: HTML` en el envío de avances/bloqueos y en el supervisor; sus mensajes utilizan valores acotados y no incorporan texto editorial libre. Publisher activo: `9d19ba18-7c1c-4155-b816-99989724a58c`; supervisor activo: `129fa17d-1eca-4ee3-ac50-ce04c1bdfae7`.
+
+La ejecución aislada 671 reprodujo el rechazo con un paquete sintético; tras cambiar el formato, la 673 envió el mismo tipo de aviso de prueba y Telegram devolvió un identificador de mensaje y el chat correcto. Las pruebas automatizadas del protocolo y publicación pasaron (8 casos). No se repitieron los avisos previos con resultado incierto. El acuse real confirma el envío de la prueba aislada, no una ejecución integral nueva del Motor ni la entrega de todas las etapas. Sigue pendiente verificar un paquete real de principio a fin y el aviso automático de demora.
