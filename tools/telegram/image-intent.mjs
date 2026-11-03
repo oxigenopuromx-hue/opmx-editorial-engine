@@ -8,7 +8,7 @@ export function chooseGeneratedImage(inventory,sources){
   const found=sources.filter(s=>s.item_id===item.item_id&&s.stream==='text');
   if(found.length!==1||!Buffer.isBuffer(found[0].bytes)||found[0].bytes.length!==item.text_bytes||createHash('sha256').update(found[0].bytes).digest('hex')!==item.sha256)throw Error('Texto no verificado');
   const text=new TextDecoder('utf-8',{fatal:true}).decode(found[0].bytes).trim();
-  if(text.startsWith(marker)&&/^\/imagen\s+generar$/i.test(text.slice(marker.length)))requested=true;
+  if(text.startsWith(marker)&&/^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(text.slice(marker.length)))requested=true;
  }
  return {generate:requested};
 }
