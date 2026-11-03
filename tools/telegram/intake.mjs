@@ -10,9 +10,9 @@ export function normalizeTelegramUpdate(update,config={}) {
  const users=(config.allowedUserIds??[]).map(String),chats=(config.allowedChatIds??[]).map(String);
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
  // Only commands typed directly by the authenticated operator select mode.
- if(typeof m.text==='string' && /^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Para seleccionar publicación o borrador, escribe el comando directamente; no reenvíes ese comando.'};
+ if(typeof m.text==='string' && /^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?|\/imagen\s+generar)$/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
  if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
- const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&/^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(m.text.trim());
+ const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&/^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?|\/imagen\s+generar)$/i.test(m.text.trim());
  const maxBytes=config.maxBytes??10*1024*1024;
  if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
  let attachment=null;
