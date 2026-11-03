@@ -28,6 +28,14 @@ test('confirmed text and duplicate stored files need no download',()=>{
  const y=resolvePackageSession(preparePackageIntent(file),{status:'OPEN',packageId:pkg});
  const replay=confirmPackageOperation(y,{status:'RESERVATION_REPLAY',state:'STORED',itemId:item});assert.equal(replay.has_file,false);assert.equal(replay.original_stored,true);
 });
+test('acknowledges the exact mode only after storing its command',()=>{
+ for(const mode of ['/publicar ambos','/borrador opuro']){
+  const v=resolvePackageSession(preparePackageIntent(text(mode)),{status:'OPEN',packageId:pkg});
+  const r=confirmPackageOperation(v,{status:'STORED',packageId:pkg,itemId:item});
+  assert.equal(r.source_stored,true);assert.match(r.reply_text,/Instrucción/);
+  assert.doesNotMatch(confirmPackageOperation(v,{error:'timeout'}).reply_text,/registrada/);
+ }
+});
 test('no storage success from timeout, wrong item or byte count; Base64 never reaches ack',()=>{
  const c={...file,packageId:pkg,itemId:item,bytes_received:100,contentBase64:'PRIVATE'};
  for(const r of [{error:'timeout'},{status:'STORED',packageId:pkg,itemId:item,bytes:99,sha256:'a'.repeat(64)},{status:'STORED_REPLAY',itemId:'ti_'+'c'.repeat(40)}]) {
