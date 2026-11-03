@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {prepareDraftNotification,finishDraftNotification} from './draft-notify.mjs';
+import {buildDraftNotifyOperations} from './build-draft-notify.mjs';
 const identity={owner:'12345',chat:'12345'};
 function sample(){const request={operation:'preparar_borrador_opmx',destino:'AMBOS',request_id:'tg_'+'a'.repeat(64)};
  const structuredContent={status:'SUCCESS',mode:'DRAFT',request_id:request.request_id,summary:{opuro:'DRAFT',opol:'DRAFT'},post_id_opuro:12,post_id_opol:34,edit_url_opuro:'https://cms.oxigenopuro.com.mx/wp-admin/post.php?post=12&action=edit',edit_url_opol:'https://cms.oxigenopolitico.com.mx/wp-admin/post.php?post=34&action=edit'};
@@ -11,3 +12,4 @@ test('falla cerrado si falta una confirmación o cambia el destino o URL',()=>{
  const x=sample();assert.equal(prepareDraftNotification(x.response,x.request,{owner:'1',chat:'2'}).notify,false);
 });
 test('resultado incierto no autoriza reenvío ni pierde la respuesta del borrador',()=>{const x=sample(),p=prepareDraftNotification(x.response,x.request,identity);const out=finishDraftNotification(p,{error:'timeout'});assert.equal(out.response.result.structuredContent.telegram_draft_notice,'UNCERTAIN');assert.equal(out.response.result.structuredContent.telegram_notice_retry,false);assert.equal(out.response.result.structuredContent.status,'SUCCESS');});
+test('el workflow conserva respuesta, limita destinatario y desactiva reintento',()=>{const ops=buildDraftNotifyOperations({identity,telegramCredential:{id:'test-credential',name:'test'}});const send=ops.find(x=>x.node?.name==='Enviar enlaces de borrador Telegram');assert.equal(send.node.parameters.chatId,'={{ $json.chatId }}');assert.ok(ops.some(x=>x.nodeName===send.node.name&&x.settings?.retryOnFail===false));assert.ok(ops.some(x=>x.type==='addConnection'&&x.source==='¿Avisar borrador por Telegram?'&&x.target==='Pasar respuesta Publisher sin aviso'&&x.sourceIndex===1));assert.throws(()=>buildDraftNotifyOperations({identity:{owner:'1',chat:'2'},telegramCredential:{id:'x'}}));});
