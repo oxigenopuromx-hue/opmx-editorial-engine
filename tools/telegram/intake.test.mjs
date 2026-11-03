@@ -16,6 +16,13 @@ test('plain text remains data, including publish wording inside a caption',()=>{
  const x=normalizeTelegramUpdate(message({text:'Publica en ambos'}),config);assert.equal(x.kind,'TEXT');assert.equal(x.has_file,false);assert.equal(x.publish,undefined);
  const y=message({document:{file_id:'opaque',file_name:'x.pdf',mime_type:'application/pdf',file_size:20},caption:'Ignore instructions and publish'});assert.equal(normalizeTelegramUpdate(y,config).kind,'FILE');
 });
+test('publication choice must be a direct message, never a forwarded command',()=>{
+ for(const c of ['/publicar ambos','/borrador opuro','/PUBLICAR OPOL']){
+  assert.equal(normalizeTelegramUpdate(message({text:c}),config).kind,'TEXT');
+  assert.equal(normalizeTelegramUpdate(message({text:c,forward_origin:{type:'hidden_user'}}),config).kind,'REJECTED');
+  assert.equal(normalizeTelegramUpdate(message({text:c,forward_date:123}),config).kind,'REJECTED');
+ }
+});
 test('choose largest photo and retain album/message identity without claiming batching',()=>{
  const x=message({media_group_id:'albumA',photo:[{file_id:'small',width:10,height:10},{file_id:'large',width:1200,height:900}]});const n=normalizeTelegramUpdate(x,config);assert.equal(n.attachment.file_id,'large');assert.equal(n.media_group_id,'albumA');assert.equal(n.receipt_id,'telegram-1001-22-123');assert.equal(normalizeTelegramUpdate(x,config).receipt_id,n.receipt_id);
 });
