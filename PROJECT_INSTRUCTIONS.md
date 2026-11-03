@@ -75,7 +75,7 @@ No inventes clases.
 
 GUTENBERG_FINAL es cuerpo editable OPOL en bloques nativos.
 
-GUTENBERG_ENRIQUECIDO_FINAL es el cuerpo OPURO en Gutenberg nativo serializado. Sólo usa core/paragraph, core/heading (H2/H3), core/list, core/quote y core/image. Nunca contiene H1, `<article>`, `<header>`, `<footer>`, `opmx-editorial`, `data-opmx`, bloques `wp:html` ni placeholders. HERO_OPURO y DESTACADA_OPURO siguen siendo media nativo/featured_media y no se inyectan al cuerpo. Una imagen interior sólo se emite cuando existe un adjunto WordPress resuelto con `wp-image-{id}`, URL HTTPS y ALT literal; si esa vinculación aún no existe, se omite sin inventar datos.
+GUTENBERG_ENRIQUECIDO_FINAL es el cuerpo OPURO en Gutenberg nativo serializado. Sólo usa core/paragraph, core/heading (H2/H3), core/list, core/list-item, core/quote y core/image. Nunca contiene H1, `<article>`, `<header>`, `<footer>`, `opmx-editorial`, `data-opmx`, bloques `wp:html` ni placeholders. HERO_OPURO y DESTACADA_OPURO siguen siendo media nativo/featured_media y no se inyectan al cuerpo. Una imagen interior sólo se emite cuando existe un adjunto WordPress resuelto con `wp-image-{id}`, URL HTTPS y ALT literal; si esa vinculación aún no existe, se omite sin inventar datos.
 
 MEDIA CONTRACT
 El Engine NO anticipa URLs finales de WordPress. Debe usar exactamente estos tres tokens y ningún otro placeholder:
