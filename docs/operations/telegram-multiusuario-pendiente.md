@@ -1,0 +1,7 @@
+# Telegram multiusuario — avance de implementación
+
+El receptor ya acepta dos cuentas; el resto de la cadena no está habilitado para ambas. El paquete de la segunda cuenta está READY, revisión 6, con orden directa /publicar ambos. La consulta autorizada del guard confirmó que no hay suscripción de eventos ni entregas para su identidad; por tanto no hay evidencia de ejecución del Motor para ese paquete. Conservar el paquete y no repetir la solicitud hasta reconciliar el estado.
+
+El módulo operator-routing.mjs es una preparación local: resuelve identidad desde un registro confiable por paquete y revisión, y desde el request_id estable de Publisher. Falla cerrado ante ausencia, inconsistencias o ambigüedad. Dos pruebas sintéticas de aislamiento y rechazo pasaron con node --test. No está conectado al servicio ni desplegado y no corrige todavía el recorrido.
+
+Pendientes antes de operar: registrar identidad autenticada por paquete; suscribir y despachar eventos para ambas cuentas sin afectar la renovación de suscripciones; resolver origen para lecturas y avisos de progreso y error; vincular request_id con paquete para avisos de Publisher, evitando confiar en destinatarios procedentes del contenido; corregir supervisor que aún usa la primera identidad; verificar aislamiento y recorrido con ambas cuentas; reconciliar publicación existente antes de ejecutar una sola vez el paquete pendiente y confirmar entrega al remitente. No registrar secretos ni contenido de fuentes en este documento.
