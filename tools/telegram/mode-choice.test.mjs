@@ -14,5 +14,7 @@ test('destino explícito prevalece',()=>assert.deepEqual(choose(attest('/nuevo')
 test('paquetes antiguos no se publican por defecto',()=>assert.deepEqual(choose('nota',attest('/listo')),{mode:'DRAFT',destination:'AMBOS',explicit:false}));
 test('sin cierre acreditado no se publica por defecto',()=>assert.deepEqual(choose(attest('/nuevo'),'nota','/listo'),{mode:'DRAFT',destination:'AMBOS',explicit:false}));
 test('texto después del cierre no autoriza el valor predeterminado',()=>assert.deepEqual(choose(attest('/nuevo'),attest('/listo'),'nota'),{mode:'DRAFT',destination:'AMBOS',explicit:false}));
+test('archivo posterior al cierre no autoriza el valor predeterminado',()=>{const s=sample(attest('/nuevo'),attest('/listo'));s.inventory.items.push({item_id:'file',kind:'FILE'});assert.deepEqual(chooseTelegramMode(s.inventory,s.sources),{mode:'DRAFT',destination:'AMBOS',explicit:false});});
+test('la última orden explícita prevalece',()=>assert.deepEqual(choose(attest('/nuevo'),attest('/publicar ambos'),attest('/borrador opuro'),attest('/listo')),{mode:'DRAFT',destination:'OPURO',explicit:true}));
 test('órdenes antiguas no acreditadas no autorizan',()=>assert.deepEqual(choose('/publicar ambos'),{mode:'DRAFT',destination:'AMBOS',explicit:false}));
 test('detecta texto alterado',()=>{const s=sample(attest('/nuevo'),attest('/listo'));s.sources[1].bytes=Buffer.from('/borrador');assert.throws(()=>chooseTelegramMode(s.inventory,s.sources));});
