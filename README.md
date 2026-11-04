@@ -34,8 +34,9 @@ La incorporación física de estos maestros al repositorio debe preservar exacta
 ## Flujo
 Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Engine n8n → redes.
 
-## Publisher vigente
-`workflows/publisher/OPMX_Publisher_MEDIA_v1.2.12.json` es la versión operativa vigente y validada en ejecución real el 2026-10-23. Elimina la whitelist OPURO embebida y delega la existencia de categoría al lookup exacto contra WordPress. `v1.2.11` se conserva como rollback probado y `v1.2.10` como baseline histórico.
+## Publisher y Telegram — estado operativo
+
+Consultar primero [estado operativo y traspaso al 4 de noviembre de 2026](docs/operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md). La configuración activa incluye servicios y cambios fuera de `main`: los exports v1.2.12 y anteriores son referencias históricas, no una identificación fiable del flujo vigente. La publicación por defecto solicitada aún no está activa: sin comando de modo se preparan borradores en ambos destinos.
 
 ## Social vigente — 2026-10-25
 

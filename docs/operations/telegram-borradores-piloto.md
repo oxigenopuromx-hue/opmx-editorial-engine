@@ -1,5 +1,7 @@
 # Telegram → borradores: piloto de integración
 
+> **Documento histórico del piloto.** Para el estado actual y las diferencias con producción, consulta [Publisher y Telegram — estado operativo](PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md). Ahora existe publicación con orden explícita, seguimiento y pruebas posteriores; publicar por defecto sigue pendiente.
+
 Fecha: 2026-11-02.
 
 ## Alcance activo
