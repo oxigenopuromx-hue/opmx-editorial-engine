@@ -13,3 +13,9 @@ El cambio está guardado en las instrucciones de la automatización y aplica a e
 ## Revisión de notas publicadas
 
 El 3 de noviembre de 2026 se revisaron las notas publicadas desde el 1 de noviembre: 44 en OPURO y 43 en OPOL, junto con los metadatos recientes de medios. Se eliminaron el pie y la descripción con aclaraciones sobre información faltante de los medios OPURO 9856 y 9852; se conservaron sus textos alternativos. La lectura posterior confirmó los campos vacíos. Se preservaron las aclaraciones necesarias para distinguir imágenes de archivo o composiciones. Las imágenes de OPOL examinadas no tenían pies registrados. El flujo de auditoría quedó inactivo y con nodos de sólo lectura.
+
+## Confirmación de procedencia
+
+El paquete tg_d9081b0d1a54fa962d333d65d731f65c310cef11, revisión 10, se detuvo antes de llamar a Publisher al no poder verificar de manera independiente el contexto de las fotos. El operador confirmó en el chat que son de la jornada de lectura y provienen de la cuenta de X de Claudia Sheinbaum. Se actualizó la instrucción del Motor para conservar las atribuciones del operador y no exigir una segunda comprobación por defecto cuando no existan indicios concretos de error. La confirmación queda atribuida al operador, no constituye verificación independiente.
+
+El paquete permanece detenido: el endpoint de emisión utiliza el mismo eventId y un INSERT IGNORE sobre entregas existentes, por lo que no se debe afirmar que volver a emitir garantiza reactivación. No se confirmó una nueva ejecución ni publicación. Resolver reanudación idempotente antes de darlo por completado.
