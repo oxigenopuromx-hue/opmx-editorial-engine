@@ -1,6 +1,6 @@
 # OPMX Pipeline — Handoff maestro
 
-Actualizado: 2026-10-25
+Estado histórico: 2026-10-25. Para Publisher y Telegram, prevalece el [estado operativo del 4 de noviembre de 2026](operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md), verificado contra configuraciones activas. Las secciones anteriores a ese corte son historia y no identifican necesariamente el flujo vigente.
 
 ## Propósito
 Punto de entrada técnico para cualquier instancia de ChatGPT Work que opere el flujo OPMX desde la salida editorial hasta distribución social.
