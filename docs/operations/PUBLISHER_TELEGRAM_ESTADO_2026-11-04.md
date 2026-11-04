@@ -4,6 +4,15 @@ Corte de revisión: 4 de noviembre de 2026, 22:20 UTC. Documento de inventario y
 
 ## Fuente de verdad y límites
 
+### Cambio en preparación posterior al corte: publicación predeterminada v1
+
+El usuario aprobó publicar por defecto y usar `/borrador` como excepción. Código,
+contrato y export completo sanitizado ya están en `main`: ver
+`contracts/TELEGRAM_PUBLICATION_POLICY_v1.0.md` y `tools/telegram/README.md`.
+15 pruebas locales/VM aprobadas; 11 nodos validados por esquema n8n. Activación
+aún pendiente en este commit. El inventario y la operación siguientes describen
+el corte previo; no confundir implementación versionada con despliegue confirmado.
+
 Este repositorio versiona contratos y código. La configuración realmente activa también incluye n8n, el guard de Hostinger, la automatización del Motor y las credenciales de cada entorno. `main` no incorpora todos los desarrollos activos: no instalar ni reemplazar un flujo de producción únicamente porque un archivo antiguo de `main` se autodenomine «vigente». Antes de operar, comparar la versión activa y su historial con el código, la configuración y las pruebas. Las descripciones de workflows también pueden estar desactualizadas. No guardar secretos, identificadores privados de chats ni originales en GitHub.
 
 ## Inventario comprobado en este corte

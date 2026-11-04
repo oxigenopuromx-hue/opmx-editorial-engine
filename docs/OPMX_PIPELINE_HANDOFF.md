@@ -5,6 +5,24 @@ Estado histórico: 2026-10-25. Para Publisher y Telegram, prevalece el [estado o
 ## Propósito
 Punto de entrada técnico para cualquier instancia de ChatGPT Work que opere el flujo OPMX desde la salida editorial hasta distribución social.
 
+## Hito Telegram — publicar por defecto, 2026-11-04
+
+Decisión del usuario: PUBLICAR AMBOS por defecto; DRAFT sólo con `/borrador`
+explícito. Implementación v1 preparada en `tools/telegram/` y contrato
+`contracts/TELEGRAM_PUBLICATION_POLICY_v1.0.md`; exports completos sanitizados en
+`workflows/telegram/`. No cambia el Publisher de 91 nodos ni Social.
+
+Terminado/probado: 15 pruebas Node/VM aprobadas y 11 configuraciones de nodos
+válidas en n8n. Incluyen cierre acreditado, órdenes reenviadas, integridad,
+selección por message_id y preservación de paquetes cerrados históricos.
+Esto no constituye prueba Telegram→WordPress ni publicación real.
+
+Estado de despliegue en este commit: pendiente. Siguiente paso: guardar borrador
+del receptor, probar con servicios simulados, actualizar exclusivamente la política
+del Motor fijando este módulo a un commit y publicar/readback del receptor.
+Registrar versión activa, resultados y cualquier bloqueo en el estado operativo
+antes de declarar el hito activado. Mantener las claves idempotentes existentes.
+
 ## Fuente de verdad
 - GitHub `main` es la fuente de verdad técnica y versionada.
 - Los chats sirven para dirección, decisiones y aprobación.
