@@ -11,3 +11,7 @@ El paquete tg_6db63b3c569d559e5d70379499f3f57fb2305b1a revisión 6 falló por in
 ## Revisión de imágenes publicadas — 4 de noviembre
 
 Se revisaron 46 publicaciones en OPURO y 46 en OPOL desde el 1 de noviembre, con sus respectivas imágenes destacadas. Se detectó un PNG superior a 500 KB: post OPURO 9882, imagen 9886, 1200 × 630, 780506 bytes. Se creó el adjunto JPEG 9900, de 89952 bytes y las mismas dimensiones, y se asignó como imagen destacada; se conservó el adjunto original y la hero 9884. Se confirmó el cambio con lectura del post y el `og:image` y `twitter:image` públicos apuntaron al nuevo JPG. La nota equivalente de OPOL ya tenía una destacada JPG de 103645 bytes; su página pública apunta a ella en los metadatos sociales. Las cachés de clientes externos podrían tardar en actualizarse. El workflow auxiliar se dejó sin nodos de escritura activos.
+
+## Prueba real — 4 de noviembre
+
+La ejecución Telegram del paquete tg_b6567b3038dc435ca704f77d3cc732f5d69c6077, revisión 6, terminó con publicación en ambos destinos y aviso de Telegram confirmado. En WordPress, las destacadas de OPURO (adjunto 9914) y OPOL (adjunto 3083) son JPEG de 1200 × 630 y 66748 bytes; la hero de OPURO (9913) es JPEG de 1200 × 630 y 66748 bytes. Es una prueba de publicación real con ilustración generada; permanece pendiente probar conversión de entrada PNG/WEBP en el flujo completo y validar enfoques y formatos de hero previstos para cada uso. El Publisher general sigue sin garantizar JPEG para otros canales.
