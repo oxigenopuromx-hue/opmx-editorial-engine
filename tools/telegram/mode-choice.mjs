@@ -11,7 +11,7 @@ export function chooseTelegramMode(inventory, sources) {
   let announcedDefault = false;
   let lastTextIsClose = false;
   for (const item of inventory.items) {
-    if (item.kind !== 'TEXT') continue;
+    if (item.kind !== 'TEXT') { lastTextIsClose = false; continue; }
     const matches = sources.filter(s => s.item_id === item.item_id && s.stream === 'text');
     if (matches.length !== 1 || !Buffer.isBuffer(matches[0].bytes) || matches[0].bytes.length !== item.text_bytes || digest(matches[0].bytes) !== item.sha256) throw Error('Texto no verificado');
     const text = new TextDecoder('utf-8', { fatal: true }).decode(matches[0].bytes).trim();
