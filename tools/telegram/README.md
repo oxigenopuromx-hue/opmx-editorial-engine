@@ -20,8 +20,13 @@ no reconstruye el Publisher. Al desplegar operaciones se conservan sus listas
 privadas y se reutiliza la credencial HTTP ya configurada. Los siete nodos nuevos
 y las conexiones se aplican al receptor existente; Publisher no cambia.
 
-Para rollback restaurar/publicar la versión nativa anterior del receptor y
-revertir sólo las ocho sustituciones del prompt, fijando el selector histórico
-al commit original. Coordinar ambos componentes; no degradar paquetes con
-policy=publish-ambos-v1 a la automatización antigua, que debe bloquearlos.
+Para rollback, primero pausar consumo y conciliar paquetes con policy=publish-ambos-v1:
+la automatización antigua no puede interpretarlos. Restaurar/publicar la versión
+nativa anterior del receptor y revertir sólo las ocho sustituciones del prompt,
+fijando el selector histórico al commit original. Coordinar ambos componentes;
+no procesar esos paquetes como borradores históricos ni republicar resultados.
 No guardar el prompt completo, datos de chats u originales en GitHub.
+
+QA aislado: `build-default-qa.mjs` genera un workflow completo manual + Code sin
+IO externo. En n8n `Q6ikbrEyNHLIJ2m7`, ejecución `3271`: 16 aserciones aprobadas;
+no demuestra Telegram/guard/WordPress reales. Permanece desactivado.

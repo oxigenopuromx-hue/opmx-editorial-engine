@@ -36,7 +36,7 @@ Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Eng
 
 ## Publisher y Telegram — estado operativo
 
-Consultar primero [estado operativo y traspaso al 4 de noviembre de 2026](docs/operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md). La configuración activa incluye servicios y cambios fuera de `main`: los exports v1.2.12 y anteriores son referencias históricas, no una identificación fiable del flujo vigente. La publicación por defecto solicitada aún no está activa: sin comando de modo se preparan borradores en ambos destinos.
+Consultar primero [estado operativo y traspaso al 4 de noviembre de 2026](docs/operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md). La configuración activa incluye servicios y cambios fuera de `main`: los exports v1.2.12 y anteriores son referencias históricas, no una identificación fiable del flujo vigente. Desde la activación de las 22:56 UTC, los paquetes nuevos de Telegram publican en ambos destinos por defecto tras aviso de apertura, `/listo` y validaciones; sólo `/borrador` solicita borradores. No se promueven paquetes cerrados anteriores. Ver [política v1](contracts/TELEGRAM_PUBLICATION_POLICY_v1.0.md).
 
 ## Social vigente — 2026-10-25
 

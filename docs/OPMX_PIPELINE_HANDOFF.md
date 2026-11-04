@@ -17,11 +17,23 @@ válidas en n8n. Incluyen cierre acreditado, órdenes reenviadas, integridad,
 selección por message_id y preservación de paquetes cerrados históricos.
 Esto no constituye prueba Telegram→WordPress ni publicación real.
 
-Estado de despliegue en este commit: pendiente. Siguiente paso: guardar borrador
-del receptor, probar con servicios simulados, actualizar exclusivamente la política
-del Motor fijando este módulo a un commit y publicar/readback del receptor.
-Registrar versión activa, resultados y cualquier bloqueo en el estado operativo
-antes de declarar el hito activado. Mantener las claves idempotentes existentes.
+Estado: **configuración activada y leída de vuelta, 22:56 UTC**. Receptor
+`OSi8AcnzLlI0csRu`, versión publicada `6dcedb03-e0da-4637-b97f-b0f13f61164e`,
+36 nodos. Motor actualizado, habilitado y con programación por evento conservada;
+selector fijado al commit `70040428b241b592756bfeb7b165746fec2bc2a0`.
+Publisher permanece en `c29101d9-afaa-45b9-990e-1047ce2a19a9`, sin cambios.
+
+QA n8n aislado `Q6ikbrEyNHLIJ2m7`, ejecución manual `3271`: SUCCESS,
+16 aserciones, cero IO externo y cero posts. Desactivado en proyecto personal,
+sin credenciales, tablas ni llamadas HTTP/Telegram/WordPress. Se corrigió la
+agrupación visual existente del receptor para incluir sus siete nodos nuevos;
+validación final sin advertencias. Fuentes/generadores y JSON completos en main.
+
+Pendiente: observar la primera nota real nueva y comprobar PUBLISHED/SENT por
+destino; **no se realizó prueba real Telegram→guard→WordPress** en este cambio.
+Bloqueos de activación: ninguno observado. Paquetes anteriores abiertos sin aviso
+de política requieren orden directa; READY históricos no cambian. Reversión y
+límites en el estado operativo y contrato. Las claves idempotentes no cambian.
 
 ## Fuente de verdad
 - GitHub `main` es la fuente de verdad técnica y versionada.

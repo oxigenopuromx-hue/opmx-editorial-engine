@@ -70,7 +70,9 @@ after.connections['Operar paquete Telegram']={main:[]};
 for(const [source,target,sourceIndex=0] of connections){after.connections[source]??={main:[]};after.connections[source].main[sourceIndex]??=[];after.connections[source].main[sourceIndex].push(edge(target));}
 after.name='OPMX — Telegram recepción · publicación predeterminada v1';
 after.active=false;
+after.nodeGroups=[{id:'b011e17e-4062-4177-ad76-3eb55c3ecca4',name:'Paquetes Telegram privados',nodeNames:after.nodes.filter(n=>n.name!=='Recibir Telegram piloto').map(n=>n.name),description:'Recepción privada, originales y controles acreditados. Publicar por defecto tras validación; /borrador es excepción.'}];
 const operations=[...updates,...newNodes.map(node=>({type:'addNode',node})),...newNodes.filter(n=>n.type==='n8n-nodes-base.httpRequest').map(n=>({type:'setNodeSettings',nodeName:n.name,settings:{retryOnFail:false,onError:'continueRegularOutput'}})),{type:'removeConnection',source:'Operar paquete Telegram',target:'Confirmar operación de paquete Telegram'},...connections.map(([source,target,sourceIndex=0])=>({type:'addConnection',source,target,sourceIndex})),{type:'setWorkflowMetadata',name:after.name,description:'Recepción privada y fuentes verificadas. Nuevos paquetes: publicar AMBOS tras aviso confirmado y cierre /listo acreditado; /borrador es excepción explícita. No cambia paquetes READY existentes.'}];
+operations.push({type:'setNodeGroups',nodeGroups:after.nodeGroups});
 export {operations,after};
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
   fs.writeFileSync(new URL('workflows/telegram/OPMX_TELEGRAM_DEFAULT_PUBLICATION_v1_REFERENCE.json',root),JSON.stringify(after,null,2)+'\n');

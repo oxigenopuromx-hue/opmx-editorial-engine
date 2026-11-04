@@ -1551,5 +1551,49 @@
     "saveDataSuccessExecution": "none",
     "saveDataErrorExecution": "none"
   },
-  "tags": []
+  "tags": [],
+  "nodeGroups": [
+    {
+      "id": "b011e17e-4062-4177-ad76-3eb55c3ecca4",
+      "name": "Paquetes Telegram privados",
+      "nodeNames": [
+        "Configurar usuarios del piloto",
+        "Normalizar entrada Telegram",
+        "¿Descargar archivo Telegram?",
+        "Descargar archivo Telegram",
+        "Comprobar bytes Telegram",
+        "Confirmar recepción Telegram",
+        "Resultado piloto Telegram",
+        "¿Identificación Telegram?",
+        "Registrar identidad candidata Telegram",
+        "Conservar identificación Telegram",
+        "Registrar resultado recepción Telegram",
+        "Preparar paquete Telegram",
+        "¿Consultar almacenamiento Telegram?",
+        "Consultar sesión Telegram",
+        "Resolver paquete Telegram",
+        "¿Operar paquete Telegram?",
+        "Operar paquete Telegram",
+        "Confirmar operación de paquete Telegram",
+        "¿Guardar bytes Telegram?",
+        "Guardar original Telegram",
+        "Confirmar original Telegram",
+        "Detectar cierre para supervisión",
+        "Registrar paquete para supervisión",
+        "Preparar correlaciones Publisher",
+        "Calcular correlaciones Publisher",
+        "Registrar correlaciones Publisher",
+        "Identificar remitente al abrir",
+        "Guardar remitente al abrir",
+        "Preparar sellado con cierre acreditado",
+        "¿Cierre acreditado guardado?",
+        "Sellar paquete con cierre acreditado",
+        "Conservar operación sin sellado",
+        "Preparar política tras aviso confirmado",
+        "Guardar apertura con política anunciada",
+        "Verificar política de apertura guardada"
+      ],
+      "description": "Recepción privada, originales y controles acreditados. Publicar por defecto tras validación; /borrador es excepción."
+    }
+  ]
 }
