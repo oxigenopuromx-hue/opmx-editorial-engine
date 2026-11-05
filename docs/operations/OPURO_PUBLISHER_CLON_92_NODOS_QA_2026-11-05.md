@@ -54,3 +54,12 @@ Se creó además un workflow manual/inactivo de **solo lectura** `2pbjg5UPclZ76d
 Para diseñar reversión antes de cualquier POST, se creó el workflow manual de rescate `7QgTXCpqbmj1CmM3`, con control de estado del borrador. **El control de seguridad del entorno bloqueó la asignación de la credencial al workflow que contenía POST**. No se intentó eludir ese bloqueo, no se ejecutó ninguna escritura ni se intentó instalar otra credencial; el workflow de rescate se **archivó**, sin credenciales ni ejecución. No continuar con POST sobre el CMS productivo desde esta conexión.
 
 Esto delimita el bloqueo operativo: se puede validar lectura autenticada y el contrato en WordPress desechable (PR #21 PASS), pero **no** ejecutar desde aquí la escritura autenticada de prueba/rollback ni la firma HMAC desde el proceso WP web. Se requiere un mecanismo de staging/hosting autorizado y seguro, no un bypass.
+
+
+## Control final del export inerte (CI #14)
+
+Se reforzó el generador para que **los 92 nodos del archivo exportado tengan `disabled=true` y no contengan referencias a credenciales**, además de `active=false`. El QA del repositorio ahora falla si alguna de estas condiciones no se cumple. No depende de que un operador recuerde deshabilitar conexiones al importar.
+
+**GitHub Actions** [run #14](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/actions/runs/42003532697) `COMPLETED/SUCCESS`, commit `1ccda4b85e84e177b17c3996ef0e2499deb741b8`. Artifact actualizado `opmx-category-placement-candidate-no-activate`, ID **13404650568**, ZIP SHA256 **85106b8109d4def954cd457a7723bbf33920def5d3033da481ecf89e495165e9**, caducidad 12 de noviembre de 2026. Sustituye la recomendación de usar los artifacts anteriores en cualquier revisión.
+
+Este éxito de CI confirma solo export, lint lógico/estructura y pruebas de seguridad de la transformación; **no** representa un test real de escritura ni permiso para activar el clone n8n o usar credenciales. El clon de n8n `637qP2jabW0DnfX9` ya se encontraba igualmente inactivo, con 92 nodos deshabilitados y cero credenciales en su última lectura.
