@@ -37,6 +37,7 @@ jobs:
           const w=JSON.parse(fs.readFileSync(p,'utf8'));
           const names=new Set(w.nodes.map(n=>n.name));
           if(w.active!==false||w.nodes.length!==92)throw Error('Candidate is active or node count unexpected');
+          if(w.nodes.some(n=>n.disabled!==true||n.credentials&&Object.keys(n.credentials).length))throw Error('Candidate must have all nodes disabled and no credentials');
           if(w.nodes.some(n=>n.name==='OPURO — Preflight de colocación (CANDIDATO)')===false)throw Error('Missing preflight');
           for(const edges of Object.values(w.connections))
             for(const branches of Object.values(edges))
