@@ -81,6 +81,8 @@ export function buildCandidate(input) {
   ].join('\n');
   readback.parameters.jsCode=readback.parameters.jsCode.replace(final,check+'\n'+final);
   w.name='OPMX — Publisher OPURO/OPOL categoría CANDIDATO NO ACTIVAR';
+  // Import safety: every node remains inert until explicitly configured in staging.
+  for(const n of w.nodes){ n.disabled=true; delete n.credentials; }
   w.active=false;
   delete w.id; delete w.versionId;delete w.activeVersionId;delete w.activeVersion;
   w.description='Export offline de prueba. NO activar; no reemplazar workflow productivo.';
