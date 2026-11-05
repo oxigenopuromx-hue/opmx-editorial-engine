@@ -3,15 +3,15 @@
 const META_KEY = 'oxpuro_excluded_category_ids';
 const validId = (v) => typeof v === 'string' && /^[1-9][0-9]*$/.test(v) && Number.isSafeInteger(Number(v));
 
-export function categoryPlacementMeta({ excludedCategoryIds, assignedCategoryIds }) {
+export function categoryPlacementMeta({ excludedCategoryIds, eligibleCategoryIds }) {
   // An absent setting means "do not write this meta"; never silently reset existing preferences.
   if (excludedCategoryIds === undefined) return {};
   if (!Array.isArray(excludedCategoryIds)) throw new TypeError('Excluded category IDs must be an array');
-  if (!Array.isArray(assignedCategoryIds) || !assignedCategoryIds.every(validId)) {
-    throw new TypeError('Assigned category IDs must be validated decimal strings');
+  if (!Array.isArray(eligibleCategoryIds) || !eligibleCategoryIds.every(validId)) {
+    throw new TypeError('Eligible category IDs must be validated decimal strings');
   }
-  if (new Set(assignedCategoryIds).size !== assignedCategoryIds.length) {
-    throw new TypeError('Duplicate assigned category IDs');
+  if (new Set(eligibleCategoryIds).size !== eligibleCategoryIds.length) {
+    throw new TypeError('Duplicate eligible category IDs');
   }
   if (!excludedCategoryIds.every(validId)) {
     throw new TypeError('Excluded category IDs must be positive decimal strings');
@@ -19,8 +19,8 @@ export function categoryPlacementMeta({ excludedCategoryIds, assignedCategoryIds
   if (new Set(excludedCategoryIds).size !== excludedCategoryIds.length) {
     throw new TypeError('Duplicate excluded category IDs');
   }
-  if (excludedCategoryIds.some(id => !assignedCategoryIds.includes(id))) {
-    throw new TypeError('Excluded category ID is not assigned to the post');
+  if (excludedCategoryIds.some(id => !eligibleCategoryIds.includes(id))) {
+    throw new TypeError('Excluded category ID is not assigned to the post or an eligible ancestor');
   }
   // [] is an explicit clear, not the same as the setting being omitted.
   return { [META_KEY]: [...excludedCategoryIds] };
