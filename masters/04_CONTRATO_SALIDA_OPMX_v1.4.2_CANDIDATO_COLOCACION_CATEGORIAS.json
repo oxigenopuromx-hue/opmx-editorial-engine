@@ -64,8 +64,8 @@
       "optional": true,
       "omitted_means": "do_not_write",
       "empty_array_means": "explicit_clear",
-      "require_assigned_categories": true,
-      "production_enabled": false
+      "production_enabled": false,
+      "require_cms_eligible_categories_including_ancestors": true
     }
   },
   "top_level_fields": [
@@ -226,7 +226,7 @@
                 "type": "string",
                 "pattern": "^[1-9][0-9]*$"
               },
-              "description": "OPCIONAL. IDs WordPress exactos de categorías asignadas en OPURO que deben enviar esta nota al listado inferior. Ausencia: no modificar meta; [] explícito: limpiar exclusiones. Resolver IDs en CMS; no alterar portada general. Propuesta pendiente de validación de producto y n8n."
+              "description": "OPCIONAL. IDs WordPress exactos de categorías elegibles del post, incluyendo categorías superiores de las subcategorías asignadas, verificadas contra la jerarquía actual del CMS. Ausencia: no modificar meta; [] explícito: limpiar exclusiones. No alterar portada general. Propuesta candidata no activa."
             }
           }
         },
