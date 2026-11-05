@@ -13,5 +13,5 @@ test('single sites and explicit all derive from Publisher registry', () => {
 });
 test('combinations are normalized and invalid selections fail closed', () => {
   assert.equal(parse('/publicar liberal, opuro').destination,'OPURO,LIBERAL');
-  for (const cmd of ['/publicar desconocido','/publicar opuro,,opol','/publicar liberal\ntexto','/publicar en ambos']) assert.throws(()=>parse(cmd));
+  for (const cmd of ['/publicar desconocido','/publicar opuro,,opol','/publicar liberal\ntexto','/publicar en ambos','/publicar\nliberal']) assert.throws(()=>parse(cmd));
 });
