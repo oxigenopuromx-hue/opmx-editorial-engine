@@ -45,3 +45,19 @@ El MASTER canónico 1.4.1 NO contiene este control. Por tanto, el adaptador aisl
 No modificar el workflow de 91 nodos hasta probar su copia completa. Si falla en staging, apagar el candidato y mantener el publicado exactamente como estaba; no borrar la metadata editorial registrada en WordPress. No usar una versión antigua de `main` como snapshot del n8n activo.
 
 Pendientes: decisión formal de ubicación del campo opcional dentro del MASTER versionado, comprobación de autorización de escritura en staging, integración de workflow y revalidación real con HMAC. No se han creado ni publicado notas de prueba en producción.
+
+
+## Control de procedencia editorial (candidato, 5 noviembre)
+
+El nuevo campo no debe activarse únicamente por aparecer en un MASTER generado desde una noticia, PDF o texto de Telegram. La versión candidata del generador exige **dos entradas congruentes**:
+
+1. `CATEGORIAS.OPURO.EXCLUIR_DE_PORTADA_IDS` como selección opcional dentro del MASTER.
+2. `EDITORIAL_PLACEMENT` fuera del MASTER, en la envoltura de la petición OAuth del motor, como decisión directa del operador. Requiere `{mode:"DIRECT_OPERATOR",target:"OPURO",request_id:"...",confirmed:true,excluded_category_ids:[...]}`, con `request_id` y arreglo idénticos a los de la petición y el MASTER.
+
+La ausencia del campo deja el flujo original intacto. Un campo editorial sin la envoltura separada se **rechaza antes de crear notas**; una envoltura sin campo, también. La normalización no utiliza el contenido documental como permiso. Se añadió prueba regresiva en `build-category-placement-candidate.test.mjs`.
+
+**Advertencia de seguridad:** la coincidencia de campos es un control de procedencia, **no una firma criptográfica independiente**. La capa que construye `EDITORIAL_PLACEMENT` debe atestiguar de manera verificable una orden directa autenticada del operador y no copiar datos de las fuentes. Hasta que ese adaptador/guard confirme identidad, intención y autorización, el uso del control de colocación sigue bloqueado para producción, aunque el código valide.
+
+### Archivo reproducible
+
+GitHub Actions `Category placement candidate — isolated QA` [run #8](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/actions/runs/42001373493) completó SUCCESS para commit `688ce7b7f972fcdf4e80ab10fb7a92dea620ff9f`. El export inactivo de 92 nodos se conserva como artifact `opmx-category-placement-candidate-no-activate` (artifact ID 13402163580, SHA256 ZIP `21c0fd4a43c42fd304c6f5a1f7ac38abea399140839d9970d55fedcbf2bca538`, caduca 12 noviembre 2026). El source de 91 nodos no contiene credenciales; ni código ni workflow contienen secretos. No importar ni publicar sin pruebas y configuración aislada.
