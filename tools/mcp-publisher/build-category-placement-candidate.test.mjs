@@ -54,7 +54,7 @@ test('only a matching direct-operator envelope permits placement intent',()=>{
   const end=validator.indexOf('const categoryOpol=',start);
   // The inserted validation follows categoryOpol, so the snippet ends at the next original declaration.
   const startLine=validator.indexOf('const placementSpecified=');
-  const endLine=validator.indexOf('const categoryOpolSecondary=',startLine);
+  const endLine=validator.indexOf('const categoryOpolSecondary=',startLine)>=0 ? validator.indexOf('const categoryOpolSecondary=',startLine) : validator.indexOf('return {json:',startLine);
   assert.ok(startLine>=0&&endLine>startLine);
   const fn=new Function('OPUROCAT','envelope',validator.slice(startLine,endLine)+';return placementIntent;');
   const list=['10'];
