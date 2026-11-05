@@ -14,15 +14,25 @@ export function buildCandidate(input) {
   if(w.nodes?.length!==91) throw Error('Live/reference version drift: reconcile first');
   const get=name=>{const n=w.nodes.find(n=>n.name===name);if(!n) throw Error('Missing node: '+name);return n;};
   if(w.nodes.some(n=>n.name===PREFLIGHT))throw Error('Already patched');
+  const prepare=get('Preparar MASTER y binarios');
+  const prepAnchor='request_id:data.request_id,source_images:';
+  if(!prepare.parameters.jsCode.includes(prepAnchor))throw Error('Authenticated entry envelope drift');
+  prepare.parameters.jsCode=prepare.parameters.jsCode.replace(prepAnchor,
+    'request_id:data.request_id,editorial_placement:(data.EDITORIAL_PLACEMENT ?? null),source_images:');
   const editor=get(EDITOR);
   const anchor='const categoryOpol=str(OPOLCAT.PRINCIPAL??OPOLCAT.principal??SEO.CATEGORIA??SEO.category);';
   if(!editor.parameters.jsCode.includes(anchor))throw Error('Validator drift');
   const intake=[
     'const placementSpecified=Object.prototype.hasOwnProperty.call(OPUROCAT,"EXCLUIR_DE_PORTADA_IDS");',
     'const placementIntent=placementSpecified ? OPUROCAT.EXCLUIR_DE_PORTADA_IDS : undefined;',
+    'const placementControl=envelope.editorial_placement;',
     'if(placementSpecified){',
+    '  if(!placementControl || placementControl.mode!=="DIRECT_OPERATOR" || placementControl.target!=="OPURO" || placementControl.request_id!==envelope.request_id || placementControl.confirmed!==true) throw Error("COLOCACION_OPURO: autorización directa del operador ausente o incongruente.");',
     '  const valid=x=>typeof x==="string" && /^[1-9][0-9]*$/.test(x) && Number.isSafeInteger(Number(x));',
     '  if(!Array.isArray(placementIntent) || !placementIntent.every(valid) || new Set(placementIntent).size!==placementIntent.length) throw Error("COLOCACION_OPURO: IDs invalidos o duplicados.");',
+    '  if(!Array.isArray(placementControl.excluded_category_ids) || JSON.stringify(placementControl.excluded_category_ids)!==JSON.stringify(placementIntent)) throw Error("COLOCACION_OPURO: instrucción de operador no coincide con MASTER.");',
+    '} else if(placementControl){',
+    '  throw Error("COLOCACION_OPURO: control directo sin campo editorial correspondiente.");',
     '}'
   ].join('\n');
   editor.parameters.jsCode=editor.parameters.jsCode.replace(anchor,anchor+'\n'+intake);
