@@ -1,0 +1,94 @@
+{
+  "date": "2026-11-05",
+  "state": "PUBLIC_PILOT_VERIFIED",
+  "source": "OPURO",
+  "destination": "LIBERAL",
+  "published": 35,
+  "sections": {
+    "politica": 5,
+    "seguridad": 5,
+    "economia": 5,
+    "estados": 5,
+    "internacional": 5,
+    "cultura": 5,
+    "deportes": 5
+  },
+  "opinion_count": 0,
+  "original_dates_preserved": true,
+  "gutenberg_sha256_verified": true,
+  "source_code_commit": "48bf07a9e8ac8cad57fba241569c40c5dc19a77d",
+  "workflows": [
+    {
+      "id": "4o7K5TmKc7joScqB",
+      "name": "OPMX — Entrada automática · borradores v3",
+      "active": true,
+      "versionId": "eb70e2ff-3aa0-403b-8009-f762ee515f24",
+      "activeVersionId": "eb70e2ff-3aa0-403b-8009-f762ee515f24",
+      "nodeCount": 138,
+      "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true,
+        "callerPolicy": "workflowsFromAList",
+        "callerIds": "bnzVMNkZuGO1GQCZ,Mt7ts2EGPbyaTC2o"
+      }
+    },
+    {
+      "id": "bnzVMNkZuGO1GQCZ",
+      "name": "OPMX — Publisher archivos MCP",
+      "active": true,
+      "versionId": "f23a3dab-d2b4-4dde-98da-9e1e22a9d557",
+      "activeVersionId": "f23a3dab-d2b4-4dde-98da-9e1e22a9d557",
+      "nodeCount": 100,
+      "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true,
+        "saveManualExecutions": false,
+        "saveDataErrorExecution": "none",
+        "saveDataSuccessExecution": "none",
+        "executionTimeout": 300
+      }
+    },
+    {
+      "id": "Mt7ts2EGPbyaTC2o",
+      "name": "OPMX Publisher — formulario · destinos v3",
+      "active": true,
+      "versionId": "35833e03-50e3-4423-8ac7-c88e9af27da6",
+      "activeVersionId": "35833e03-50e3-4423-8ac7-c88e9af27da6",
+      "nodeCount": 48,
+      "settings": {
+        "executionOrder": "v1",
+        "binaryMode": "separate",
+        "availableInMCP": true
+      }
+    },
+    {
+      "id": "C4hk6fQQomueYC8f",
+      "name": "OPMX — Recuperación de resultados · sólo lectura",
+      "active": true,
+      "versionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "nodeCount": 10,
+      "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true
+      }
+    }
+  ],
+  "executions": {
+    "first_real_publication": "6106",
+    "bulk": "6110",
+    "targeted_prewrite_recovery": "6276",
+    "native_audit": "6288",
+    "anonymous_frontend_audit": "6519"
+  },
+  "temporary_workflows": {
+    "qVfs5nVIWJXzOQFR": "inactive",
+    "0NQMGTxDYZOZyLFh": "inactive"
+  },
+  "temporary_caller_removed": true,
+  "remaining_limitations": [
+    "Native transport for foreign core/image attachments is still required before selecting LIBERAL for content with interior images.",
+    "A client may retain a cached destination enum until rediscovering tools/list."
+  ],
+  "notes": "These are real authorized news publications. The earlier private fixture remains unpublished. No new test of a simultaneous three-site publication was performed."
+}
