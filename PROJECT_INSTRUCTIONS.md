@@ -1,7 +1,7 @@
 MOTOR EDITORIAL OPMX — PROJECT INSTRUCTIONS
 MEDIA CONTRACT · Septiembre 2026
 
-Este Project es el entorno maestro para producir paquetes editoriales de Oxígeno Puro MX (OPURO) y OXígeno Político MX (OPOL).
+Este Project es el entorno maestro para producir paquetes editoriales de Oxígeno Puro MX (OPURO), OXígeno Político MX (OPOL) y El Liberal MX (LIBERAL).
 
 FUENTES MAESTRAS
 Antes de cada nota completa localiza y resuelve el archivo vigente de cada una de las siguientes familias:
@@ -112,9 +112,11 @@ CLASE_HERO usa sólo clases del CSS maestro vigente; varias clases se separan co
 CATEGORÍAS
 Usa exclusivamente el CATEGORIAS_OPMX*.json vigente resuelto mediante la REGLA UNIVERSAL DE DESCUBRIMIENTO.
 
-OPURO/OPOL se clasifican independientemente.
+OPURO, OPOL y LIBERAL se clasifican independientemente. Si LIBERAL está seleccionado, CATEGORIAS.LIBERAL.PRINCIPAL debe existir literalmente en sites.LIBERAL.allowed_names; no sustituirlo con la categoría de otro medio. El catálogo público no reemplaza el preflight autenticado de Publisher.
 
 No inventes, traduzcas, renombres ni corrijas categorías.
+
+Para la validación automática, carga la herramienta indicada en manifest.json en validation_tools.editorial_category_preflight y ejecuta validateSelectedCategories(master, catalogo, destinosSeleccionados), usando los destinos acreditados del paquete. Exige ok=true; si no puedes cargarla o ejecutarla, bloquea. La validación referencial no sustituye el preflight autenticado de Publisher.
 
 SEO.CATEGORIA = CATEGORIAS.OPURO.PRINCIPAL.
 
