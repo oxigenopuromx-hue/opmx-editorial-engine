@@ -1,0 +1,58 @@
+name: Category placement candidate — isolated QA
+
+on:
+  pull_request:
+    paths:
+      - 'tools/mcp-publisher/category-placement*'
+      - 'tools/mcp-publisher/build-category-placement-candidate*'
+      - 'masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_CANDIDATO_COLOCACION_CATEGORIAS.json'
+      - 'workflows/publisher/OPMX_ENTRADA_AUTOMATICA_DESTINOS_v2.json'
+      - '.github/workflows/category-placement-candidate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate category placement adapter and legacy contract
+        run: node --test tools/mcp-publisher/category-placement*.test.mjs
+      - name: Validate candidate transformation on actual 91-node export
+        run: |
+          node --test tools/mcp-publisher/build-category-placement-candidate.test.mjs
+          node tools/mcp-publisher/build-category-placement-candidate.mjs --check
+          node tools/mcp-publisher/build-category-placement-candidate.mjs
+      - name: Check candidate graph and non-activation
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const p='workflows/publisher/OPMX_ENTRADA_AUTOMATICA_COLOCACION_CANDIDATO_NO_ACTIVAR.json';
+          const w=JSON.parse(fs.readFileSync(p,'utf8'));
+          const names=new Set(w.nodes.map(n=>n.name));
+          if(w.active!==false||w.nodes.length!==92)throw Error('Candidate is active or node count unexpected');
+          if(w.nodes.some(n=>n.disabled!==true||n.credentials&&Object.keys(n.credentials).length))throw Error('Candidate must have all nodes disabled and no credentials');
+          if(w.nodes.some(n=>n.name==='OPURO — Preflight de colocación (CANDIDATO)')===false)throw Error('Missing preflight');
+          for(const edges of Object.values(w.connections))
+            for(const branches of Object.values(edges))
+              for(const list of branches)
+                for(const link of list||[])
+                  if(!names.has(link.node))throw Error('Broken edge: '+link.node);
+          const writer=w.nodes.find(n=>n.name==='OPURO — Crear borrador Gutenberg enriquecido');
+          if(!writer.parameters.jsonBody.includes('oxpuro_excluded_category_ids'))throw Error('Meta not in write path');
+          console.log('PASS: inactive export, 92 nodes, valid graph and meta write path');
+          JS
+
+      - name: Upload inactive candidate for controlled review
+        uses: actions/upload-artifact@v4
+        with:
+          name: opmx-category-placement-candidate-no-activate
+          path: workflows/publisher/OPMX_ENTRADA_AUTOMATICA_COLOCACION_CANDIDATO_NO_ACTIVAR.json
+          if-no-files-found: error
+          retention-days: 7
