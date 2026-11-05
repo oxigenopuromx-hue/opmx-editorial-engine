@@ -26,3 +26,10 @@ test('real normalized controls are bound and interpreted by candidate policy',()
 test('every nonempty combination has one unambiguous canonical correlation',()=>{
  assert.deepEqual(correlationLabels(),['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS']);
 });
+
+test('stored selection is accurately acknowledged and help preserves AMBOS',()=>{
+ const x={...received('/publicar todos'),package_operation:'CONTENT',packageId:pkg};
+ const r=execute('Confirmar operación de paquete Telegram',{status:'STORED',packageId:pkg,itemId:'ti_'+'b'.repeat(40)},{'Resolver paquete Telegram':x})[0].json;
+ assert.match(r.reply_text,/PUBLICAR registrada para TODOS/);
+ const h=execute('Preparar paquete Telegram',{...received('/ayuda')})[0].json.reply_text;assert.match(h,/AMBOS: OXígeno Puro y OXígeno Político/);assert.match(h,/TODOS incluye los tres/);
+});

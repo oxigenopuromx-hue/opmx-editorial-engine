@@ -20,6 +20,15 @@ function build(){
  p=replaceOnce(p,String.raw`/^\/(?:nuevo|listo|publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(command)`, 'validControl(command)');
  p=replaceOnce(p,String.raw`/^\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$/i.test(x.text.trim())`, 'isMode(x.text.trim())');
  get('Resolver paquete Telegram').jsCode=helpers+p;
+ const updatedHelp='Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en AMBOS: OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.';
+ for(const name of ['Preparar paquete Telegram','Resolver paquete Telegram','Confirmar operación de paquete Telegram']) {
+  const entry=get(name);entry.jsCode=entry.jsCode.replace(/^const help=.*;$/m,'const help='+JSON.stringify(updatedHelp)+';');
+ }
+ let confirm=get('Confirmar operación de paquete Telegram').jsCode;
+ const legacy=String.raw`const mode=/^\/(publicar|borrador)(?:\s+(ambos|opuro|opol))?$/i.exec(context.text.trim());`;
+ const next=`const mode=context.mode_attested===true?modeMatch(context.text.trim()):null;`;
+ confirm=replaceOnce(confirm,legacy,next);
+ get('Confirmar operación de paquete Telegram').jsCode=helpers+`function modeMatch(s){try{const x=parseDestinationCommand(s);return [null,x.mode==='PUBLISH'?'publicar':'borrador',x.destination];}catch{return null;}}\n`+confirm;
  return nodes;
 }
 export const candidateNodes=build();
