@@ -10,6 +10,7 @@ function fixture(){
   swap(2,'OPURO — Preparar etiquetas v1.13',{jsCode:'return [];'});
   swap(3,'OPURO — Crear borrador Gutenberg enriquecido',{jsonBody:'={{ { meta:{\n    oxpuro_editorial: { subtitle: \'x\' }\n} } }}'});
   swap(4,'OPURO — Validar antes de publicar',{jsCode:'const p=$json;\nreturn {json:{validated:true,post_id:Number(p.id)}};'});
+  swap(5,'Preparar MASTER y binarios',{jsCode:'return {json:{json: JSON.stringify(data.master), CREAR_EN:destination, PUBLICAR:false, request_id:data.request_id,source_images:{}},binary};'});
   return {nodes,connections:{'OPURO — Resolver categoría':{main:[[{node:'OPURO — Preparar etiquetas v1.13',type:'main',index:0}]]}},active:true,id:'test',versionId:'old'};
 }
 test('adds a single inactive preflight, preserving 91 original node definitions',()=>{
@@ -44,4 +45,27 @@ test('preflight supports ancestor traversal and fails closed on invalid hierarch
   assert.equal(result[0].json.placement_requested,false);
   const bad=stub(['99'],{35:{id:35,parent:10},10:{id:10,parent:0}});
   await assert.rejects(()=>run.call({helpers:{httpRequest:bad.http}},name=>({first:()=>bad.lookup(name)})),/not eligible/);
+});
+
+test('only a matching direct-operator envelope permits placement intent',()=>{
+  const w=buildCandidate(fixture());
+  const validator=w.nodes.find(n=>n.name==='Validar y normalizar OPMX MASTER').parameters.jsCode;
+  const start=validator.indexOf('const placementSpecified=');
+  const end=validator.indexOf('const categoryOpol=',start);
+  // The inserted validation follows categoryOpol, so the snippet ends at the next original declaration.
+  const startLine=validator.indexOf('const placementSpecified=');
+  const endLine=validator.indexOf('const categoryOpolSecondary=',startLine);
+  assert.ok(startLine>=0&&endLine>startLine);
+  const fn=new Function('OPUROCAT','envelope',validator.slice(startLine,endLine)+';return placementIntent;');
+  const list=['10'];
+  const field={EXCLUIR_DE_PORTADA_IDS:list};
+  const direct={mode:'DIRECT_OPERATOR',target:'OPURO',request_id:'req-123',confirmed:true,excluded_category_ids:list};
+  assert.throws(()=>fn(field,{request_id:'req-123'}),/autorización directa/);
+  assert.deepEqual(fn(field,{request_id:'req-123',editorial_placement:direct}),list);
+  assert.throws(()=>fn(field,{request_id:'different',editorial_placement:direct}),/autorización directa/);
+  assert.throws(()=>fn(field,{request_id:'req-123',editorial_placement:{...direct,excluded_category_ids:['99']}}),/no coincide/);
+  assert.throws(()=>fn({}, {request_id:'req-123',editorial_placement:direct}),/control directo sin campo/);
+  assert.equal(fn({}, {request_id:'req-123'}),undefined);
+  const preparation=w.nodes.find(n=>n.name==='Preparar MASTER y binarios').parameters.jsCode;
+  assert.match(preparation,/editorial_placement:\(data.EDITORIAL_PLACEMENT \?\? null\)/);
 });
