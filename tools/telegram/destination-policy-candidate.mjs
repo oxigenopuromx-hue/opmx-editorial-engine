@@ -89,7 +89,7 @@ export function chooseTelegramMode(inventory, sources) {
   }
   const last = choices.at(-1);
   if (last) {
-    const selection = parseDestinationCommand(last.legacy && /^\/(?:publicar|borrador)$/i.test(last.command) ? last.command+' ambos' : last.command);
+    const selection = parseDestinationCommand((last.legacy || last.policy===LEGACY_POLICY) && /^\/(?:publicar|borrador)$/i.test(last.command) ? last.command+' ambos' : last.command);
     return { mode: selection.mode, destination: selection.destination, explicit:true, authorized:true, authorization:'DIRECT_MODE_COMMAND', control_item_ids:controlIds };
   }
   if (opening.length) return { mode:'PUBLISH', destination:opening[0].policy===LEGACY_POLICY?'AMBOS':'TODOS', explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds };

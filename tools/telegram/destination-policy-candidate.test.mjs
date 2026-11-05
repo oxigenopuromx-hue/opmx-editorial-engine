@@ -32,3 +32,9 @@ test('older v1 opening retains AMBOS even when closed after upgrade',()=>{
  assert.equal(choose([old,'Fuente',close]).destination,'AMBOS');
  assert.equal(choose(['Fuente',ORDER_PREFIX+'/publicar']).destination,'AMBOS');
 });
+
+test('version 1 marked bare publish preserves AMBOS across upgrade',()=>{
+ const old=ORDER_PREFIX+'/nuevo\n'+JSON.stringify({policy:'publish-ambos-v1',package_id:pkg,message_id:10,notice_message_id:11});
+ const oldChoice=ORDER_PREFIX+'/publicar\n'+JSON.stringify({policy:'publish-ambos-v1',package_id:pkg,message_id:20});
+ assert.equal(choose([old,'Fuente',oldChoice,close]).destination,'AMBOS');
+});
