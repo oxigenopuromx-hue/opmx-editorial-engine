@@ -160,3 +160,14 @@ Con información suficiente ejecuta sin confirmaciones innecesarias.
 Si falta una imagen/fuente indispensable o existe contradicción material, usa CONTROL_EDITORIAL.
 
 Los cambios al sistema se tratan como mantenimiento/versionado separado.
+
+
+## Decisión vigente — Publisher integrado v3 (2026-11-05)
+
+DEFINIDO por OPMx: la referencia técnica es OXígeno Puro en producción (`feat/portadas-categoria-cache`, `8acd8bff524e329dadf14e645559d0f99c3a5eeb`). Se descarta el receptor WordPress independiente de Liberal. Los cuatro workflows OPMX existentes y el guard ya integran LIBERAL por REST nativa con Gutenberg enriquecido, Hero/destacada propios y Rank Math.
+
+Contrato: OPURO, OPOL, LIBERAL; AMBOS significa permanentemente OPURO + OPOL; TODOS incluye todos los destinos registrados, actualmente los tres. Se admiten combinaciones por comas con espacios, mayúsculas y duplicados normalizados. Un miembro desconocido o vacío rechaza el conjunto antes de escribir. Categorías/autor/adjuntos/credenciales se resuelven por CMS; nunca reutilizar IDs de otros sitios.
+
+Código y pruebas del runtime activo: [Publisher v3](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/tree/feat/publisher-liberal-v3). [ADR y evidencias](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/blob/feat/publisher-liberal-v3/docs/architecture/ADR_PUBLISHER_DESTINOS_v3.0.md). [Decisión oficial en Drive](https://drive.google.com/file/d/1ZcHahE8JUJu8eSnokJXFPn5-34SS1-jg/view). CI 42061182423 y 112 pruebas aprobadas; borrador privado real 5712 y duplicados 5713/5719. No se publicó el fixture.
+
+El transporte actual lleva Hero y destacada. Para LIBERAL se rechazan core/image interiores con IDs de otro CMS antes de cualquier escritura; no se falsea la vinculación nativa. El servidor tools/list anuncia el nuevo destino string y post_id_liberal; un cliente que conserve el enum antiguo debe redescubrir ese esquema. Se mantienen las órdenes explícitas de publicación y el preflight conjunto antes de cambiar estados.
