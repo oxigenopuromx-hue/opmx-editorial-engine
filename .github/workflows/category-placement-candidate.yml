@@ -47,3 +47,11 @@ jobs:
           if(!writer.parameters.jsonBody.includes('oxpuro_excluded_category_ids'))throw Error('Meta not in write path');
           console.log('PASS: inactive export, 92 nodes, valid graph and meta write path');
           JS
+
+      - name: Upload inactive candidate for controlled review
+        uses: actions/upload-artifact@v4
+        with:
+          name: opmx-category-placement-candidate-no-activate
+          path: workflows/publisher/OPMX_ENTRADA_AUTOMATICA_COLOCACION_CANDIDATO_NO_ACTIVAR.json
+          if-no-files-found: error
+          retention-days: 7
