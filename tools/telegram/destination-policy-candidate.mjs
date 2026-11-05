@@ -32,7 +32,11 @@ export function decodeControl(text, packageId) {
   const split = marked.indexOf('\n');
   if (split === -1) return null; // image instructions and legacy non-mode records
   const command = marked.slice(0, split);
-  if (!validControl(command)) return null;
+  if (!validControl(command)) {
+    // A malformed or unsupported marked mode must never fall back to the default.
+    if (/^\/(?:publicar|borrador)(?:\s|$)/i.test(command)) throw Error('CONTROL_INVALID');
+    return null;
+  }
   let data;
   try { data = JSON.parse(marked.slice(split + 1)); } catch { throw Error('CONTROL_INVALID'); }
   if (data.policy !== POLICY || data.package_id !== packageId || !Number.isSafeInteger(data.message_id) || data.message_id < 1) throw Error('CONTROL_BINDING_INVALID');
