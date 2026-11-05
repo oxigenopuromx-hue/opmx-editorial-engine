@@ -39,3 +39,18 @@ Se creó un workflow independiente en n8n para validar la carga del grafo comple
 
 ## Próximo punto seguro
 Mantener el candidato inactivo. Crear un adaptador de autorización de orden editorial firmado o vinculado a una sesión válida del guard y probarlo con fixtures. Después, en staging separado, conectar credenciales de prueba, habilitar solamente los nodos pertinentes y comprobar preflight → POST WordPress → readback → reversión antes de cualquier promoción.
+
+
+## Readback final del clon e intento de prueba autenticada (5 noviembre, 09:xx UTC)
+
+Se comparó otra vez la referencia de 91 nodos con n8n. Resultado nativo del workflow candidato:
+- 92 nodos, `active=false`, **los 92 deshabilitados**, **cero credenciales**.
+- 133 conexiones (las 132 de referencia con una arista sustituida por dos): **0 faltantes, 0 adicionales**.
+- Sólo cuatro nodos de la referencia tienen diferencias de parámetros intencionales: preparación del sobre, validador del MASTER, cuerpo de creación OPURO y readback OPURO. Se añade un nodo preflight.
+- El Publisher productivo todavía mantiene 91 nodos y versión `c29101d9-afaa-45b9-990e-1047ce2a19a9`, activo.
+
+Se creó además un workflow manual/inactivo de **solo lectura** `2pbjg5UPclZ76dds` para verificar la existencia del borrador técnico previamente autorizado `9924`, usando la referencia a la credencial existente sin mostrar ningún secreto. Ejecución `5600` **SUCCESS**: GET autenticado `context=edit` confirmó `id=9924`, `status=draft`, `slug=""`, categorías `[1]`, `oxpuro_excluded_category_ids=[]`. No hubo escritura.
+
+Para diseñar reversión antes de cualquier POST, se creó el workflow manual de rescate `7QgTXCpqbmj1CmM3`, con control de estado del borrador. **El control de seguridad del entorno bloqueó la asignación de la credencial al workflow que contenía POST**. No se intentó eludir ese bloqueo, no se ejecutó ninguna escritura ni se intentó instalar otra credencial; el workflow de rescate se **archivó**, sin credenciales ni ejecución. No continuar con POST sobre el CMS productivo desde esta conexión.
+
+Esto delimita el bloqueo operativo: se puede validar lectura autenticada y el contrato en WordPress desechable (PR #21 PASS), pero **no** ejecutar desde aquí la escritura autenticada de prueba/rollback ni la firma HMAC desde el proceso WP web. Se requiere un mecanismo de staging/hosting autorizado y seguro, no un bypass.
