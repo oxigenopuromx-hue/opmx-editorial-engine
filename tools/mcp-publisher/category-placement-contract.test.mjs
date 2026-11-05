@@ -22,7 +22,7 @@ test('new placement field is optional, array of exact decimal strings', () => {
   assert.equal(field.items.type,'string');
   assert.equal(field.uniqueItems,true);
   assert.equal(candidate.contract_rules.category_placement_candidate.production_enabled,false);
-  assert.deepEqual(categoryPlacementMeta({excludedCategoryIds:undefined,assignedCategoryIds:['12']}),{});
-  assert.deepEqual(categoryPlacementMeta({excludedCategoryIds:['12'],assignedCategoryIds:['12']}),{oxpuro_excluded_category_ids:['12']});
+  assert.deepEqual(categoryPlacementMeta({excludedCategoryIds:undefined,eligibleCategoryIds:['12']}),{});
+  assert.deepEqual(categoryPlacementMeta({excludedCategoryIds:['12'],eligibleCategoryIds:['12']}),{oxpuro_excluded_category_ids:['12']});
   assert.equal(verifyCategoryPlacementReadback({excludedCategoryIds:['12'],post:{meta:{oxpuro_excluded_category_ids:['12']}}}),true);
 });
