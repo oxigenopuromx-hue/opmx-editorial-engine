@@ -14,14 +14,14 @@ El MASTER canónico 1.4.1 NO contiene este control. Por tanto, el adaptador aisl
 
 - `undefined`: no hacer cambios en este metadato ni borrar exclusiones antiguas.
 - `[]` enviado explícitamente por operador autorizado: limpiar todas las exclusiones.
-- `['12','35']`: aceptar sólo cadenas numéricas positivas sin ceros iniciales ni duplicados, presentes en el conjunto de categorías que **el CMS confirmó asignadas al post**.
+- `['12','35']`: aceptar sólo cadenas numéricas positivas sin ceros iniciales ni duplicados, presentes en el conjunto de categorías elegibles que **el CMS confirmó para la nota**, incluyendo categorías ascendentes de las subcategorías asignadas.
 - No aceptar IDs obtenidos por coincidencia parcial de nombres o por inferencia; no convertir silenciosamente números ni hacer búsquedas que cambien categorías.
 - `oxpuro_exclude_home` jamás debe modificarse como consecuencia secundaria.
 
 ## Punto de integración candidato
 
-1. Tras resolver la categoría en WordPress, leer IDs asignados y la selección explícita autorizada.
-2. Ejecutar `categoryPlacementMeta({excludedCategoryIds, assignedCategoryIds})` **antes de cualquier escritura**. Si está ausente, devolver `{}` y no incorporar el meta al JSON del POST.
+1. Tras resolver la categoría en WordPress, leer IDs elegibles de categorías directas y ancestras con la jerarquía del CMS y la selección explícita autorizada. No usar sólo categorías directas, porque `category_story_eligible()` admite ancestras.
+2. Ejecutar `categoryPlacementMeta({excludedCategoryIds, eligibleCategoryIds})` **antes de cualquier escritura**. Si está ausente, devolver `{}` y no incorporar el meta al JSON del POST.
 3. Crear / modificar artículo conservando el contrato Gutenberg y el guard actual. Si la selección fue explícita, incluir el meta validado en el body de WordPress.
 4. Leer el post en `context=edit`, después de la escritura, y exigir que `verifyCategoryPlacementReadback` devuelva true. Un fallo deja la publicación detenida para conciliación; no reintentar POST de creación bajo otro request_id.
 5. Inspeccionar página categoría y archivo público para comprobar posición; no inferir éxito por HTTP 200 del POST.
@@ -33,8 +33,8 @@ El MASTER canónico 1.4.1 NO contiene este control. Por tanto, el adaptador aisl
 |---|---|
 | Campo omitido | Ninguna escritura al meta |
 | Array vacío explícito | Escritura de `[]` y readback `[]` |
-| ID de categoría asignada | Exclusión sólo de su portada principal; nota accesible |
-| ID ajeno a categorías asignadas | Bloqueo antes de escritura |
+| ID de categoría elegible (directa o ancestro) | Exclusión sólo de la portada de categoría indicada; nota accesible |
+| ID ajeno a categorías elegibles (directas o ancestras) | Bloqueo antes de escritura |
 | Duplicado, número, negativo o cadena malformada | Bloqueo antes de escritura |
 | Readback incompleto o incoherente | Bloqueo y conciliación |
 | Paquete anterior sin el nuevo control | Comportamiento previo intacto |
