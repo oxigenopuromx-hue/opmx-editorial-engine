@@ -18,6 +18,8 @@ test('adds a single inactive preflight, preserving 91 original node definitions'
   assert.deepEqual(source,old);
   assert.equal(w.nodes.length,92);
   assert.equal(w.active,false);
+  assert.equal(w.nodes.every(n=>n.disabled===true),true);
+  assert.equal(w.nodes.some(n=>n.credentials&&Object.keys(n.credentials).length),false);
   assert.equal(w.id,undefined);
   assert.equal(w.connections['OPURO — Resolver categoría'].main[0][0].node,'OPURO — Preflight de colocación (CANDIDATO)');
   assert.equal(w.connections['OPURO — Preflight de colocación (CANDIDATO)'].main[0][0].node,'OPURO — Preparar etiquetas v1.13');
