@@ -1,7 +1,7 @@
 // Offline candidate: no sends. Validate each target and canonical URL before notice.
 import {destinationRegistry,resolveDestinations,destinationLabel} from '../mcp-publisher/destinations.mjs';
 const names={OPURO:'OXígeno Puro',OPOL:'OXígeno Político',LIBERAL:'El Liberal'};
-function requestTargets(request,identity,operation){
+export function requestTargets(request,identity,operation){
  if(!identity||identity.owner!==identity.chat||!/^[1-9][0-9]{0,15}$/.test(identity.chat??''))return null;
  if(request?.operation!==operation||!/^tg_[a-f0-9]{64}$/.test(request.request_id??''))return null;
  if(operation==='publicar_nota_opmx'&&request.confirmar_publicacion!=='PUBLICAR')return null;

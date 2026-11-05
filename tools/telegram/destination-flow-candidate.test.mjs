@@ -11,5 +11,22 @@ function choose(texts){const sources=texts.map((s,i)=>({item_id:'ti_'+i.toString
 const opening=attestedControl('/nuevo',pkg,10,11),closing=attestedControl('/listo',pkg,50);
 function mockResult(mode,dest){const sites=resolveDestinations(dest),request_id='tg_'+createHash('sha256').update(pkg+':3:'+dest+':draft-v1').digest('hex');const request={operation:mode==='PUBLISH'?'publicar_nota_opmx':'preparar_borrador_opmx',destino:dest,request_id,confirmar_publicacion:'PUBLICAR'};let v={status:'SUCCESS',mode,request_id,destino:dest};if(mode==='PUBLISH'){v.slug='nota-sintetica';v.targets={};for(const [i,d] of sites.entries())v.targets[d]={status:'PUBLISHED',cms_verified:true,post_id:i+1,public_url:registry[d].publicOrigin+'/nota-sintetica/'};}else{v.summary={};for(const [i,d] of sites.entries()){let k=d.toLowerCase();v.summary[k]='DRAFT';v['post_id_'+k]=i+1;v['edit_url_'+k]=registry[d].cms+'/wp-admin/post.php?post='+(i+1)+'&action=edit';}}return {request,response:{response:{result:{isError:false,structuredContent:v}}}};}
 for(const [input,mode,dest,count] of [['/publicar liberal','PUBLISH','LIBERAL',1],['/publicar todos','PUBLISH','TODOS',3],['/borrador opol, liberal','DRAFT','OPOL,LIBERAL',2]])test('synthetic pipeline '+input,()=>{const choice=choose([opening,'Fuente editorial sintética',command(input),closing]);assert.equal(choice.mode,mode);assert.equal(choice.destination,dest);assert.equal(choice.authorization,'DIRECT_MODE_COMMAND');assert.ok(correlationLabels().includes(dest));const m=mockResult(mode,dest);const notice=mode==='PUBLISH'?preparePublicationNotice(m.response,m.request,identity):prepareDraftNotice(m.response,m.request,identity);assert.equal(notice.notify,true);assert.equal((notice.text.match(/https:\/\//g)||[]).length,count);});
-test('implicit default and invalid marked commands never silently expand sites',()=>{assert.equal(choose([opening,'fuente',closing]).destination,'AMBOS');assert.throws(()=>choose([opening,'fuente',ORDER_PREFIX+'/publicar desconocido\n{}',closing]),/CONTROL_INVALID/);});
+test('implicit default and invalid marked commands never silently expand sites',()=>{assert.equal(choose([opening,'fuente',closing]).destination,'TODOS');assert.throws(()=>choose([opening,'fuente',ORDER_PREFIX+'/publicar desconocido\n{}',closing]),/CONTROL_INVALID/);});
 test('partial publication message does not invent success or trigger retry',()=>{const m=mockResult('PUBLISH','TODOS');m.response.response.result.structuredContent.status='PARTIAL_SUCCESS';m.response.response.result.structuredContent.targets.LIBERAL={status:'UNCERTAIN'};const n=preparePublicationNotice(m.response,m.request,identity);assert.equal(n.notify,true);assert.match(n.text,/resultado incierto/);assert.match(n.text,/No vuelvas a enviarla/);assert.doesNotMatch(n.text,/El Liberal: publicado/);});
+for(const [cmd,expected] of [
+ ['/publicar OPOL,LIBERAL','OPOL,LIBERAL'],
+ ['/publicar OPURO,LIBERAL','OPURO,LIBERAL'],
+ ['/publicar OPURO,OPOL','AMBOS'],
+ ['/publicar OPURO,OPOL,LIBERAL','TODOS'],
+ ['/publicar','TODOS'],
+])test('requested command '+cmd,()=>{
+ const choice=choose([opening,'Fuente sintética',command(cmd),closing]);
+ assert.equal(choice.mode,'PUBLISH');assert.equal(choice.destination,expected);assert.equal(choice.authorized,true);
+});
+test('new opening explicitly announces all destinations and writes version 2 policy',()=>{
+ const x={package_operation:'OPEN',message_id:10,receipt_id:'r',user_id:'123',chat_id:'123'};
+ const r=run('Resolver paquete Telegram',{status:'OPEN',state:'OPEN',packageId:pkg},{'Preparar paquete Telegram':x});
+ assert.match(r.reply_text,/PUBLICARÁ EN TODOS/);assert.match(r.reply_text,/El Liberal/);
+ const body=run('Preparar política tras aviso confirmado',{message_id:11,chat:{id:123}},{'Resolver paquete Telegram':{...r,default_policy_candidate:true,package_operation:'OPEN',package_state:'OPEN'}}).body;
+ assert.match(body.text,/publish-todos-v2/);
+});

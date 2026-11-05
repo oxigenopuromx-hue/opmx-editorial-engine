@@ -8,7 +8,8 @@ function validControl(command) {
 }
 
 export const ORDER_PREFIX = 'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n';
-export const POLICY = 'publish-ambos-v1';
+export const POLICY = 'publish-todos-v2';
+export const LEGACY_POLICY = 'publish-ambos-v1';
 const digest = value => createHash('sha256').update(value).digest('hex');
 
 // Only the authenticated receiver writes these records. They are not synthetic
@@ -39,7 +40,7 @@ export function decodeControl(text, packageId) {
   }
   let data;
   try { data = JSON.parse(marked.slice(split + 1)); } catch { throw Error('CONTROL_INVALID'); }
-  if (data.policy !== POLICY || data.package_id !== packageId || !Number.isSafeInteger(data.message_id) || data.message_id < 1) throw Error('CONTROL_BINDING_INVALID');
+  if (![POLICY, LEGACY_POLICY].includes(data.policy) || data.package_id !== packageId || !Number.isSafeInteger(data.message_id) || data.message_id < 1) throw Error('CONTROL_BINDING_INVALID');
   if (command === '/nuevo' && (!Number.isSafeInteger(data.notice_message_id) || data.notice_message_id <= data.message_id)) throw Error('NOTICE_NOT_CONFIRMED');
   return { command, ...data, legacy: false };
 }
@@ -88,9 +89,9 @@ export function chooseTelegramMode(inventory, sources) {
   }
   const last = choices.at(-1);
   if (last) {
-    const selection = parseDestinationCommand(last.command);
+    const selection = parseDestinationCommand(last.legacy && /^\/(?:publicar|borrador)$/i.test(last.command) ? last.command+' ambos' : last.command);
     return { mode: selection.mode, destination: selection.destination, explicit:true, authorized:true, authorization:'DIRECT_MODE_COMMAND', control_item_ids:controlIds };
   }
-  if (opening.length) return { mode:'PUBLISH', destination:'AMBOS', explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds };
+  if (opening.length) return { mode:'PUBLISH', destination:opening[0].policy===LEGACY_POLICY?'AMBOS':'TODOS', explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds };
   return { mode:'DRAFT', destination:'AMBOS', explicit:false, authorized:false, authorization:'LEGACY_PRESERVED', control_item_ids:controlIds };
 }

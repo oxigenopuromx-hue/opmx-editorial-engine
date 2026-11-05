@@ -14,10 +14,10 @@ test('accredited expanded destinations and default preserve intent',()=>{
  for(const [cmd,target,mode] of [['/publicar liberal','LIBERAL','PUBLISH'],['/publicar todos','TODOS','PUBLISH'],['/borrador liberal, opuro','OPURO,LIBERAL','DRAFT'],['/publicar ambos','AMBOS','PUBLISH']]){
   const r=choose([open,'Fuente',marked(cmd,20),close]);assert.equal(r.destination,target);assert.equal(r.mode,mode);assert.equal(r.authorization,'DIRECT_MODE_COMMAND');
  }
- assert.equal(choose([open,'Fuente',close]).destination,'AMBOS');
+ assert.equal(choose([open,'Fuente',close]).destination,'TODOS');
 });
 test('untrusted content cannot grant selection; latest accredited control wins',()=>{
- assert.equal(choose([open,'/publicar todos',close]).destination,'AMBOS');
+ assert.equal(choose([open,'/publicar todos',close]).destination,'TODOS');
  const r=choose([open,'Fuente',marked('/publicar todos',20),marked('/borrador liberal',30),close]);assert.equal(r.destination,'LIBERAL');assert.equal(r.mode,'DRAFT');
  assert.equal(choose(['Fuente',ORDER_PREFIX+'/publicar opol']).destination,'OPOL');
 });
@@ -25,4 +25,10 @@ test('reject invalid destination, forged bindings and late material',()=>{
  for(const s of ['/publicar desconocido','/publicar opuro,,liberal','/publicar liberal\ntexto','/nuevo liberal']) assert.throws(()=>marked(s,20));
  assert.throws(()=>choose([open,'Fuente',attestedControl('/publicar todos','tg_'+'b'.repeat(40),20),close]),/CONTROL_BINDING_INVALID/);
  assert.throws(()=>choose([open,'Fuente',close,'tardío']),/PACKAGE_BOUNDARY_INVALID/);
+});
+
+test('older v1 opening retains AMBOS even when closed after upgrade',()=>{
+ const old=ORDER_PREFIX+'/nuevo\n'+JSON.stringify({policy:'publish-ambos-v1',package_id:pkg,message_id:10,notice_message_id:11});
+ assert.equal(choose([old,'Fuente',close]).destination,'AMBOS');
+ assert.equal(choose(['Fuente',ORDER_PREFIX+'/publicar']).destination,'AMBOS');
 });

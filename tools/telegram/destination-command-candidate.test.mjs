@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseDestinationCommand as parse } from './destination-command-candidate.mjs';
 
 test('legacy default and AMBOS retain their original two destinations', () => {
-  assert.deepEqual(parse('/publicar').destinations, ['OPURO','OPOL']);
+  assert.deepEqual(parse('/publicar').destinations, ['OPURO','OPOL','LIBERAL']);
   assert.deepEqual(parse('/borrador ambos').destinations, ['OPURO','OPOL']);
 });
 test('single sites and explicit all derive from Publisher registry', () => {
