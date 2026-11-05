@@ -1,0 +1,21 @@
+import {writeFileSync} from 'node:fs';
+import {normalizeTelegramUpdate,validateTelegramDownload} from './intake.mjs';
+const normalize=normalizeTelegramUpdate.toString()+`\nconst x=$input.first().json;const r=normalizeTelegramUpdate(x.update,x.config);return r?[{json:r}]:[];`;
+const check=validateTelegramDownload.toString()+`\nconst original=$('Normalizar entrada Telegram').first(0,0).json;try{const keys=Object.keys($input.first().binary??{});if(keys.length!==1)throw Error('Binario ausente');const bytes=await this.helpers.getBinaryDataBuffer(0,keys[0]);return [{json:validateTelegramDownload(original,bytes)}];}catch{return [{json:{...original,kind:'DOWNLOAD_NOT_CONFIRMED',has_file:false,bytes_received:null,reply_text:'No se pudo confirmar el archivo. Este piloto no lo conservó ni lo envió al Motor.'}}];}`;
+const config=`return [{json:{update:$input.first().json,config:{allowedUserIds:[],allowedChatIds:[],maxBytes:10485760}}}];`;
+const result=`const sent=$input.first().json;const m=sent.result??sent;let input;try{input=$('Comprobar bytes Telegram').first(0,0).json}catch{input=$('Normalizar entrada Telegram').first(0,0).json;}const ack=String(m.chat?.id)===input.chat_id&&Number.isSafeInteger(m.message_id)&&m.message_id>0;return [{json:{status:ack?'RECEIPT_CONFIRMED':'RECEIPT_NOT_CONFIRMED',mode:'RECEIPT_ONLY',kind:input.kind,receipt_id:input.receipt_id,bytes_received:input.bytes_received??null,publisher_called:false,work_event_sent:false,original_stored:false}}];`;
+const source=`import {workflow,node,trigger,ifElse,expr} from '@n8n/workflow-sdk';
+const start=trigger({type:'n8n-nodes-base.telegramTrigger',version:1.5,config:{name:'Recibir Telegram piloto',parameters:{updates:['message'],additionalFields:{download:false}}}});
+const config=node({type:'n8n-nodes-base.code',version:2,config:{name:'Configurar usuarios del piloto',parameters:{mode:'runOnceForAllItems',jsCode:${JSON.stringify(config)}}}});
+const normalize=node({type:'n8n-nodes-base.code',version:2,config:{name:'Normalizar entrada Telegram',parameters:{mode:'runOnceForAllItems',jsCode:${JSON.stringify(normalize)}}}});
+const hasFile=ifElse({version:2.2,config:{name:'¿Descargar archivo Telegram?',parameters:{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},conditions:[{leftValue:expr('{{ $json.has_file }}'),rightValue:true,operator:{type:'boolean',operation:'true',singleValue:true}}],combinator:'and'},options:{}}}});
+const download=node({type:'n8n-nodes-base.telegram',version:1.2,config:{name:'Descargar archivo Telegram',parameters:{resource:'file',operation:'get',fileId:expr('{{ $json.attachment.file_id }}'),download:true,additionalFields:{}}}});
+const check=node({type:'n8n-nodes-base.code',version:2,config:{name:'Comprobar bytes Telegram',parameters:{mode:'runOnceForAllItems',jsCode:${JSON.stringify(check)}}}});
+const ack=node({type:'n8n-nodes-base.telegram',version:1.2,config:{name:'Confirmar recepción Telegram',parameters:{resource:'message',operation:'sendMessage',chatId:expr('{{ $json.chat_id }}'),text:expr('{{ $json.reply_text }}'),additionalFields:{appendAttribution:false,parse_mode:'HTML',reply_to_message_id:expr('{{ $json.message_id }}')}}}});
+const result=node({type:'n8n-nodes-base.code',version:2,config:{name:'Resultado piloto Telegram',parameters:{mode:'runOnceForAllItems',jsCode:${JSON.stringify(result)}}}});
+export default workflow('opmx-telegram-reception-pilot','OPMX — Telegram recepción piloto · H110').add(start).to(config).to(normalize).to(hasFile.onTrue(download.to(check.to(ack.to(result)))).onFalse(ack.to(result)));
+`;
+writeFileSync('/tmp/opmx-telegram-intake-sdk.js',source);
+writeFileSync('/tmp/opmx-telegram-intake-code.json',JSON.stringify({normalize,check,config,result}));
+console.log(JSON.stringify({bytes:Buffer.byteLength(source),nodes:8,mode:'RECEIPT_ONLY',credentialsEmbedded:false}));
+

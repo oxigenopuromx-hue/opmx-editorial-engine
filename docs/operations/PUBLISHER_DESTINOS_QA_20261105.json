@@ -1,0 +1,63 @@
+{
+  "draft": {
+    "status": "SUCCESS",
+    "mode": "DRAFT",
+    "request_id": "qa_liberal_integrated_20261105_v3",
+    "destino": "LIBERAL",
+    "summary": {
+      "opuro": "SKIPPED",
+      "opol": "SKIPPED",
+      "liberal": "DRAFT"
+    },
+    "post_id_opuro": null,
+    "post_id_opol": null,
+    "post_id_liberal": 9,
+    "edit_url_opuro": null,
+    "edit_url_opol": null,
+    "edit_url_liberal": "https://cms.elliberal.mx/wp-admin/post.php?post=9&action=edit",
+    "targets": {
+      "oxigenopuro": {
+        "status": "SKIPPED",
+        "target": "oxigenopuro"
+      },
+      "oxigenopolitico": {
+        "status": "SKIPPED",
+        "target": "oxigenopolitico"
+      },
+      "elliberal": {
+        "status": "DRAFT",
+        "target": "elliberal",
+        "request_id": "qa_liberal_integrated_20261105_v3",
+        "post_id": 9,
+        "slug": "qa-privada-publisher-liberal-20261105-v3",
+        "edit_url": "https://cms.elliberal.mx/wp-admin/post.php?post=9&action=edit",
+        "warnings": [
+          "No se cotejó el archivo byte a byte."
+        ]
+      }
+    },
+    "retryPermitted": false
+  },
+  "duplicate": {
+    "executionId": "5713",
+    "status": "error",
+    "error": "Posible duplicado LIBERAL: ya existe una nota con ese slug. [line 1]"
+  },
+  "productionDuplicate": {
+    "executionId": "5719",
+    "status": "error",
+    "error": "Posible duplicado LIBERAL: ya existe una nota con ese slug. [line 1]"
+  },
+  "wrongId": {
+    "executionId": "5718",
+    "publicationWritesStarted": false,
+    "status": "PUBLICATION_REJECTED"
+  },
+  "form": {
+    "executionId": "5721",
+    "state": "waiting_at_Form",
+    "expectedDuplicateCaptured": true,
+    "triggerPinned": true,
+    "childReal": true
+  }
+}

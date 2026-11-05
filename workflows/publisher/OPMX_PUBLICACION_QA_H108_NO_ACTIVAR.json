@@ -1,0 +1,1673 @@
+{
+  "name": "OPMX — QA publicación H108 · fixtures sin credenciales",
+  "nodes": [
+    {
+      "id": "880a5d25-b5e1-4964-b129-63e96d3a9738",
+      "name": "Iniciar diagnóstico MCP",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "0a4d2b54-be93-4ccf-b81c-b9d9547e3018",
+      "name": "Protocolo MCP archivos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{route:\"files\",request:{\"id\":108,\"operation\":\"publicar_nota_opmx\",\"confirmar_publicacion\":\"PUBLICAR\",\"request_id\":\"opmx-fixture-publish-20261102\",\"destino\":\"AMBOS\"}}}];"
+      }
+    },
+    {
+      "id": "0d8b8ecb-a92e-495c-8251-a97d17e9c43a",
+      "name": "Publisher protegido existente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{\"status\":\"SUCCESS\",\"mode\":\"DRAFT\",\"request_id\":\"opmx-fixture-publish-20261102\",\"post_id_opuro\":900001,\"post_id_opol\":900002,\"targets\":{\"oxigenopuro\":{\"status\":\"DRAFT\",\"post_id\":900001,\"slug\":\"opmx-fixture-no-publicar\"},\"oxigenopolitico\":{\"status\":\"DRAFT\",\"post_id\":900002,\"slug\":\"opmx-fixture-no-publicar\"}}}}];"
+      }
+    },
+    {
+      "id": "c87f67ae-d074-4b39-8867-5b2697a7a07a",
+      "name": "Responder MCP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      }
+    },
+    {
+      "id": "7c13ae18-9f86-4a0d-aad0-b74b945af042",
+      "name": "Resultado Publisher MCP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      }
+    },
+    {
+      "id": "100ace9b-8b26-4331-bf7e-a55ce2b4f375",
+      "name": "¿Publicar nota nueva?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        -600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Protocolo MCP archivos').first().json.request.operation === 'publicar_nota_opmx' && $json.status === 'SUCCESS' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "da018c78-df86-49ae-a216-9613acfcd59e",
+      "name": "Preparar publicación verificada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function preparePublication(request,receipt) {\n if(request?.operation!=='publicar_nota_opmx'||request.confirmar_publicacion!=='PUBLICAR')throw Error('Falta orden PUBLICAR');\n if(!/^[A-Za-z0-9_-]{16,128}$/.test(request.request_id??'')||receipt?.request_id!==request.request_id||receipt.status!=='SUCCESS'||receipt.mode!=='DRAFT')throw Error('Entrega de borradores no confirmada');\n const requested=request.destino==='AMBOS'?['OPURO','OPOL']:['OPURO','OPOL'].includes(request.destino)?[request.destino]:[];\n if(!requested.length)throw Error('Destino inválido');\n const targets={};let slug=null;\n for(const destination of requested){const key=destination==='OPURO'?'oxigenopuro':'oxigenopolitico';const r=receipt.targets?.[key];const id=receipt[destination==='OPURO'?'post_id_opuro':'post_id_opol'];\n  if(r?.status!=='DRAFT'||!Number.isSafeInteger(id)||id<1||r.post_id!==id||typeof r.slug!=='string'||r.slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(r.slug)||slug&&r.slug!==slug)throw Error('Borrador o identidad de destino inválido');\n  slug=r.slug;targets[destination]={post_id:id,status:'NOT_ATTEMPTED'};\n }\n return {operation:request.operation,request_id:request.request_id,destino:request.destino,slug,requested,targets,retryPermitted:false};\n}\nreturn [{json:preparePublication($('Protocolo MCP archivos').first().json.request,$input.first().json)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "cfc7bfaa-d756-4b86-993e-268c5e4c94db",
+      "name": "¿Preflight publicación OPURO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        -600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Conservar plan publicación').first().json.requested.includes('OPURO') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3b305491-046f-4422-95ca-33c26569c40f",
+      "name": "Publicación — Preflight OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        -600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "0570d9b1-a1cc-4fc6-8231-7c020535f890",
+      "name": "¿Preflight publicación OPOL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2600,
+        -600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Conservar plan publicación').first().json.requested.includes('OPOL') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f4a6f0e6-f6a5-4d2a-985c-c8f87608ad3a",
+      "name": "Publicación — Preflight OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2900,
+        -600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "8f970ecd-ad0c-4ce4-ac18-a2454853e9be",
+      "name": "Publicación — Categoría OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3200,
+        -600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "845116ed-0201-4a33-bdf8-a449c2fe02e4",
+      "name": "Preflight conjunto publicación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function editorialSnapshot(post) {\n // Dates, permalinks, generated SEO head and capabilities legitimately change\n // on publication. Editorial data must remain exactly as read before publishing.\n const meta={};for(const key of ['rank_math_title','rank_math_description','rank_math_focus_keyword','opmx_editorial','oxpuro_hero_media_id','oxpuro_editorial','site-post-title'])if(Object.hasOwn(post.meta??{},key))meta[key]=post.meta[key];\n return {id:post.id,slug:post.slug,type:post.type,title:post.title?.raw,content:post.content?.raw,excerpt:post.excerpt?.raw,author:post.author,featured_media:post.featured_media,categories:[...(post.categories??[])].sort((a,b)=>a-b),tags:[...(post.tags??[])].sort((a,b)=>a-b),meta};\n}\nfunction checkPublicationPreflight(plan,responses,opolCategory,guards) {\n const next=JSON.parse(JSON.stringify(plan));\n for(const destination of plan.requested){const r=responses[destination],p=r?.body,g=guards?.[destination];\n  if(g?.statusCode!==200||g.body?.status!=='reported'||String(g.body?.postId)!==String(plan.targets[destination].post_id))throw Error('Guard no confirma identidad del post: '+destination);\n  const existingPublic=plan.operation==='publicar_borradores_opmx'&&p?.status==='publish';\n  if(r?.statusCode!==200||!p||p.id!==plan.targets[destination].post_id||p.slug!==plan.slug||!(p.status==='draft'||existingPublic)||p.type!=='post'||typeof p.title?.raw!=='string'||!p.title.raw.trim()||typeof p.content?.raw!=='string'||!p.content.raw.includes('<!-- wp:')||p.content.raw.includes('{{OPMX:')||!Number.isSafeInteger(p.featured_media)||p.featured_media<1||!Number.isSafeInteger(p.author)||p.author<1||!Array.isArray(p.categories)||!p.categories.length||!Array.isArray(p.tags))throw Error('Preflight de borradores no coincide: '+destination);\n  for(const key of ['rank_math_title','rank_math_description','rank_math_focus_keyword'])if(typeof p.meta?.[key]!=='string'||!p.meta[key].trim())throw Error('SEO no confirmado: '+destination);\n  if(destination==='OPURO'&&(!Number.isSafeInteger(p.meta?.oxpuro_hero_media_id)||p.meta.oxpuro_hero_media_id<1||!p.meta.oxpuro_editorial))throw Error('Hero no confirmado');\n  let path='/'+plan.slug+'/';\n  if(destination==='OPOL'){const c=opolCategory?.body;const primary=p.meta?.opmx_editorial?.primary_category;\n   if(opolCategory?.statusCode!==200||!c||!p.categories.includes(c.id)||Number(primary)!==c.id||typeof c.slug!=='string'||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(c.slug))throw Error('Ruta de categoría OPOL no confirmada');\n   path='/'+c.slug+path;\n  }\n  next.targets[destination]={...next.targets[destination],guard_verified:true,before:editorialSnapshot(p),status:existingPublic?'PUBLISHED':'NOT_ATTEMPTED',cms_verified:existingPublic,public_url:'https://'+(destination==='OPURO'?'oxigenopuro.com.mx':'oxigenopolitico.com.mx')+path};\n }\n return next;\n}\nconst p=$('Conservar plan publicación').first().json;const responses={},guards={};for(const d of p.requested){responses[d]=$('Publicación — Preflight '+d).first().json;guards[d]=$('Publicación — Guard '+d).first().json;}return [{json:checkPublicationPreflight(p,responses,p.requested.includes('OPOL')?$('Publicación — Categoría OPOL').first().json:undefined,guards)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "cfdc081a-2e7b-4042-a08b-000cf8fefd69",
+      "name": "¿Publicar OPURO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1700,
+        -300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Preflight conjunto publicación').first().json.requested.includes('OPURO') && $('Preflight conjunto publicación').first().json.targets.OPURO.status !== 'PUBLISHED' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6dbf8c0b-9cd1-4bf8-8b41-292a21aa7800",
+      "name": "Publicación — Publicar OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        -300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {status:\"publish\"} }}"
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "0f06ff4c-c390-4a40-ac2c-6e273bbff59a",
+      "name": "Publicación — Confirmar OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2300,
+        -300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "66785d60-06db-4b00-9348-8a8054e92178",
+      "name": "Publicación — Evaluar OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function editorialSnapshot(post) {\n // Dates, permalinks, generated SEO head and capabilities legitimately change\n // on publication. Editorial data must remain exactly as read before publishing.\n const meta={};for(const key of ['rank_math_title','rank_math_description','rank_math_focus_keyword','opmx_editorial','oxpuro_hero_media_id','oxpuro_editorial','site-post-title'])if(Object.hasOwn(post.meta??{},key))meta[key]=post.meta[key];\n return {id:post.id,slug:post.slug,type:post.type,title:post.title?.raw,content:post.content?.raw,excerpt:post.excerpt?.raw,author:post.author,featured_media:post.featured_media,categories:[...(post.categories??[])].sort((a,b)=>a-b),tags:[...(post.tags??[])].sort((a,b)=>a-b),meta};\n}\nfunction recordPublication(plan,destination,response) {\n const next=JSON.parse(JSON.stringify(plan)),t=next.targets[destination],p=response?.body;\n if(!t?.before)throw Error('Falta preflight');\n // Even a lost POST response is reconciled by a separate authenticated GET.\n // Never resend the POST automatically.\n const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);\n const ok=response?.statusCode===200&&p?.status==='publish'&&stable(editorialSnapshot(p))===stable(t.before);\n t.status=ok?'PUBLISHED':'UNCERTAIN';t.cms_verified=ok;\n return next;\n}\nreturn [{json:recordPublication($('Preflight conjunto publicación').first().json,'OPURO',$input.first().json)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "658a40fb-f08f-49b8-b456-faeca11eb331",
+      "name": "Publicación — Omitir OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$('Preflight conjunto publicación').first().json}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "704de9a4-c686-43df-bb47-2b16d55aadb2",
+      "name": "Conservar publicación OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        -300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "07bc61d5-eed5-40a6-859c-c3b57f42ec50",
+      "name": "¿Publicar OPOL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Conservar publicación OPURO').first().json.requested.includes('OPOL') && $('Conservar publicación OPURO').first().json.targets.OPOL.status !== 'PUBLISHED' && (!$('Conservar publicación OPURO').first().json.requested.includes('OPURO') || $('Conservar publicación OPURO').first().json.targets.OPURO.status === 'PUBLISHED') }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b65092d1-51af-42f1-9925-235a3bd71ee7",
+      "name": "Publicación — Publicar OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {status:\"publish\"} }}"
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "dc0b54c4-84db-40f1-9452-b436988bacfb",
+      "name": "Publicación — Confirmar OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "08f013e6-68eb-4072-9f73-98b4d9e3473a",
+      "name": "Publicación — Evaluar OPOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function editorialSnapshot(post) {\n // Dates, permalinks, generated SEO head and capabilities legitimately change\n // on publication. Editorial data must remain exactly as read before publishing.\n const meta={};for(const key of ['rank_math_title','rank_math_description','rank_math_focus_keyword','opmx_editorial','oxpuro_hero_media_id','oxpuro_editorial','site-post-title'])if(Object.hasOwn(post.meta??{},key))meta[key]=post.meta[key];\n return {id:post.id,slug:post.slug,type:post.type,title:post.title?.raw,content:post.content?.raw,excerpt:post.excerpt?.raw,author:post.author,featured_media:post.featured_media,categories:[...(post.categories??[])].sort((a,b)=>a-b),tags:[...(post.tags??[])].sort((a,b)=>a-b),meta};\n}\nfunction recordPublication(plan,destination,response) {\n const next=JSON.parse(JSON.stringify(plan)),t=next.targets[destination],p=response?.body;\n if(!t?.before)throw Error('Falta preflight');\n // Even a lost POST response is reconciled by a separate authenticated GET.\n // Never resend the POST automatically.\n const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);\n const ok=response?.statusCode===200&&p?.status==='publish'&&stable(editorialSnapshot(p))===stable(t.before);\n t.status=ok?'PUBLISHED':'UNCERTAIN';t.cms_verified=ok;\n return next;\n}\nreturn [{json:recordPublication($('Conservar publicación OPURO').first().json,'OPOL',$input.first().json)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "0c3d1680-f8fd-4eb6-967a-ed8c66bcb3d6",
+      "name": "Publicación — Omitir OPOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$('Conservar publicación OPURO').first().json}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "ebaa4786-7810-40b8-81d4-9f90df2817b1",
+      "name": "Conservar publicación OPOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "94db255f-a1c5-4728-ad4f-5f53fa69be06",
+      "name": "¿Verificar web OPURO?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3200,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Conservar publicación OPOL').first().json.targets.OPURO?.status === 'PUBLISHED' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "660c1a8e-470b-4346-88b3-0d66bbd17314",
+      "name": "Publicación — Revalidar OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {scope:\"story\",slug:$('Conservar publicación OPOL').first().json.slug,categories:[]} }}"
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "9691b755-1cde-43af-8195-e225f52ec666",
+      "name": "Publicación — Web OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "a6289fdb-510d-490b-9ee1-ad87baca811d",
+      "name": "Publicación — Visibilidad OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function recordPublicVisibility(plan,destination,response) {\n const next=JSON.parse(JSON.stringify(plan)),t=next.targets[destination];\n if(t.status!=='PUBLISHED')return next;\n const html=response?.body;const escaped=t.public_url.replaceAll('&','&amp;');\n // Exact canonical URL, not a generic 200 error page or an unrelated slug.\n const canonicals=typeof html==='string'?[...html.matchAll(/<link\\b[^>]*>/gi)].filter(x=>/\\brel=[\"']canonical[\"']/i.test(x[0])).map(x=>x[0].match(/\\bhref=[\"']([^\"']+)[\"']/i)?.[1]):[];\n t.public_verified=response?.statusCode===200&&(canonicals.includes(t.public_url)||canonicals.includes(escaped));\n return next;\n}\nconst p=recordPublicVisibility($('Conservar publicación OPOL').first().json,'OPURO',$input.first().json);const r=$('Publicación — Revalidar OPURO').first().json;p.cache_revalidation=r.statusCode===200?'SUCCESS':'NOT_CONFIRMED';return [{json:p}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "2ef99d73-28be-48bd-9dca-861a62605b17",
+      "name": "Publicación — Sin web OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$('Conservar publicación OPOL').first().json}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "155145dd-5907-46e5-aaf2-bcca689e743d",
+      "name": "Conservar visibilidad OPURO",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "f320628d-4d4e-41eb-ad99-00146a44394e",
+      "name": "¿Verificar web OPOL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2900,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.targets.OPOL?.status === 'PUBLISHED' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "359d77cf-3096-4251-87ae-1558c8616898",
+      "name": "Publicación — Web OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3200,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "791b927a-2885-4a1e-8166-0d021f354537",
+      "name": "Publicación — Visibilidad OPOL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function recordPublicVisibility(plan,destination,response) {\n const next=JSON.parse(JSON.stringify(plan)),t=next.targets[destination];\n if(t.status!=='PUBLISHED')return next;\n const html=response?.body;const escaped=t.public_url.replaceAll('&','&amp;');\n // Exact canonical URL, not a generic 200 error page or an unrelated slug.\n const canonicals=typeof html==='string'?[...html.matchAll(/<link\\b[^>]*>/gi)].filter(x=>/\\brel=[\"']canonical[\"']/i.test(x[0])).map(x=>x[0].match(/\\bhref=[\"']([^\"']+)[\"']/i)?.[1]):[];\n t.public_verified=response?.statusCode===200&&(canonicals.includes(t.public_url)||canonicals.includes(escaped));\n return next;\n}\nreturn [{json:recordPublicVisibility($('Conservar visibilidad OPURO').first().json,'OPOL',$input.first().json)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "e557550a-f602-4203-acc2-d247b8462c27",
+      "name": "Resultado publicación MCP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function summarizePublication(plan) {\n const targets=Object.fromEntries(plan.requested.map(d=>{const t=plan.targets[d];return [d,{post_id:t.post_id,status:t.status,cms_verified:t.cms_verified===true,public_verified:t.public_verified===true,public_url:t.status==='PUBLISHED'?t.public_url:null}];}));\n const rows=Object.values(targets),published=rows.filter(t=>t.status==='PUBLISHED').length;\n const all=published===rows.length&&rows.length>0;\n const status=all?(rows.every(t=>t.public_verified)?'SUCCESS':'PUBLISHED_VISIBILITY_PENDING'):published?'PARTIAL_SUCCESS':'UNCERTAIN';\n return {status,mode:'PUBLISH',request_id:plan.request_id,slug:plan.slug,destino:plan.destino,targets,retryPermitted:false,cache_revalidation:plan.cache_revalidation??'NOT_REQUESTED',message:status==='SUCCESS'?'Publicación y enlaces verificados.':all?'WordPress confirma publicación; falta confirmar visibilidad pública. No reenviar.':'Publicación no confirmada en todos los destinos. Revisar IDs y estados; no reenviar automáticamente.'};\n}\nconst r=summarizePublication($input.first().json);return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:!['SUCCESS','PUBLISHED_VISIBILITY_PENDING'].includes(r.status)}}}}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "de43b78c-dfc9-4965-a0b7-0eaaa4dbc1ab",
+      "name": "Publicación rechazada antes de publicar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "let p={};try{p=$('Conservar plan publicación').first(0,0).json}catch{}const r={status:'PUBLICATION_REJECTED',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug??$('Protocolo MCP archivos').first().json.request.slug??null,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),publicationWritesStarted:false,draftsMayExist:true,retryPermitted:false,message:'No se efectuaron cambios de publicación: los borradores no superaron el preflight conjunto. No reenviar el paquete; revisar los IDs existentes.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
+      }
+    },
+    {
+      "id": "7c141e57-bd73-40a1-868a-5b55d3a252c6",
+      "name": "Publicación resultado incierto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "let p={};for(const name of ['Conservar visibilidad OPURO','Conservar publicación OPOL','Conservar publicación OPURO','Preflight conjunto publicación','Conservar plan publicación','Preparar publicación verificada','Preparar publicación existente']){try{p=$(name).first(0,0).json;break}catch{}}const r={status:'UNCERTAIN',mode:'PUBLISH',request_id:$('Protocolo MCP archivos').first().json.request.request_id,slug:p.slug,post_ids:Object.fromEntries(Object.entries(p.targets??{}).map(([d,t])=>[d,t.post_id])),retryPermitted:false,message:'Revisar WordPress y los estados de estos IDs antes de cualquier reenvío. No se confirma la publicación completa.'};return [{json:{httpStatus:200,response:{jsonrpc:'2.0',id:$('Protocolo MCP archivos').first().json.request.id,result:{content:[{type:'text',text:JSON.stringify(r)}],structuredContent:r,isError:true}}}}];"
+      }
+    },
+    {
+      "id": "b4ddd7dd-eccc-407c-b1bf-d7b0447cdbce",
+      "name": "¿Publicar borradores existentes?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2000,
+        -600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.route === 'existing-publication' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fd914c8a-aa63-46aa-84ea-e8cda6b83e32",
+      "name": "Preparar publicación existente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2300,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function prepareExistingPublication(request) {\n if(request?.operation!=='publicar_borradores_opmx'||request.confirmar_publicacion!=='PUBLICAR'||!/^[A-Za-z0-9_-]{16,128}$/.test(request.request_id??'')||typeof request.slug!=='string'||request.slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(request.slug))throw Error('Identidad de borradores existentes inválida');\n const requested=request.destino==='AMBOS'?['OPURO','OPOL']:['OPURO','OPOL'].includes(request.destino)?[request.destino]:[];\n if(!requested.length)throw Error('Destino inválido');\n const targets={};for(const d of requested){const id=request['post_id_'+d.toLowerCase()];if(!Number.isSafeInteger(id)||id<1)throw Error('Falta ID original');targets[d]={post_id:id,status:'NOT_ATTEMPTED'};}\n return {operation:request.operation,request_id:request.request_id,destino:request.destino,slug:request.slug,requested,targets,retryPermitted:false};\n}\nreturn [{json:prepareExistingPublication($('Protocolo MCP archivos').first().json.request)}];"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "da037de8-8db0-4b2b-bd00-64f3d2357125",
+      "name": "Conservar plan publicación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        -600
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all();"
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "e7ec32c0-8edf-4108-abe4-be8c2f3b1f55",
+      "name": "Publicación — Guard OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3200,
+        -600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {requestId:$('Conservar plan publicación').first().json.request_id,slug:$('Conservar plan publicación').first().json.slug,destination:\"OPURO\"} }}"
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "169d2604-9b37-4bc6-bb14-97c63666706b",
+      "name": "Publicación — Guard OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        -300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://example.invalid/fixture",
+        "authentication": "none",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {requestId:$('Conservar plan publicación').first().json.request_id,slug:$('Conservar plan publicación').first().json.slug,destination:\"OPOL\"} }}"
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    }
+  ],
+  "connections": {
+    "Preparar publicación verificada": {
+      "main": [
+        [
+          {
+            "node": "Conservar plan publicación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación rechazada antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preflight conjunto publicación": {
+      "main": [
+        [
+          {
+            "node": "¿Publicar OPURO?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación rechazada antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Evaluar OPURO": {
+      "main": [
+        [
+          {
+            "node": "Conservar publicación OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Omitir OPURO": {
+      "main": [
+        [
+          {
+            "node": "Conservar publicación OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar publicación OPURO": {
+      "main": [
+        [
+          {
+            "node": "¿Publicar OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Evaluar OPOL": {
+      "main": [
+        [
+          {
+            "node": "Conservar publicación OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Omitir OPOL": {
+      "main": [
+        [
+          {
+            "node": "Conservar publicación OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar publicación OPOL": {
+      "main": [
+        [
+          {
+            "node": "¿Verificar web OPURO?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Visibilidad OPURO": {
+      "main": [
+        [
+          {
+            "node": "Conservar visibilidad OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Sin web OPURO": {
+      "main": [
+        [
+          {
+            "node": "Conservar visibilidad OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar visibilidad OPURO": {
+      "main": [
+        [
+          {
+            "node": "¿Verificar web OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Visibilidad OPOL": {
+      "main": [
+        [
+          {
+            "node": "Resultado publicación MCP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado publicación MCP": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación resultado incierto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publisher protegido existente": {
+      "main": [
+        [
+          {
+            "node": "¿Publicar nota nueva?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Publicar nota nueva?": {
+      "main": [
+        [
+          {
+            "node": "Preparar publicación verificada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado Publisher MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Preflight publicación OPURO?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Guard OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Preflight publicación OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Preflight OPURO": {
+      "main": [
+        [
+          {
+            "node": "¿Preflight publicación OPOL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Preflight publicación OPOL?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Guard OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preflight conjunto publicación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Preflight OPOL": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Categoría OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Categoría OPOL": {
+      "main": [
+        [
+          {
+            "node": "Preflight conjunto publicación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Publicar OPURO?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Publicar OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación — Omitir OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Publicar OPURO": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Confirmar OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Confirmar OPURO": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Evaluar OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Publicar OPOL?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Publicar OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación — Omitir OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Publicar OPOL": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Confirmar OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Confirmar OPOL": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Evaluar OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Verificar web OPURO?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Revalidar OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación — Sin web OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Revalidar OPURO": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Web OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Web OPURO": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Visibilidad OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Verificar web OPOL?": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Web OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resultado publicación MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Web OPOL": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Visibilidad OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación rechazada antes de publicar": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación resultado incierto": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Iniciar diagnóstico MCP": {
+      "main": [
+        [
+          {
+            "node": "Protocolo MCP archivos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado Publisher MCP": {
+      "main": [
+        [
+          {
+            "node": "Responder MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar publicación existente": {
+      "main": [
+        [
+          {
+            "node": "Conservar plan publicación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación rechazada antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar plan publicación": {
+      "main": [
+        [
+          {
+            "node": "¿Preflight publicación OPURO?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publicación rechazada antes de publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Publicar borradores existentes?": {
+      "main": [
+        [
+          {
+            "node": "Preparar publicación existente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Publisher protegido existente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Guard OPURO": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Preflight OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicación — Guard OPOL": {
+      "main": [
+        [
+          {
+            "node": "Publicación — Preflight OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Protocolo MCP archivos": {
+      "main": [
+        [
+          {
+            "node": "¿Publicar borradores existentes?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "2bdf70a0-c20c-463b-bca5-416cd2c24bf8",
+      "name": "QA publicación simulada",
+      "nodeNames": [
+        "Protocolo MCP archivos",
+        "Publisher protegido existente",
+        "Responder MCP",
+        "Resultado Publisher MCP",
+        "¿Publicar nota nueva?",
+        "Preparar publicación verificada",
+        "¿Preflight publicación OPURO?",
+        "Publicación — Preflight OPURO",
+        "¿Preflight publicación OPOL?",
+        "Publicación — Preflight OPOL",
+        "Publicación — Categoría OPOL",
+        "Preflight conjunto publicación",
+        "¿Publicar OPURO?",
+        "Publicación — Publicar OPURO",
+        "Publicación — Confirmar OPURO",
+        "Publicación — Evaluar OPURO",
+        "Publicación — Omitir OPURO",
+        "Conservar publicación OPURO",
+        "¿Publicar OPOL?",
+        "Publicación — Publicar OPOL",
+        "Publicación — Confirmar OPOL",
+        "Publicación — Evaluar OPOL",
+        "Publicación — Omitir OPOL",
+        "Conservar publicación OPOL",
+        "¿Verificar web OPURO?",
+        "Publicación — Revalidar OPURO",
+        "Publicación — Web OPURO",
+        "Publicación — Visibilidad OPURO",
+        "Publicación — Sin web OPURO",
+        "Conservar visibilidad OPURO",
+        "¿Verificar web OPOL?",
+        "Publicación — Web OPOL",
+        "Publicación — Visibilidad OPOL",
+        "Resultado publicación MCP",
+        "Publicación rechazada antes de publicar",
+        "Publicación resultado incierto",
+        "¿Publicar borradores existentes?",
+        "Preparar publicación existente",
+        "Conservar plan publicación",
+        "Publicación — Guard OPURO",
+        "Publicación — Guard OPOL"
+      ],
+      "description": "Todos los HTTP fijados, example.invalid, sin credenciales."
+    }
+  ],
+  "active": false,
+  "meta": {
+    "purpose": "H108 synthetic QA; every HTTP is example.invalid and has no credentials. Use test_workflow and fixtures/mcp-publication-h108-pins.json. NEVER ACTIVATE.",
+    "sourceWorkflowId": "s7h6AbZ4nvJjMAdf"
+  }
+}
+

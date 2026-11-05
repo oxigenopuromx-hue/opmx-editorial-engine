@@ -1,0 +1,17 @@
+name: Publisher destinations
+on:
+  push:
+    paths: ['tools/mcp-publisher/**', 'tools/telegram/**', 'workflows/publisher/**', 'automatic-*.json', 'community-*.json', 'files-mcp-*.json', 'recovery-*.json', '.github/workflows/publisher-destinations.yml']
+  pull_request:
+    paths: ['tools/mcp-publisher/**', 'tools/telegram/**', 'workflows/publisher/**', 'automatic-*.json', 'community-*.json', 'files-mcp-*.json', 'recovery-*.json', '.github/workflows/publisher-destinations.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test tools/mcp-publisher/*.test.mjs

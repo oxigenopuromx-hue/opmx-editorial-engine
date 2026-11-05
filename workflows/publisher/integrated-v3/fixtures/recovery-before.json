@@ -1,0 +1,186 @@
+{
+  "name": "OPMX — Recuperación de resultados · sólo lectura",
+  "nodes": [
+    {
+      "id": "5786029a-e644-4680-bfbd-51e5b7144e08",
+      "name": "Entrada de recuperación",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "id": "a7889651-5ad1-4420-b7f5-7dc478df89bb",
+      "name": "Validar identidad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$input.first().json; if(!x || typeof x.requestId!=='string' || !/^[A-Za-z0-9_-]{16,128}$/.test(x.requestId) || typeof x.slug!=='string' || x.slug.length>200 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(x.slug) || x.destination!=='OPURO' || typeof x.fingerprint!=='string' || !/^[a-f0-9]{64}$/.test(x.fingerprint)) throw new Error('Identidad de recuperación inválida'); return [{json:{requestId:x.requestId,slug:x.slug,destination:x.destination,fingerprint:x.fingerprint}}];"
+      }
+    },
+    {
+      "id": "50774df3-7747-4548-8d46-f2a8dcb2a9f6",
+      "name": "Consultar guard de recuperación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/recovery/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "6cd96020-853c-42de-aafe-081a20b3039a",
+      "name": "Comprobar identidad guard",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json; if(r.statusCode!==200 || r.body?.observed?.reservation?.status!=='claimed' || r.body?.observed?.reservation?.identity!=='matched' || r.body?.retryPermitted!==false) throw new Error('Identidad o estado de guard no confirmados; conciliación manual'); return [{json:{guard:r.body}}];"
+      }
+    },
+    {
+      "id": "4c07fa74-efba-4fb5-85ee-e43d78cd3101",
+      "name": "Consultar WordPress sin escribir",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts?context=edit&status=any&per_page=100&_fields=id,slug,status,featured_media&slug=' + encodeURIComponent($('Validar identidad').first().json.slug) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "34692d0c-2fd7-408e-9401-59455ba9571e",
+      "name": "Informe de conciliación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json, identity=$('Validar identidad').first().json, g=$('Comprobar identidad guard').first().json.guard; if(r.statusCode!==200 || !Array.isArray(r.body)) throw new Error('Consulta WordPress no confirmada; conciliación manual'); const matches=r.body.filter(p=>p && p.slug===identity.slug && Number.isSafeInteger(p.id) && p.id>0).map(p=>({id:p.id,status:p.status,featured_media:p.featured_media})); const reported=g.observed?.target?.postId??null; return [{json:{requestId:identity.requestId,slug:identity.slug,destination:identity.destination,guard:g,wordpress:{exactMatches:matches,reportedPostIdFound:reported===null?null:matches.some(p=>String(p.id)===String(reported))},action:'manual_reconciliation',retryPermitted:false,consistentSnapshot:false,notice:'Sólo consulta por slug; no verifica medios ni prueba ausencia global.'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Entrada de recuperación": {
+      "main": [
+        [
+          {
+            "node": "Validar identidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar identidad": {
+      "main": [
+        [
+          {
+            "node": "Consultar guard de recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar guard de recuperación": {
+      "main": [
+        [
+          {
+            "node": "Comprobar identidad guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar identidad guard": {
+      "main": [
+        [
+          {
+            "node": "Consultar WordPress sin escribir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar WordPress sin escribir": {
+      "main": [
+        [
+          {
+            "node": "Informe de conciliación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "active": false
+}

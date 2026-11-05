@@ -1,0 +1,190 @@
+{
+  "name": "OPMX — QA sintético sólo borrador H100",
+  "nodes": [
+    {
+      "id": "04cdaeda-3ff9-4214-89aa-ef781a4643df",
+      "name": "Iniciar QA",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d4c8db8e-2035-438d-9155-edb22d8e3039",
+      "name": "Buscar borrador QA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/9674?context=edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "6c85cd2f-784d-40a8-a7c3-41ae0c4017d6",
+      "name": "Evitar duplicado QA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json,p=r.body;if(r.statusCode!==200||p?.id!==9674||p.status!=='draft'||p.slug!=='opmx-qa-sintetico-h100-20261101')throw new Error('No es draft QA esperado'); return [{json:{status:'QA_CONFIRMED'}}];"
+      }
+    },
+    {
+      "id": "702b6a23-fcb9-4000-a8a4-8cf483b04856",
+      "name": "Crear sólo borrador sintético",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/9674",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"status\":\"draft\",\"featured_media\":9676,\"meta\":{\"oxpuro_hero_media_id\":9675,\"oxpuro_editorial\":{\"subtitle\":\"Subtítulo sintético H100\",\"photo_credit\":\"Fixture técnico OPMX\"},\"rank_math_title\":\"QA H100 OPMX\",\"rank_math_description\":\"Prueba sintética del pipeline. No publicar.\",\"rank_math_focus_keyword\":\"prueba sintética\"}}",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "2b2b742f-fdce-459e-80de-bfdd64f69fa3",
+      "name": "Leer borrador sintético",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/' + $('Crear sólo borrador sintético').first().json.id + '?context=edit' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "63103c9f-1877-44eb-9bee-bbc3898557b0",
+      "name": "Verificar QA borrador",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p=$input.first().json;if(p.id!==9674||p.status!=='draft'||p.featured_media!==9676||p.meta?.oxpuro_hero_media_id!==9675||p.meta?.oxpuro_editorial?.subtitle!=='Subtítulo sintético H100'||p.meta?.oxpuro_editorial?.photo_credit!=='Fixture técnico OPMX'||p.meta?.rank_math_title!=='QA H100 OPMX'||p.meta?.rank_math_description!=='Prueba sintética del pipeline. No publicar.'||p.meta?.rank_math_focus_keyword!=='prueba sintética')throw new Error('Metadata QA no coincide'); return [{json:{status:'QA_MEDIA_METADATA_VERIFIED',post_id:p.id,hero_id:9675,featured_id:9676,wordpress_status:p.status}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Iniciar QA": {
+      "main": [
+        [
+          {
+            "node": "Buscar borrador QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar borrador QA": {
+      "main": [
+        [
+          {
+            "node": "Evitar duplicado QA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evitar duplicado QA": {
+      "main": [
+        [
+          {
+            "node": "Crear sólo borrador sintético",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear sólo borrador sintético": {
+      "main": [
+        [
+          {
+            "node": "Leer borrador sintético",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer borrador sintético": {
+      "main": [
+        [
+          {
+            "node": "Verificar QA borrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [],
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "tags": []
+}
+

@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-05",
+  "state": "ACTIVE",
+  "decision": "ADR_PUBLISHER_DESTINOS_v3.0.md",
+  "versions": {
+    "recovery": {
+      "id": "C4hk6fQQomueYC8f",
+      "versionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "before": "f0a0336b-5d7e-447a-b291-8f899429af19"
+    },
+    "automatic": {
+      "id": "4o7K5TmKc7joScqB",
+      "versionId": "eb70e2ff-3aa0-403b-8009-f762ee515f24",
+      "before": "c29101d9-afaa-45b9-990e-1047ce2a19a9"
+    },
+    "files-mcp": {
+      "id": "bnzVMNkZuGO1GQCZ",
+      "versionId": "f23a3dab-d2b4-4dde-98da-9e1e22a9d557",
+      "before": "06cb5193-275a-443e-99c9-ee8c51460444"
+    },
+    "community": {
+      "id": "Mt7ts2EGPbyaTC2o",
+      "versionId": "35833e03-50e3-4423-8ac7-c88e9af27da6",
+      "before": "4d477bfd-ab9d-46f9-b174-7f9a7b923e8a"
+    }
+  },
+  "guard": {
+    "file": "opmx-guard-destinos-20261105.zip",
+    "sha256": "b3667a9d62ad93d780406d2c0e10079e3a0d0dce61323a3044c112dbbf7d902d",
+    "previousFile": "opmx-guard-telegram-multiusuario.zip"
+  },
+  "verification": {
+    "nodeTests": 112,
+    "realPrivateDraftExecution": "5712",
+    "postIdLiberal": 9,
+    "heroId": 7,
+    "featuredId": 8,
+    "duplicateManual": "5713",
+    "duplicateActive": "5719",
+    "mcpTools": "5717",
+    "wrongIdRejected": "5718",
+    "formSimulated": "5721",
+    "publicFixturePublished": false
+  }
+}
