@@ -19,3 +19,16 @@ Una búsqueda documental recuperó referencias a un staging histórico del repos
 ## Siguiente validación
 
 Ejecutar con WordPress descartable (WP >=6.6, PHP >=8.2) la escritura deliberada `meta.oxpuro_excluded_category_ids` bajo identidad autorizada, relectura `context=edit`, comprobación de categoría directa/ancestra y persistencia de listados/URL, sin tocar notas productivas. Registrar ID de fixture y reversión. Cualquier promoción a workflow productivo exige además snapshot completo, prueba de rollback y revalidación HMAC.
+
+
+## Ampliación — QA #5576 (5 noviembre, 09:05 UTC)
+
+El workflow manual de QA fue extendido de 2 a 3 nodos con un Code Node de **simulación de intención de exclusión, sin escrituras ni credenciales**. Se conservaron trigger manual y lectura GET de categorías. Prueba n8n real #5576 `SUCCESS`, `get_workflow_execution` mostró:
+
+```json
+{"status":"PASS","dry_run":true,"writes":0,"eligible_ids":["35","4"],"selected_parent":"4","omitted_means_no_write":true,"explicit_selection":["4"],"wordpress_meta":"oxpuro_excluded_category_ids"}
+```
+
+El QA confirma que n8n recuperó jerarquía real Agua 35 → Noticias 4, distinguió ausencia de selección frente a selección explícita de la categoría ancestro y **no intentó un POST**. La validación de producción por lectura inmediata confirmó el Publisher automático `4o7K5TmKc7joScqB` ACTIVO, 91 nodos, versión publicada y borrador `c29101d9-afaa-45b9-990e-1047ce2a19a9` sin cambios; el QA `oTukmjDFYXfYUhDp` sigue INACTIVO (3 nodos, versión `6d0a83a4-7eff-413b-afef-9968f5040429`).
+
+**Límite:** sigue siendo ensayo dry-run con llamada GET, no escritura de posts ni ejecución del workflow completo de 92 nodos. El flujo principal y los secretos no se tocaron.
