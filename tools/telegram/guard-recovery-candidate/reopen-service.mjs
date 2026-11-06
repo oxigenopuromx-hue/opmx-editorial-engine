@@ -38,7 +38,7 @@ export function createReopenService({db,adminUserIds=[]}) {
       if(!Array.isArray(items)||items.some(x=>x.state==='PENDING'))return {status:'PENDING_RESERVATION'};
       // The adapter persists all source references, hashes, prior authorization,
       // destinations and results as an immutable revision snapshot.
-      await tx.saveSnapshot({packageId:id,revision:pkg.revision,ownerKey:pkg.ownerKey,items,barrierId:barrier.id});
+      await tx.saveSnapshot({packageId:id,revision:pkg.revision,ownerKey:pkg.ownerKey,items,barrier});
       const revision=pkg.revision+1;
       await tx.markOpen({packageId:id,expectedRevision:pkg.revision,revision});
       await tx.createLease({packageId:id,actorKey:actor,ownerKey:pkg.ownerKey,revision,receiptId:input.receiptId});
