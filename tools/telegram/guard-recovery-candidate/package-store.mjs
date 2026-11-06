@@ -54,7 +54,9 @@ const schema=[
   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
 ];
 
-export function createTelegramPackageStore(pool,{events=null}={}) {
+export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[]}={}) {
+  if(typeof recoveryEnabled!=='boolean'||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
+  const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
   let ready;
   const initialize=()=>ready??=(async()=>{
     const c=await pool.getConnection();try {for(const sql of schema)await c.execute(sql);}finally{c.release();}
@@ -67,7 +69,8 @@ export function createTelegramPackageStore(pool,{events=null}={}) {
       }finally{c.release();}
     },
     async run(action,input) {
-      const {ownerKey,bytes}=validatePackageRequest(action,input);
+      const validated=validatePackageRequest(action,input),actorKey=validated.ownerKey,bytes=validated.bytes;
+      let ownerKey=actorKey;
       await initialize();if(action==='seal'&&events)await events.initialize();
       const c=await pool.getConnection();let committed=false;
       try {
@@ -92,9 +95,20 @@ export function createTelegramPackageStore(pool,{events=null}={}) {
           await c.execute('UPDATE opmx_tg_quota_v1 SET package_count=package_count+1 WHERE id=1');
           return await finish({status:'OPEN',packageId:id,revision:1});
         }
+        let lease=null;
+        if(recoveryEnabled){
+          const [leases]=await c.execute('SELECT actor_key,owner_key FROM opmx_tg_recovery_leases_v1 WHERE package_id=?',[input.packageId]);
+          lease=leases[0]??null;
+          if(lease && lease.actor_key===actorKey && lease.owner_key!==actorKey && admins.has(actorKey))ownerKey=lease.owner_key;
+        }
         const [packs]=await c.execute('SELECT * FROM opmx_tg_packages_v1 WHERE package_id=? AND owner_key=?',[input.packageId,ownerKey]);
         if(!packs.length)return await finish({status:'NOT_FOUND'});
         const pack=packs[0];
+        if(lease && lease.actor_key!==actorKey && ['reserve','complete','seal','discard'].includes(action))return await finish({status:'PACKAGE_IN_USE'});
+        if(lease && lease.actor_key===actorKey && ['reserve','complete','seal','discard'].includes(action)){
+          const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=?',[actorKey]);
+          if(!sessions.length||sessions[0].package_id!==input.packageId)return await finish({status:'NO_EDIT_SESSION'});
+        }
         if(action==='manifest') {
           const [items]=await c.execute('SELECT item_id,kind,state,text_content,attachment_json,content_bytes,sha256 FROM opmx_tg_items_v1 WHERE package_id=? AND owner_key=? ORDER BY created_at,item_id',[input.packageId,ownerKey]);
           return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined}))});
@@ -130,7 +144,8 @@ export function createTelegramPackageStore(pool,{events=null}={}) {
           const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
           if(!Number(counts[0].stored)||Number(counts[0].pending))return await finish({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
-          await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[ownerKey,input.packageId]);
+          await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[actorKey,input.packageId]);
+          if(lease)await c.execute('DELETE FROM opmx_tg_recovery_leases_v1 WHERE package_id=? AND actor_key=?',[input.packageId,actorKey]);
           if(events)await events.enqueue(c,{owner:ownerKey,packageId:pack.package_id,revision:Number(pack.revision)+1,itemCount:Number(counts[0].stored),timestamp:new Date().toISOString()});
           return await finish({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1});
         }
@@ -144,6 +159,7 @@ export function createTelegramPackageStore(pool,{events=null}={}) {
           const id='ti_'+digest(`${ownerKey}:${input.receiptId}`).slice(0,40);
           const textOnly=input.kind==='TEXT';
           await c.execute('INSERT INTO opmx_tg_items_v1 (item_id,package_id,owner_key,receipt_key,fingerprint,kind,state,text_content,attachment_json,reserved_bytes,content_bytes,sha256,content_blob,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,UTC_TIMESTAMP(6))',[id,input.packageId,ownerKey,receiptKey,fingerprint,input.kind,textOnly?'STORED':'PENDING',input.text,input.attachment?JSON.stringify(input.attachment):null,reserved,textOnly?reserved:0,textOnly?digest(input.text):null]);
+          if(lease)await c.execute('INSERT INTO opmx_tg_recovery_contributions_v1 (item_id,package_id,actor_key,created_at) VALUES (?,?,?,UTC_TIMESTAMP(6))',[id,input.packageId,actorKey]);
           await c.execute('UPDATE opmx_tg_packages_v1 SET item_count=item_count+1,used_bytes=used_bytes+?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[reserved,input.packageId]);
           await c.execute('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes+? WHERE id=1',[reserved]);
           return await finish({status:textOnly?'STORED':'RESERVED',packageId:input.packageId,itemId:id});
