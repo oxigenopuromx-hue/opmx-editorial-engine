@@ -2,6 +2,14 @@
 
 Estado: **diseño y política aislada; no desplegado**. El receptor activo rechaza `/abrir`; no anunciar este comando en producción hasta desplegar y verificar todos los componentes. No se ha modificado ningún paquete ni publicación.
 
+## Comprobación del guard y corrección candidata
+
+El 6 de noviembre se comparó por SHA-256 `hbuilds/last-source/tools/telegram/package-store.mjs` en Hostinger con el módulo versionado en `feat/mcp-publisher-file-draft`: ambos coinciden en `d73c205ed3d93dbf4f4b7c1a29cddc59b5910d7261c88c60f39e0245ba0c96d1`. Esto identifica la última fuente cargada; no demuestra por sí solo los bytes del proceso en ejecución. El `event-store.mjs` de la última fuente no coincide con el de esa rama, por lo que no se debe desplegar la rama histórica completa.
+
+El módulo de paquetes revisado permite que una solicitud `seal` para un paquete `CANCELLED` con elementos almacenados pase a `READY` y pueda encolar un evento. El flujo normal del bot no ofrece este camino por sí solo, pues busca la sesión actual; el problema existe en la ruta autenticada del guard y es relevante al diseñar recuperación. Una prueba de caracterización lo reproduce con una base de datos simulada, sin efectuar ninguna operación real.
+
+`guard-recovery-candidate/` conserva una copia del módulo de paquetes con una corrección mínima: sólo `OPEN` puede sellarse y el replay `READY` no cambia. Tres pruebas simuladas cubren paquete cancelado, abierto y replay. Es una corrección candidata, no se ha probado con MySQL ni desplegado. No implementa `/abrir`, sesiones de administrador, snapshots ni conciliación. Antes de integrarla debe compararse con los archivos realmente ejecutados y probarse junto con el event-store desplegado y todos los consumidores.
+
 El operador puede solicitar `/abrir tg_…` sobre su paquete bloqueado; el administrador autorizado puede solicitarlo sobre el de cualquier operador. El texto del bloqueo incluye ese comando. Una sesión de edición pertenece a quien la abrió; si ya tiene otra, se informa y no se reemplaza. Tras añadir material o instrucciones, `/listo` prepara una nueva revisión y el Motor existente recibe un único evento. La identidad del autor original, sus instrucciones y destinos permanecen asociados al paquete; el administrador y las nuevas aportaciones se registran como tales. No duplicar el consumidor del Motor.
 
 ## Requisitos antes de conectar
