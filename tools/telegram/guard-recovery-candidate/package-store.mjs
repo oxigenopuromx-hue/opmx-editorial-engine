@@ -169,10 +169,13 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           if(recoveryEnabled&&pack.state==='READY'){
             const [closures]=await c.execute('SELECT package_id FROM opmx_tg_recovery_closures_v1 WHERE package_id=? AND revision=?',[input.packageId,pack.revision]);
             if(closures.length){
-              if(closures.length!==1||!readRecoveredPolicy)return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
+              // Both readers are mandatory: without the decision reader an
+              // approved destination/mode could be silently replaced by the
+              // pre-recovery policy. Ordinary packages remain unaffected.
+              if(closures.length!==1||!readRecoveredPolicy||!readConfirmedCorrection)return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
               recoveredPolicy=await readRecoveredPolicy(c,input.packageId,Number(pack.revision));
               if(!recoveredPolicy||typeof recoveredPolicy!=='object'||recoveredPolicy.authorized!==true||!['PUBLISH','DRAFT'].includes(recoveredPolicy.mode)||typeof recoveredPolicy.destination!=='string'||!Array.isArray(recoveredPolicy.control_item_ids))return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
-              if(readConfirmedCorrection)confirmedCorrection=await readConfirmedCorrection(c,input.packageId,Number(pack.revision));
+              confirmedCorrection=await readConfirmedCorrection(c,input.packageId,Number(pack.revision));
             }
           }
           return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{})});
