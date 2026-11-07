@@ -50,3 +50,11 @@ test('missing, foreign or unauthenticated original controls block reopening',asy
   const {state,service}=fixture();mutate(state);assert.equal((await service(input('123'))).status,'RECONCILIATION_REQUIRED');assert.equal(state.pkg.state,'READY');
  }
 });
+test('incomplete prior metadata rolls back a fence promoted during reconciliation',async()=>{
+ const state={fence:'RECONCILING'},key=hash('123');
+ const db={async transaction(fn){const before=state.fence;try{return await fn({
+  async lockQuota(){},async lockPackage(){return {ownerKey:key,state:'READY',revision:7}},async lockSession(){return null},async lockLease(){return null},async lockInventory(){return [{itemId:'ti_'+'1'.repeat(40),ownerKey:key,state:'STORED'}]},
+  async lockSafetyBarrier(){state.fence='SAFE_TO_REOPEN';return {packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}},async captureTrustedRevision(){return null}
+ })}catch(e){state.fence=before;throw e}}};
+ const result=await createReopenService({db})(input('123'));assert.equal(result.status,'RECONCILIATION_REQUIRED');assert.equal(state.fence,'RECONCILING');
+});

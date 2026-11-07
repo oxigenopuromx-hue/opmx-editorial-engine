@@ -49,21 +49,21 @@ export function createReopenService({db,adminUserIds=[]}) {
         return {status:'OPEN_REPLAY',packageId:id,revision:pkg.revision};
       if(session || lease || pkg.state!=='READY')return {status:'NOT_REOPENABLE'};
       if(!Number.isSafeInteger(pkg.revision)||pkg.revision<1||pkg.revision>=Number.MAX_SAFE_INTEGER)throw Error('INVALID_REVISION');
+      const items=await tx.lockInventory(id);
+      if(!Array.isArray(items)||items.some(x=>x.state==='PENDING'))return {status:'PENDING_RESERVATION'};
       const barrier=await tx.lockSafetyBarrier(id,pkg.revision);
       if(!barrier || barrier.packageId!==id || barrier.revision!==pkg.revision ||
          barrier.terminalBlocked!==true || barrier.noActiveAttempts!==true ||
          barrier.noPublicationSideEffects!==true || barrier.writesFenced!==true)
-        return {status:'RECONCILIATION_REQUIRED'};
-      const items=await tx.lockInventory(id);
-      if(!Array.isArray(items)||items.some(x=>x.state==='PENDING'))return {status:'PENDING_RESERVATION'};
+        throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       // Only a server-owned provider operating under the same transaction can
       // supply the prior publication metadata; missing evidence fails closed.
       const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey,items):null;
-      if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))return {status:'RECONCILIATION_REQUIRED'};
-      if(prior.controls.some(control=>!items.some(item=>item.itemId===control&&item.ownerKey===pkg.ownerKey&&item.state==='STORED')))return {status:'RECONCILIATION_REQUIRED'};
+      if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
+      if(prior.controls.some(control=>!items.some(item=>item.itemId===control&&item.ownerKey===pkg.ownerKey&&item.state==='STORED')))throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       // A read-only assertion is not a durable fence. Its atomic transition must
       // share this transaction with the revision, snapshot and session updates.
-      if(typeof tx.claimRecoveryFence!=='function')return {status:'RECONCILIATION_REQUIRED'};
+      if(typeof tx.claimRecoveryFence!=='function')throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       if(await tx.claimRecoveryFence(id,pkg.revision,barrier)!==true)throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       await tx.saveSnapshot({packageId:id,revision:pkg.revision,ownerKey:pkg.ownerKey,items,barrier,prior});
       const revision=pkg.revision+1;
