@@ -27,6 +27,10 @@ test('confirmation commits one existing event and repeat is idempotent',async()=
  const result=await Promise.all([f.store.confirm(x),f.store.confirm(x)]);
  assert.deepEqual(result.map(x=>x.status).sort(),['CONFIRMED','CONFIRMED_REPLAY']);assert.deepEqual(f.state.events,[eventId]);
 });
+test('repeating preview returns the same complete content for review',async()=>{
+ const f=fixture(),a=await f.store.preview(request),b=await f.store.preview({...request,receiptId:'telegram-123-11-101'});
+ assert.equal(b.status,'PREVIEW_EXISTS');assert.deepEqual(b.preview,a.preview);assert.deepEqual(f.state.events,[]);
+});
 test('a failure rolls back preview consumption and event together',async()=>{
  const f=fixture({failEnqueue:true}),p=await f.store.preview(request),x={...request,receiptId:'telegram-123-11-101',previewHash:p.preview.previewHash,action:'UPDATE'};
  await assert.rejects(()=>f.store.confirm(x),/OUTBOX_FAILED/);assert.equal(f.state.proposal.state,'PREVIEWED');assert.deepEqual(f.state.events,[]);assert.equal(f.state.pack.state,'OPEN');

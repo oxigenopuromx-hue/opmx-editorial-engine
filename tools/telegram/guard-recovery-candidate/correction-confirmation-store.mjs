@@ -48,7 +48,7 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     const facts=await loadLockedFacts(c,{packageId:x.packageId,revision:x.revision,ownerKey:actorKey});
     const preview=buildCorrectionPreview({...facts,packageId:x.packageId,revision:x.revision,ownerKey:actorKey,actorKey});
     const [result]=await c.execute("INSERT IGNORE INTO opmx_tg_correction_previews_v1 (package_id,revision,preview_hash,owner_key,preview_receipt,preview_json,state,created_at) VALUES (?,?,?,?,?,?,'PREVIEWED',UTC_TIMESTAMP(6))",[x.packageId,x.revision,preview.previewHash,actorKey,x.receiptId,JSON.stringify(preview)]);
-    if(result.affectedRows!==1)return {status:'PREVIEW_EXISTS',previewHash:preview.previewHash};
+    if(result.affectedRows!==1)return {status:'PREVIEW_EXISTS',preview};
     return {status:'PREVIEW_READY',preview};
    });
   },

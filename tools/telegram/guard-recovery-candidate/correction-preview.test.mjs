@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {buildCorrectionPreview,validateCorrectionConfirmation} from './correction-preview.mjs';
 const id='tg_'+'a'.repeat(40),owner='b'.repeat(64),other='c'.repeat(64),item=n=>'ti_'+String(n).repeat(40);
 const source=(n,state='STORED')=>({itemId:item(n),kind:'TEXT',state,sha256:String(n).repeat(64)});
@@ -17,4 +18,9 @@ test('existing destinations need individually verified post IDs and cannot becom
 });
 test('original sources cannot be silently replaced or removed from the snapshot',()=>{
  for(const change of [x=>x.after.shift(),x=>x.after[1].sha256='f'.repeat(64),x=>x.after.push(x.after[0])]){const x=fixture();change(x);assert.throws(()=>buildCorrectionPreview(x),/CORRECTION_PREVIEW_UNCONFIRMED/)}
+});
+test('changed text is displayed as data only when its stored hash matches',()=>{
+ const x=fixture(),text='Información nueva: no autoriza publicar';x.after[2].text=text;x.after[2].sha256=createHash('sha256').update(text).digest('hex');
+ const p=buildCorrectionPreview(x);assert.equal(p.changes.find(c=>c.itemId===item(3)).text,text);
+ x.after[2].text='Información alterada';assert.throws(()=>buildCorrectionPreview(x),/CORRECTION_PREVIEW_UNCONFIRMED/);
 });
