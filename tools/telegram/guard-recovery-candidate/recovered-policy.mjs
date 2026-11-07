@@ -26,12 +26,29 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
  for(const item of snapshot.items){if(!itemPattern.test(item.itemId??'')||item.ownerKey!==prior.ownerKey||before.has(item.itemId))fail();before.set(item.itemId,item);}
  for(const item of items){if(!itemPattern.test(item.itemId??'')||after.has(item.itemId))fail();after.set(item.itemId,item);}
  // Compare all immutable source and quota fields preserved by the snapshot.
- for(const [id,old] of before){const now=after.get(id);if(!now)fail();for(const key of ['ownerKey','receiptKey','fingerprint','kind','state','text','reservedBytes','contentBytes','sha256'])if(old[key]!==now[key])fail();if(JSON.stringify(old.attachment??null)!==JSON.stringify(now.attachment??null))fail();}
+ for(const [id,old] of before){
+  const now=after.get(id);if(!now)fail();
+  for(const key of ['ownerKey','receiptKey','fingerprint','kind','text','contentBytes','sha256'])if(old[key]!==now[key])fail();
+  if(JSON.stringify(old.attachment??null)!==JSON.stringify(now.attachment??null))fail();
+  // The store retains original bytes, fingerprint and quota reservation when
+  // an editor discards a stored item; history must still count toward quota.
+  // Original authorization controls must remain stored and immutable.
+  const removed=old.state==='STORED'&&now.state==='DISCARDED';
+  if(removed){if(prior.controls.includes(id)||now.reservedBytes!==old.reservedBytes)fail();}
+  else if(old.state!==now.state||old.reservedBytes!==now.reservedBytes)fail();
+ }
  if(new Set(prior.controls).size!==prior.controls.length||prior.controls.some(id=>!before.has(id)))fail();
  const extra=items.filter(i=>!before.has(i.itemId));
  if(!extra.length||extra.at(-1).itemId!==closure.closeItemId||items.at(-1)?.itemId!==closure.closeItemId)fail();
  for(const item of extra){
-  if(item.ownerKey!==prior.ownerKey||item.state!=='STORED'||item.actorKey!==closure.actorKey||!['TEXT','FILE'].includes(item.kind))fail();
+  if(item.ownerKey!==prior.ownerKey||!['STORED','DISCARDED'].includes(item.state)||item.actorKey!==closure.actorKey||!['TEXT','FILE'].includes(item.kind))fail();
+  // Stored discards retain bytes and quota; pending file reservations can be
+  // released because they have no stored bytes or content hash.
+  if(item.state==='DISCARDED'){
+   if(item.sha256===null){if(item.reservedBytes!==0||item.contentBytes!==0)fail();}
+   else if(!hashPattern.test(item.sha256??'')||item.reservedBytes!==item.contentBytes)fail();
+   continue;
+  }
   if(item.kind==='TEXT'){
    if(typeof item.text!=='string'||hash(item.text)!==item.sha256||Buffer.byteLength(item.text)!==item.contentBytes)fail();
    if(item.text.startsWith(prefix)&&item.itemId!==closure.closeItemId&&!directImage.test(item.text.slice(prefix.length)))fail();

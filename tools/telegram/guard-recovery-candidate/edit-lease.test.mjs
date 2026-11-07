@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {createTelegramPackageStore,PACKAGE_LIMITS} from './package-store.mjs';
 const k=id=>createHash('sha256').update(`opmx:telegram:v1:${id}:${id}`).digest('hex');
 const packageId='tg_'+'a'.repeat(40);
-function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,closeActor='456',lastItem='close-item',failClosure=false}={}){
+function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,closeActor='456',lastItem='close-item',failClosure=false,discardItem=null,controls=['ti_'+'c'.repeat(40)]}={}){
   const calls=[];
   const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql,args=[]){
     calls.push({sql,args});
@@ -14,6 +14,8 @@ function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,
     if(sql.startsWith('SELECT * FROM opmx_tg_packages'))return [args[1]===k('123')?[{package_id:packageId,owner_key:k('123'),state:'OPEN',revision:8,item_count:itemCount,used_bytes:usedBytes}]:[]];
     if(sql.startsWith('SELECT package_id FROM opmx_tg_sessions'))return [session?[{package_id:packageId}]:[]];
     if(sql.startsWith('SELECT item_id,package_id,fingerprint'))return [[]];
+    if(sql.startsWith('SELECT * FROM opmx_tg_items'))return [discardItem?[discardItem]:[]];
+    if(sql.startsWith('SELECT snapshot_json FROM opmx_tg_revision_snapshots'))return [[{snapshot_json:JSON.stringify({prior:{packageId,ownerKey:k('123'),revision:7,controls}})}]];
     if(sql.startsWith('SELECT i.item_id,i.kind'))return [[{item_id:'close-item',kind:'TEXT',text_content:'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo\n'+JSON.stringify({policy:'publish-todos-v2',package_id:packageId,message_id:2}),state:'STORED',actor_key:k(closeActor)}]];
     if(sql.startsWith('SELECT item_id FROM opmx_tg_items'))return [[{item_id:lastItem}]];
     if(sql.startsWith('SELECT COUNT(*) AS total'))return [[{total:1,pending:0,stored:1}]];
@@ -71,4 +73,17 @@ test('failure to persist the recovery closure prevents the event',async()=>{
  const {store,base,events}=fixture({failClosure:true});
  await assert.rejects(()=>store.run('seal',{...base,receiptId:'telegram-456-2-2'}));
  assert.equal(events.length,0);
+});
+test('recovery editor can deselect stored material while retaining bytes and quota',async()=>{
+ const id='ti_'+'b'.repeat(40),{store,base,calls}=fixture({discardItem:{state:'STORED',reserved_bytes:42}});
+ assert.equal((await store.run('discard',{...base,itemId:id})).status,'DISCARDED');
+ assert.ok(calls.some(c=>c.sql.includes("SET state='DISCARDED' WHERE")));
+ assert.equal(calls.some(c=>c.sql.includes('used_bytes=used_bytes-')),false);
+});
+test('recovery cannot discard controls or alter a package leased by another actor',async()=>{
+ const id='ti_'+'b'.repeat(40);
+ const f=fixture({discardItem:{state:'STORED',reserved_bytes:42},controls:[id]});assert.equal((await f.store.run('discard',{...f.base,itemId:id})).status,'PROTECTED_CONTROL');
+ const other=fixture({actor:'123',discardItem:{state:'STORED',reserved_bytes:42}});assert.equal((await other.store.run('discard',{...other.base,itemId:id})).status,'PACKAGE_IN_USE');
+ const incomplete=fixture({discardItem:{state:'STORED',reserved_bytes:42},controls:[]});assert.equal((await incomplete.store.run('discard',{...incomplete.base,itemId:id})).status,'RECOVERY_POLICY_UNCONFIRMED');
+ assert.equal(f.calls.some(c=>c.sql.startsWith('UPDATE opmx_tg_items')),false);
 });

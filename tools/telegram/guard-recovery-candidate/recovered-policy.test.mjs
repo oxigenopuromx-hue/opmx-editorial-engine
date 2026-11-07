@@ -30,6 +30,21 @@ test('new controls cannot silently replace the preserved publication decision',(
  const input=fixture();input.items[3]=item(4,prefix+'/publicar TODOS',admin);
  assert.throws(()=>resolveRecoveredPolicy(input),/RECOVERY_POLICY_UNCONFIRMED/);
 });
+test('editor may remove an original source without changing its retained identity or contents',()=>{
+ const input=fixture();input.items[1].state='DISCARDED';
+ assert.equal(resolveRecoveredPolicy(input).destination,'OPURO,LIBERAL');
+ for(const mutate of [x=>x.items[1].text='replaced in place',x=>x.items[1].sha256=hash('altered'),x=>x.items[1].reservedBytes=1]){
+  const x=fixture();x.items[1].state='DISCARDED';mutate(x);assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/);
+ }
+});
+test('an original authorization control cannot be discarded',()=>{
+ const x=fixture();x.items[0].state='DISCARDED';assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/);
+});
+test('a newly added source may be discarded without blocking a later close',()=>{
+ const x=fixture();x.items[3].state='DISCARDED';
+ assert.equal(resolveRecoveredPolicy(x).destination,'OPURO,LIBERAL');
+ x.items[3].reservedBytes=1;assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/);
+});
 test('a recovered editor can request an image without changing the original destination',()=>{
  for(const text of ['/imagen generar','Genera una imagen del evento\nDetalle editorial']){
   const input=fixture();input.items[3]=item(4,prefix+text,admin);

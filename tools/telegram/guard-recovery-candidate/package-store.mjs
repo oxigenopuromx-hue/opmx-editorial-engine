@@ -224,6 +224,18 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         const [items]=await c.execute('SELECT * FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=?',[input.itemId,input.packageId,ownerKey]);
         if(!items.length)return await finish({status:'NOT_FOUND'});const item=items[0];
         if(action==='discard') {
+          if(lease&&item.state==='DISCARDED')return await finish({status:'DISCARDED_REPLAY',itemId:input.itemId});
+          if(lease&&item.state==='STORED'){
+            // Preserve originals and their byte reservations for audit. The
+            // existing quota counts retained blobs, even when not selected.
+            const [snapshots]=await c.execute('SELECT snapshot_json FROM opmx_tg_revision_snapshots_v1 WHERE package_id=? AND revision=?',[input.packageId,Number(lease.opening_revision)-1]);
+            let prior;try{prior=JSON.parse(snapshots[0]?.snapshot_json??'').prior}catch{return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'})}
+            if(prior?.packageId!==input.packageId||prior.ownerKey!==ownerKey||prior.revision!==Number(lease.opening_revision)-1||!Array.isArray(prior.controls)||!prior.controls.length||new Set(prior.controls).size!==prior.controls.length||prior.controls.some(id=>typeof id!=='string'||!/^ti_[a-f0-9]{40}$/.test(id)))return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
+            if(prior.controls.includes(input.itemId))return await finish({status:'PROTECTED_CONTROL'});
+            await c.execute("UPDATE opmx_tg_items_v1 SET state='DISCARDED' WHERE item_id=? AND state='STORED'",[input.itemId]);
+            await c.execute('UPDATE opmx_tg_packages_v1 SET revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[input.packageId]);
+            return await finish({status:'DISCARDED',itemId:input.itemId});
+          }
           if(item.state!=='PENDING')return await finish({status:'NOT_PENDING'});
           await c.execute("UPDATE opmx_tg_items_v1 SET state='DISCARDED',reserved_bytes=0 WHERE item_id=?",[input.itemId]);
           await c.execute('UPDATE opmx_tg_packages_v1 SET used_bytes=used_bytes-?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[item.reserved_bytes,input.packageId]);
