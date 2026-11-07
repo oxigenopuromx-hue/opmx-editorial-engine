@@ -58,7 +58,7 @@ export function createReopenService({db,adminUserIds=[]}) {
       if(!Array.isArray(items)||items.some(x=>x.state==='PENDING'))return {status:'PENDING_RESERVATION'};
       // Only a server-owned provider operating under the same transaction can
       // supply the prior publication metadata; missing evidence fails closed.
-      const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey):null;
+      const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey,items):null;
       if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))return {status:'RECONCILIATION_REQUIRED'};
       if(prior.controls.some(control=>!items.some(item=>item.itemId===control&&item.ownerKey===pkg.ownerKey&&item.state==='STORED')))return {status:'RECONCILIATION_REQUIRED'};
       // A read-only assertion is not a durable fence. Its atomic transition must
