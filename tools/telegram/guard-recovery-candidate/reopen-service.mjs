@@ -35,7 +35,7 @@ export function createReopenService({db,adminUserIds=[]}) {
        !packagePattern.test(input.packageId??'')||!receiptPattern.test(input.receiptId??'')||
        !input.receiptId.startsWith(`telegram-${input.chat}-`)) return {status:'INVALID_REQUEST'};
     const actor=ownerKey(input.owner), id=input.packageId;
-    return db.transaction(async tx=>{
+    try { return await db.transaction(async tx=>{
       await tx.lockQuota(); // Same first lock as the existing package store.
       const pkg=await tx.lockPackage(id);
       if(!pkg || (pkg.ownerKey!==actor&&!adminKeys.has(actor)))return {status:'NOT_FOUND'};
@@ -56,6 +56,10 @@ export function createReopenService({db,adminUserIds=[]}) {
       // supply the prior publication metadata; missing evidence fails closed.
       const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey):null;
       if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))return {status:'RECONCILIATION_REQUIRED'};
+      // A read-only assertion is not a durable fence. Its atomic transition must
+      // share this transaction with the revision, snapshot and session updates.
+      if(typeof tx.claimRecoveryFence!=='function')return {status:'RECONCILIATION_REQUIRED'};
+      if(await tx.claimRecoveryFence(id,pkg.revision,barrier)!==true)throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       await tx.saveSnapshot({packageId:id,revision:pkg.revision,ownerKey:pkg.ownerKey,items,barrier,prior});
       const revision=pkg.revision+1;
       await tx.markOpen({packageId:id,expectedRevision:pkg.revision,revision});
@@ -63,6 +67,9 @@ export function createReopenService({db,adminUserIds=[]}) {
       await tx.createSession({actorKey:actor,packageId:id});
       await tx.audit({type:'PACKAGE_REOPENED',packageId:id,previousRevision:pkg.revision,revision,actorKey:actor,ownerKey:pkg.ownerKey});
       return {status:'OPEN',packageId:id,revision};
-    });
+    }); } catch(error) {
+      if(error?.message==='RECOVERY_FENCE_NOT_CONFIRMED')return {status:'RECONCILIATION_REQUIRED'};
+      throw error;
+    }
   };
 }

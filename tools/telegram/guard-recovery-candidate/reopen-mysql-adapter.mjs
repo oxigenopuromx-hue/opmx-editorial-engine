@@ -11,8 +11,8 @@ export function recoverySchema(){return [...schema];}
 // The evidence provider must be server-owned and hold an enforceable publication
 // fence for this transaction; no such provider exists in production yet. Without
 // one, every READY package is rejected by reopen-service, not reopened.
-export function createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier=null,captureTrustedRevision=null}={}){
-  if(!pool||typeof pool.getConnection!=='function'||(lockTrustedSafetyBarrier!==null&&typeof lockTrustedSafetyBarrier!=='function')||(captureTrustedRevision!==null&&typeof captureTrustedRevision!=='function'))throw Error('INVALID_CONFIGURATION');
+export function createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier=null,captureTrustedRevision=null,claimTrustedRecoveryFence=null}={}){
+  if(!pool||typeof pool.getConnection!=='function'||(lockTrustedSafetyBarrier!==null&&typeof lockTrustedSafetyBarrier!=='function')||(captureTrustedRevision!==null&&typeof captureTrustedRevision!=='function')||(claimTrustedRecoveryFence!==null&&typeof claimTrustedRecoveryFence!=='function'))throw Error('INVALID_CONFIGURATION');
   return {async transaction(operation){
     const c=await pool.getConnection();let committed=false;
     try{
@@ -24,6 +24,7 @@ export function createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier=null,c
         async lockLease(id){const [rows]=await c.execute('SELECT actor_key FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[id]);return rows.length?{actorKey:rows[0].actor_key}:null;},
         async lockSafetyBarrier(id,revision){return lockTrustedSafetyBarrier?await lockTrustedSafetyBarrier(c,id,revision):null;},
         async captureTrustedRevision(id,revision,ownerKey){return captureTrustedRevision?await captureTrustedRevision(c,id,revision,ownerKey):null;},
+        async claimRecoveryFence(id,revision,barrier){return claimTrustedRecoveryFence?await claimTrustedRecoveryFence(c,id,revision,barrier):false;},
         async lockInventory(id){const [rows]=await c.execute('SELECT item_id,owner_key,receipt_key,fingerprint,kind,state,text_content,attachment_json,reserved_bytes,content_bytes,sha256 FROM opmx_tg_items_v1 WHERE package_id=? ORDER BY created_at,item_id FOR UPDATE',[id]);return rows.map(row=>({itemId:row.item_id,ownerKey:row.owner_key,receiptKey:row.receipt_key,fingerprint:row.fingerprint,kind:row.kind,state:row.state,text:row.text_content,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,reservedBytes:Number(row.reserved_bytes),contentBytes:Number(row.content_bytes),sha256:row.sha256}));},
         async saveSnapshot({packageId,revision,ownerKey,items,barrier,prior}){const snapshot=JSON.stringify({items,barrier,prior});await c.execute('INSERT INTO opmx_tg_revision_snapshots_v1 (package_id,revision,owner_key,snapshot_json,created_at) VALUES (?,?,?,?,UTC_TIMESTAMP(6))',[packageId,revision,ownerKey,snapshot]);},
         async markOpen({packageId,expectedRevision,revision}){const [r]=await c.execute("UPDATE opmx_tg_packages_v1 SET state='OPEN',revision=?,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='READY'",[revision,packageId,expectedRevision]);if(r.affectedRows!==1)throw Error('REVISION_CONFLICT');},
