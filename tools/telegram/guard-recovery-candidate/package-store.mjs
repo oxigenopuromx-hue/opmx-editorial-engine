@@ -72,6 +72,42 @@ const schema=[
   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
 ];
 
+// Caller owns the quota/package locks and transaction. This function never
+// commits or writes to WordPress; an error must roll back the caller.
+export async function sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,ownerKey,events,initializePublicationFence,initializeMotorAttempt}) {
+          if(pack.state==='READY')return ({status:'READY',packageId:pack.package_id,revision:pack.revision});
+          // Only an explicitly open package can be sealed. In particular,
+          // CANCELLED packages must never produce a new editorial event.
+          if(pack.state!=='OPEN')return ({status:'PACKAGE_CLOSED',packageId:pack.package_id});
+          let recoveryCloseId=null;
+          if(lease){
+            // Only a close from this same editor's chat, sent after /abrir,
+            // may seal this lease. IDs from the original owner's chat must
+            // never be compared against the administrator's message IDs.
+            const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
+            const closed=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId??'');
+            if(!opened||!closed||opened[1]!==input.chat||closed[1]!==input.chat||BigInt(closed[2])<=BigInt(opened[2]))return ({status:'CLOSE_NOT_CONFIRMED'});
+            const [closing]=await c.execute("SELECT i.item_id,i.kind,i.text_content,i.state,rc.actor_key FROM opmx_tg_items_v1 i JOIN opmx_tg_recovery_contributions_v1 rc ON rc.item_id=i.item_id AND rc.package_id=i.package_id WHERE i.package_id=? AND i.receipt_key=?",[input.packageId,digest(input.receiptId)]);
+            if(closing.length!==1||closing[0].actor_key!==actorKey||closing[0].state!=='STORED'||!isAttestedClose({kind:closing[0].kind,text:closing[0].text_content,receiptId:input.receiptId,chat:input.chat,packageId:input.packageId}))return ({status:'CLOSE_NOT_CONFIRMED'});
+            const [last]=await c.execute("SELECT item_id FROM opmx_tg_items_v1 WHERE package_id=? AND state='STORED' ORDER BY created_at DESC,item_id DESC LIMIT 1",[input.packageId]);
+            if(last.length!==1||last[0].item_id!==closing[0].item_id)return ({status:'CLOSE_NOT_CONFIRMED'});
+            if(!Number.isSafeInteger(Number(lease.opening_revision))||Number(lease.opening_revision)<2||Number(lease.opening_revision)>Number(pack.revision))return ({status:'CLOSE_NOT_CONFIRMED'});
+            recoveryCloseId=closing[0].item_id;
+          }
+          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
+          if(!Number(counts[0].stored)||Number(counts[0].pending))return ({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
+          await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
+          if(lease)await c.execute('INSERT INTO opmx_tg_recovery_closures_v1 (package_id,revision,snapshot_revision,actor_key,close_item_id,close_receipt_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,Number(pack.revision)+1,Number(lease.opening_revision)-1,actorKey,recoveryCloseId,digest(input.receiptId)]);
+          // Candidate opt-in only: create the fence before the event becomes
+          // visible, inside the same transaction. Failure rolls everything back.
+          if(initializePublicationFence)await initializePublicationFence(c,{packageId:pack.package_id,revision:Number(pack.revision)+1});
+          await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[actorKey,input.packageId]);
+          if(lease)await c.execute('DELETE FROM opmx_tg_recovery_leases_v1 WHERE package_id=? AND actor_key=?',[input.packageId,actorKey]);
+          let eventId=null;
+          if(events){eventId=await events.enqueue(c,{owner:ownerKey,packageId:pack.package_id,revision:Number(pack.revision)+1,itemCount:Number(counts[0].stored),timestamp:new Date().toISOString()});if(initializeMotorAttempt)await initializeMotorAttempt(c,{packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});}
+          return ({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});
+}
+
 export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null}={}) {
   if(typeof recoveryEnabled!=='boolean'||(readRecoveredPolicy!==null&&typeof readRecoveredPolicy!=='function')||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
@@ -164,36 +200,8 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           return await finish({status:'FOUND',packageId:pack.package_id,itemId:input.itemId,stream:input.stream,mime_type:mime,totalBytes:total,offset:input.offset,bytes:chunk.length,sha256:sha,chunkSha256:digest(chunk),contentBase64:chunk.toString('base64'),nextOffset:input.offset+chunk.length,eof:input.offset+chunk.length===total});
         }
         if(action==='seal') {
-          if(pack.state==='READY')return await finish({status:'READY',packageId:pack.package_id,revision:pack.revision});
-          // Only an explicitly open package can be sealed. In particular,
-          // CANCELLED packages must never produce a new editorial event.
-          if(pack.state!=='OPEN')return await finish({status:'PACKAGE_CLOSED',packageId:pack.package_id});
-          let recoveryCloseId=null;
-          if(lease){
-            // Only a close from this same editor's chat, sent after /abrir,
-            // may seal this lease. IDs from the original owner's chat must
-            // never be compared against the administrator's message IDs.
-            const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
-            const closed=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId??'');
-            if(!opened||!closed||opened[1]!==input.chat||closed[1]!==input.chat||BigInt(closed[2])<=BigInt(opened[2]))return await finish({status:'CLOSE_NOT_CONFIRMED'});
-            const [closing]=await c.execute("SELECT i.item_id,i.kind,i.text_content,i.state,rc.actor_key FROM opmx_tg_items_v1 i JOIN opmx_tg_recovery_contributions_v1 rc ON rc.item_id=i.item_id AND rc.package_id=i.package_id WHERE i.package_id=? AND i.receipt_key=?",[input.packageId,digest(input.receiptId)]);
-            if(closing.length!==1||closing[0].actor_key!==actorKey||closing[0].state!=='STORED'||!isAttestedClose({kind:closing[0].kind,text:closing[0].text_content,receiptId:input.receiptId,chat:input.chat,packageId:input.packageId}))return await finish({status:'CLOSE_NOT_CONFIRMED'});
-            const [last]=await c.execute("SELECT item_id FROM opmx_tg_items_v1 WHERE package_id=? AND state='STORED' ORDER BY created_at DESC,item_id DESC LIMIT 1",[input.packageId]);
-            if(last.length!==1||last[0].item_id!==closing[0].item_id)return await finish({status:'CLOSE_NOT_CONFIRMED'});
-            if(!Number.isSafeInteger(Number(lease.opening_revision))||Number(lease.opening_revision)<2||Number(lease.opening_revision)>Number(pack.revision))return await finish({status:'CLOSE_NOT_CONFIRMED'});
-            recoveryCloseId=closing[0].item_id;
-          }
-          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
-          if(!Number(counts[0].stored)||Number(counts[0].pending))return await finish({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
-          await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
-          if(lease)await c.execute('INSERT INTO opmx_tg_recovery_closures_v1 (package_id,revision,snapshot_revision,actor_key,close_item_id,close_receipt_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,Number(pack.revision)+1,Number(lease.opening_revision)-1,actorKey,recoveryCloseId,digest(input.receiptId)]);
-          // Candidate opt-in only: create the fence before the event becomes
-          // visible, inside the same transaction. Failure rolls everything back.
-          if(initializePublicationFence)await initializePublicationFence(c,{packageId:pack.package_id,revision:Number(pack.revision)+1});
-          await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[actorKey,input.packageId]);
-          if(lease)await c.execute('DELETE FROM opmx_tg_recovery_leases_v1 WHERE package_id=? AND actor_key=?',[input.packageId,actorKey]);
-          if(events){const eventId=await events.enqueue(c,{owner:ownerKey,packageId:pack.package_id,revision:Number(pack.revision)+1,itemCount:Number(counts[0].stored),timestamp:new Date().toISOString()});if(initializeMotorAttempt)await initializeMotorAttempt(c,{packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});}
-          return await finish({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1});
+          const result=await sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,ownerKey,events,initializePublicationFence,initializeMotorAttempt});
+          const {eventId,...response}=result;return await finish(response);
         }
         if(pack.state!=='OPEN' && action!=='complete')return await finish({status:'PACKAGE_CLOSED'});
         if(action==='reserve') {

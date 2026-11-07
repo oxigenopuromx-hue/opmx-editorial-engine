@@ -68,7 +68,7 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     if(!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:row.owner_key,currentRevision:x.revision,explicitAction:x.action}))return {status:'PREVIEW_MISMATCH'};
     // No result is committed if the existing event and the preview consumption
     // do not both succeed; exceptions roll the entire transaction back.
-    const eventId=await commitConfirmed(c,{preview,actorKey,confirmationReceipt:x.receiptId});
+    const eventId=await commitConfirmed(c,{preview,actorKey,previewReceipt:row.preview_receipt,confirmationReceipt:x.receiptId});
     if(!/^evt_[a-f0-9]{48}$/.test(eventId??''))throw Error('CONFIRMATION_EVENT_UNCONFIRMED');
     const [changed]=await c.execute("UPDATE opmx_tg_correction_previews_v1 SET state='CONFIRMED',confirmation_receipt=?,event_id=? WHERE package_id=? AND revision=? AND preview_hash=? AND state='PREVIEWED'",[x.receiptId,eventId,x.packageId,x.revision,x.previewHash]);
     if(changed.affectedRows!==1)throw Error('CONFIRMATION_CONFLICT');
