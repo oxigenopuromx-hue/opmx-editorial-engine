@@ -28,7 +28,7 @@ export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,bas
  for(const [id,item] of current)if(!old.has(id)&&item.state==='STORED')changes.push({itemId:id,kind:item.kind,change:'ADDED',sha256:item.sha256});
  if(![...current.values()].some(x=>x.state==='STORED'))fail();
  const posts=destinations.map(d=>({destination:d,postId:verifiedPosts[d]??null}));
- const preview={packageId,revision,baseRevision,action,mode,destination:destinationLabel(destinations),posts,changes};
+ const preview={packageId,revision,baseRevision,ownerKey,action,mode,destination:destinationLabel(destinations),posts,changes};
  return {...preview,previewHash:sha(JSON.stringify(preview))};
 }
 
@@ -36,7 +36,7 @@ export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,bas
 // This check alone is not a durable single-use claim; the caller must persist
 // the proposal and consume it atomically in the same transaction as enqueue.
 export function validateCorrectionConfirmation({preview,previewHash,actorKey,ownerKey,currentRevision,explicitAction}){
- if(!obj(preview)||!hash.test(previewHash??'')||!hash.test(ownerKey??'')||actorKey!==ownerKey||!validRevision(currentRevision)||currentRevision!==preview.revision||!['CREATE','UPDATE'].includes(explicitAction)||explicitAction!==preview.action)return false;
+ if(!obj(preview)||!hash.test(previewHash??'')||!hash.test(ownerKey??'')||actorKey!==ownerKey||preview.ownerKey!==ownerKey||!validRevision(currentRevision)||currentRevision!==preview.revision||!['CREATE','UPDATE'].includes(explicitAction)||explicitAction!==preview.action)return false;
  const {previewHash:embedded,...content}=preview;
  return embedded===previewHash&&sha(JSON.stringify(content))===previewHash;
 }

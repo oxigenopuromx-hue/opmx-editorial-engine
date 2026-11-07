@@ -10,7 +10,7 @@ test('preview identifies exact changed items and existing post',()=>{
 });
 test('confirmation fails on stale version, another sender, changed preview or wrong action',()=>{
  const p=buildCorrectionPreview(fixture()),v={preview:p,previewHash:p.previewHash,actorKey:owner,ownerKey:owner,currentRevision:10,explicitAction:'UPDATE'};
- for(const change of [{currentRevision:11},{actorKey:other},{explicitAction:'CREATE'},{preview:{...p,destination:'TODOS'}},{previewHash:'a'.repeat(64)}])assert.equal(validateCorrectionConfirmation({...v,...change}),false);
+ for(const change of [{currentRevision:11},{actorKey:other},{actorKey:other,ownerKey:other},{explicitAction:'CREATE'},{preview:{...p,destination:'TODOS'}},{previewHash:'a'.repeat(64)}])assert.equal(validateCorrectionConfirmation({...v,...change}),false);
 });
 test('existing destinations need individually verified post IDs and cannot become create',()=>{
  for(const change of [{verifiedPosts:{}},{verifiedPosts:{OPURO:0}},{verifiedPosts:{OPOL:22}},{action:'CREATE'},{actorKey:other}])assert.throws(()=>buildCorrectionPreview({...fixture(),...change}),/CORRECTION_PREVIEW_UNCONFIRMED/);
