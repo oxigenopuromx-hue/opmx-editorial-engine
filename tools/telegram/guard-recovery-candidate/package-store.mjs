@@ -32,11 +32,15 @@ const receiptId = value => {if (typeof value !== 'string' || !/^telegram-[1-9][0
 export function validatePackageRequest(action, input) {
   const base=['owner','chat'];
   const keys={current:base,open:[...base,'receiptId'],reserve:[...base,'packageId','receiptId','kind','text','attachment'],complete:[...base,'packageId','itemId','contentBase64'],manifest:[...base,'packageId'],asset:[...base,'packageId','itemId'],chunk:[...base,'packageId','itemId','stream','offset','length'],seal:[...base,'packageId'],discard:[...base,'packageId','itemId']};
-  if (!keys[action]) bad(); exact(input, keys[action]); const ownerKey=identity(input);
+  if (!keys[action]) bad();
+  // A recovered session requires the exact /listo receipt at seal time. The
+  // legacy shape remains available for sessions that were never reopened.
+  if(action==='seal' && Object.hasOwn(input,'receiptId')) keys.seal=[...keys.seal,'receiptId'];
+  exact(input, keys[action]); const ownerKey=identity(input);
   if (!['open','current'].includes(action)) packageId(input.packageId);
   if (['complete','asset','chunk','discard'].includes(action)) itemId(input.itemId);
   if(action==='chunk'&&(!['text','original'].includes(input.stream)||!Number.isSafeInteger(input.offset)||input.offset<0||input.offset>PACKAGE_LIMITS.fileBytes||!Number.isSafeInteger(input.length)||input.length<1||input.length>65536))bad();
-  if (['open','reserve'].includes(action)) {
+  if (['open','reserve'].includes(action) || (action==='seal' && Object.hasOwn(input,'receiptId'))) {
     receiptId(input.receiptId);
     if (!input.receiptId.startsWith(`telegram-${input.chat}-`)) bad();
   }
@@ -111,7 +115,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         }
         let lease=null;
         if(recoveryEnabled){
-          const [leases]=await c.execute('SELECT actor_key,owner_key FROM opmx_tg_recovery_leases_v1 WHERE package_id=?',[input.packageId]);
+          const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=?',[input.packageId]);
           lease=leases[0]??null;
           if(lease && lease.actor_key===actorKey && lease.owner_key!==actorKey && admins.has(actorKey))ownerKey=lease.owner_key;
         }
@@ -155,9 +159,25 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           // Only an explicitly open package can be sealed. In particular,
           // CANCELLED packages must never produce a new editorial event.
           if(pack.state!=='OPEN')return await finish({status:'PACKAGE_CLOSED',packageId:pack.package_id});
+          let recoveryCloseId=null;
+          if(lease){
+            // Only a close from this same editor's chat, sent after /abrir,
+            // may seal this lease. IDs from the original owner's chat must
+            // never be compared against the administrator's message IDs.
+            const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
+            const closed=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId??'');
+            if(!opened||!closed||opened[1]!==input.chat||closed[1]!==input.chat||BigInt(closed[2])<=BigInt(opened[2]))return await finish({status:'CLOSE_NOT_CONFIRMED'});
+            const [closing]=await c.execute("SELECT i.item_id,i.kind,i.text_content,i.state,rc.actor_key FROM opmx_tg_items_v1 i JOIN opmx_tg_recovery_contributions_v1 rc ON rc.item_id=i.item_id AND rc.package_id=i.package_id WHERE i.package_id=? AND i.receipt_key=?",[input.packageId,digest(input.receiptId)]);
+            if(closing.length!==1||closing[0].actor_key!==actorKey||closing[0].state!=='STORED'||!isAttestedClose({kind:closing[0].kind,text:closing[0].text_content,receiptId:input.receiptId,chat:input.chat,packageId:input.packageId}))return await finish({status:'CLOSE_NOT_CONFIRMED'});
+            const [last]=await c.execute("SELECT item_id FROM opmx_tg_items_v1 WHERE package_id=? AND state='STORED' ORDER BY created_at DESC,item_id DESC LIMIT 1",[input.packageId]);
+            if(last.length!==1||last[0].item_id!==closing[0].item_id)return await finish({status:'CLOSE_NOT_CONFIRMED'});
+            if(!Number.isSafeInteger(Number(lease.opening_revision))||Number(lease.opening_revision)<2||Number(lease.opening_revision)>Number(pack.revision))return await finish({status:'CLOSE_NOT_CONFIRMED'});
+            recoveryCloseId=closing[0].item_id;
+          }
           const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
           if(!Number(counts[0].stored)||Number(counts[0].pending))return await finish({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
+          if(lease)await c.execute('INSERT INTO opmx_tg_recovery_closures_v1 (package_id,revision,snapshot_revision,actor_key,close_item_id,close_receipt_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,Number(pack.revision)+1,Number(lease.opening_revision)-1,actorKey,recoveryCloseId,digest(input.receiptId)]);
           // Candidate opt-in only: create the fence before the event becomes
           // visible, inside the same transaction. Failure rolls everything back.
           if(initializePublicationFence)await initializePublicationFence(c,{packageId:pack.package_id,revision:Number(pack.revision)+1});
@@ -168,6 +188,11 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         }
         if(pack.state!=='OPEN' && action!=='complete')return await finish({status:'PACKAGE_CLOSED'});
         if(action==='reserve') {
+          if(lease){
+            const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
+            const received=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId);
+            if(!opened||!received||opened[1]!==input.chat||received[1]!==input.chat||BigInt(received[2])<=BigInt(opened[2]))return await finish({status:'STALE_SESSION_MESSAGE'});
+          }
           const a=input.attachment,receiptKey=digest(input.receiptId),fingerprint=digest(JSON.stringify([input.packageId,input.kind,input.text,a?[a.file_name,a.mime_type,a.declared_bytes]:null]));
           const [prior]=await c.execute('SELECT item_id,package_id,fingerprint,state FROM opmx_tg_items_v1 WHERE receipt_key=?',[receiptKey]);
           if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state});

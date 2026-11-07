@@ -51,3 +51,9 @@ El cierre candidato acepta una función de inicialización desactivada por defec
 ## Congelación previa a la revisión
 
 La propuesta ahora permite pasar atómicamente READY_TO_WRITE a RECONCILING antes de consultar evidencias: un inicio tardío debe rechazarse y la incertidumbre mantiene el estado congelado. Una operación separada propone avanzar a SAFE_TO_REOPEN sólo con evidencia del proveedor confiable. Las 58 pruebas locales son simuladas; las afirmaciones de evidencia aún no cuentan con proveedor real y no hay garantía mientras existan rutas escritoras sin participar. Los paquetes históricos sin barrera no se vuelven seguros por esta propuesta.
+
+## Cierre y política de recuperación candidatos
+
+El cierre candidato exige ahora el recibo exacto del `/listo`, posterior al `/abrir` del mismo chat. Verifica que el cierre pertenezca al editor de la sesión y que sea el último elemento almacenado. Guarda en la misma transacción un registro persistente con la revisión sellada, la revisión de la instantánea, el editor y el cierre, antes de emitir el evento. El código candidato del receptor transporta el recibo; el guard de producción actual no acepta ese campo adicional, por lo que ambos cambios requieren despliegue coordinado.
+
+`recovered-policy.mjs` propone conservar la decisión y destinos acreditados en la instantánea, verificar que los originales y la autoría de las adiciones no cambiaron y excluir el cierre de las fuentes. No compara identificadores de mensajes entre chats. Rechaza por ahora nuevos controles marcados durante la recuperación y cualquier evidencia incompleta. Es una función aislada: todavía no existe un proveedor real que suministre y verifique esos registros al Motor. Tampoco resuelve la evidencia terminal ni la barrera de todos los escritores. Las pruebas usan datos sintéticos y no validan MySQL ni la integración de producción. La reapertura sigue desactivada.
