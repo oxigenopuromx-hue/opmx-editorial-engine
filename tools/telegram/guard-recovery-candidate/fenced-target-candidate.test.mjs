@@ -74,15 +74,22 @@ test('seal binds every canonical request identity to the same fenced revision',a
 });
 test('router requires a durable class before legacy writer can start',async()=>{
   const calls=[];const c={async beginTransaction(){calls.push('begin')},async commit(){calls.push('commit')},async rollback(){calls.push('rollback')},release(){calls.push('release')},async execute(sql){calls.push(sql);return sql.startsWith('SELECT')?[[{kind:'LEGACY'}]]:[{affectedRows:1}];}};
-  const pool={async getConnection(){return c}},router=createClassifiedTargetRouter(async(p,x)=>{assert.equal(p,pool);assert.equal(x,input);calls.push('legacy');return {status:'write_started'};});
-  assert.equal((await router(pool,input)).status,'write_started');assert.ok(calls.indexOf('commit')<calls.indexOf('legacy'));
+  const legacy={...input,requestId:'manual_request_123456'};
+  const pool={async getConnection(){return c}},router=createClassifiedTargetRouter(async(p,x)=>{assert.equal(p,pool);assert.equal(x,legacy);calls.push('legacy');return {status:'write_started'};});
+  assert.equal((await router(pool,legacy)).status,'write_started');assert.ok(calls.indexOf('commit')<calls.indexOf('legacy'));
 });
 test('unconfirmed classification never invokes a legacy writer',async()=>{
   let invoked=false;const c={async beginTransaction(){},async commit(){throw Error('lost')},async rollback(){},release(){},async execute(sql){return sql.startsWith('SELECT')?[[{kind:'LEGACY'}]]:[{affectedRows:1}];}};
   const router=createClassifiedTargetRouter(async()=>{invoked=true});
-  await assert.rejects(()=>router({async getConnection(){return c}},input),/REQUEST_CLASS_UNCONFIRMED/);assert.equal(invoked,false);
+  await assert.rejects(()=>router({async getConnection(){return c}},{...input,requestId:'manual_request_123456'}),/REQUEST_CLASS_UNCONFIRMED/);assert.equal(invoked,false);
 });
 test('a failed binding bubbles up so sealing can roll back before emitting',async()=>{
   const id='tg_'+'b'.repeat(40);let n=0;const c={async execute(){if(++n===4)throw Error('write failure');return [{affectedRows:1}];}};
   await assert.rejects(()=>initializeRevisionBindings(c,{packageId:id,revision:7}),/write failure/);assert.equal(n,4);
+});
+
+test('unknown or legacy-classified Telegram IDs never use the legacy writer',async()=>{
+ for(const rows of [[],[{kind:'LEGACY'}]]){let legacy=0,inserts=0;const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){if(sql.startsWith('INSERT'))inserts++;return [rows]}};
+  const r=createClassifiedTargetRouter(async()=>{legacy++});assert.equal((await r({async getConnection(){return c}},input)).status,'NOT_BOUND');assert.equal(legacy,0);assert.equal(inserts,0);
+ }
 });

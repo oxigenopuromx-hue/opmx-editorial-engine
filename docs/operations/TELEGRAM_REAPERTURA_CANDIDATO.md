@@ -89,3 +89,9 @@ La automatización existente `Motor — recepción Telegram` se actualizó para 
 ## Identidad del titular tras edición administrativa
 
 Se corrigió en producción el nodo `Resolver identidad de solicitud`: el registro `ROUTING` del `/nuevo` identifica al dueño original, mientras que un `QUEUED` posterior puede identificar al administrador que cerró. Cuando existe `ROUTING`, se exige un único dueño válido; sin él se conserva el comportamiento anterior con `QUEUED`. La versión activa del MCP es `bee5c6da-5611-4e0f-8fe6-35a3753ccebb`; sólo cambió ese nodo frente a `7f492766-b80e-4f5b-95a3-36823762b374`. Una lectura real ordinaria funcionó y los casos de dueño, administrador y registros ambiguos se probaron con datos sintéticos. No se ha probado aún una recuperación real de un operador por el administrador.
+
+## Cobertura de escritores y namespace
+
+Se revisaron los ocho workflows activos de n8n el 7 de noviembre. Los dos flujos que publican borradores existentes (MCP y formulario) contienen tres POST a WordPress cada uno; el análisis de caminos muestra que los seis pasan por el preflight conjunto, que exige al guard estado `reported` e ID coincidente. El flujo compartido de borradores exige el guard de inicio por destino antes de las escrituras verificadas. Esto no acredita otros clientes externos ni cambios posteriores de versiones.
+
+El enrutador candidato se endureció para que un `request_id` Telegram canónico sin clasificación Telegram registrada no caiga en el escritor legado. El cambio permanece desactivado: antes de desplegar debe resolverse el tratamiento de solicitudes históricas y verificar todas las rutas, incluidos clientes con IDs fuera de ese namespace.

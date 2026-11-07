@@ -50,8 +50,13 @@ export function createClassifiedTargetRouter(beginLegacyTarget) {
     const c=await pool.getConnection();let committed=false,kind;
     try {
       await c.beginTransaction();
-      await c.execute("INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'LEGACY')",[requestId]);
+      // The Telegram namespace can only be registered by package sealing.
+      // An unknown or pre-existing LEGACY entry must never fall through to
+      // a writer that does not hold the revision fence.
+      const telegramNamespace=/^tg_[a-f0-9]{64}$/.test(requestId);
+      if(!telegramNamespace)await c.execute("INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'LEGACY')",[requestId]);
       const [rows]=await c.execute('SELECT kind FROM opmx_tg_request_class_v1 WHERE request_id=? FOR UPDATE',[requestId]);
+      if(telegramNamespace&&(rows.length!==1||rows[0].kind!=='TELEGRAM')){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'};}
       if(rows.length!==1||!['LEGACY','TELEGRAM'].includes(rows[0].kind))throw Error('INVALID_REQUEST_CLASS');
       kind=rows[0].kind;await c.commit();committed=true;
     } catch(error){if(!committed)try{await c.rollback()}catch{}throw Error('REQUEST_CLASS_UNCONFIRMED',{cause:error});}
