@@ -68,3 +68,13 @@ test('attempt endpoints are absent by default and protected when enabled',async(
   const response=await post(port,'/v1/telegram/attempts/begin',input);assert.equal(response.body.status,'ATTEMPT_STARTED');assert.equal(calls,1);
  });
 });
+test('correction preview and confirmation routes are opt-in and authenticated',async()=>{
+ const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100'};let calls=[];
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).status,404));
+ const corrections={async preview(x){calls.push(['preview',x]);return {status:'PREVIEW_READY'}},async confirm(x){calls.push(['confirm',x]);return {status:'CONFIRMED'}}};
+ await withServer({telegramCorrections:corrections},async port=>{
+  assert.equal((await post(port,'/v1/telegram/corrections/confirm',input,'b'.repeat(64))).status,401);assert.equal(calls.length,0);
+  assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).body.status,'PREVIEW_READY');
+  assert.equal((await post(port,'/v1/telegram/corrections/confirm',input)).body.status,'CONFIRMED');assert.deepEqual(calls,[['preview',input],['confirm',input]]);
+ });
+});
