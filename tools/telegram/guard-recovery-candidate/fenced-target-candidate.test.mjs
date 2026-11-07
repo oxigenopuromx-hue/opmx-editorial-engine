@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginFencedTarget} from './fenced-target-candidate.mjs';
+import {beginFencedTarget,initializeRevisionFence,bindTrustedRequestInTransaction,requestBindingSchema} from './fenced-target-candidate.mjs';
+import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'LIBERAL'};
 function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=false,commitError=false}={}){
@@ -43,4 +44,24 @@ test('lost commit response does not grant permission to call WordPress',async()=
 test('reject invalid parameters before acquiring any connection',async()=>{
   const f=fixture();await assert.rejects(()=>beginFencedTarget(f.pool,{...input,destination:'UNKNOWN'}),/INVALID_TARGET_REQUEST/);
   assert.equal(f.calls.length,0);
+});
+test('each server-resolved destination can have a distinct immutable binding',async()=>{
+  const id='tg_'+'b'.repeat(40),calls=[];const c={async execute(sql,args){calls.push({sql,args});return sql.startsWith('SELECT')?[[{state:'READY_TO_WRITE'}]]:[{affectedRows:1}];}};
+  await initializeRevisionFence(c,{packageId:id,revision:7});
+  for(const destination of ['OPURO','AMBOS','TODOS']){
+    const requestId=expectedDraftRequestId({packageId:id,revision:7,destination});
+    assert.equal(await bindTrustedRequestInTransaction(c,{packageId:id,revision:7,destination,requestId}),true);
+  }
+  assert.equal(calls.filter(x=>x.sql.startsWith('INSERT INTO opmx_tg_request_binding')).length,3);
+  assert.doesNotMatch(requestBindingSchema,/UNIQUE KEY package_revision/);
+});
+test('binding rejects untrusted identity and refuses closed or missing fences',async()=>{
+  const id='tg_'+'b'.repeat(40),requestId=expectedDraftRequestId({packageId:id,revision:7,destination:'TODOS'});
+  for(const state of [null,'WRITING','SAFE_TO_REOPEN','RECOVERY_FENCED']){
+    const calls=[];const c={async execute(sql){calls.push(sql);return [state===null?[]:[{state}]]}};
+    assert.equal(await bindTrustedRequestInTransaction(c,{packageId:id,revision:7,destination:'TODOS',requestId}),false);
+    assert.equal(calls.length,1);
+  }
+  const c={async execute(){throw Error('unexpected database access')}};
+  await assert.rejects(()=>bindTrustedRequestInTransaction(c,{packageId:id,revision:7,destination:'OPURO',requestId}),/INVALID_BINDING/);
 });

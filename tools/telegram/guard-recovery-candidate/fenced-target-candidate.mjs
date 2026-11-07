@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 // Candidate only: registration must come from the trusted receiver in the
 // same transaction as its outbox event. This schema is not a deployment.
@@ -6,8 +7,27 @@ export const requestBindingSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_request_bi
  request_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
  package_id VARCHAR(43) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  revision INT UNSIGNED NOT NULL,
- UNIQUE KEY package_revision (package_id,revision)
+ KEY package_revision (package_id,revision)
 ) ENGINE=InnoDB`;
+
+// The caller must use a server-resolved destination and the transaction that
+// seals the package; caller-supplied claims alone are not authorization.
+export async function initializeRevisionFence(connection,{packageId,revision}) {
+  if(!connection?.execute || typeof packageId!=='string'||!/^tg_[a-f0-9]{40}$/.test(packageId)||
+     !Number.isSafeInteger(revision)||revision<1||revision>4294967295)throw Error('INVALID_REVISION');
+  await connection.execute("INSERT INTO opmx_tg_publication_fence_v1 (package_id,revision,state,updated_at) VALUES (?,?,'READY_TO_WRITE',UTC_TIMESTAMP(6))",[packageId,revision]);
+}
+
+// The binding is immutable. Never recreate a missing fence or bind after a
+// recovery fence: a delayed worker must not regain permission on an old revision.
+export async function bindTrustedRequestInTransaction(connection,{packageId,revision,destination,requestId}) {
+  if(!connection?.execute || !Number.isSafeInteger(revision)||revision>4294967295 ||
+     requestId!==expectedDraftRequestId({packageId,revision,destination}))throw Error('INVALID_BINDING');
+  const [rows]=await connection.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+  if(rows.length!==1 || rows[0].state!=='READY_TO_WRITE')return false;
+  await connection.execute('INSERT INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES (?,?,?)',[requestId,packageId,revision]);
+  return true;
+}
 
 // Same target identity and insertion as the verified deployed target-progress
 // module, with fence check and claim sharing one transaction. All entry points

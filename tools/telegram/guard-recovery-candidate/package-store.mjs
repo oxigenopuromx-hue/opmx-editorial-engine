@@ -54,8 +54,8 @@ const schema=[
   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
 ];
 
-export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[]}={}) {
-  if(typeof recoveryEnabled!=='boolean'||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
+export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null}={}) {
+  if(typeof recoveryEnabled!=='boolean'||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
   let ready;
   const initialize=()=>ready??=(async()=>{
@@ -144,6 +144,9 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
           if(!Number(counts[0].stored)||Number(counts[0].pending))return await finish({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
+          // Candidate opt-in only: create the fence before the event becomes
+          // visible, inside the same transaction. Failure rolls everything back.
+          if(initializePublicationFence)await initializePublicationFence(c,{packageId:pack.package_id,revision:Number(pack.revision)+1});
           await c.execute('DELETE FROM opmx_tg_sessions_v1 WHERE owner_key=? AND package_id=?',[actorKey,input.packageId]);
           if(lease)await c.execute('DELETE FROM opmx_tg_recovery_leases_v1 WHERE package_id=? AND actor_key=?',[input.packageId,actorKey]);
           if(events)await events.enqueue(c,{owner:ownerKey,packageId:pack.package_id,revision:Number(pack.revision)+1,itemCount:Number(counts[0].stored),timestamp:new Date().toISOString()});
