@@ -4,7 +4,7 @@ import {claimFenceInTransaction} from './publication-fence-candidate.mjs';
 import {createClassifiedTargetRouter,initializeRevisionBindings} from './fenced-target-candidate.mjs';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 import {createNeverWrittenEvidence} from './never-written-evidence.mjs';
-import {createOriginalRevisionCapture} from './original-policy-provider.mjs';
+import {createRevisionCapture} from './revision-capture.mjs';
 import {readRecoveredPolicyInTransaction} from './recovered-policy-mysql.mjs';
 
 // Explicitly composed by the server, never by HTTP input. Merely constructing
@@ -32,5 +32,5 @@ export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRu
   const evidence=createNeverWrittenEvidence({verifyTerminalRun,verifyWriterCoverage});
   return createCandidateRecoverySubsystem({pool,adminUserIds,beginLegacyTarget,
     lockTrustedSafetyBarrier:evidence.lockSafetyBarrier,
-    captureTrustedRevision:createOriginalRevisionCapture({lockVerifiedBlockedOutcomes:evidence.lockVerifiedBlockedOutcomes})});
+    captureTrustedRevision:createRevisionCapture({lockVerifiedBlockedOutcomes:evidence.lockVerifiedBlockedOutcomes})});
 }

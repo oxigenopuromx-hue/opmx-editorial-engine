@@ -77,3 +77,5 @@ Se identificó que el lector MCP rechazaba inventarios mayores a 20 elementos y 
 ## Lectura de autorización recuperada candidata
 
 La lectura candidata del guard detecta si la revisión READY tiene cierre de recuperación y, sólo en ese caso, exige resolver la política desde el registro e instantánea ligados a esa revisión. Sin proveedor o con decisión incompleta, devuelve fallo. El nodo MCP candidato transmite esa decisión bajo `recovered_policy` tras comprobar modo, destinos, autorización y control IDs presentes en el inventario. Se probó en memoria; no está desplegado. El Motor activo aún debe incorporar esa rama y verificar el mismo paquete/revisión antes de utilizarla.
+
+La captura candidata de una revisión bloqueada distingue ahora la primera recuperación de una reapertura posterior: usa controles originales verificados en el primer caso y el cierre y la política preservada en los siguientes. Exige los resultados de conciliación para todos los destinos en ambos casos. Esto no aporta por sí mismo evidencia terminal ni habilita la función.
