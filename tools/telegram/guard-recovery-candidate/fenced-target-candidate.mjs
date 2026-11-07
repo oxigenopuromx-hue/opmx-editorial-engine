@@ -18,6 +18,18 @@ export async function initializeRevisionFence(connection,{packageId,revision}) {
   await connection.execute("INSERT INTO opmx_tg_publication_fence_v1 (package_id,revision,state,updated_at) VALUES (?,?,'READY_TO_WRITE',UTC_TIMESTAMP(6))",[packageId,revision]);
 }
 
+// Register every prospective canonical destination label before making the
+// ready event visible. The bindings do not grant editorial authorization: they
+// only make delayed requests for this revision subject to the same fence.
+// This function is meant to run inside the package seal transaction.
+export async function initializeRevisionBindings(connection,{packageId,revision}) {
+  await initializeRevisionFence(connection,{packageId,revision});
+  for(const destination of ['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS']) {
+    const requestId=expectedDraftRequestId({packageId,revision,destination});
+    await connection.execute('INSERT INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES (?,?,?)',[requestId,packageId,revision]);
+  }
+}
+
 // The binding is immutable. Never recreate a missing fence or bind after a
 // recovery fence: a delayed worker must not regain permission on an old revision.
 export async function bindTrustedRequestInTransaction(connection,{packageId,revision,destination,requestId}) {

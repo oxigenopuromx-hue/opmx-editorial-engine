@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginFencedTarget,initializeRevisionFence,bindTrustedRequestInTransaction,requestBindingSchema} from './fenced-target-candidate.mjs';
+import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,bindTrustedRequestInTransaction,requestBindingSchema} from './fenced-target-candidate.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'LIBERAL'};
@@ -64,4 +64,15 @@ test('binding rejects untrusted identity and refuses closed or missing fences',a
   }
   const c={async execute(){throw Error('unexpected database access')}};
   await assert.rejects(()=>bindTrustedRequestInTransaction(c,{packageId:id,revision:7,destination:'OPURO',requestId}),/INVALID_BINDING/);
+});
+test('seal binds every canonical request identity to the same fenced revision',async()=>{
+  const id='tg_'+'b'.repeat(40),calls=[];const c={async execute(sql,args){calls.push({sql,args});return [{affectedRows:1}];}};
+  await initializeRevisionBindings(c,{packageId:id,revision:7});
+  assert.equal(calls.length,8);assert.match(calls[0].sql,/opmx_tg_publication_fence/);
+  const labels=['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'];
+  assert.deepEqual(calls.slice(1).map(x=>x.args),labels.map(destination=>[expectedDraftRequestId({packageId:id,revision:7,destination}),id,7]));
+});
+test('a failed binding bubbles up so sealing can roll back before emitting',async()=>{
+  const id='tg_'+'b'.repeat(40);let n=0;const c={async execute(){if(++n===4)throw Error('write failure');return [{affectedRows:1}];}};
+  await assert.rejects(()=>initializeRevisionBindings(c,{packageId:id,revision:7}),/write failure/);assert.equal(n,4);
 });
