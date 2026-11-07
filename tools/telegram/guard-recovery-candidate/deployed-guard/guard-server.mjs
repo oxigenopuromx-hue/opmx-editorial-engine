@@ -7,9 +7,9 @@ import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-pro
 const MAX_BODY=4096;
 // Integration candidate derived from the verified last-source blob 7881ae8.
 // Recovery and writer hooks are opt-in; production is not changed by this file.
-export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,targetBegin=beginTargetWrite}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramAttempts=null,targetBegin=beginTargetWrite}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
-  if ((telegramRecovery!==null&&typeof telegramRecovery!=='function') || typeof targetBegin!=='function') throw new Error('Configuración incompleta');
+  if ((telegramRecovery!==null&&typeof telegramRecovery!=='function') || (telegramAttempts!==null&&(!telegramAttempts||typeof telegramAttempts.begin!=='function'||typeof telegramAttempts.block!=='function')) || typeof targetBegin!=='function') throw new Error('Configuración incompleta');
   const expected=Buffer.from('Bearer '+secret);
   let windowStart=Date.now(), requestCount=0;
   return createServer(async(req,res)=>{
@@ -23,17 +23,19 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
     const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capabilities|current|open|reserve|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
     const recoverAction=telegramRecovery&&req.url==='/v1/telegram/packages/reopen';
+    const attemptAction=telegramAttempts&&/^\/v1\/telegram\/attempts\/(begin|block)$/.exec(req.url)?.[1];
     const eventAction=telegramEvents&&/^\/v1\/telegram\/events\/(subscribe|unsubscribe|status|emit)$/.exec(req.url)?.[1];
     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||(!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!attemptAction&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(telegramAction||eventAction||reviewAction||recoverAction) {
+      if(telegramAction||eventAction||reviewAction||recoverAction||attemptAction) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
         if(recoverAction)return end(200,await telegramRecovery(input));
+        if(attemptAction)return end(200,await telegramAttempts[attemptAction](input));
         if(eventAction)return end(200,await telegramEvents.run(eventAction,input));
         if(reviewAction)return end(200,await telegramReviews.run(reviewAction,input));
         if(telegramAction==='capabilities') {
@@ -85,7 +87,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
         const diagnostic = allowed.includes(error.diagnostic) ? error.diagnostic : 'OTHER';
         try { diagnosticLogger(`guard.media.begin: ${diagnostic}`); } catch { /* logging must not change fail-closed behavior */ }
       }
-      return end(error.message==='Solicitud inválida'||error instanceof SyntaxError?400:503,{error:'not_confirmed'});
+      return end(error.message==='Solicitud inválida'||error.message==='INVALID_ATTEMPT'||error instanceof SyntaxError?400:503,{error:'not_confirmed'});
     }
   });
 }

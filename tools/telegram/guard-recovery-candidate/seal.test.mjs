@@ -63,3 +63,17 @@ test('failure to initialize fence rolls back seal and prevents the event',async(
   await assert.rejects(()=>store.run('seal',{owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40)}));
   assert.deepEqual(calls,['rollback']);
 });
+test('outbox event and attempt registration use the same seal transaction',async()=>{
+ const calls=[];let inTransaction=false;
+ const c={async beginTransaction(){inTransaction=true},async commit(){calls.push('commit');inTransaction=false},async rollback(){calls.push('rollback');inTransaction=false},release(){},async execute(sql,args=[]){
+  if(sql.startsWith('CREATE TABLE')||sql.startsWith('INSERT IGNORE'))return [[]];
+  if(sql.startsWith('SELECT used_bytes'))return [[{used_bytes:1,package_count:1}]];
+  if(sql.startsWith('SELECT * FROM opmx_tg_packages'))return [[{package_id:args[0],state:'OPEN',revision:25}]];
+  if(sql.startsWith('SELECT COUNT(*) AS total'))return [[{pending:0,stored:1}]];
+  if(sql.startsWith('UPDATE')||sql.startsWith('DELETE'))return [{affectedRows:1}];throw Error('unexpected SQL');
+ }};
+ const eventId='evt_'+'d'.repeat(48),events={async initialize(){},async enqueue(conn){assert.equal(conn,c);assert.equal(inTransaction,true);calls.push('event');return eventId}};
+ const store=createTelegramPackageStore({async getConnection(){return c}},{events,initializePublicationFence:async()=>calls.push('fence'),initializeMotorAttempt:async(conn,x)=>{assert.equal(conn,c);assert.equal(inTransaction,true);assert.equal(x.eventId,eventId);calls.push('attempt')}});
+ assert.equal((await store.run('seal',{owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40)})).status,'READY');
+ assert.deepEqual(calls,['fence','event','attempt','commit']);
+});

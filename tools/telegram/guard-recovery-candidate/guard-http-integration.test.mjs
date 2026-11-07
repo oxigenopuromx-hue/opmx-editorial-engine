@@ -59,3 +59,12 @@ test('target request in a recovering package cannot start through the integrated
   assert.equal(r.status,409);assert.equal(r.body.status,'WRITE_NOT_PERMITTED');assert.equal(legacy,0);
  } finally {await new Promise(resolve=>server.close(resolve));}
 });
+test('attempt endpoints are absent by default and protected when enabled',async()=>{
+ const input={packageId:'tg_'+'a'.repeat(40),revision:7,eventId:'evt_'+'b'.repeat(48)};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/attempts/begin',input)).status,404));
+ const attempts={async begin(x){calls++;assert.deepEqual(x,input);return {status:'ATTEMPT_STARTED',token:'c'.repeat(64)}},async block(){throw Error('unexpected')}};
+ await withServer({telegramAttempts:attempts},async port=>{
+  assert.equal((await post(port,'/v1/telegram/attempts/begin',input,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  const response=await post(port,'/v1/telegram/attempts/begin',input);assert.equal(response.body.status,'ATTEMPT_STARTED');assert.equal(calls,1);
+ });
+});
