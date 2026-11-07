@@ -6,6 +6,7 @@ import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-st
 import {createNeverWrittenEvidence} from './never-written-evidence.mjs';
 import {createRevisionCapture} from './revision-capture.mjs';
 import {readRecoveredPolicyInTransaction} from './recovered-policy-mysql.mjs';
+import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
 import {createCorrectionConfirmationStore} from './correction-confirmation-store.mjs';
 import {createConfirmedRecoverySeal} from './confirmed-recovery-seal.mjs';
 
@@ -25,6 +26,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     motorAttempts:createMotorAttemptStore({pool}),
     initializeMotorAttempt,
     readRecoveredPolicy:readRecoveredPolicyInTransaction,
+    readConfirmedCorrection:readConfirmedCorrectionInTransaction,
   });
 }
 

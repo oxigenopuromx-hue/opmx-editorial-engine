@@ -8,7 +8,7 @@ const fail=()=>{throw Error('RECOVERED_POLICY_UNCONFIRMED')};
 // source's text or an LLM-generated object. Sources must be verified buffers.
 export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
  if(!inventory||inventory.status!=='PACKAGE_FOUND'||inventory.package_id!==packageId||inventory.revision!==revision||inventory.state!=='READY'||!Array.isArray(inventory.items)||!Array.isArray(sources))fail();
- if(!Object.hasOwn(inventory,'recovered_policy'))return chooseTelegramMode(inventory,sources);
+ if(!Object.hasOwn(inventory,'recovered_policy')){if(Object.hasOwn(inventory,'confirmed_correction'))fail();return chooseTelegramMode(inventory,sources)}
  const p=inventory.recovered_policy;
  if(!p||typeof p!=='object'||Array.isArray(p)||p.authorized!==true||!['PUBLISH','DRAFT'].includes(p.mode)||typeof p.explicit!=='boolean'||
     !['DIRECT_MODE_COMMAND','ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'].includes(p.authorization)||
@@ -29,5 +29,12 @@ export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
   if(control)controls.set(item.item_id,control);else if(text&&!text.startsWith(ORDER_PREFIX))substantive++;
  }
  if(!substantive||!last||last.kind!=='TEXT'||!p.control_item_ids.includes(last.item_id)||controls.get(last.item_id)?.command!=='/listo'||p.control_item_ids.some(id=>!controls.has(id))||[...controls.keys()].some(id=>!p.control_item_ids.includes(id)))fail();
- return {mode:p.mode,authorized:true,explicit:p.explicit,authorization:p.authorization,destination:p.destination,control_item_ids:[...p.control_item_ids]};
+ const result={mode:p.mode,authorized:true,explicit:p.explicit,authorization:p.authorization,destination:p.destination,control_item_ids:[...p.control_item_ids]};
+ if(Object.hasOwn(inventory,'confirmed_correction')){
+  const c=inventory.confirmed_correction;
+  if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||c.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();
+  try{if(destinationLabel(resolveDestinations(c.destination))!==c.destination)fail()}catch{fail()}
+  result.destination=c.destination;result.content_mode=c.content_mode;result.confirmed_preview_hash=c.preview_hash;
+ }
+ return result;
 }

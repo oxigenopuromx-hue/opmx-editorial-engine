@@ -12,7 +12,13 @@ function formatTelegramReaderResult(request,result) {
       !['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'].includes(p.destination)||!Array.isArray(p.control_item_ids)||!p.control_item_ids.length||new Set(p.control_item_ids).size!==p.control_item_ids.length||p.control_item_ids.some(id=>!ids.has(id)))return respond({status:'SOURCE_NOT_CONFIRMED'},true);
    recovered_policy={mode:p.mode,authorized:true,explicit:p.explicit,authorization:p.authorization,destination:p.destination,control_item_ids:[...p.control_item_ids]};
   }
-  return respond({status:'PACKAGE_FOUND',package_id:result.packageId,state:result.state,revision:result.revision,items,...(recovered_policy?{recovered_policy}:{})});
+  let confirmed_correction;
+  if(Object.hasOwn(result,'confirmedCorrection')) {
+   const c=result.confirmedCorrection;
+   if(!recovered_policy||!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==result.packageId||c.revision!==result.revision||c.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'].includes(c.destination)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))return respond({status:'SOURCE_NOT_CONFIRMED'},true);
+   confirmed_correction={package_id:c.package_id,revision:c.revision,action:c.action,content_mode:c.content_mode,destination:c.destination,preview_hash:c.preview_hash};
+  }
+  return respond({status:'PACKAGE_FOUND',package_id:result.packageId,state:result.state,revision:result.revision,items,...(recovered_policy?{recovered_policy}:{}),...(confirmed_correction?{confirmed_correction}:{})});
  }
  const valid=result.itemId===request.body.itemId&&result.stream===request.body.stream&&result.offset===request.body.offset&&Number.isSafeInteger(result.bytes)&&result.bytes>=0&&result.bytes<=request.body.length&&Number.isSafeInteger(result.totalBytes)&&result.totalBytes<=10485760&&result.totalBytes>=result.offset+result.bytes&&result.bytes===Math.min(request.body.length,result.totalBytes-result.offset)&&result.nextOffset===result.offset+result.bytes&&result.eof===(result.nextOffset===result.totalBytes)&&/^[a-f0-9]{64}$/.test(result.sha256??'')&&/^[a-f0-9]{64}$/.test(result.chunkSha256??'')&&typeof result.contentBase64==='string'&&result.contentBase64.length<=4*Math.ceil(65536/3);
  if(!valid)return respond({status:'SOURCE_NOT_CONFIRMED'},true);

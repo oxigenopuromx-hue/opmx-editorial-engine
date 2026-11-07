@@ -22,5 +22,10 @@ test('candidate reader passes only complete, attributable recovery decisions',as
  const result={status:'FOUND',packageId,state:'READY',revision:9,items:[item],recoveredPolicy:{mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND',destination:'OPURO,LIBERAL',control_item_ids:[itemId]}};
  function read(){return new Function('$','$input',source)($,{first:()=>({json:result})})[0].json.response.result.structuredContent;}
  assert.equal(read().recovered_policy.destination,'OPURO,LIBERAL');
+ result.confirmedCorrection={package_id:packageId,revision:9,action:'CREATE',content_mode:'LITERAL',destination:'OPURO',preview_hash:'c'.repeat(64)};
+ assert.equal(read().confirmed_correction.destination,'OPURO');
+ result.confirmedCorrection.revision=8;assert.equal(read().status,'SOURCE_NOT_CONFIRMED');result.confirmedCorrection.revision=9;
+ delete result.recoveredPolicy;assert.equal(read().status,'SOURCE_NOT_CONFIRMED');
+ result.recoveredPolicy={mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND',destination:'OPURO,LIBERAL',control_item_ids:[itemId]};
  result.recoveredPolicy.control_item_ids=['ti_'+'c'.repeat(40)];assert.equal(read().status,'SOURCE_NOT_CONFIRMED');
 });

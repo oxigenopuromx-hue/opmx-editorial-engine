@@ -24,6 +24,17 @@ test('ordinary packages keep their existing selector behavior',()=>{
  const x=make();delete x.inventory.recovered_policy;x.inventory.items=x.inventory.items.slice(0,4);x.sources=x.sources.slice(0,4);
  assert.equal(chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}).destination,'OPOL,LIBERAL');
 });
+test('confirmed correction selects only its verified mode and destination',()=>{
+ const x=make();x.inventory.confirmed_correction={package_id:id,revision,action:'CREATE',content_mode:'LITERAL',destination:'OPURO',preview_hash:'b'.repeat(64)};
+ const p=chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision});
+ assert.equal(p.destination,'OPURO');assert.equal(p.content_mode,'LITERAL');assert.equal(p.mode,'PUBLISH');
+});
+test('rejects orphaned, altered, stale or unsupported confirmed corrections',()=>{
+ for(const change of [c=>c.revision--,c=>c.package_id='other',c=>c.action='UPDATE',c=>c.content_mode='AUTO',c=>c.destination='LIBERAL,OPOL',c=>c.preview_hash='bad']){
+  const x=make();x.inventory.confirmed_correction={package_id:id,revision,action:'CREATE',content_mode:'LITERAL',destination:'OPURO',preview_hash:'b'.repeat(64)};change(x.inventory.confirmed_correction);assert.throws(()=>chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}),/RECOVERED_POLICY_UNCONFIRMED/);
+ }
+ const x=make();delete x.inventory.recovered_policy;x.inventory.confirmed_correction={};assert.throws(()=>chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}),/RECOVERED_POLICY_UNCONFIRMED/);
+});
 test('ordinary decisions exactly match the current pinned Motor selector',async()=>{
  const {chooseTelegramMode}=await import('./original-destination-policy.mjs');
  for(const command of [null,'/publicar OPURO','/publicar OPOL,LIBERAL','/publicar OPURO,OPOL','/borrador LIBERAL']){
