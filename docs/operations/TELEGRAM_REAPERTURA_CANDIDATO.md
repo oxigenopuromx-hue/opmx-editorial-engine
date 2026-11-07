@@ -39,3 +39,7 @@ Pruebas con infraestructura aislada, reloj y resultados controlados: dueño, adm
 ## Concurrencia real en QA18 — 2026-11-07
 
 En la tabla aislada de la base QA se ejecutaron dos transacciones con conexiones distintas sobre la misma fila sintética. La primera cambió SAFE_TO_REOPEN a RECOVERY_FENCED y mantuvo el bloqueo ocho segundos; la segunda inició un UPDATE condicionado durante ese intervalo, esperó 6,84 segundos y afectó cero filas después del commit de la primera. Esto comprueba la exclusión de esa operación SQL concreta, no la integración de Publisher ni la certeza del estado SAFE_TO_REOPEN. Queda una fila sintética de prueba en QA. Las 45 pruebas locales candidatas pasan; no se ha activado la funcionalidad.
+
+## Vinculación de escritura candidata
+
+Los blobs de guard-server.mjs, direct-claim.mjs, target-progress.mjs y media-progress.mjs de last-source en Hostinger coinciden con feat/publisher-liberal-v3. fenced-target-candidate.mjs adapta la inserción de avance de destino verificada para que la vinculación servidor request/paquete/revisión, el bloqueo y el inicio de destino compartan transacción. Incluye ensayos simulados de falta de vínculo, cerrojo, duplicados y confirmación de commit perdida; 51 pruebas locales pasan. Queda por conectar el registro de vínculos a la emisión confiable del evento y adaptar todas las rutas de publicación y medios, incluso publicación de borradores existentes; no se ha desplegado ni prueba cierre completo de la carrera.
