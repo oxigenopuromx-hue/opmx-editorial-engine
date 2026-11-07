@@ -47,3 +47,7 @@ Los blobs de guard-server.mjs, direct-claim.mjs, target-progress.mjs y media-pro
 ## Inicialización atómica candidata
 
 El cierre candidato acepta una función de inicialización desactivada por defecto; si se suministra, inserta la barrera en la misma transacción antes de emitir el evento. Una vinculación candidata valida el ID derivado del paquete, revisión y destino resuelto por el servidor y sólo puede crearse con la barrera READY_TO_WRITE bloqueada. Las múltiples etiquetas legítimas tienen IDs distintos: no se impone unicidad del par paquete/revisión en la tabla de vínculos. Las pruebas simuladas cubren rollback si falla la inicialización y rechazo de una vinculación tardía; 55 pruebas pasan. Falta que un origen confiable resuelva y registre los vínculos y que todas las rutas de escritura adopten la barrera; esto aún no se ha activado.
+
+## Congelación previa a la revisión
+
+La propuesta ahora permite pasar atómicamente READY_TO_WRITE a RECONCILING antes de consultar evidencias: un inicio tardío debe rechazarse y la incertidumbre mantiene el estado congelado. Una operación separada propone avanzar a SAFE_TO_REOPEN sólo con evidencia del proveedor confiable. Las 58 pruebas locales son simuladas; las afirmaciones de evidencia aún no cuentan con proveedor real y no hay garantía mientras existan rutas escritoras sin participar. Los paquetes históricos sin barrera no se vuelven seguros por esta propuesta.
