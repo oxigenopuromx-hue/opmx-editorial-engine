@@ -12,6 +12,11 @@ function make(){
 test('Motor accepts authenticated recovery while message IDs overlap across chats',()=>{
  const {inventory,sources}=make();const p=chooseMotorPolicy(inventory,sources,{packageId:id,revision});assert.equal(p.destination,'OPOL,LIBERAL');assert.equal(p.control_item_ids.length,4);
 });
+test('authenticated image instruction preserves the recovered publishing choice',()=>{
+ const x=make(),text='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/imagen generar',bytes=Buffer.from(text);
+ x.sources[4].bytes=bytes;x.inventory.items[4].text_bytes=bytes.length;x.inventory.items[4].sha256=createHash('sha256').update(bytes).digest('hex');
+ assert.equal(chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}).destination,'OPOL,LIBERAL');
+});
 test('Motor rejects incomplete or altered recovery data',()=>{
  for(const mutate of [x=>x.inventory.revision=11,x=>x.sources[4].bytes=Buffer.from('alterado'),x=>x.inventory.recovered_policy.control_item_ids.pop(),x=>x.inventory.recovered_policy.destination='LIBERAL,OPOL',x=>x.inventory.recovered_policy.authorized=false,x=>x.inventory.items.push({...x.inventory.items[4]})]){const x=make();mutate(x);assert.throws(()=>chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}),/RECOVERED_POLICY_UNCONFIRMED/);}
 });

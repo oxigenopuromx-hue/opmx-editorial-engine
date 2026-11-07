@@ -6,6 +6,10 @@ const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const fail=()=>{throw Error('RECOVERY_POLICY_UNCONFIRMED')};
 const itemPattern=/^ti_[a-f0-9]{40}$/;
 const hashPattern=/^[a-f0-9]{64}$/;
+// Same direct-image grammar used by the authenticated Telegram receiver and
+// the production image selector. It conveys image intent, never publication
+// authorization; mode commands remain forbidden in the recovery additions.
+const directImage=/^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i;
 
 // Candidate only. All arguments must come from guard-owned immutable snapshots,
 // closure records and item/contribution rows under one consistent read. Never
@@ -30,7 +34,7 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
   if(item.ownerKey!==prior.ownerKey||item.state!=='STORED'||item.actorKey!==closure.actorKey||!['TEXT','FILE'].includes(item.kind))fail();
   if(item.kind==='TEXT'){
    if(typeof item.text!=='string'||hash(item.text)!==item.sha256||Buffer.byteLength(item.text)!==item.contentBytes)fail();
-   if(item.text.startsWith(prefix)&&item.itemId!==closure.closeItemId)fail();
+   if(item.text.startsWith(prefix)&&item.itemId!==closure.closeItemId&&!directImage.test(item.text.slice(prefix.length)))fail();
   }
  }
  const close=extra.at(-1);

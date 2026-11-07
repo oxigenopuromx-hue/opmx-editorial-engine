@@ -30,6 +30,18 @@ test('new controls cannot silently replace the preserved publication decision',(
  const input=fixture();input.items[3]=item(4,prefix+'/publicar TODOS',admin);
  assert.throws(()=>resolveRecoveredPolicy(input),/RECOVERY_POLICY_UNCONFIRMED/);
 });
+test('a recovered editor can request an image without changing the original destination',()=>{
+ for(const text of ['/imagen generar','Genera una imagen del evento\nDetalle editorial']){
+  const input=fixture();input.items[3]=item(4,prefix+text,admin);
+  const result=resolveRecoveredPolicy(input);assert.equal(result.destination,'OPURO,LIBERAL');assert.equal(result.mode,'PUBLISH');
+ }
+});
+test('image-like commands cannot introduce a new destination',()=>{
+ for(const text of ['/publicar TODOS','/imagen generar extra','/borrador LIBERAL']){
+  const input=fixture();input.items[3]=item(4,prefix+text,admin);
+  assert.throws(()=>resolveRecoveredPolicy(input),/RECOVERY_POLICY_UNCONFIRMED/);
+ }
+});
 
 test('MySQL reader binds the exact READY revision, snapshot and closure',async()=>{
  const {readRecoveredPolicyInTransaction}=await import('./recovered-policy-mysql.mjs');
