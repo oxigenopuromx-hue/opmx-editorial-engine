@@ -14,7 +14,8 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
  if(!/^tg_[a-f0-9]{40}$/.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!object(snapshot)||!object(snapshot.prior)||!object(closure)||!Array.isArray(items))fail();
  const prior=snapshot.prior,auth=prior.authorization;
  if(prior.packageId!==packageId||!hashPattern.test(prior.ownerKey??'')||closure.packageId!==packageId||closure.revision!==revision||closure.snapshotRevision!==prior.revision||closure.snapshotRevision>=revision||
-    !object(auth)||!['PUBLISH','DRAFT'].includes(auth.mode)||auth.authorized!==true||typeof auth.authorization!=='string'||!auth.authorization||typeof auth.explicit!=='boolean'||
+    !object(auth)||!['PUBLISH','DRAFT'].includes(auth.mode)||auth.authorized!==true||!['DIRECT_MODE_COMMAND','ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'].includes(auth.authorization)||typeof auth.explicit!=='boolean'||
+    (auth.authorization==='DIRECT_MODE_COMMAND'&&auth.explicit!==true)||(auth.authorization==='ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'&&(auth.explicit!==false||auth.mode!=='PUBLISH'))||
     !Array.isArray(prior.destinations)||!prior.destinations.length||prior.destinations.some(d=>!['OPURO','OPOL','LIBERAL'].includes(d))||new Set(prior.destinations).size!==prior.destinations.length||
     !Array.isArray(prior.controls)||!Array.isArray(snapshot.items)||!hashPattern.test(closure.actorKey??'')||!hashPattern.test(closure.closeReceiptKey??'')||!itemPattern.test(closure.closeItemId??''))fail();
  const before=new Map(),after=new Map();

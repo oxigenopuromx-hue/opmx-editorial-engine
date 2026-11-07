@@ -11,8 +11,12 @@ function completeRevision(value,{id,revision,ownerKey}) {
      !Array.isArray(value.destinations)||!value.destinations.length||
      value.destinations.some(x=>!['OPURO','OPOL','LIBERAL'].includes(x))||
      new Set(value.destinations).size!==value.destinations.length||
-     !object(value.authorization)||!Object.keys(value.authorization).length||
-     !Array.isArray(value.controls)||!Array.isArray(value.results)) return false;
+     !object(value.authorization)||!['PUBLISH','DRAFT'].includes(value.authorization.mode)||value.authorization.authorized!==true||
+     typeof value.authorization.explicit!=='boolean'||
+     !['DIRECT_MODE_COMMAND','ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'].includes(value.authorization.authorization)||
+     (value.authorization.authorization==='DIRECT_MODE_COMMAND'&&value.authorization.explicit!==true)||
+     (value.authorization.authorization==='ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'&&(value.authorization.explicit!==false||value.authorization.mode!=='PUBLISH'))||
+     !Array.isArray(value.controls)||!value.controls.length||value.controls.some(x=>typeof x!=='string'||!/^ti_[a-f0-9]{40}$/.test(x))||new Set(value.controls).size!==value.controls.length||!Array.isArray(value.results)) return false;
   // A blocked editorial result alone does not prove that no draft or post was
   // created. Every destination also needs an explicit reconciled verdict.
   return value.results.length===value.destinations.length && value.results.every(x=>
@@ -56,6 +60,7 @@ export function createReopenService({db,adminUserIds=[]}) {
       // supply the prior publication metadata; missing evidence fails closed.
       const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey):null;
       if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))return {status:'RECONCILIATION_REQUIRED'};
+      if(prior.controls.some(control=>!items.some(item=>item.itemId===control&&item.ownerKey===pkg.ownerKey&&item.state==='STORED')))return {status:'RECONCILIATION_REQUIRED'};
       // A read-only assertion is not a durable fence. Its atomic transition must
       // share this transaction with the revision, snapshot and session updates.
       if(typeof tx.claimRecoveryFence!=='function')return {status:'RECONCILIATION_REQUIRED'};

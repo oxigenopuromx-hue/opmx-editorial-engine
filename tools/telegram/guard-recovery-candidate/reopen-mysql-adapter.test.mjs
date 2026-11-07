@@ -12,12 +12,12 @@ function setup({barrier=false,missingRevision=false,missingFence=false,failAt=''
     if(sql.includes('FROM opmx_tg_quota'))return [[{id:1}]];
     if(sql.includes('FROM opmx_tg_packages'))return [[{package_id:id,owner_key:key,state:'READY',revision:7}]];
     if(sql.includes('FROM opmx_tg_sessions')||sql.includes('FROM opmx_tg_recovery_leases'))return [[]];
-    if(sql.includes('FROM opmx_tg_items'))return [[{item_id:'ti_1',owner_key:key,receipt_key:'r',fingerprint:'f',kind:'TEXT',state:'STORED',text_content:'source',attachment_json:null,reserved_bytes:6,content_bytes:6,sha256:'hash'}]];
+    if(sql.includes('FROM opmx_tg_items'))return [[{item_id:'ti_'+'1'.repeat(40),owner_key:key,receipt_key:'r',fingerprint:'f',kind:'TEXT',state:'STORED',text_content:'source',attachment_json:null,reserved_bytes:6,content_bytes:6,sha256:'hash'}]];
     if(sql.startsWith('UPDATE'))return [{affectedRows:1}];
     if(sql.startsWith('INSERT'))return [{affectedRows:1}];
     throw Error('UNEXPECTED_QUERY');
   }};
-  const options=barrier?{lockTrustedSafetyBarrier:async()=>({id:'b',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}),captureTrustedRevision:async()=>({packageId:id,revision:7,ownerKey:key,requestId:'req-7',destinations:['OPURO','OPOL','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true},controls:['control-1'],results:['OPURO','OPOL','LIBERAL'].map(destination=>({destination,status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}))})}:{};
+  const options=barrier?{lockTrustedSafetyBarrier:async()=>({id:'b',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}),captureTrustedRevision:async()=>({packageId:id,revision:7,ownerKey:key,requestId:'req-7',destinations:['OPURO','OPOL','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND'},controls:['ti_'+'1'.repeat(40)],results:['OPURO','OPOL','LIBERAL'].map(destination=>({destination,status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}))})}:{};
   if(barrier&&!missingFence)options.claimTrustedRecoveryFence=async(conn,pkg,revision)=>{assert.equal(conn,c);assert.equal(pkg,id);assert.equal(revision,7);calls.push('FENCE');return true;};
   if(missingRevision)delete options.captureTrustedRevision;
   return {calls,service:createReopenService({db:createRecoveryMysqlAdapter({async getConnection(){return c}},options)})};

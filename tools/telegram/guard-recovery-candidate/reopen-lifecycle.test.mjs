@@ -10,11 +10,11 @@ const ownerKey=id=>hash(`opmx:telegram:v1:${id}:${id}`),id='tg_'+'a'.repeat(40);
 // and package store, not SQL isolation, production credentials, or Publisher.
 test('admin reopens, contributes, and seals once while preserving the owner',async()=>{
  const owner=ownerKey('123'),admin=ownerKey('456'),events=[],contributions=[];
- const state={pkg:{id,ownerKey:owner,state:'READY',revision:7,item_count:1,used_bytes:5},session:null,lease:null,items:[{itemId:'original',state:'STORED'}],snapshot:null};
+ const state={pkg:{id,ownerKey:owner,state:'READY',revision:7,item_count:1,used_bytes:5},session:null,lease:null,items:[{itemId:'ti_'+'1'.repeat(40),ownerKey:owner,state:'STORED'}],snapshot:null};
  const db={async transaction(fn){return fn({
   async lockQuota(){},async lockPackage(){return state.pkg},async lockSession(){return state.session},async lockLease(){return state.lease},
   async lockSafetyBarrier(){return {packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}},
-  async lockInventory(){return state.items},async captureTrustedRevision(){return {packageId:id,revision:7,ownerKey:owner,requestId:'original-request',destinations:['OPURO'],authorization:{mode:'PUBLISH'},controls:['original-control'],results:[{destination:'OPURO',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}]}},
+  async lockInventory(){return state.items},async captureTrustedRevision(){return {packageId:id,revision:7,ownerKey:owner,requestId:'original-request',destinations:['OPURO'],authorization:{mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND'},controls:['ti_'+'1'.repeat(40)],results:[{destination:'OPURO',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}]}},
   async claimRecoveryFence(){return true},async saveSnapshot(x){state.snapshot=structuredClone(x)},
   async markOpen(x){state.pkg.state='OPEN';state.pkg.revision=x.revision},async createLease(x){state.lease={actorKey:x.actorKey,ownerKey:x.ownerKey,receiptId:x.receiptId}},
   async createSession(x){state.session={packageId:x.packageId,actorKey:x.actorKey}},async audit(){}

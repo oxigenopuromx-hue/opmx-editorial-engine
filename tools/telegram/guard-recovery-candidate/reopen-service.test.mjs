@@ -7,7 +7,7 @@ const hash=id=>createHash('sha256').update(`opmx:telegram:v1:${id}:${id}`).diges
 const id='tg_'+'a'.repeat(40);
 const input=who=>({owner:who,chat:who,packageId:id,receiptId:`telegram-${who}-1-2`});
 function fixture({failAudit=false,missingFenceClaim=false,failedFenceClaim=false}={}){
-  const state={fenced:false,pkg:{ownerKey:hash('123'),state:'READY',revision:7},session:new Map(),lease:null,snapshots:[],audits:[],items:[{id:'one',state:'STORED'}],prior:{packageId:id,revision:7,ownerKey:hash('123'),requestId:'req-7',destinations:['OPURO','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true},controls:['control-1'],results:[{destination:'OPURO',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'},{destination:'LIBERAL',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}]},barrier:{id:'barrier',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}};
+  const state={fenced:false,pkg:{ownerKey:hash('123'),state:'READY',revision:7},session:new Map(),lease:null,snapshots:[],audits:[],items:[{itemId:'ti_'+'1'.repeat(40),ownerKey:hash('123'),state:'STORED'}],prior:{packageId:id,revision:7,ownerKey:hash('123'),requestId:'req-7',destinations:['OPURO','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND'},controls:['ti_'+'1'.repeat(40)],results:[{destination:'OPURO',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'},{destination:'LIBERAL',status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}]},barrier:{id:'barrier',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}};
   let queue=Promise.resolve();
   const db={transaction(fn){const result=queue.then(async()=>{
     const before=structuredClone(state);
@@ -44,3 +44,9 @@ test('a blocked result without confirmed absence of publication stays closed',as
 });
 test('private identity and receipt must match',async()=>{const {service}=fixture();assert.equal((await service({...input('123'),chat:'456'})).status,'INVALID_REQUEST');assert.equal((await service({...input('123'),receiptId:'telegram-456-1-2'})).status,'INVALID_REQUEST');});
 test('a failed write rolls back fence, snapshot, revision, lease and session',async()=>{const {state,service}=fixture({failAudit:true});await assert.rejects(service(input('123')),/AUDIT_FAILED/);assert.equal(state.fenced,false);assert.equal(state.pkg.state,'READY');assert.equal(state.pkg.revision,7);assert.equal(state.snapshots.length,0);assert.equal(state.lease,null);assert.equal(state.session.size,0);});
+
+test('missing, foreign or unauthenticated original controls block reopening',async()=>{
+ for(const mutate of [s=>s.prior.authorization.authorized=false,s=>s.prior.authorization.explicit=false,s=>s.prior.controls=['ti_'+'2'.repeat(40)],s=>s.items[0].ownerKey=hash('999')]){
+  const {state,service}=fixture();mutate(state);assert.equal((await service(input('123'))).status,'RECONCILIATION_REQUIRED');assert.equal(state.pkg.state,'READY');
+ }
+});
