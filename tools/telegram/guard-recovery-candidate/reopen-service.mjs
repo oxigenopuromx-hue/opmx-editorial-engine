@@ -13,9 +13,11 @@ function completeRevision(value,{id,revision,ownerKey}) {
      new Set(value.destinations).size!==value.destinations.length||
      !object(value.authorization)||!Object.keys(value.authorization).length||
      !Array.isArray(value.controls)||!Array.isArray(value.results)) return false;
-  // The provider must explicitly report one result for each destination.
+  // A blocked editorial result alone does not prove that no draft or post was
+  // created. Every destination also needs an explicit reconciled verdict.
   return value.results.length===value.destinations.length && value.results.every(x=>
-    object(x)&&value.destinations.includes(x.destination)&&typeof x.status==='string'&&x.status.trim()) &&
+    object(x)&&value.destinations.includes(x.destination)&&x.status==='BLOCKED'&&
+    x.publicationVerdict==='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED') &&
     new Set(value.results.map(x=>x.destination)).size===value.destinations.length;
 }
 

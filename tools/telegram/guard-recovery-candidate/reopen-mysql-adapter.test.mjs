@@ -17,7 +17,7 @@ function setup({barrier=false,missingRevision=false,failAt=''}={}){
     if(sql.startsWith('INSERT'))return [{affectedRows:1}];
     throw Error('UNEXPECTED_QUERY');
   }};
-  const options=barrier?{lockTrustedSafetyBarrier:async()=>({id:'b',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}),captureTrustedRevision:async()=>({packageId:id,revision:7,ownerKey:key,requestId:'req-7',destinations:['OPURO','OPOL','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true},controls:['control-1'],results:[{destination:'OPURO',status:'BLOCKED'},{destination:'OPOL',status:'BLOCKED'},{destination:'LIBERAL',status:'BLOCKED'}]})}:{};
+  const options=barrier?{lockTrustedSafetyBarrier:async()=>({id:'b',packageId:id,revision:7,terminalBlocked:true,noActiveAttempts:true,noPublicationSideEffects:true,writesFenced:true}),captureTrustedRevision:async()=>({packageId:id,revision:7,ownerKey:key,requestId:'req-7',destinations:['OPURO','OPOL','LIBERAL'],authorization:{mode:'PUBLISH',authorized:true},controls:['control-1'],results:['OPURO','OPOL','LIBERAL'].map(destination=>({destination,status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}))})}:{};
   if(missingRevision)delete options.captureTrustedRevision;
   return {calls,service:createReopenService({db:createRecoveryMysqlAdapter({async getConnection(){return c}},options)})};
 }
