@@ -19,3 +19,12 @@ test('ordinary packages keep their existing selector behavior',()=>{
  const x=make();delete x.inventory.recovered_policy;x.inventory.items=x.inventory.items.slice(0,4);x.sources=x.sources.slice(0,4);
  assert.equal(chooseMotorPolicy(x.inventory,x.sources,{packageId:id,revision}).destination,'OPOL,LIBERAL');
 });
+test('ordinary decisions exactly match the current pinned Motor selector',async()=>{
+ const {chooseTelegramMode}=await import('./original-destination-policy.mjs');
+ for(const command of [null,'/publicar OPURO','/publicar OPOL,LIBERAL','/publicar OPURO,OPOL','/borrador LIBERAL']){
+  const texts=[attestedControl('/nuevo',id,10,11),'texto editorial',...(command?[attestedControl(command,id,12)]:[]),attestedControl('/listo',id,20)];
+  const sources=[],items=texts.map((s,i)=>{const bytes=Buffer.from(s),item_id='ti_'+String(i+1).repeat(40);sources.push({item_id,stream:'text',bytes});return {item_id,kind:'TEXT',state:'STORED',text_bytes:bytes.length,sha256:createHash('sha256').update(bytes).digest('hex')}});
+  const inventory={status:'PACKAGE_FOUND',package_id:id,revision,state:'READY',items};
+  assert.deepEqual(chooseMotorPolicy(inventory,sources,{packageId:id,revision}),chooseTelegramMode(inventory,sources));
+ }
+});
