@@ -15,3 +15,12 @@ test('published event catalog advertises the same maximum',()=>{
  const result=new Function('$input',protocol)(input)[0].json.response.result;
  assert.equal(result.events[0].payloadSchema.properties.item_count.maximum,40);
 });
+test('candidate reader passes only complete, attributable recovery decisions',async()=>{
+ const source=await readFile(new URL('./mcp-recovered-policy-reader-candidate.js',import.meta.url),'utf8');
+ const request={id:1,action:'manifest',body:{packageId}},$=()=>({first:()=>({json:{request}})}),itemId='ti_'+'b'.repeat(40);
+ const item={item_id:itemId,kind:'TEXT',state:'STORED',text_content:'control',content_bytes:7,sha256:'a'.repeat(64)};
+ const result={status:'FOUND',packageId,state:'READY',revision:9,items:[item],recoveredPolicy:{mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND',destination:'OPURO,LIBERAL',control_item_ids:[itemId]}};
+ function read(){return new Function('$','$input',source)($,{first:()=>({json:result})})[0].json.response.result.structuredContent;}
+ assert.equal(read().recovered_policy.destination,'OPURO,LIBERAL');
+ result.recoveredPolicy.control_item_ids=['ti_'+'c'.repeat(40)];assert.equal(read().status,'SOURCE_NOT_CONFIRMED');
+});

@@ -5,6 +5,7 @@ import {createClassifiedTargetRouter,initializeRevisionBindings} from './fenced-
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 import {createNeverWrittenEvidence} from './never-written-evidence.mjs';
 import {createOriginalRevisionCapture} from './original-policy-provider.mjs';
+import {readRecoveredPolicyInTransaction} from './recovered-policy-mysql.mjs';
 
 // Explicitly composed by the server, never by HTTP input. Merely constructing
 // this object must not enable production; the caller must install and migrate
@@ -21,6 +22,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     initializePublicationFence:initializeRevisionBindings,
     motorAttempts:createMotorAttemptStore({pool}),
     initializeMotorAttempt,
+    readRecoveredPolicy:readRecoveredPolicyInTransaction,
   });
 }
 

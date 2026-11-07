@@ -72,8 +72,8 @@ const schema=[
   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
 ];
 
-export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null}={}) {
-  if(typeof recoveryEnabled!=='boolean'||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
+export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null}={}) {
+  if(typeof recoveryEnabled!=='boolean'||(readRecoveredPolicy!==null&&typeof readRecoveredPolicy!=='function')||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
   let ready;
   const initialize=()=>ready??=(async()=>{
@@ -129,7 +129,16 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         }
         if(action==='manifest') {
           const [items]=await c.execute('SELECT item_id,kind,state,text_content,attachment_json,content_bytes,sha256 FROM opmx_tg_items_v1 WHERE package_id=? AND owner_key=? ORDER BY created_at,item_id',[input.packageId,ownerKey]);
-          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined}))});
+          let recoveredPolicy;
+          if(recoveryEnabled&&pack.state==='READY'){
+            const [closures]=await c.execute('SELECT package_id FROM opmx_tg_recovery_closures_v1 WHERE package_id=? AND revision=?',[input.packageId,pack.revision]);
+            if(closures.length){
+              if(closures.length!==1||!readRecoveredPolicy)return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
+              recoveredPolicy=await readRecoveredPolicy(c,input.packageId,Number(pack.revision));
+              if(!recoveredPolicy||typeof recoveredPolicy!=='object'||recoveredPolicy.authorized!==true||!['PUBLISH','DRAFT'].includes(recoveredPolicy.mode)||typeof recoveredPolicy.destination!=='string'||!Array.isArray(recoveredPolicy.control_item_ids))return await finish({status:'RECOVERY_POLICY_UNCONFIRMED'});
+            }
+          }
+          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{})});
         }
         if(action==='asset') {
           const [items]=await c.execute("SELECT content_blob,sha256,attachment_json FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=? AND state='STORED' AND kind='FILE'",[input.itemId,input.packageId,ownerKey]);

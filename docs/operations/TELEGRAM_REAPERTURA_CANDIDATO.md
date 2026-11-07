@@ -73,3 +73,7 @@ La tabla candidata de intentos se creó en QA y una transacción sintética pas�
 ## Compatibilidad del lector MCP — producción
 
 Se identificó que el lector MCP rechazaba inventarios mayores a 20 elementos y el catálogo del evento anunciaba un máximo de 20, mientras que una revisión recuperada puede conservar hasta 40. Se amplió a 40 en los dos nodos correspondientes del workflow `bnzVMNkZuGO1GQCZ`; la versión activa pasó de `6ef0ea75-56ae-48d9-9d40-4c244704ef04` a `eec8f8b7-7b9d-46f3-9e8f-4588639101dc`. Los nodos y el diff se revisaron antes de activar: no hubo cambios de conexiones ni de otros nodos. Pruebas locales de sus funciones confirmaron aceptación de 20 y 40, rechazo de 41 y catálogo máximo 40. El workflow no conserva datos de ejecución de producción; no se dispone de una prueba en vivo con 40 elementos. Esta corrección no habilita por sí sola `/abrir`.
+
+## Lectura de autorización recuperada candidata
+
+La lectura candidata del guard detecta si la revisión READY tiene cierre de recuperación y, sólo en ese caso, exige resolver la política desde el registro e instantánea ligados a esa revisión. Sin proveedor o con decisión incompleta, devuelve fallo. El nodo MCP candidato transmite esa decisión bajo `recovered_policy` tras comprobar modo, destinos, autorización y control IDs presentes en el inventario. Se probó en memoria; no está desplegado. El Motor activo aún debe incorporar esa rama y verificar el mismo paquete/revisión antes de utilizarla.
