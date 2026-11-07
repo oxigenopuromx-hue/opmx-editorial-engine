@@ -2,6 +2,19 @@ import {createHash} from 'node:crypto';
 import {validateTelegramDownload} from './intake.mjs';
 
 export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:100});
+// An explicitly reopened package can accept additional information while
+// retaining every original. The final slot is reserved for the attested /listo.
+export const RECOVERY_ITEM_LIMIT=40;
+const CONTROL_PREFIX='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo\n';
+function isAttestedClose(input){
+  if(input.kind!=='TEXT'||typeof input.text!=='string'||!input.text.startsWith(CONTROL_PREFIX))return false;
+  let meta;try{meta=JSON.parse(input.text.slice(CONTROL_PREFIX.length));}catch{return false;}
+  const parts=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId);
+  return !!parts&&parts[1]===input.chat&&meta&&typeof meta==='object'&&!Array.isArray(meta)&&
+    Object.keys(meta).sort().join(',')==='message_id,package_id,policy'&&meta.package_id===input.packageId&&
+    ['publish-todos-v2','publish-ambos-v1'].includes(meta.policy)&&Number.isSafeInteger(meta.message_id)&&
+    meta.message_id>0&&String(meta.message_id)===String(Number(parts[2]));
+}
 const digest = value => createHash('sha256').update(value).digest('hex');
 const bad = () => {throw new Error('Solicitud inválida');};
 const exact = (value, keys) => {
@@ -158,7 +171,8 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           const [prior]=await c.execute('SELECT item_id,package_id,fingerprint,state FROM opmx_tg_items_v1 WHERE receipt_key=?',[receiptKey]);
           if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state});
           const reserved=input.kind==='TEXT'?Buffer.byteLength(input.text):input.attachment.declared_bytes??PACKAGE_LIMITS.fileBytes;
-          if(Number(pack.item_count)>=PACKAGE_LIMITS.items||Number(pack.used_bytes)+reserved>PACKAGE_LIMITS.packageBytes||Number(quota[0].used_bytes)+reserved>PACKAGE_LIMITS.totalBytes)return await finish({status:'QUOTA_EXCEEDED'});
+          const itemLimit=lease?RECOVERY_ITEM_LIMIT-(isAttestedClose(input)?0:1):PACKAGE_LIMITS.items;
+          if(Number(pack.item_count)>=itemLimit||Number(pack.used_bytes)+reserved>PACKAGE_LIMITS.packageBytes||Number(quota[0].used_bytes)+reserved>PACKAGE_LIMITS.totalBytes)return await finish({status:'QUOTA_EXCEEDED'});
           const id='ti_'+digest(`${ownerKey}:${input.receiptId}`).slice(0,40);
           const textOnly=input.kind==='TEXT';
           await c.execute('INSERT INTO opmx_tg_items_v1 (item_id,package_id,owner_key,receipt_key,fingerprint,kind,state,text_content,attachment_json,reserved_bytes,content_bytes,sha256,content_blob,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,UTC_TIMESTAMP(6))',[id,input.packageId,ownerKey,receiptKey,fingerprint,input.kind,textOnly?'STORED':'PENDING',input.text,input.attachment?JSON.stringify(input.attachment):null,reserved,textOnly?reserved:0,textOnly?digest(input.text):null]);
