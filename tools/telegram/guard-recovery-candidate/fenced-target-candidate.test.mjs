@@ -19,7 +19,15 @@ function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=fals
 test('reserves the actual target inside the same transaction as the fence',async()=>{
   const f=fixture();assert.deepEqual(await beginFencedTarget(f.pool,input),{status:'write_started'});
   assert.equal(f.state,'WRITING');assert.deepEqual(f.calls.filter(x=>typeof x==='string'),['begin','commit','release']);
-  const statements=f.calls.filter(x=>x.sql);assert.match(statements[1].sql,/FOR UPDATE/);assert.match(statements[3].sql,/INSERT INTO opmx_mcp_target_progress/);
+  const statements=f.calls.filter(x=>x.sql);assert.doesNotMatch(statements[0].sql,/FOR UPDATE/);assert.match(statements[1].sql,/FOR UPDATE/);assert.match(statements[2].sql,/FOR UPDATE/);assert.match(statements[4].sql,/INSERT INTO opmx_mcp_target_progress/);
+});
+test('a binding changed after discovery cannot grant permission to write',async()=>{
+  let reads=0,writes=0;const c={async beginTransaction(){},async commit(){throw Error('must not commit')},async rollback(){},release(){},async execute(sql){
+    if(sql.startsWith('SELECT package_id'))return [[{package_id:'tg_'+(++reads===1?'b':'c').repeat(40),revision:7}]];
+    if(sql.startsWith('SELECT state'))return [[{state:'READY_TO_WRITE'}]];
+    writes++;throw Error('unexpected write');
+  }};
+  assert.equal((await beginFencedTarget({async getConnection(){return c}},input)).status,'NOT_BOUND');assert.equal(writes,0);
 });
 test('a fenced or unknown revision and an unbound request never acquire a target',async()=>{
   for(const options of [{bound:false},{state:'RECOVERY_FENCED'},{state:'SAFE_TO_REOPEN'},{state:null}]){

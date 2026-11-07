@@ -89,12 +89,19 @@ export async function beginFencedTarget(pool,input) {
   const c=await pool.getConnection();let committed=false;
   try {
     await c.beginTransaction();
-    const [bindings]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
+    // Discover the fence without locking the binding: reconciliation locks
+    // the fence before the binding set. Revalidate under a lock after taking
+    // the fence so the two paths have the same lock order.
+    const [bindings]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=?',[requestId]);
     if(bindings.length!==1){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'};}
     const b=bindings[0];
     const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[b.package_id,b.revision]);
     if(fences.length!==1 || !['READY_TO_WRITE','WRITING'].includes(fences[0].state)){
       await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'};
+    }
+    const [confirmed]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
+    if(confirmed.length!==1||confirmed[0].package_id!==b.package_id||Number(confirmed[0].revision)!==Number(b.revision)){
+      await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'};
     }
     if(fences[0].state==='READY_TO_WRITE') {
       const [change]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='READY_TO_WRITE'",[b.package_id,b.revision]);
