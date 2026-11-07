@@ -30,3 +30,24 @@ test('new controls cannot silently replace the preserved publication decision',(
  const input=fixture();input.items[3]=item(4,prefix+'/publicar TODOS',admin);
  assert.throws(()=>resolveRecoveredPolicy(input),/RECOVERY_POLICY_UNCONFIRMED/);
 });
+
+test('MySQL reader binds the exact READY revision, snapshot and closure',async()=>{
+ const {readRecoveredPolicyInTransaction}=await import('./recovered-policy-mysql.mjs');
+ const f=fixture(),queries=[];
+ const connection={async execute(sql,args){
+  queries.push({sql,args});
+  if(sql.startsWith('SELECT owner_key,state'))return [[{owner_key:owner,state:'READY',revision:12}]];
+  if(sql.startsWith('SELECT snapshot_revision'))return [[{snapshot_revision:7,actor_key:admin,close_item_id:f.closure.closeItemId,close_receipt_key:f.closure.closeReceiptKey}]];
+  if(sql.startsWith('SELECT owner_key,snapshot_json'))return [[{owner_key:owner,snapshot_json:JSON.stringify(f.snapshot)}]];
+  if(sql.startsWith('SELECT i.item_id'))return [f.items.map(x=>({item_id:x.itemId,owner_key:x.ownerKey,receipt_key:x.receiptKey,fingerprint:x.fingerprint,kind:x.kind,state:x.state,text_content:x.text,attachment_json:null,reserved_bytes:x.reservedBytes,content_bytes:x.contentBytes,sha256:x.sha256,actor_key:x.actorKey??null}))];
+  throw Error('unexpected SQL');
+ }};
+ const out=await readRecoveredPolicyInTransaction(connection,pkg,12);assert.equal(out.destination,'OPURO,LIBERAL');
+ assert.deepEqual(queries.map(q=>q.args),[[pkg],[pkg,12],[pkg,7],[pkg]]);
+ assert.ok(queries.every(q=>q.sql.endsWith('FOR UPDATE')));
+});
+test('MySQL reader rejects stale revisions before reading policy',async()=>{
+ const {readRecoveredPolicyInTransaction}=await import('./recovered-policy-mysql.mjs');let count=0;
+ const connection={async execute(){count++;return [[{owner_key:owner,state:'READY',revision:13}]]}};
+ await assert.rejects(()=>readRecoveredPolicyInTransaction(connection,pkg,12),/RECOVERY_POLICY_UNCONFIRMED/);assert.equal(count,1);
+});
