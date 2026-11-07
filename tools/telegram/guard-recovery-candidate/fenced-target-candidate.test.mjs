@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,bindTrustedRequestInTransaction,requestBindingSchema} from './fenced-target-candidate.mjs';
+import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,bindTrustedRequestInTransaction,createClassifiedTargetRouter,requestBindingSchema} from './fenced-target-candidate.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'LIBERAL'};
@@ -68,9 +68,19 @@ test('binding rejects untrusted identity and refuses closed or missing fences',a
 test('seal binds every canonical request identity to the same fenced revision',async()=>{
   const id='tg_'+'b'.repeat(40),calls=[];const c={async execute(sql,args){calls.push({sql,args});return [{affectedRows:1}];}};
   await initializeRevisionBindings(c,{packageId:id,revision:7});
-  assert.equal(calls.length,8);assert.match(calls[0].sql,/opmx_tg_publication_fence/);
+  assert.equal(calls.length,15);assert.match(calls[0].sql,/opmx_tg_publication_fence/);
   const labels=['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'];
-  assert.deepEqual(calls.slice(1).map(x=>x.args),labels.map(destination=>[expectedDraftRequestId({packageId:id,revision:7,destination}),id,7]));
+  assert.deepEqual(calls.filter(x=>x.sql.includes('INSERT INTO opmx_tg_request_binding')).map(x=>x.args),labels.map(destination=>[expectedDraftRequestId({packageId:id,revision:7,destination}),id,7]));
+});
+test('router requires a durable class before legacy writer can start',async()=>{
+  const calls=[];const c={async beginTransaction(){calls.push('begin')},async commit(){calls.push('commit')},async rollback(){calls.push('rollback')},release(){calls.push('release')},async execute(sql){calls.push(sql);return sql.startsWith('SELECT')?[[{kind:'LEGACY'}]]:[{affectedRows:1}];}};
+  const pool={async getConnection(){return c}},router=createClassifiedTargetRouter(async(p,x)=>{assert.equal(p,pool);assert.equal(x,input);calls.push('legacy');return {status:'write_started'};});
+  assert.equal((await router(pool,input)).status,'write_started');assert.ok(calls.indexOf('commit')<calls.indexOf('legacy'));
+});
+test('unconfirmed classification never invokes a legacy writer',async()=>{
+  let invoked=false;const c={async beginTransaction(){},async commit(){throw Error('lost')},async rollback(){},release(){},async execute(sql){return sql.startsWith('SELECT')?[[{kind:'LEGACY'}]]:[{affectedRows:1}];}};
+  const router=createClassifiedTargetRouter(async()=>{invoked=true});
+  await assert.rejects(()=>router({async getConnection(){return c}},input),/REQUEST_CLASS_UNCONFIRMED/);assert.equal(invoked,false);
 });
 test('a failed binding bubbles up so sealing can roll back before emitting',async()=>{
   const id='tg_'+'b'.repeat(40);let n=0;const c={async execute(){if(++n===4)throw Error('write failure');return [{affectedRows:1}];}};

@@ -9,6 +9,10 @@ export const requestBindingSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_request_bi
  revision INT UNSIGNED NOT NULL,
  KEY package_revision (package_id,revision)
 ) ENGINE=InnoDB`;
+export const requestClassificationSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_request_class_v1 (
+ request_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY,
+ kind VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL
+) ENGINE=InnoDB`;
 
 // The caller must use a server-resolved destination and the transaction that
 // seals the package; caller-supplied claims alone are not authorization.
@@ -26,8 +30,34 @@ export async function initializeRevisionBindings(connection,{packageId,revision}
   await initializeRevisionFence(connection,{packageId,revision});
   for(const destination of ['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS']) {
     const requestId=expectedDraftRequestId({packageId,revision,destination});
+    // Classification and binding are inserted with the fence in the same
+    // transaction. A previously classified legacy request causes rollback.
+    await connection.execute("INSERT INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'TELEGRAM')",[requestId]);
     await connection.execute('INSERT INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES (?,?,?)',[requestId,packageId,revision]);
   }
+}
+
+// Claim a stable class under a transactional unique key before choosing a
+// writer. A legacy claim that wins before sealing prevents that seal from
+// creating a recoverable binding; the reverse ordering routes to the fence.
+// Production still needs a migration of in-flight requests, all writer paths,
+// and an authoritative reconciliation provider before enabling this router.
+export function createClassifiedTargetRouter(beginLegacyTarget) {
+  if(typeof beginLegacyTarget!=='function')throw Error('INVALID_ROUTER_CONFIGURATION');
+  return async function route(pool,input) {
+    const requestId=input?.requestId;
+    if(!pool?.getConnection||typeof requestId!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(requestId))throw Error('INVALID_TARGET_REQUEST');
+    const c=await pool.getConnection();let committed=false,kind;
+    try {
+      await c.beginTransaction();
+      await c.execute("INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'LEGACY')",[requestId]);
+      const [rows]=await c.execute('SELECT kind FROM opmx_tg_request_class_v1 WHERE request_id=? FOR UPDATE',[requestId]);
+      if(rows.length!==1||!['LEGACY','TELEGRAM'].includes(rows[0].kind))throw Error('INVALID_REQUEST_CLASS');
+      kind=rows[0].kind;await c.commit();committed=true;
+    } catch(error){if(!committed)try{await c.rollback()}catch{}throw Error('REQUEST_CLASS_UNCONFIRMED',{cause:error});}
+    finally {c.release();}
+    return kind==='TELEGRAM'?beginFencedTarget(pool,input):beginLegacyTarget(pool,input);
+  };
 }
 
 // The binding is immutable. Never recreate a missing fence or bind after a
@@ -37,6 +67,7 @@ export async function bindTrustedRequestInTransaction(connection,{packageId,revi
      requestId!==expectedDraftRequestId({packageId,revision,destination}))throw Error('INVALID_BINDING');
   const [rows]=await connection.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
   if(rows.length!==1 || rows[0].state!=='READY_TO_WRITE')return false;
+  await connection.execute("INSERT INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'TELEGRAM')",[requestId]);
   await connection.execute('INSERT INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES (?,?,?)',[requestId,packageId,revision]);
   return true;
 }
@@ -73,3 +104,4 @@ export async function beginFencedTarget(pool,input) {
     throw Error('WRITE_START_UNCONFIRMED',{cause:error});
   } finally {c.release();}
 }
+

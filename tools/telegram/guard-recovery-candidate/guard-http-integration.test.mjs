@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createGuard} from './deployed-guard/guard-server.mjs';
 import {request} from 'node:http';
 import {createReopenService} from './reopen-service.mjs';
+import {createClassifiedTargetRouter} from './fenced-target-candidate.mjs';
 
 const secret='a'.repeat(64),pool={async getConnection(){throw Error('unexpected database access')}};
 async function withServer(options,fn){
@@ -41,4 +42,20 @@ test('real reopen handler rejects spoofed identity and fails closed without a sa
   let r=await post(port,'/v1/telegram/packages/reopen',input);assert.equal(r.body.status,'INVALID_REQUEST');assert.equal(transactions,0);
   r=await post(port,'/v1/telegram/packages/reopen',{...input,chat:'123'});assert.equal(r.body.status,'NOT_FOUND');assert.equal(transactions,1);
  });
+});
+test('target request in a recovering package cannot start through the integrated HTTP route',async()=>{
+ let calls=0,legacy=0;
+ const classification={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){if(sql.startsWith('SELECT'))return [[{kind:'TELEGRAM'}]];return [{affectedRows:0}];}};
+ const target={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){
+  if(sql.startsWith('SELECT package_id'))return [[{package_id:'tg_'+'a'.repeat(40),revision:7}]];
+  if(sql.startsWith('SELECT state'))return [[{state:'RECOVERY_FENCED'}]];
+  throw Error('unexpected write');
+ }};
+ const testPool={async getConnection(){return ++calls===1?classification:target}};
+ const server=createGuard({pool:testPool,secret,targetBegin:createClassifiedTargetRouter(async()=>{legacy++;return {status:'write_started'}})});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try {
+  const r=await post(server.address().port,'/v1/targets/begin',{requestId:'tg_'+'a'.repeat(64),slug:'nota-prueba',destination:'OPURO'});
+  assert.equal(r.status,409);assert.equal(r.body.status,'WRITE_NOT_PERMITTED');assert.equal(legacy,0);
+ } finally {await new Promise(resolve=>server.close(resolve));}
 });

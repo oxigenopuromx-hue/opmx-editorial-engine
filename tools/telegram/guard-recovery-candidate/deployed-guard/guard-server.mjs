@@ -68,7 +68,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
         const expectedKeys=req.url==='/v1/targets/report'?'destination,postId,requestId,slug':'destination,requestId,slug';
         if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!==expectedKeys) return end(400,{error:'invalid_request'});
         const result=req.url==='/v1/targets/begin'?await targetBegin(pool,input):req.url==='/v1/targets/report'?await recordTargetPost(pool,input):await inspectTargetProgress(pool,input);
-        const conflict=['already_started','not_reserved','not_updated'].includes(result.status);
+        const conflict=['already_started','not_reserved','not_updated','NOT_BOUND','WRITE_NOT_PERMITTED','NOT_RESERVED'].includes(result.status);
         return end(conflict?409:200,result);
       }
       if(req.url==='/v1/reservations/status') {
