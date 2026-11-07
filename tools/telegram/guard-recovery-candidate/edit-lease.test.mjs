@@ -1,17 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {createTelegramPackageStore} from './package-store.mjs';
+import {createTelegramPackageStore,PACKAGE_LIMITS} from './package-store.mjs';
 const k=id=>createHash('sha256').update(`opmx:telegram:v1:${id}:${id}`).digest('hex');
 const packageId='tg_'+'a'.repeat(40);
-function fixture({actor='456',session=true,itemCount=2}={}){
+function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0}={}){
   const calls=[];
   const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql,args=[]){
     calls.push({sql,args});
     if(sql.startsWith('CREATE TABLE')||sql.startsWith('INSERT IGNORE'))return [[]];
-    if(sql.includes('SELECT used_bytes,package_count'))return [[{used_bytes:0,package_count:1}]];
+    if(sql.includes('SELECT used_bytes,package_count'))return [[{used_bytes:totalBytes,package_count:1}]];
     if(sql.includes('SELECT actor_key,owner_key FROM opmx_tg_recovery_leases'))return [[{actor_key:k('456'),owner_key:k('123')}]];
-    if(sql.startsWith('SELECT * FROM opmx_tg_packages'))return [args[1]===k('123')?[{package_id:packageId,owner_key:k('123'),state:'OPEN',revision:8,item_count:itemCount,used_bytes:0}]:[]];
+    if(sql.startsWith('SELECT * FROM opmx_tg_packages'))return [args[1]===k('123')?[{package_id:packageId,owner_key:k('123'),state:'OPEN',revision:8,item_count:itemCount,used_bytes:usedBytes}]:[]];
     if(sql.startsWith('SELECT package_id FROM opmx_tg_sessions'))return [session?[{package_id:packageId}]:[]];
     if(sql.startsWith('SELECT item_id,package_id,fingerprint'))return [[]];
     if(sql.startsWith('SELECT COUNT(*) AS total'))return [[{total:1,pending:0,stored:1}]];
@@ -32,4 +32,13 @@ test('the last recovery slot is reserved for the attested closing message',async
   assert.equal((await store.run('reserve',make('otro elemento'))).status,'QUOTA_EXCEEDED');
   assert.equal((await store.run('reserve',make(text))).status,'STORED');
   assert.equal((await store.run('reserve',make(text.replace('"message_id":1','"message_id":2')))).status,'QUOTA_EXCEEDED');
+});
+test('a verified close can use its bounded reserve when byte quotas are full',async()=>{
+  const {store,base,calls}=fixture({itemCount:39,usedBytes:PACKAGE_LIMITS.packageBytes,totalBytes:PACKAGE_LIMITS.totalBytes});
+  const text='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo\n'+JSON.stringify({policy:'publish-todos-v2',package_id:packageId,message_id:1});
+  const make=t=>({...base,receiptId:'telegram-456-1-2',kind:'TEXT',text:t,attachment:null});
+  assert.equal((await store.run('reserve',make('texto normal'))).status,'QUOTA_EXCEEDED');
+  assert.equal((await store.run('reserve',make(text))).status,'STORED');
+  const accounted=calls.find(c=>c.sql.startsWith('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes+'));
+  assert.equal(accounted.args[0],Buffer.byteLength(text));
 });
