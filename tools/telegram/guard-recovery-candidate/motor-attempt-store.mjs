@@ -32,16 +32,17 @@ export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).t
    if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='chat,owner,packageId,revision'||typeof input.owner!=='string'||input.owner!==input.chat||!/^[1-9][0-9]{0,15}$/.test(input.owner)||!valid(input.packageId,input.revision))throw Error('INVALID_ATTEMPT');
    const c=await pool.getConnection();let rows;try{[rows]=await c.execute('SELECT a.event_id,p.owner_key FROM opmx_tg_motor_attempts_v1 a JOIN opmx_tg_packages_v1 p ON p.package_id=a.package_id WHERE a.package_id=? AND a.revision=?',[input.packageId,input.revision])}finally{c.release()}
    if(rows.length!==1||rows[0].owner_key!==digest(`opmx:telegram:v1:${input.owner}:${input.chat}`)||!/^evt_[a-f0-9]{48}$/.test(rows[0].event_id??''))return {status:'ATTEMPT_NOT_REGISTERED'};
-   const eventId=rows[0].event_id,result=await store.begin({packageId:input.packageId,revision:input.revision,eventId});
+   const eventId=rows[0].event_id,result=await store.begin({packageId:input.packageId,revision:input.revision,eventId},rows[0].owner_key);
    return result.status==='ATTEMPT_STARTED'?{...result,eventId}:result;
   },
-  async begin(input={}){
+  async begin(input={},expectedOwnerKey=null){
    const {packageId,revision,eventId}=input??{};
    if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='eventId,packageId,revision'||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??''))throw Error('INVALID_ATTEMPT');
    return transaction(async c=>{
     // Same lock order as seal/reopen: package, then attempt, then fence.
-    const [p]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
+    const [p]=await c.execute('SELECT state,revision,owner_key FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
     if(p.length!==1||p[0].state!=='READY'||Number(p[0].revision)!==revision)return {status:'STALE_REVISION'};
+    if(expectedOwnerKey!==null&&p[0].owner_key!==expectedOwnerKey)return {status:'ATTEMPT_NOT_REGISTERED'};
     const [a]=await c.execute('SELECT state,event_id FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
     if(a.length!==1||a[0].event_id!==eventId)return {status:'ATTEMPT_NOT_REGISTERED'};
     if(a[0].state!=='QUEUED')return {status:'ATTEMPT_ALREADY_CLAIMED'};
