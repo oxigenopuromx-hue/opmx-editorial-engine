@@ -14,6 +14,15 @@ test('forwarded instructions and ordinary packages cannot select correction opti
  assert.equal(run(normal,msg('/opciones literal OPURO',true)).kind,'REJECTED');
  const intent=run(prepare,run(normal,msg('/opciones literal OPURO')));assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).requires_operation,false);
 });
+test('discard requires a direct command and a recovery session',()=>{
+ const command=`/descartar ${item}`;
+ assert.equal(run(normal,msg(command,true)).kind,'REJECTED');
+ const intent=run(prepare,run(normal,msg(command)));
+ assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).requires_operation,false);
+ const accepted=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
+ assert.equal(accepted.next_action,'discard');assert.equal(accepted.next_body.itemId,item);
+ const forged={...intent,mode_attested:false};assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},forged).requires_operation,false);
+});
 test('closing a recovered package requests a preview instead of sealing',()=>{
  const intent=run(prepare,run(normal,msg('/listo')));const next=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
  const out=run(seal,{status:'STORED',packageId:pkg,itemId:item,revision:12},next);assert.equal(out.seal_requested,false);assert.equal(out.preview_requested,true);assert.equal(out.preview_body.revision,12);
