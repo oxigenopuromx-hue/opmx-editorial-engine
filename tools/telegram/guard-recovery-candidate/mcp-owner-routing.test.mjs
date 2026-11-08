@@ -15,5 +15,5 @@ test('legacy entries without opening route use the unambiguous queue owner',()=>
 });
 test('attempt tools resolve the original owner, not the administrator editor',()=>{
  const rows=[{package_id:packageId,stage:'ROUTING',chat_id:'123'},{package_id:packageId,stage:'QUEUED',chat_id:'456'}];
- for(const name of ['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx'])assert.deepEqual(resolve(rows,name),{owner:'123',chat:'123'});
+ for(const name of ['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx'])assert.deepEqual(resolve(rows,name),{owner:'123',chat:'123'});
 });

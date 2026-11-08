@@ -1,7 +1,7 @@
 import {createRecoveryMysqlAdapter} from './reopen-mysql-adapter.mjs';
 import {createReopenService} from './reopen-service.mjs';
 import {claimFenceInTransaction} from './publication-fence-candidate.mjs';
-import {createClassifiedTargetRouter,initializeRevisionBindings} from './fenced-target-candidate.mjs';
+import {createClassifiedTargetRouter,initializeRevisionBindings,initializeDecisionPendingBindings} from './fenced-target-candidate.mjs';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 import {createNeverWrittenEvidence} from './never-written-evidence.mjs';
 import {createRevisionCapture} from './revision-capture.mjs';
@@ -19,7 +19,7 @@ import {createPreviewDeliveryStore} from './preview-delivery-store.mjs';
 // this object must not enable production; the caller must install and migrate
 // schemas, wire the package store, event consumer and every relevant writer,
 // and provide evidence backed by authoritative records and an effective fence.
-export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget}) {
+export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget,verifyLiteralEnforcement=async()=>false}) {
   if(!pool?.getConnection||!Array.isArray(adminUserIds)||typeof lockTrustedSafetyBarrier!=='function'||
      typeof captureTrustedRevision!=='function'||typeof beginLegacyTarget!=='function')throw Error('RECOVERY_CONFIGURATION_INCOMPLETE');
   const db=createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier,captureTrustedRevision,
@@ -30,7 +30,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     targetBegin:createClassifiedTargetRouter(beginLegacyTarget),
     telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
-    motorAttempts:createMotorAttemptStore({pool}),
+    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement}),
     initializeMotorAttempt,
     readRecoveredPolicy:readRecoveredPolicyInTransaction,
     readConfirmedCorrection:readConfirmedCorrectionInTransaction,
@@ -39,9 +39,9 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
 
 // These callbacks must be real, authoritative deployment integrations. Their
 // existence or test doubles does not establish that production is safe.
-export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget}) {
+export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget,verifyLiteralEnforcement=async()=>false}) {
   const evidence=createNeverWrittenEvidence({verifyTerminalRun,verifyWriterCoverage});
-  return createCandidateRecoverySubsystem({pool,adminUserIds,beginLegacyTarget,
+  return createCandidateRecoverySubsystem({pool,adminUserIds,beginLegacyTarget,verifyLiteralEnforcement,
     lockTrustedSafetyBarrier:evidence.lockSafetyBarrier,
     captureTrustedRevision:createRevisionCapture({lockVerifiedBlockedOutcomes:evidence.lockVerifiedBlockedOutcomes})});
 }
@@ -52,7 +52,7 @@ export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRu
 export function createCandidateCorrectionSubsystem({pool,events,loadLockedFacts=null,readLockedSelection=null,verifyDecisionConsumer}){
  if(loadLockedFacts!==null&&readLockedSelection!==null)throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
  const facts=loadLockedFacts??createCorrectionFactsReader({readLockedSelection:readLockedSelection??readCorrectionSelectionInTransaction});
- const commitConfirmed=createConfirmedRecoverySeal({events,initializePublicationFence:initializeRevisionBindings,initializeMotorAttempt,verifyDecisionConsumer});
+ const commitConfirmed=createConfirmedRecoverySeal({events,initializePublicationFence:initializeDecisionPendingBindings,initializeMotorAttempt,verifyDecisionConsumer});
  const previewDelivery=createPreviewDeliveryStore({pool});
  return {...createCorrectionConfirmationStore({pool,loadLockedFacts:facts,commitConfirmed,verifyPreviewDelivery:previewDelivery.verifyPreviewDelivery}),...createCorrectionSelectionStore({pool}),previewDelivery};
 }

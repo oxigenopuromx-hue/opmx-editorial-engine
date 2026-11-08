@@ -24,8 +24,9 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
     const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capabilities|current|open|reserve|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
     const recoverAction=telegramRecovery&&req.url==='/v1/telegram/packages/reopen';
     const blockedListAction=telegramBlockedList&&req.url==='/v1/telegram/packages/blocked';
-    const attemptMatch=telegramAttempts&&/^\/v1\/telegram\/attempts\/(begin|block|start)$/.exec(req.url)?.[1];
-    const attemptAction=attemptMatch&&typeof telegramAttempts[attemptMatch]==='function'?attemptMatch:null;
+    const attemptMatch=telegramAttempts&&/^\/v1\/telegram\/attempts\/(begin|block|start|decision)$/.exec(req.url)?.[1];
+    const attemptMethod=attemptMatch==='decision'?'acknowledgeDecision':attemptMatch;
+    const attemptAction=attemptMethod&&typeof telegramAttempts[attemptMethod]==='function'?attemptMethod:null;
     const correctionAction=telegramCorrections&&/^\/v1\/telegram\/corrections\/(preview|confirm)$/.exec(req.url)?.[1];
     const selectionAction=telegramSelections&&req.url==='/v1/telegram/corrections/select';
     const deliveryAction=telegramPreviewDelivery&&/^\/v1\/telegram\/previews\/delivery\/(initialize|claim|report)$/.exec(req.url)?.[1];

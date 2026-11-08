@@ -81,6 +81,11 @@ test('server-side attempt lookup accepts the existing webhook identity only when
  const attempts={async begin(){throw Error('unused')},async block(){throw Error('unused')},async start(x){count++;assert.deepEqual(x,input);return {status:'ATTEMPT_NOT_REGISTERED'}}};
  await withServer({telegramAttempts:attempts},async port=>{assert.equal((await post(port,'/v1/telegram/attempts/start',input,'b'.repeat(64))).status,401);assert.equal(count,0);assert.equal((await post(port,'/v1/telegram/attempts/start',input)).body.status,'ATTEMPT_NOT_REGISTERED');assert.equal(count,1)});
 });
+test('decision acknowledgement is opt-in and never bypasses the guard bearer',async()=>{
+ const input={packageId:'tg_'+'a'.repeat(40),revision:7,eventId:'evt_'+'b'.repeat(48),token:'c'.repeat(64),previewHash:'d'.repeat(64),destination:'OPURO',contentMode:'LITERAL',action:'CREATE'};let count=0;
+ const attempts={async begin(){},async block(){},async acknowledgeDecision(x){count++;assert.deepEqual(x,input);return {status:'DECISION_MISMATCH',retryPermitted:false}}};
+ await withServer({telegramAttempts:attempts},async port=>{assert.equal((await post(port,'/v1/telegram/attempts/decision',input,'b'.repeat(64))).status,401);assert.equal(count,0);assert.equal((await post(port,'/v1/telegram/attempts/decision',input)).body.status,'DECISION_MISMATCH');assert.equal(count,1)});
+});
 test('correction preview and confirmation routes are opt-in and authenticated',async()=>{
  const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100'};let calls=[];
  await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).status,404));

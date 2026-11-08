@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,bindTrustedRequestInTransaction,createClassifiedTargetRouter,requestBindingSchema} from './fenced-target-candidate.mjs';
+import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,initializeDecisionPendingBindings,bindTrustedRequestInTransaction,createClassifiedTargetRouter,requestBindingSchema} from './fenced-target-candidate.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'LIBERAL'};
@@ -30,10 +30,15 @@ test('a binding changed after discovery cannot grant permission to write',async(
   assert.equal((await beginFencedTarget({async getConnection(){return c}},input)).status,'NOT_BOUND');assert.equal(writes,0);
 });
 test('a fenced or unknown revision and an unbound request never acquire a target',async()=>{
-  for(const options of [{bound:false},{state:'RECOVERY_FENCED'},{state:'SAFE_TO_REOPEN'},{state:null}]){
+  for(const options of [{bound:false},{state:'AWAITING_DECISION'},{state:'RECOVERY_FENCED'},{state:'SAFE_TO_REOPEN'},{state:null}]){
     const f=fixture(options);assert.notEqual((await beginFencedTarget(f.pool,input)).status,'write_started');
     assert.equal(f.calls.some(x=>x.sql?.startsWith('INSERT')),false);assert.ok(f.calls.includes('rollback'));
   }
+});
+test('recovery bindings start behind the decision fence and retain all seven canonical IDs',async()=>{
+ const calls=[],c={async execute(sql,args){calls.push({sql,args});return [{affectedRows:1}]}};
+ await initializeDecisionPendingBindings(c,{packageId:'tg_'+'b'.repeat(40),revision:7});
+ assert.match(calls[0].sql,/AWAITING_DECISION/);assert.equal(calls.filter(x=>x.sql.includes('INSERT INTO opmx_tg_request_binding_v1')).length,7);
 });
 test('an already writing request may start another reserved destination',async()=>{
   const f=fixture({state:'WRITING'});assert.equal((await beginFencedTarget(f.pool,input)).status,'write_started');

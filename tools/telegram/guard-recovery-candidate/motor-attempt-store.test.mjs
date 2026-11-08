@@ -3,21 +3,23 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 const packageId='tg_'+'a'.repeat(40),revision=7,eventId='evt_'+'b'.repeat(48),token='c'.repeat(64);
-function fixture({fence='READY_TO_WRITE',failBlock=false}={}){
+function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVerified=false}={}){
  let state={attempt:'QUEUED',fence,tokenHash:null};let chain=Promise.resolve(),locked;
  const pool={async getConnection(){
   let release;const prior=chain;chain=new Promise(r=>release=r);
   return {async beginTransaction(){await prior;locked=structuredClone(state)},async commit(){release()},async rollback(){state=locked;release()},release(){},async execute(sql,args){
+   if(sql.startsWith('SELECT id FROM opmx_tg_quota'))return [[{id:1}]];
    if(sql.startsWith('SELECT state,revision'))return [[{state:'READY',revision}]];
    if(sql.startsWith('SELECT state,event_id'))return [[{state:state.attempt,event_id:eventId,token_hash:state.tokenHash}]];
    if(sql.startsWith('SELECT state FROM opmx_tg_publication_fence'))return [[{state:state.fence}]];
    if(sql.includes("SET state='RUNNING'")){state.attempt='RUNNING';state.tokenHash=args[0];return [{affectedRows:1}];}
+   if(sql.includes("SET state='READY_TO_WRITE'")){state.fence='READY_TO_WRITE';return [{affectedRows:1}];}
    if(sql.includes("SET state='RECONCILING'")){state.fence='RECONCILING';return [{affectedRows:1}];}
    if(sql.includes("SET state='BLOCKED'")){if(failBlock)throw Error('FAULT');state.attempt='BLOCKED';return [{affectedRows:1}];}
    throw Error('unexpected SQL '+sql);
   }};
  }};
- return {store:createMotorAttemptStore({pool,tokenFactory:()=>token}),get state(){return state}};
+ return {store:createMotorAttemptStore({pool,tokenFactory:()=>token,readDecision:async()=>decision,verifyLiteralEnforcement:async()=>literalVerified}),get state(){return state}};
 }
 test('one claim wins, and a blocked attempt freezes its revision atomically',async()=>{
  const f=fixture(),input={packageId,revision,eventId};
@@ -59,4 +61,22 @@ test('a changed owner between lookup and lock cannot obtain a capability',async(
  const owner_key=createHash('sha256').update('opmx:telegram:v1:123:123').digest('hex');let calls=0,writes=0;
  const pool={async getConnection(){calls++;if(calls===1)return {release(){},async execute(){return [[{event_id:eventId,owner_key}]]}};return {release(){},async beginTransaction(){},async commit(){},async rollback(){},async execute(sql){if(sql.startsWith('SELECT state,revision'))return [[{state:'READY',revision,owner_key:'d'.repeat(64)}]];writes++;throw Error('unexpected write')}}}};
  assert.deepEqual(await createMotorAttemptStore({pool}).start({owner:'123',chat:'123',packageId,revision}),{status:'ATTEMPT_NOT_REGISTERED'});assert.equal(writes,0);
+});
+test('a recovered revision stays fenced until its exact decision is acknowledged by its claimed attempt',async()=>{
+ const previewHash='d'.repeat(64),decision={package_id:packageId,revision,preview_hash:previewHash,destination:'OPURO',content_mode:'LITERAL',action:'CREATE'};
+ const f=fixture({fence:'AWAITING_DECISION',decision,literalVerified:true}),key={packageId,revision,eventId};assert.equal((await f.store.begin(key)).status,'ATTEMPT_STARTED');
+ const ack={...key,token,previewHash,destination:'OPURO',contentMode:'LITERAL',action:'CREATE'};
+ assert.equal((await f.store.acknowledgeDecision({...ack,destination:'OPOL'})).status,'DECISION_MISMATCH');assert.equal(f.state.fence,'AWAITING_DECISION');
+ assert.equal((await f.store.acknowledgeDecision({...ack,token:'f'.repeat(64)})).status,'ATTEMPT_NOT_AUTHORIZED');assert.equal(f.state.fence,'AWAITING_DECISION');
+ assert.equal((await f.store.acknowledgeDecision(ack)).status,'DECISION_ACKNOWLEDGED');assert.equal(f.state.fence,'READY_TO_WRITE');
+ assert.equal((await f.store.acknowledgeDecision(ack)).status,'DECISION_ACK_NOT_PERMITTED');
+});
+test('literal choice remains fenced when writer enforcement is unverified',async()=>{
+ const previewHash='d'.repeat(64),decision={package_id:packageId,revision,preview_hash:previewHash,destination:'OPURO',content_mode:'LITERAL',action:'CREATE'},f=fixture({fence:'AWAITING_DECISION',decision});
+ const key={packageId,revision,eventId};await f.store.begin(key);const out=await f.store.acknowledgeDecision({...key,token,previewHash,destination:'OPURO',contentMode:'LITERAL',action:'CREATE'});
+ assert.equal(out.status,'LITERAL_ENFORCEMENT_UNCONFIRMED');assert.equal(f.state.fence,'AWAITING_DECISION');
+});
+test('a recovered attempt may freeze before acknowledgement but cannot write',async()=>{
+ const f=fixture({fence:'AWAITING_DECISION'}),key={packageId,revision,eventId};assert.equal((await f.store.begin(key)).status,'ATTEMPT_STARTED');
+ assert.equal((await f.store.block({...key,token})).status,'ATTEMPT_BLOCKED');assert.equal(f.state.fence,'RECONCILING');
 });

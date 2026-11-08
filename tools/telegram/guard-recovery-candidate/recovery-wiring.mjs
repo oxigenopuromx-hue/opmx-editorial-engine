@@ -9,9 +9,9 @@ import {createUpdateClaimStore} from './update-claim.mjs';
 // Production must supply independent, authoritative verifiers only after all
 // writers and the Motor have been wired and checked. No HTTP input, source
 // document or environment boolean can substitute for those providers.
-export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,legacyTargetBegin=beginTargetWrite,updateProviders=null}){
+export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,legacyTargetBegin=beginTargetWrite,updateProviders=null}){
  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
- const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget:legacyTargetBegin});
+ const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,beginLegacyTarget:legacyTargetBegin});
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer});
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:recovery.readConfirmedCorrection});
  // Ordinary sealing initializes the outbox before opening its transaction.
