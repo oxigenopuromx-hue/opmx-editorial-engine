@@ -1,3 +1,5 @@
+From https://github.com/oxigenopuromx-hue/opmx-editorial-engine
+ * branch            feat/telegram-reopen-recovery -> FETCH_HEAD
 # Recuperación de paquetes Telegram — candidato para issue #18
 
 Estado: **diseño y política aislada; no desplegado**. El receptor activo rechaza `/abrir`; no anunciar este comando en producción hasta desplegar y verificar todos los componentes. No se ha modificado ningún paquete ni publicación.
@@ -147,3 +149,8 @@ La rama `feat/telegram-reopen-recovery` en `15dea4670cb139a780c2646a9f8bf62c2ede
 ## Verificación de acceso y evidencia — 7 de noviembre de 2026 (CDMX)
 
 En Hostinger se autorizó para QA18 la IP 2.24.16.137 con confirmación del operador. La ejecución de sólo lectura 18822 volvió a fallar con ER_ACCESS_DENIED_ERROR y mostró la IP de origen 2.24.16.109. La salida cambia entre ejecuciones; no se verificó aún si la credencial también falla. No se habilitó acceso desde cualquier host. Se corrigió el candidato de evidencia para vincular el request ID al conjunto exacto de destinos y rechazar duplicados. Las 178 pruebas locales pasan con dobles; no verifican integración, publicación ni despliegue.
+
+
+## Conexión QA verificada — 7 de noviembre de 2026 (CDMX)
+
+Con autorización expresa se abrió temporalmente el acceso remoto desde cualquier host únicamente a QA18. La ejecución manual de sólo lectura `18883` del workflow `C6XrTNtNahiV6ppn` devolvió SUCCESS y la base `u164117262_opmxqa18`; snapshots 0, leases 1, auditoría 0, contribuciones 0. La ejecución `18884` confirmó 14 tablas `opmx_tg_*` InnoDB existentes; la consulta temporal se restauró. No se cambió ninguna nota ni se ejecutó el recorrido de recuperación. Al terminar se eliminó la regla de cualquier host y Hostinger confirmó su eliminación. Siguen pendientes las integraciones y pruebas de recuperación indicadas arriba; esta conectividad no las acredita.
