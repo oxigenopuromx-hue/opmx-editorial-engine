@@ -20,7 +20,7 @@ function fixture({attempt='BLOCKED',fence='RECONCILING',target=false,media=false
 }
 test('verified completed revision with no publisher writes can be fenced for reopening',async()=>{
  const f=fixture();const barrier=await f.evidence.lockSafetyBarrier(f.c,id,revision);assert.equal(barrier.noPublicationSideEffects,true);assert.equal(f.state.fence,'SAFE_TO_REOPEN');
- const results=await f.evidence.lockVerifiedBlockedOutcomes(f.c,{packageId:id,revision,requestId:ids[6],destinations:['OPURO','LIBERAL']});assert.deepEqual(results.map(x=>x.destination),['OPURO','LIBERAL']);
+ const results=await f.evidence.lockVerifiedBlockedOutcomes(f.c,{packageId:id,revision,requestId:ids[4],destinations:['OPURO','LIBERAL']});assert.deepEqual(results.map(x=>x.destination),['OPURO','LIBERAL']);
 });
 test('incomplete evidence or any write fails closed',async()=>{
  for(const opts of [{attempt:'RUNNING'},{fence:'WRITING'},{target:true},{media:true},{missing:true},{coverage:false},{terminal:false},{active:true}]){
@@ -30,4 +30,6 @@ test('incomplete evidence or any write fails closed',async()=>{
 test('evidence verifiers are required and unregistered requests cannot receive outcomes',async()=>{
  assert.throws(()=>createNeverWrittenEvidence({}),/EVIDENCE_PROVIDER_INCOMPLETE/);
  const f=fixture({fence:'SAFE_TO_REOPEN'});assert.equal(await f.evidence.lockVerifiedBlockedOutcomes(f.c,{packageId:id,revision,requestId:'unregistered',destinations:['OPURO']}),null);
+ assert.equal(await f.evidence.lockVerifiedBlockedOutcomes(f.c,{packageId:id,revision,requestId:ids[6],destinations:['OPURO','LIBERAL']}),null);
+ assert.equal(await f.evidence.lockVerifiedBlockedOutcomes(f.c,{packageId:id,revision,requestId:ids[0],destinations:['OPURO','OPURO']}),null);
 });
