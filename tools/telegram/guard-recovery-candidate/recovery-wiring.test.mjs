@@ -12,6 +12,12 @@ test('wires the existing guard, event store and recovery paths without starting 
  for(const key of ['telegramRecovery','telegramBlockedList','telegramPublicationBegin','targetBegin'])assert.equal(typeof w[key],'function');
  for(const [key,methods] of [['telegramAttempts',['begin','block','start']],['telegramCorrections',['preview','confirm']],['telegramSelections',['select']],['telegramPreviewDelivery',['initialize','claim','report']]])for(const method of methods)assert.equal(typeof w[key][method],'function');
  assert.ok(Object.isFrozen(w));
+ assert.equal(w.telegramUpdateClaims,null);
+});
+test('update claims remain absent unless both server-owned providers exist',()=>{
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders:{loadVerifiedDecision:async()=>null}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders:{pool,loadVerifiedDecision:async()=>null,loadVerifiedPayloadEvidence:async()=>null}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
+ const w=createRecoveryWiring({...options,updateProviders:{loadVerifiedDecision:async()=>null,loadVerifiedPayloadEvidence:async()=>null}});assert.equal(typeof w.telegramUpdateClaims.begin,'function');
 });
 test('wired guard requires the existing bearer before recovery access',async()=>{
  const server=createRecoveryGuard(options);await new Promise(r=>server.listen(0,'127.0.0.1',r));

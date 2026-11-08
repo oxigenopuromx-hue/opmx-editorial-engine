@@ -115,3 +115,11 @@ test('publication claim route is opt-in, authenticated and refuses uncertain wri
   assert.equal((await post(port,'/v1/telegram/publications/begin',body,'b'.repeat(64))).status,401);assert.equal((await post(port,'/v1/telegram/publications/begin',body)).status,409);assert.equal(count,1);
  });
 });
+test('existing-post update claim is absent by default and requires the guard bearer',async()=>{
+ const input={packageId:'tg_'+'a'.repeat(40),revision:12,destination:'OPURO',postId:123,previewHash:'b'.repeat(64),payloadHash:'c'.repeat(64),operationId:'update_'+'d'.repeat(64)};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/updates/begin',input)).status,404));
+ await withServer({telegramUpdateClaims:{async begin(x){calls++;assert.deepEqual(x,input);return {status:'PREFLIGHT_UNCONFIRMED',retryPermitted:false}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/updates/begin',input,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  const r=await post(port,'/v1/telegram/updates/begin',input);assert.equal(r.status,409);assert.equal(r.body.retryPermitted,false);assert.equal(calls,1);
+ });
+});
