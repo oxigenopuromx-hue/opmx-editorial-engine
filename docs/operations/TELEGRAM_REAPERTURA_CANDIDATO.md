@@ -142,3 +142,8 @@ Se implementó una reclamación candidata de publicación en el guard: bloquea l
 ## Verificación de continuación — 7 de noviembre de 2026 (CDMX)
 
 La rama `feat/telegram-reopen-recovery` en `15dea4670cb139a780c2646a9f8bf62c2edee255` pasó 178 pruebas Node locales con dependencias simuladas; no acreditan el recorrido integral ni despliegue. El workflow receptor `OSi8AcnzLlI0csRu` continúa activo y el candidato de recuperación no se activó. La ejecución manual de sólo lectura `18799` del diagnóstico QA `C6XrTNtNahiV6ppn` falló con `ER_ACCESS_DENIED_ERROR` para la credencial MySQL de QA. Corregir credenciales o autorización del host y repetir; la causa específica aún no está determinada. No se crearon ni publicaron notas. La barrera de todos los escritores, las fuentes de evidencia confiable, el receptor, el Motor, el modo literal y las actualizaciones por ID siguen pendientes de integración y verificación reales.
+
+
+## Verificación de acceso y evidencia — 7 de noviembre de 2026 (CDMX)
+
+En Hostinger se autorizó para QA18 la IP 2.24.16.137 con confirmación del operador. La ejecución de sólo lectura 18822 volvió a fallar con ER_ACCESS_DENIED_ERROR y mostró la IP de origen 2.24.16.109. La salida cambia entre ejecuciones; no se verificó aún si la credencial también falla. No se habilitó acceso desde cualquier host. Se corrigió el candidato de evidencia para vincular el request ID al conjunto exacto de destinos y rechazar duplicados. Las 178 pruebas locales pasan con dobles; no verifican integración, publicación ni despliegue.
