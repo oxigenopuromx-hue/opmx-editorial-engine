@@ -1,6 +1,7 @@
 import {chooseTelegramMode} from './original-destination-policy.mjs';
 import {resolveDestinations} from './original-destinations.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
+import {copyVerifiedOutcomes} from './verified-outcomes.mjs';
 
 // Candidate only. Input is read and locked by the guard, not sent by the bot.
 // This derives an editorial decision, never evidence that processing stopped.
@@ -33,8 +34,7 @@ export function createOriginalRevisionCapture({lockVerifiedBlockedOutcomes}) {
  if(typeof lockVerifiedBlockedOutcomes!=='function')throw Error('MISSING_BLOCKED_OUTCOME_PROVIDER');
  return async function capture(connection,packageId,revision,ownerKey,items){
   let decision;try{decision=deriveOriginalDecision({packageId,revision,ownerKey,items})}catch{return null;}
-  const outcome=await lockVerifiedBlockedOutcomes(connection,decision);
-  if(!Array.isArray(outcome)||outcome.length!==decision.destinations.length||new Set(outcome.map(x=>x?.destination)).size!==decision.destinations.length||outcome.some(x=>!decision.destinations.includes(x?.destination)||x.status!=='BLOCKED'||x.publicationVerdict!=='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'))return null;
-  return {...decision,results:outcome.map(({destination,status,publicationVerdict})=>({destination,status,publicationVerdict}))};
+  const outcome=copyVerifiedOutcomes(decision.destinations,await lockVerifiedBlockedOutcomes(connection,decision));
+  return outcome?{...decision,results:outcome}:null;
  };
 }

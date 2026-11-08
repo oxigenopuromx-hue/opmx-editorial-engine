@@ -1,4 +1,6 @@
 import {createHash} from 'node:crypto';
+import {destinationLabel} from './original-destinations.mjs';
+import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const userIdPattern=/^[1-9][0-9]{0,15}$/;
 const packagePattern=/^tg_[a-f0-9]{40}$/;
@@ -17,12 +19,15 @@ function completeRevision(value,{id,revision,ownerKey}) {
      (value.authorization.authorization==='DIRECT_MODE_COMMAND'&&value.authorization.explicit!==true)||
      (value.authorization.authorization==='ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'&&(value.authorization.explicit!==false||value.authorization.mode!=='PUBLISH'))||
      !Array.isArray(value.controls)||!value.controls.length||value.controls.some(x=>typeof x!=='string'||!/^ti_[a-f0-9]{40}$/.test(x))||new Set(value.controls).size!==value.controls.length||!Array.isArray(value.results)) return false;
-  // A blocked editorial result alone does not prove that no draft or post was
-  // created. Every destination also needs an explicit reconciled verdict.
-  return value.results.length===value.destinations.length && value.results.every(x=>
-    object(x)&&value.destinations.includes(x.destination)&&x.status==='BLOCKED'&&
-    x.publicationVerdict==='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED') &&
-    new Set(value.results.map(x=>x.destination)).size===value.destinations.length;
+  // Every destination must be reconciled. A prior post needs an authenticated
+  // CMS observation with identity; missing, trashed and uncertain results do
+  // not become an absent post. This does not itself authorize an update.
+  if(value.results.length!==value.destinations.length||new Set(value.results.map(x=>x?.destination)).size!==value.destinations.length||value.results.some(x=>!object(x)||!value.destinations.includes(x.destination)))return false;
+  return value.results.every(x=>
+    x.status==='BLOCKED'&&x.publicationVerdict==='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED' ||
+    ['PUBLISHED','DRAFT'].includes(x.status)&&x.publicationVerdict==='CMS_RECORD_CONFIRMED'&&x.cmsVerified===true&&
+    (x.status==='PUBLISHED'?x.wordpressStatus==='publish':x.wordpressStatus==='draft')&&
+    Number.isSafeInteger(x.postId)&&x.postId>0&&typeof x.slug==='string'&&x.slug.length<=200&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(x.slug));
 }
 
 // The adapter is deliberately transactional: lockQuota, lockPackage, lockSession,
@@ -54,12 +59,15 @@ export function createReopenService({db,adminUserIds=[]}) {
       const barrier=await tx.lockSafetyBarrier(id,pkg.revision);
       if(!barrier || barrier.packageId!==id || barrier.revision!==pkg.revision ||
          barrier.terminalBlocked!==true || barrier.noActiveAttempts!==true ||
-         barrier.noPublicationSideEffects!==true || barrier.writesFenced!==true)
+         barrier.writesFenced!==true)
         throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       // Only a server-owned provider operating under the same transaction can
       // supply the prior publication metadata; missing evidence fails closed.
       const prior=typeof tx.captureTrustedRevision==='function'?await tx.captureTrustedRevision(id,pkg.revision,pkg.ownerKey,items):null;
       if(!completeRevision(prior,{id,revision:pkg.revision,ownerKey:pkg.ownerKey}))throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
+      const hasExisting=prior.results.some(x=>x.publicationVerdict==='CMS_RECORD_CONFIRMED');
+      if(hasExisting ? barrier.allPublicationOutcomesVerified!==true||barrier.noPublicationSideEffects!==false : barrier.noPublicationSideEffects!==true)throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
+      if(hasExisting){try{if(prior.requestId!==expectedDraftRequestId({packageId:id,revision:pkg.revision,destination:destinationLabel(prior.destinations)}))throw Error()}catch{throw Error('RECOVERY_FENCE_NOT_CONFIRMED')}}
       if(prior.controls.some(control=>!items.some(item=>item.itemId===control&&item.ownerKey===pkg.ownerKey&&item.state==='STORED')))throw Error('RECOVERY_FENCE_NOT_CONFIRMED');
       // A read-only assertion is not a durable fence. Its atomic transition must
       // share this transaction with the revision, snapshot and session updates.

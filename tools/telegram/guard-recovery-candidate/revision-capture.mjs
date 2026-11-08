@@ -3,6 +3,7 @@ import {readRecoveredPolicyInTransaction} from './recovered-policy-mysql.mjs';
 import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
 import {resolveDestinations} from './original-destinations.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
+import {copyVerifiedOutcomes} from './verified-outcomes.mjs';
 
 // Runs only inside the guard-owned reopen transaction. Historical revisions
 // without closure records use the original verified controls; earlier
@@ -20,8 +21,7 @@ export function createRevisionCapture({lockVerifiedBlockedOutcomes,readRecovered
   const destination=correction?.destination??policy.destination;
   let destinations,requestId;try{destinations=resolveDestinations(destination);requestId=expectedDraftRequestId({packageId,revision,destination})}catch{return null;}
   const decision={packageId,revision,ownerKey,requestId,destinations,authorization:{mode:policy.mode,authorized:true,explicit:policy.explicit,authorization:policy.authorization},controls:policy.control_item_ids,...(correction?{contentMode:correction.content_mode,confirmedPreviewHash:correction.preview_hash}:{})};
-  const results=await lockVerifiedBlockedOutcomes(c,decision);
-  if(!Array.isArray(results)||results.length!==destinations.length||new Set(results.map(x=>x?.destination)).size!==destinations.length||results.some(x=>!destinations.includes(x?.destination)||x.status!=='BLOCKED'||x.publicationVerdict!=='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'))return null;
-  return {...decision,results:results.map(({destination,status,publicationVerdict})=>({destination,status,publicationVerdict}))};
+  const results=copyVerifiedOutcomes(destinations,await lockVerifiedBlockedOutcomes(c,decision));
+  return results?{...decision,results}:null;
  };
 }

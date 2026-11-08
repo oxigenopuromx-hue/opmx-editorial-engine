@@ -30,6 +30,13 @@ export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpd
   let verifiedPolicy;try{verifiedPolicy=resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
   const selection=await readLockedSelection(c,{packageId,revision,ownerKey,actorKey});
   if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||!['CREATE','UPDATE'].includes(selection.action)||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
+  // Never turn an existing or uncertain post into a new publication. A
+  // creation decision is valid only when every original outcome is explicitly
+  // reconciled as having no publication side effects.
+  if(selection.action==='CREATE'){
+   const p=snapshot?.prior;
+   if(!p||!Array.isArray(p.destinations)||!p.destinations.length||!Array.isArray(p.results)||p.results.length!==p.destinations.length||new Set(p.results.map(x=>x?.destination)).size!==p.destinations.length||p.results.some(x=>!p.destinations.includes(x?.destination)||x.status!=='BLOCKED'||x.publicationVerdict!=='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'))fail();
+  }
   let destination;try{destination=destinationLabel(resolveDestinations(selection.destination));if(destination!==selection.destination)fail()}catch{fail()}
   let verifiedPosts={};
   if(selection.action==='UPDATE'){

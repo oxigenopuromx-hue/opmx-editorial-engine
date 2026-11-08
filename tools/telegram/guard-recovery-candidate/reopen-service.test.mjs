@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createReopenService} from './reopen-service.mjs';
+import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const hash=id=>createHash('sha256').update(`opmx:telegram:v1:${id}:${id}`).digest('hex');
 const id='tg_'+'a'.repeat(40);
@@ -45,6 +46,19 @@ test('a blocked result without confirmed absence of publication stays closed',as
 });
 test('private identity and receipt must match',async()=>{const {service}=fixture();assert.equal((await service({...input('123'),chat:'456'})).status,'INVALID_REQUEST');assert.equal((await service({...input('123'),receiptId:'telegram-456-1-2'})).status,'INVALID_REQUEST');});
 test('a failed write rolls back fence, snapshot, revision, lease and session',async()=>{const {state,service}=fixture({failAudit:true});await assert.rejects(service(input('123')),/AUDIT_FAILED/);assert.equal(state.fenced,false);assert.equal(state.pkg.state,'READY');assert.equal(state.pkg.revision,7);assert.equal(state.snapshots.length,0);assert.equal(state.lease,null);assert.equal(state.session.size,0);});
+
+test('existing posts reopen only after trusted complete reconciliation and an atomic fence',async()=>{
+ const {state,service}=fixture();state.prior.requestId=expectedDraftRequestId({packageId:id,revision:7,destination:'OPURO,LIBERAL'});
+ state.prior.results[0]={destination:'OPURO',status:'PUBLISHED',publicationVerdict:'CMS_RECORD_CONFIRMED',cmsVerified:true,wordpressStatus:'publish',postId:123,slug:'nota-real'};
+ state.barrier.noPublicationSideEffects=false;state.barrier.allPublicationOutcomesVerified=true;
+ assert.equal((await service(input('123'))).status,'OPEN');assert.equal(state.snapshots[0].prior.results[0].postId,123);assert.equal(state.fenced,true);
+});
+test('existing posts remain closed for partial, deleted or unproven outcomes',async()=>{
+ const mutate=[s=>s.barrier.allPublicationOutcomesVerified=false,s=>s.barrier.noPublicationSideEffects=true,s=>s.prior.requestId='wrong',s=>s.prior.results[0].postId=0,s=>s.prior.results[0].cmsVerified=false,s=>s.prior.results[0].wordpressStatus='trash',s=>s.prior.results[0].slug='invalid slug',s=>s.prior.results[1].publicationVerdict='UNKNOWN'];
+ for(const change of mutate){const {state,service}=fixture();state.prior.requestId=expectedDraftRequestId({packageId:id,revision:7,destination:'OPURO,LIBERAL'});state.prior.results[0]={destination:'OPURO',status:'PUBLISHED',publicationVerdict:'CMS_RECORD_CONFIRMED',cmsVerified:true,wordpressStatus:'publish',postId:123,slug:'nota-real'};state.barrier.noPublicationSideEffects=false;state.barrier.allPublicationOutcomesVerified=true;change(state);
+  assert.equal((await service(input('123'))).status,'RECONCILIATION_REQUIRED');assert.equal(state.pkg.state,'READY');assert.equal(state.snapshots.length,0);
+ }
+});
 
 test('missing, foreign or unauthenticated original controls block reopening',async()=>{
  for(const mutate of [s=>s.prior.authorization.authorized=false,s=>s.prior.authorization.explicit=false,s=>s.prior.controls=['ti_'+'2'.repeat(40)],s=>s.items[0].ownerKey=hash('999')]){
