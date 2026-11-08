@@ -11,6 +11,7 @@ import {createCorrectionConfirmationStore} from './correction-confirmation-store
 import {createConfirmedRecoverySeal} from './confirmed-recovery-seal.mjs';
 import {createCorrectionFactsReader} from './correction-facts-mysql.mjs';
 import {createCorrectionSelectionStore,readCorrectionSelectionInTransaction} from './correction-selection-store.mjs';
+import {beginFencedPublication} from './fenced-publication-candidate.mjs';
 
 // Explicitly composed by the server, never by HTTP input. Merely constructing
 // this object must not enable production; the caller must install and migrate
@@ -24,6 +25,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
   return Object.freeze({
     telegramRecovery:createReopenService({db,adminUserIds}),
     targetBegin:createClassifiedTargetRouter(beginLegacyTarget),
+    telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
     motorAttempts:createMotorAttemptStore({pool}),
     initializeMotorAttempt,

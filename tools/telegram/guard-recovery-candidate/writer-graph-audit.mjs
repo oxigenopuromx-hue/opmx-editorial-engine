@@ -20,6 +20,8 @@ export function auditWriterGraph({nodes,connections,mode}){
   // target/status preflight is a read, not an atomic write claim, and so never
   // establishes the recovery fence. Draft claims need separate attestation of
   // the live server and their graph, not just a node bearing the right name.
-  return {name:n.name,site,guard,reachable:isReachable,guarded,atomicFenceVerified:false};
+  const claimGate='Publicación — Reclamo confirmado';
+  const claimGatePresent=mode==='publication'&&names.has(claimGate)&&isReachable&&!reachable(n.name,claimGate);
+  return {name:n.name,site,guard,reachable:isReachable,guarded,claimGatePresent,atomicFenceVerified:false};
  });
 }

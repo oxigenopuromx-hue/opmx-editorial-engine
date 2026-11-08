@@ -86,3 +86,10 @@ test('selection route is opt-in and guarded by the existing bearer',async()=>{
   assert.equal((await post(port,'/v1/telegram/corrections/select',body)).body.status,'SELECTED');assert.equal(called,1);
  });
 });
+test('publication claim route is opt-in, authenticated and refuses uncertain writes',async()=>{
+ let count=0;const body={requestId:'tg_'+'a'.repeat(64),slug:'nota-prueba',targets:[{destination:'OPURO',postId:123}]};
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/publications/begin',body)).status,404));
+ await withServer({telegramPublicationBegin:async(p,x)=>{assert.equal(p,pool);assert.deepEqual(x,body);count++;return {status:'WRITE_NOT_PERMITTED'}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/publications/begin',body,'b'.repeat(64))).status,401);assert.equal((await post(port,'/v1/telegram/publications/begin',body)).status,409);assert.equal(count,1);
+ });
+});
