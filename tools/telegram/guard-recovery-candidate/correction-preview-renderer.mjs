@@ -1,8 +1,10 @@
 export function renderCorrectionPreview(result){
- const p=result?.preview,valid=/^tg_[a-f0-9]{40}$/.test(p?.packageId??'')&&Number.isSafeInteger(p?.revision)&&p.revision>0&&/^[a-f0-9]{64}$/.test(p?.previewHash??'')&&p.action==='CREATE'&&['LITERAL','EDITORIAL'].includes(p.mode)&&['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'].includes(p.destination)&&Array.isArray(p.posts)&&Array.isArray(p.changes)&&Array.isArray(p.materials)&&Array.isArray(p.controlItemIds)&&new Set(p.controlItemIds).size===p.controlItemIds.length;
+ const p=result?.preview,valid=/^tg_[a-f0-9]{40}$/.test(p?.packageId??'')&&Number.isSafeInteger(p?.revision)&&p.revision>0&&/^[a-f0-9]{64}$/.test(p?.previewHash??'')&&['CREATE','UPDATE'].includes(p.action)&&['LITERAL','EDITORIAL'].includes(p.mode)&&['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'].includes(p.destination)&&Array.isArray(p.posts)&&Array.isArray(p.changes)&&Array.isArray(p.materials)&&Array.isArray(p.controlItemIds)&&new Set(p.controlItemIds).size===p.controlItemIds.length;
  if(!['PREVIEW_READY','PREVIEW_EXISTS'].includes(result?.status)||!valid)return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
+ const expected=p.destination==='TODOS'?['OPURO','OPOL','LIBERAL']:p.destination==='AMBOS'?['OPURO','OPOL']:p.destination.split(',');
+ if(p.action==='UPDATE'&&(p.posts.length!==expected.length||p.posts.some((x,i)=>!x||x.destination!==expected[i]||!Number.isSafeInteger(x.postId)||x.postId<1)))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
  const controls=new Set(p.controlItemIds);
- const lines=[`Paquete: ${p.packageId}`,`Revisión: ${p.revision}`,`Acción: crear una nota nueva`,`Destinos: ${p.destination}`,`Modo: ${p.mode}`,`Identificadores de nota: aún no existen`,`Cambios:`];
+ const lines=[`Paquete: ${p.packageId}`,`Revisión: ${p.revision}`,`Acción: ${p.action==='UPDATE'?'actualizar notas existentes':'crear una nota nueva'}`,`Destinos: ${p.destination}`,`Modo: ${p.mode}`,p.action==='UPDATE'?`Identificadores de nota: ${p.posts.map(x=>`${x.destination} ${x.postId}`).join(', ')}`:'Identificadores de nota: aún no existen',`Cambios:`];
  let changes=0;
  for(const x of p.changes){
   if(!/^ti_[a-f0-9]{40}$/.test(x?.itemId??'')||!['TEXT','FILE'].includes(x.kind)||!['ADDED','REMOVED'].includes(x.change)||!/^[a-f0-9]{64}$/.test(x.sha256??'')||(x.kind==='FILE'&&(typeof x.fileName!=='string'||typeof x.caption!=='string')))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
@@ -23,7 +25,7 @@ export function renderCorrectionPreview(result){
   if(x.kind==='FILE'&&typeof x.caption==='string'&&x.caption)lines.push(`Texto adjunto: ${x.caption}`);
  }
  if(!materials||[...controls].some(id=>!seen.has(id)))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
- lines.push(`Para confirmar esta revisión, escribe:\n/confirmar crear ${p.revision} ${p.previewHash}`);
+ lines.push(`Para confirmar esta revisión, escribe:\n/confirmar ${p.action==='UPDATE'?'actualizar':'crear'} ${p.revision} ${p.previewHash}`);
  // Escape one code point at a time so no HTML entity or surrogate pair is
  // split across Telegram messages. The caller must deliver all parts in order.
  const escape=c=>c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c;

@@ -33,7 +33,7 @@ function parseDestinationCommand(text) {
 }
 function isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }
 function isCorrectionOptions(s) { const m=/^\/opciones[ \t]+(literal|editorial)[ \t]+([A-Za-z, ]+)$/i.exec(s);if(!m)return false;try{resolveDestinations(m[2]);return true}catch{return false} }
-function isCorrectionConfirmation(s) { return /^\/confirmar[ \t]+crear[ \t]+[1-9][0-9]{0,9}[ \t]+[a-f0-9]{64}$/i.test(s); }
+function isCorrectionConfirmation(s) { return /^\/confirmar[ \t]+(?:crear|actualizar)[ \t]+[1-9][0-9]{0,9}[ \t]+[a-f0-9]{64}$/i.test(s); }
 function validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }
 function normalizeTelegramUpdate(update,config={}) {
  const m=update?.message;

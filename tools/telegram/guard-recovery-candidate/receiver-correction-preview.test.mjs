@@ -25,3 +25,8 @@ test('file names and captions are shown as escaped source data',()=>{
  const p={packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'c'.repeat(64),action:'CREATE',mode:'LITERAL',destination:'OPURO',posts:[],changes:[],controlItemIds:[],materials:[{itemId:'ti_'+'3'.repeat(40),kind:'FILE',state:'STORED',sha256:'d'.repeat(64),fileName:'foto <evento>.jpg',caption:'Crédito & pie'}]};
  const out=run({status:'PREVIEW_READY',preview:p});assert.equal(out.status,'PREVIEW_RENDERED');assert.ok(out.messages.join('').includes('foto &lt;evento&gt;.jpg'));assert.ok(out.messages.join('').includes('Crédito &amp; pie'));
 });
+test('an update preview displays the exact post IDs and explicit update confirmation',()=>{
+ const p={packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'c'.repeat(64),action:'UPDATE',mode:'LITERAL',destination:'AMBOS',posts:[{destination:'OPURO',postId:123},{destination:'OPOL',postId:456}],changes:[],controlItemIds:[],materials:[{itemId:'ti_'+'3'.repeat(40),kind:'TEXT',state:'STORED',sha256:'d'.repeat(64),text:'Texto a revisar'}]};
+ const out=run({status:'PREVIEW_READY',preview:p}),text=out.messages.join('');assert.equal(out.status,'PREVIEW_RENDERED');assert.ok(text.includes('OPURO 123, OPOL 456'));assert.ok(text.includes('/confirmar actualizar 8 '+p.previewHash));
+ for(const posts of [[],[{destination:'OPURO',postId:0},{destination:'OPOL',postId:456}],[{destination:'OPOL',postId:456},{destination:'OPURO',postId:123}]])assert.equal(run({status:'PREVIEW_READY',preview:{...p,posts}}).status,'PREVIEW_NOT_CONFIRMED');
+});

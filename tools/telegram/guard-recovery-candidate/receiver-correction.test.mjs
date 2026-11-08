@@ -40,3 +40,9 @@ test('confirmation requires direct command, current revision and exact preview h
  assert.equal(out.next_url,'https://publisher.oxigenopuro.com.mx/v1/telegram/corrections/confirm');
  assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:13,recovery:true},intent).requires_operation,false);
 });
+test('an update requires an explicit non-forwarded confirmation bound to the revision and hash',()=>{
+ const hash='c'.repeat(64),command=`/confirmar actualizar 12 ${hash}`;
+ assert.equal(run(normal,msg(command,true)).kind,'REJECTED');const intent=run(prepare,run(normal,msg(command)));
+ const out=run(resolve,{status:'OPEN',packageId:pkg,revision:12,recovery:true},intent);assert.equal(out.next_body.action,'UPDATE');assert.equal(out.next_body.previewHash,hash);
+ assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:13,recovery:true},intent).requires_operation,false);
+});

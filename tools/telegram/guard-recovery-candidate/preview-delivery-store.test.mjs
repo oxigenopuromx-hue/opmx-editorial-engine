@@ -8,9 +8,9 @@ const sendCode=await readFile(new URL('./receiver/preview-delivery-send-candidat
 const ackCode=await readFile(new URL('./receiver/preview-delivery-ack-candidate.js',import.meta.url),'utf8');
 const node=(code,prior,result,run=0)=>new Function('$input','$','$runIndex',code)({first:()=>({json:result})},()=>({first:()=>({json:prior})}),run)[0].json;
 const sha=x=>createHash('sha256').update(x).digest('hex'),id='tg_'+'a'.repeat(40),actorKey=sha('opmx:telegram:v1:123:123');
-function setup(){
+function setup({action='CREATE'}={}){
  const item={itemId:'ti_'+'b'.repeat(40),kind:'TEXT',state:'STORED',text:'Contenido <verificado> '.repeat(300),sha256:sha('Contenido <verificado> '.repeat(300))};
- const preview=buildCorrectionPreview({packageId:id,revision:9,baseRevision:7,ownerKey:actorKey,actorKey,before:[item],after:[item],action:'CREATE',mode:'LITERAL',destination:'OPURO',verifiedPosts:{}});
+ const preview=buildCorrectionPreview({packageId:id,revision:9,baseRevision:7,ownerKey:actorKey,actorKey,before:[item],after:[item],action,mode:'LITERAL',destination:'OPURO',verifiedPosts:action==='UPDATE'?{OPURO:123}:{}});
  let data={pack:{owner_key:actorKey,state:'OPEN',revision:9},preview:{owner_key:actorKey,preview_receipt:'telegram-123-10-10',preview_json:JSON.stringify(preview),state:'PREVIEWED'},parts:[]},saved;
  const c={async beginTransaction(){saved=structuredClone(data)},async commit(){},async rollback(){data=saved},release(){},async execute(sql,args){
   if(sql.startsWith('SELECT id FROM opmx_tg_quota'))return [[{id:1}]];
@@ -68,4 +68,10 @@ test('guard claims, receiver mapping, simulated Telegram response and persisted 
   assert.equal((await f.store.report(ack.body)).status,'PART_REPORTED');
  }
  assert.ok(sent>1);assert.equal(await f.store.verifyPreviewDelivery(f.c,{packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10',confirmationReceipt:'telegram-123-999-999'}),true);
+});
+test('an update preview can be acknowledged only after all parts carrying its existing post ID',async()=>{
+ const f=setup({action:'UPDATE'}),start=await f.store.initialize(f.input);let shown='';
+ for(let i=1;i<=start.parts;i++){const part=await f.store.claim(f.input);shown+=part.text;assert.equal((await f.store.report({...f.input,part:i,token:part.token,telegramChat:'123',telegramMessageId:100+i})).status,'PART_REPORTED')}
+ assert.ok(shown.includes('OPURO 123'));assert.ok(shown.includes('/confirmar actualizar 9'));
+ const proof={packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10',confirmationReceipt:'telegram-123-999-999'};assert.equal(await f.store.verifyPreviewDelivery(f.c,proof),true);
 });

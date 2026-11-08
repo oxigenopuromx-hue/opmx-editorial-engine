@@ -91,8 +91,8 @@ function resolvePackageSession(intent,result) {
   action='corrections/select';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,mode:x.selection_mode,destination:x.selection_destination});
  }
  else if(x.package_operation==='CONFIRM'){
-  if(!x.recovery_session||x.mode_attested!==true||result.revision!==x.confirmation_revision)return response(intent,'La vista previa ya no corresponde a la revisión actual; vuelve a pedirla con /listo.');
-  action='corrections/confirm';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,previewHash:x.confirmation_hash,action:'CREATE'});
+  if(!x.recovery_session||x.mode_attested!==true||!['CREATE','UPDATE'].includes(x.confirmation_action)||result.revision!==x.confirmation_revision)return response(intent,'La vista previa ya no corresponde a la revisión actual; vuelve a pedirla con /listo.');
+  action='corrections/confirm';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,previewHash:x.confirmation_hash,action:x.confirmation_action});
  }
  else if(x.package_operation==='SEAL'){action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:'TEXT',text:attestedControl('/listo',x.packageId,x.message_id),attachment:null});}
  else if(x.package_operation==='STATUS')action='manifest';

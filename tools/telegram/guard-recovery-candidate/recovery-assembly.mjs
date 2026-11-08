@@ -49,10 +49,10 @@ export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRu
 // Opt-in composition for isolated integration tests. No production startup
 // calls this; the facts provider and consumer attestation must be real before
 // an event may be emitted. It reuses the existing event store, not a consumer.
-export function createCandidateCorrectionSubsystem({pool,events,loadLockedFacts=null,readLockedSelection=null,verifyDecisionConsumer}){
+export function createCandidateCorrectionSubsystem({pool,events,loadLockedFacts=null,readLockedSelection=null,verifyDecisionConsumer,verifyUpdateReadiness=async()=>false}){
  if(loadLockedFacts!==null&&readLockedSelection!==null)throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
  const facts=loadLockedFacts??createCorrectionFactsReader({readLockedSelection:readLockedSelection??readCorrectionSelectionInTransaction});
- const commitConfirmed=createConfirmedRecoverySeal({events,initializePublicationFence:initializeDecisionPendingBindings,initializeMotorAttempt,verifyDecisionConsumer});
+ const commitConfirmed=createConfirmedRecoverySeal({events,initializePublicationFence:initializeDecisionPendingBindings,initializeMotorAttempt,verifyDecisionConsumer,verifyUpdateReadiness});
  const previewDelivery=createPreviewDeliveryStore({pool});
  return {...createCorrectionConfirmationStore({pool,loadLockedFacts:facts,commitConfirmed,verifyPreviewDelivery:previewDelivery.verifyPreviewDelivery}),...createCorrectionSelectionStore({pool}),previewDelivery};
 }

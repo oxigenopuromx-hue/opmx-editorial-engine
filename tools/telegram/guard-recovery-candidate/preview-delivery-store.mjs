@@ -28,7 +28,7 @@ function inputIdentity(x,extra=[]){
 }
 function renderVerified(row,x,actorKey){
  let preview;try{preview=JSON.parse(row.preview_json)}catch{throw Error('PREVIEW_DELIVERY_UNCONFIRMED')}
- if(row.owner_key!==actorKey||preview.actorKey!==actorKey||preview.packageId!==x.packageId||preview.revision!==x.revision||!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:preview.ownerKey,currentRevision:x.revision,explicitAction:'CREATE'}))throw Error('PREVIEW_DELIVERY_UNCONFIRMED');
+ if(row.owner_key!==actorKey||preview.actorKey!==actorKey||preview.packageId!==x.packageId||preview.revision!==x.revision||!['CREATE','UPDATE'].includes(preview.action)||!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:preview.ownerKey,currentRevision:x.revision,explicitAction:preview.action}))throw Error('PREVIEW_DELIVERY_UNCONFIRMED');
  const rendered=renderCorrectionPreview({status:'PREVIEW_READY',preview});
  if(rendered.status!=='PREVIEW_RENDERED'||!Array.isArray(rendered.messages)||!rendered.messages.length||rendered.messages.length>300)throw Error('PREVIEW_DELIVERY_UNCONFIRMED');
  return rendered.messages;
