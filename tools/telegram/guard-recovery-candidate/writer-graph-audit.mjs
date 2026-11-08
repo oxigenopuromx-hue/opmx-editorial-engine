@@ -3,8 +3,8 @@
 const sites=['OPURO','OPOL','LIBERAL'];
 const expectedHosts={OPURO:'cms.oxigenopuro.com.mx',OPOL:'cms.oxigenopolitico.com.mx',LIBERAL:'cms.elliberal.mx'};
 const draftGuard={OPURO:'GUARD — Verificar destino',OPOL:'GUARD OPOL — Verificar destino',LIBERAL:'GUARD LIBERAL — Verificar destino'};
-export function auditWriterGraph({nodes,connections,mode,fenceEnabled=false}){
- if(!Array.isArray(nodes)||!connections||!['draft','publication'].includes(mode)||typeof fenceEnabled!=='boolean')throw Error('INVALID_GRAPH');
+export function auditWriterGraph({nodes,connections,mode}){
+ if(!Array.isArray(nodes)||!connections||!['draft','publication'].includes(mode))throw Error('INVALID_GRAPH');
  const names=new Set(nodes.map(x=>x.name));if(names.size!==nodes.length)throw Error('DUPLICATE_NODE');
  const roots=nodes.filter(n=>/\.(?:webhook|formTrigger|executeWorkflowTrigger)$/i.test(n.type??'')&&!n.disabled).map(n=>n.name);
  if(!roots.length)throw Error('TRIGGER_MISSING');
@@ -20,6 +20,6 @@ export function auditWriterGraph({nodes,connections,mode,fenceEnabled=false}){
   // target/status preflight is a read, not an atomic write claim, and so never
   // establishes the recovery fence. Draft claims need separate attestation of
   // the live server and their graph, not just a node bearing the right name.
-  return {name:n.name,site,guard,reachable:isReachable,guarded,fenced:mode==='draft'&&guarded&&fenceEnabled};
+  return {name:n.name,site,guard,reachable:isReachable,guarded,atomicFenceVerified:false};
  });
 }
