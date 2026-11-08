@@ -78,3 +78,11 @@ test('correction preview and confirmation routes are opt-in and authenticated',a
   assert.equal((await post(port,'/v1/telegram/corrections/confirm',input)).body.status,'CONFIRMED');assert.deepEqual(calls,[['preview',input],['confirm',input]]);
  });
 });
+test('selection route is opt-in and guarded by the existing bearer',async()=>{
+ let called=0;const body={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100',mode:'LITERAL',destination:'OPURO'};
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/select',body)).status,404));
+ await withServer({telegramSelections:{async select(x){called++;assert.deepEqual(x,body);return {status:'SELECTED'}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/corrections/select',body,'b'.repeat(64))).status,401);
+  assert.equal((await post(port,'/v1/telegram/corrections/select',body)).body.status,'SELECTED');assert.equal(called,1);
+ });
+});
