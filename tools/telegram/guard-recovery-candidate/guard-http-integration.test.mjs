@@ -76,6 +76,11 @@ test('attempt endpoints are absent by default and protected when enabled',async(
   const response=await post(port,'/v1/telegram/attempts/begin',input);assert.equal(response.body.status,'ATTEMPT_STARTED');assert.equal(calls,1);
  });
 });
+test('server-side attempt lookup accepts the existing webhook identity only when explicitly configured',async()=>{
+ const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:7};let count=0;
+ const attempts={async begin(){throw Error('unused')},async block(){throw Error('unused')},async start(x){count++;assert.deepEqual(x,input);return {status:'ATTEMPT_NOT_REGISTERED'}}};
+ await withServer({telegramAttempts:attempts},async port=>{assert.equal((await post(port,'/v1/telegram/attempts/start',input,'b'.repeat(64))).status,401);assert.equal(count,0);assert.equal((await post(port,'/v1/telegram/attempts/start',input)).body.status,'ATTEMPT_NOT_REGISTERED');assert.equal(count,1)});
+});
 test('correction preview and confirmation routes are opt-in and authenticated',async()=>{
  const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100'};let calls=[];
  await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).status,404));

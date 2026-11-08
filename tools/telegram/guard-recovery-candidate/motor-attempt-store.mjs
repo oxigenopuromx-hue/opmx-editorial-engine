@@ -24,7 +24,17 @@ export async function initializeMotorAttempt(connection,{packageId,revision,even
 export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).toString('hex')}){
  if(!pool?.getConnection||typeof tokenFactory!=='function')throw Error('INVALID_ATTEMPT_CONFIGURATION');
  async function transaction(fn){const c=await pool.getConnection();let committed=false;try{await c.beginTransaction();const result=await fn(c);await c.commit();committed=true;return result}catch(e){if(!committed)try{await c.rollback()}catch{}throw e}finally{c.release()}}
- return {
+ const store={
+  // The existing webhook payload contains package/revision, not eventId.
+  // Resolve the registered attempt on the server; begin() rechecks state,
+  // event binding, revision and fence under locks before issuing a capability.
+  async start(input={}){
+   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='chat,owner,packageId,revision'||typeof input.owner!=='string'||input.owner!==input.chat||!/^[1-9][0-9]{0,15}$/.test(input.owner)||!valid(input.packageId,input.revision))throw Error('INVALID_ATTEMPT');
+   const c=await pool.getConnection();let rows;try{[rows]=await c.execute('SELECT a.event_id,p.owner_key FROM opmx_tg_motor_attempts_v1 a JOIN opmx_tg_packages_v1 p ON p.package_id=a.package_id WHERE a.package_id=? AND a.revision=?',[input.packageId,input.revision])}finally{c.release()}
+   if(rows.length!==1||rows[0].owner_key!==digest(`opmx:telegram:v1:${input.owner}:${input.chat}`)||!/^evt_[a-f0-9]{48}$/.test(rows[0].event_id??''))return {status:'ATTEMPT_NOT_REGISTERED'};
+   const eventId=rows[0].event_id,result=await store.begin({packageId:input.packageId,revision:input.revision,eventId});
+   return result.status==='ATTEMPT_STARTED'?{...result,eventId}:result;
+  },
   async begin(input={}){
    const {packageId,revision,eventId}=input??{};
    if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='eventId,packageId,revision'||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??''))throw Error('INVALID_ATTEMPT');
@@ -65,4 +75,5 @@ export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).t
    });
   }
  };
+ return store;
 }

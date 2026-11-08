@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 const packageId='tg_'+'a'.repeat(40),revision=7,eventId='evt_'+'b'.repeat(48),token='c'.repeat(64);
 function fixture({fence='READY_TO_WRITE',failBlock=false}={}){
@@ -43,4 +44,14 @@ test('initial registration rejects event IDs not generated as event identifiers'
 test('a writer that starts after claim prevents a safe blocked transition',async()=>{
  const f=fixture(),input={packageId,revision,eventId};await f.store.begin(input);f.state.fence='WRITING';
  assert.equal((await f.store.block({...input,token})).status,'RECONCILIATION_REQUIRED');assert.equal(f.state.attempt,'RUNNING');assert.equal(f.state.fence,'WRITING');
+});
+test('existing webhook identity resolves the registered event before claiming the attempt',async()=>{
+ const owner_key=createHash('sha256').update('opmx:telegram:v1:123:123').digest('hex');let calls=0;const pool={async getConnection(){calls++;if(calls===1)return {release(){},async execute(sql,args){assert.match(sql,/SELECT a.event_id,p.owner_key/);assert.deepEqual(args,[packageId,revision]);return [[{event_id:eventId,owner_key}]]}};
+  return {release(){},async beginTransaction(){},async commit(){},async rollback(){},async execute(sql){if(sql.startsWith('SELECT state,revision'))return [[{state:'READY',revision}]];if(sql.startsWith('SELECT state,event_id'))return [[{state:'QUEUED',event_id:eventId}]];if(sql.startsWith('SELECT state FROM opmx_tg_publication_fence'))return [[{state:'READY_TO_WRITE'}]];if(sql.includes("SET state='RUNNING'"))return [{affectedRows:1}];throw Error('unexpected SQL')}};
+ }};
+ const store=createMotorAttemptStore({pool,tokenFactory:()=>token});assert.deepEqual(await store.start({owner:'123',chat:'123',packageId,revision}),{status:'ATTEMPT_STARTED',token,eventId});assert.equal(calls,2);
+ await assert.rejects(()=>store.start({owner:'123',chat:'123',packageId,revision,eventId}),/INVALID_ATTEMPT/);
+});
+test('missing or ambiguous attempt registration never claims an event',async()=>{
+ for(const rows of [[],[{event_id:eventId},{event_id:eventId}],[{event_id:'bad'}],[{event_id:eventId,owner_key:'d'.repeat(64)}]]){let calls=0;const pool={async getConnection(){calls++;return {release(){},async execute(){return [rows]}}}};const store=createMotorAttemptStore({pool});assert.deepEqual(await store.start({owner:'123',chat:'123',packageId,revision}),{status:'ATTEMPT_NOT_REGISTERED'});assert.equal(calls,1)}
 });

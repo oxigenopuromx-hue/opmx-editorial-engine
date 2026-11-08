@@ -10,7 +10,7 @@ test('requires all three server-owned verifier interfaces and the existing store
 test('wires the existing guard, event store and recovery paths without starting a consumer',()=>{
  const w=createRecoveryWiring(options);assert.equal(w.telegramEvents,events);assert.equal(w.telegramReviews,reviews);assert.equal(typeof w.telegramStore.run,'function');
  for(const key of ['telegramRecovery','telegramBlockedList','telegramPublicationBegin','targetBegin'])assert.equal(typeof w[key],'function');
- for(const [key,methods] of [['telegramAttempts',['begin','block']],['telegramCorrections',['preview','confirm']],['telegramSelections',['select']],['telegramPreviewDelivery',['initialize','claim','report']]])for(const method of methods)assert.equal(typeof w[key][method],'function');
+ for(const [key,methods] of [['telegramAttempts',['begin','block','start']],['telegramCorrections',['preview','confirm']],['telegramSelections',['select']],['telegramPreviewDelivery',['initialize','claim','report']]])for(const method of methods)assert.equal(typeof w[key][method],'function');
  assert.ok(Object.isFrozen(w));
 });
 test('wired guard requires the existing bearer before recovery access',async()=>{
