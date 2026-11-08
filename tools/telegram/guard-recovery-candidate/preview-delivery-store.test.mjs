@@ -28,7 +28,7 @@ function setup(){
 }
 test('all preview parts must be acknowledged in order before confirmation',async()=>{
  const f=setup(),start=await f.store.initialize(f.input);assert.ok(start.parts>1);
- const proof={packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10'};
+ const proof={packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10',confirmationReceipt:'telegram-123-999-999'};
  assert.equal(await f.store.verifyPreviewDelivery(f.c,proof),false);
  for(let i=1;i<=start.parts;i++){
   const part=await f.store.claim(f.input);assert.equal(part.status,'PART_CLAIMED');assert.equal(part.part,i);
@@ -36,6 +36,9 @@ test('all preview parts must be acknowledged in order before confirmation',async
  }
  assert.equal((await f.store.claim(f.input)).status,'DELIVERY_COMPLETE');assert.equal(await f.store.verifyPreviewDelivery(f.c,proof),true);
  assert.equal(await f.store.verifyPreviewDelivery(f.c,{...proof,previewReceipt:'telegram-123-1-1'}),false);
+ assert.equal(await f.store.verifyPreviewDelivery(f.c,{...proof,confirmationReceipt:'telegram-123-101-20'}),false);
+ assert.equal(await f.store.verifyPreviewDelivery(f.c,{...proof,confirmationReceipt:'telegram-456-999-20'}),false);
+ assert.equal(await f.store.verifyPreviewDelivery(f.c,{...proof,confirmationReceipt:undefined}),false);
 });
 test('lost acknowledgement prevents repeat send and no forged acknowledgement succeeds',async()=>{
  const f=setup();await f.store.initialize(f.input);const p=await f.store.claim(f.input);
@@ -64,5 +67,5 @@ test('guard claims, receiver mapping, simulated Telegram response and persisted 
   const ack=node(ackCode,ready,{chat:{id:123},message_id:++sent+100},sent-1);assert.equal(ack.status,'RECEIPT_READY');
   assert.equal((await f.store.report(ack.body)).status,'PART_REPORTED');
  }
- assert.ok(sent>1);assert.equal(await f.store.verifyPreviewDelivery(f.c,{packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10'}),true);
+ assert.ok(sent>1);assert.equal(await f.store.verifyPreviewDelivery(f.c,{packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10',confirmationReceipt:'telegram-123-999-999'}),true);
 });

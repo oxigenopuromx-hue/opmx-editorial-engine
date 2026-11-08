@@ -17,6 +17,7 @@ export const previewDeliverySchema=`CREATE TABLE IF NOT EXISTS opmx_tg_preview_d
 ) ENGINE=InnoDB`;
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const hex=/^[a-f0-9]{64}$/,pkg=/^tg_[a-f0-9]{40}$/,user=/^[1-9][0-9]{0,15}$/;
+const receipt=/^telegram-([1-9][0-9]{0,15})-([1-9][0-9]{0,15})-([0-9]{1,16})$/;
 const actor=id=>hash(`opmx:telegram:v1:${id}:${id}`);
 const validRevision=n=>Number.isSafeInteger(n)&&n>0&&n<4294967295;
 const same=(a,b)=>typeof a==='string'&&typeof b==='string'&&hex.test(a)&&hex.test(b)&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
@@ -86,10 +87,12 @@ export function createPreviewDeliveryStore({pool,tokenFactory=()=>randomBytes(32
   },
   async verifyPreviewDelivery(c,x){
    if(!c?.execute||!pkg.test(x?.packageId??'')||!validRevision(x.revision)||!hex.test(x.previewHash??'')||!hex.test(x.actorKey??''))return false;
+   const opened=receipt.exec(x.previewReceipt??''),confirmed=receipt.exec(x.confirmationReceipt??'');
+   if(!opened||!confirmed||opened[1]!==confirmed[1]||actor(opened[1])!==x.actorKey||BigInt(confirmed[2])<=BigInt(opened[2]))return false;
    const [p]=await c.execute('SELECT owner_key,preview_receipt,preview_json,state FROM opmx_tg_correction_previews_v1 WHERE package_id=? AND revision=? AND preview_hash=? FOR UPDATE',key(x));
    if(p.length!==1||p[0].state!=='PREVIEWED'||p[0].preview_receipt!==x.previewReceipt)return false;
    let messages;try{messages=renderVerified(p[0],x,x.actorKey)}catch{return false}
-   const r=await rows(c,x);return validateRows(r,messages,x.actorKey)&&r.every((v,i)=>v.state==='SENT'&&Number.isSafeInteger(Number(v.telegram_message_id))&&Number(v.telegram_message_id)>0&&(i===0||Number(r[i-1].telegram_message_id)<Number(v.telegram_message_id)));
+   const r=await rows(c,x);return validateRows(r,messages,x.actorKey)&&r.every((v,i)=>v.state==='SENT'&&Number.isSafeInteger(Number(v.telegram_message_id))&&Number(v.telegram_message_id)>0&&(i===0||Number(r[i-1].telegram_message_id)<Number(v.telegram_message_id)))&&BigInt(r[0].telegram_message_id)>BigInt(opened[2])&&BigInt(r.at(-1).telegram_message_id)<BigInt(confirmed[2]);
   }
  };
 }
