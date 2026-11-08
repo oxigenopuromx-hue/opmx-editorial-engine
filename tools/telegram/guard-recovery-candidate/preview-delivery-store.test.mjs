@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {buildCorrectionPreview} from './correction-preview.mjs';
 import {createPreviewDeliveryStore} from './preview-delivery-store.mjs';
+import {readFile} from 'node:fs/promises';
+const sendCode=await readFile(new URL('./receiver/preview-delivery-send-candidate.js',import.meta.url),'utf8');
+const ackCode=await readFile(new URL('./receiver/preview-delivery-ack-candidate.js',import.meta.url),'utf8');
+const node=(code,prior,result)=>new Function('$input','$',code)({first:()=>({json:result})},()=>({first:()=>({json:prior})}))[0].json;
 const sha=x=>createHash('sha256').update(x).digest('hex'),id='tg_'+'a'.repeat(40),actorKey=sha('opmx:telegram:v1:123:123');
 function setup(){
  const item={itemId:'ti_'+'b'.repeat(40),kind:'TEXT',state:'STORED',text:'Contenido <verificado> '.repeat(300),sha256:sha('Contenido <verificado> '.repeat(300))};
@@ -51,4 +55,14 @@ test('a stale revision or changed preview cannot claim a part',async()=>{
  assert.equal((await f.store.claim(f.input)).status,'NOT_AVAILABLE');
  f.data.pack.revision=9;f.data.preview.preview_json=f.data.preview.preview_json.replace('Contenido','Alterado');
  await assert.rejects(()=>f.store.claim(f.input),/PREVIEW_DELIVERY_UNCONFIRMED/);
+});
+test('guard claims, receiver mapping, simulated Telegram response and persisted acks compose',async()=>{
+ const f=setup(),identity={status:'PREVIEW_IDENTITY_READY',...f.input};await f.store.initialize(f.input);
+ let sent=0;
+ while(true){const claim=await f.store.claim(f.input);if(claim.status==='DELIVERY_COMPLETE')break;
+  const ready=node(sendCode,identity,claim);assert.equal(ready.status,'SEND_READY');
+  const ack=node(ackCode,ready,{chat:{id:123},message_id:++sent+100});assert.equal(ack.status,'RECEIPT_READY');
+  assert.equal((await f.store.report(ack.body)).status,'PART_REPORTED');
+ }
+ assert.ok(sent>1);assert.equal(await f.store.verifyPreviewDelivery(f.c,{packageId:id,revision:9,previewHash:f.preview.previewHash,actorKey,previewReceipt:'telegram-123-10-10'}),true);
 });
