@@ -29,8 +29,8 @@ function exact(x,keys){if(!x||Object.keys(x).sort().join(',')!==keys.sort().join
 // owned: loadLockedFacts must derive sources and post IDs from trusted records;
 // commitConfirmed must validate the fence, seal and enqueue the *existing*
 // event atomically on the supplied connection. No client can provide either.
-export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitConfirmed}){
- if(!pool?.getConnection||typeof loadLockedFacts!=='function'||typeof commitConfirmed!=='function')throw Error('CORRECTION_CONFIGURATION_INCOMPLETE');
+export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitConfirmed,verifyPreviewDelivery}){
+ if(!pool?.getConnection||typeof loadLockedFacts!=='function'||typeof commitConfirmed!=='function'||typeof verifyPreviewDelivery!=='function')throw Error('CORRECTION_CONFIGURATION_INCOMPLETE');
  async function tx(f){const c=await pool.getConnection();let committed=false;try{await c.beginTransaction();const result=await f(c);await c.commit();committed=true;return result}catch(e){if(!committed)try{await c.rollback()}catch{}throw e}finally{c.release()}}
  async function lockPackage(c,x,actor){
   // Same quota-first ordering as the package store and reopen operation.
@@ -66,6 +66,10 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     if(row.state!=='PREVIEWED')return {status:'NOT_AVAILABLE'};
     let preview;try{preview=JSON.parse(row.preview_json)}catch{throw Error('CORRECTION_PREVIEW_UNCONFIRMED')}
     if(!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:pack.owner_key,currentRevision:x.revision,explicitAction:x.action}))return {status:'PREVIEW_MISMATCH'};
+    // The server-owned verifier must bind every preview part and successful
+    // Telegram delivery to this exact preview and recipient. A typed hash by
+    // itself does not prove that the complete preview reached the operator.
+    if(await verifyPreviewDelivery(c,{packageId:x.packageId,revision:x.revision,previewHash:x.previewHash,actorKey,previewReceipt:row.preview_receipt,confirmationReceipt:x.receiptId})!==true)return {status:'PREVIEW_DELIVERY_UNCONFIRMED'};
     // No result is committed if the existing event and the preview consumption
     // do not both succeed; exceptions roll the entire transaction back.
     const eventId=await commitConfirmed(c,{preview,actorKey,previewReceipt:row.preview_receipt,confirmationReceipt:x.receiptId});
