@@ -154,3 +154,7 @@ En Hostinger se autorizó para QA18 la IP 2.24.16.137 con confirmación del oper
 ## Conexión QA verificada — 7 de noviembre de 2026 (CDMX)
 
 Con autorización expresa se abrió temporalmente el acceso remoto desde cualquier host únicamente a QA18. La ejecución manual de sólo lectura `18883` del workflow `C6XrTNtNahiV6ppn` devolvió SUCCESS y la base `u164117262_opmxqa18`; snapshots 0, leases 1, auditoría 0, contribuciones 0. La ejecución `18884` confirmó 14 tablas `opmx_tg_*` InnoDB existentes; la consulta temporal se restauró. No se cambió ninguna nota ni se ejecutó el recorrido de recuperación. Al terminar se eliminó la regla de cualquier host y Hostinger confirmó su eliminación. Siguen pendientes las integraciones y pruebas de recuperación indicadas arriba; esta conectividad no las acredita.
+
+## Edición administrativa candidata
+
+La selección, vista, confirmación, sellado y lectura candidata distinguen el dueño original del editor que tiene la sesión de recuperación. La vista incluye ambas identidades en el hash; la selección exige la lease vigente y la lectura liga confirmación y cierre al mismo editor. El evento conserva al dueño. Se ejecutaron 184 pruebas Node locales con dobles, con casos de administrador, remitente incorrecto y cierre alterado. Son pruebas simuladas: la integración con MySQL real, Telegram, Motor, todos los escritores y actualización por IDs sigue pendiente. No se desplegó ni habilitó el candidato.

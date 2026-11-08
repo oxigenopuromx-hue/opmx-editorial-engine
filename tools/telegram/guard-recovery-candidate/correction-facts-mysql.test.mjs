@@ -17,6 +17,14 @@ function setup(){
 test('locked guard records produce a preview using the separately authenticated selection',async()=>{
  const {read,c}=setup(),facts=await read(c,{packageId,revision,ownerKey});const preview=buildCorrectionPreview({...facts,packageId,revision,ownerKey,actorKey:ownerKey});assert.equal(preview.destination,'LIBERAL');assert.equal(preview.mode,'LITERAL');assert.equal(preview.changes[0].text,'Aclaración');
 });
+test('administrator facts require the active lease and retain the original owner',async()=>{
+ const {s,c,read}=setup(),actorKey='c'.repeat(64);
+ s.lease.actor_key=actorKey;s.items[3].actorKey=actorKey;s.items[4].actorKey=actorKey;
+ const facts=await read(c,{packageId,revision,ownerKey,actorKey});
+ const preview=buildCorrectionPreview({...facts,packageId,revision,ownerKey,actorKey});
+ assert.equal(preview.ownerKey,ownerKey);assert.equal(preview.actorKey,actorKey);
+ await assert.rejects(()=>read(c,{packageId,revision,ownerKey,actorKey:'d'.repeat(64)}),/CORRECTION_FACTS_UNCONFIRMED/);
+});
 test('incorrect lease, session, material, selection or pending files fail closed',async()=>{
  for(const change of [s=>s.lease.actor_key='c'.repeat(64),s=>s.session='tg_'+'c'.repeat(40),s=>s.items[1].text='Alterado',s=>s.items[3].state='PENDING',s=>s.selection.revision--,s=>s.selection.action='UPDATE',s=>s.selection.destination='LIBERAL,OPOL']){
   const {s,c,read}=setup();change(s);await assert.rejects(()=>read(c,{packageId,revision,ownerKey}),/CORRECTION_FACTS_UNCONFIRMED/);

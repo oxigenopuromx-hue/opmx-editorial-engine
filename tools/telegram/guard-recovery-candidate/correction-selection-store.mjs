@@ -25,14 +25,14 @@ export function createCorrectionSelectionStore({pool}){
    await c.beginTransaction();
    const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)throw Error('QUOTA_MISSING');
    const [packages]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
-   if(packages.length!==1||packages[0].owner_key!==ownerKey){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
+   if(packages.length!==1){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
    const [prior]=await c.execute('SELECT package_id,revision,owner_key,mode,destination FROM opmx_tg_correction_selections_v1 WHERE receipt_key=? FOR UPDATE',[receiptKey]);
    if(prior.length){const p=prior[0],same=p.package_id===input.packageId&&p.owner_key===ownerKey&&Number(p.revision)===input.revision+1&&p.mode===input.mode&&p.destination===destination;await c.commit();committed=true;return same?{status:'SELECTION_REPLAY',revision:Number(p.revision)}:{status:'RECEIPT_CONFLICT'}}
    if(packages[0].state!=='OPEN'||Number(packages[0].revision)!==input.revision){await c.commit();committed=true;return {status:'STALE_REVISION'}}
    const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
    const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[ownerKey]);
    const opened=leases.length===1?receiptPattern.exec(leases[0].receipt_id??''):null;
-   if(!opened||leases[0].actor_key!==ownerKey||leases[0].owner_key!==ownerKey||opened[1]!==input.chat||BigInt(receipt[2])<=BigInt(opened[2])||sessions.length!==1||sessions[0].package_id!==input.packageId){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
+   if(!opened||leases[0].actor_key!==ownerKey||leases[0].owner_key!==packages[0].owner_key||opened[1]!==input.chat||BigInt(receipt[2])<=BigInt(opened[2])||sessions.length!==1||sessions[0].package_id!==input.packageId){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
    const [last]=await c.execute('SELECT message_id FROM opmx_tg_correction_selections_v1 WHERE package_id=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId]);
    if(last.length&&BigInt(receipt[2])<=BigInt(last[0].message_id)){await c.commit();committed=true;return {status:'STALE_SELECTION'}}
    const revision=input.revision+1;
@@ -44,11 +44,11 @@ export function createCorrectionSelectionStore({pool}){
  }};
 }
 // Must be called by the guard on the same transaction that locks the package.
-export async function readCorrectionSelectionInTransaction(c,{packageId,revision,ownerKey}){
- if(!c?.execute||!packagePattern.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!/^[a-f0-9]{64}$/.test(ownerKey??''))throw Error('INVALID_SELECTION');
+export async function readCorrectionSelectionInTransaction(c,{packageId,revision,ownerKey,actorKey=ownerKey}){
+ if(!c?.execute||!packagePattern.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!/^[a-f0-9]{64}$/.test(ownerKey??'')||!/^[a-f0-9]{64}$/.test(actorKey??''))throw Error('INVALID_SELECTION');
  // A choice remains valid as materials and /listo advance the revision, but
  // must never be inherited from a previous recovery lease.
- const [rows]=await c.execute('SELECT s.owner_key,s.mode,s.destination FROM opmx_tg_correction_selections_v1 s JOIN opmx_tg_recovery_leases_v1 l ON l.package_id=s.package_id AND l.owner_key=s.owner_key WHERE s.package_id=? AND s.revision<=? AND s.revision>=l.opening_revision ORDER BY s.revision DESC LIMIT 1 FOR UPDATE',[packageId,revision]);
- if(rows.length!==1||rows[0].owner_key!==ownerKey)return null;
+ const [rows]=await c.execute('SELECT s.owner_key,s.mode,s.destination FROM opmx_tg_correction_selections_v1 s JOIN opmx_tg_recovery_leases_v1 l ON l.package_id=s.package_id AND l.actor_key=s.owner_key AND l.owner_key=? WHERE s.package_id=? AND s.revision<=? AND s.revision>=l.opening_revision ORDER BY s.revision DESC LIMIT 1 FOR UPDATE',[ownerKey,packageId,revision]);
+ if(rows.length!==1||rows[0].owner_key!==actorKey)return null;
  return {packageId,revision,ownerKey,action:'CREATE',mode:rows[0].mode,destination:rows[0].destination};
 }

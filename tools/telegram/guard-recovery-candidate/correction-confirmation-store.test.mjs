@@ -5,7 +5,7 @@ import {createCorrectionConfirmationStore} from './correction-confirmation-store
 const packageId='tg_'+'a'.repeat(40),owner='123',ownerKey=createHash('sha256').update('opmx:telegram:v1:123:123').digest('hex'),revision=10;
 const item=n=>({itemId:'ti_'+String(n).repeat(40),kind:'TEXT',state:'STORED',sha256:String(n).repeat(64)});
 const eventId='evt_'+'a'.repeat(48);
-function fixture({failEnqueue=false}={}){
+function fixture({failEnqueue=false,editorKey=ownerKey}={}){
  let state={pack:{owner_key:ownerKey,state:'OPEN',revision},proposal:null,events:[]},chain=Promise.resolve();
  const pool={async getConnection(){let release,snapshot;const previous=chain;chain=new Promise(r=>release=r);return {
   async beginTransaction(){await previous;snapshot=structuredClone(state)},async commit(){release()},async rollback(){state=snapshot;release()},release(){},
@@ -18,7 +18,7 @@ function fixture({failEnqueue=false}={}){
    throw Error('unexpected SQL '+sql);
   }
  }}},facts={baseRevision:8,before:[item(1)],after:[item(1),item(2)],action:'UPDATE',mode:'LITERAL',destination:'OPURO',verifiedPosts:{OPURO:10268}};
- const store=createCorrectionConfirmationStore({pool,loadLockedFacts:async()=>facts,commitConfirmed:async()=>{state.events.push(eventId);if(failEnqueue)throw Error('OUTBOX_FAILED');state.pack.state='READY';state.pack.revision++;return eventId}});
+ const store=createCorrectionConfirmationStore({pool,loadLockedFacts:async(c,x)=>{if(x.actorKey!==editorKey)throw Error('LEASE_INVALID');return {...facts,authorizedEditorKey:editorKey}},commitConfirmed:async()=>{state.events.push(eventId);if(failEnqueue)throw Error('OUTBOX_FAILED');state.pack.state='READY';state.pack.revision++;return eventId}});
  return {store,get state(){return state}};
 }
 const request={owner,chat:owner,packageId,revision,receiptId:'telegram-123-10-100'};
@@ -26,6 +26,14 @@ test('confirmation commits one existing event and repeat is idempotent',async()=
  const f=fixture(),p=await f.store.preview(request),x={...request,receiptId:'telegram-123-11-101',previewHash:p.preview.previewHash,action:'UPDATE'};
  const result=await Promise.all([f.store.confirm(x),f.store.confirm(x)]);
  assert.deepEqual(result.map(x=>x.status).sort(),['CONFIRMED','CONFIRMED_REPLAY']);assert.deepEqual(f.state.events,[eventId]);
+});
+test('the leased administrator confirms their own preview without transferring ownership',async()=>{
+ const editorKey=createHash('sha256').update('opmx:telegram:v1:456:456').digest('hex'),f=fixture({editorKey});
+ const requestAdmin={...request,owner:'456',chat:'456',receiptId:'telegram-456-10-100'};
+ const p=await f.store.preview(requestAdmin);assert.equal(p.preview.ownerKey,ownerKey);assert.equal(p.preview.actorKey,editorKey);
+ const x={...requestAdmin,receiptId:'telegram-456-11-101',previewHash:p.preview.previewHash,action:'UPDATE'};
+ assert.equal((await f.store.confirm({...x,owner:'123',chat:'123',receiptId:'telegram-123-11-101'})).status,'NOT_AVAILABLE');
+ assert.equal((await f.store.confirm(x)).status,'CONFIRMED');assert.deepEqual(f.state.events,[eventId]);
 });
 test('repeating preview returns the same complete content for review',async()=>{
  const f=fixture(),a=await f.store.preview(request),b=await f.store.preview({...request,receiptId:'telegram-123-11-101'});

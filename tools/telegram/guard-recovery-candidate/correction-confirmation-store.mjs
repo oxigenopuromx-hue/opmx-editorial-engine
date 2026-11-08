@@ -36,7 +36,7 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
   // Same quota-first ordering as the package store and reopen operation.
   const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)throw Error('QUOTA_MISSING');
   const [rows]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[x.packageId]);
-  if(rows.length!==1||rows[0].owner_key!==actor)return null;
+  if(rows.length!==1)return null;
   return rows[0];
  }
  return {
@@ -45,8 +45,8 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
    return tx(async c=>{
     const pack=await lockPackage(c,x,actorKey);
     if(!pack||pack.state!=='OPEN'||Number(pack.revision)!==x.revision)return {status:'NOT_AVAILABLE'};
-    const facts=await loadLockedFacts(c,{packageId:x.packageId,revision:x.revision,ownerKey:actorKey});
-    const preview=buildCorrectionPreview({...facts,packageId:x.packageId,revision:x.revision,ownerKey:actorKey,actorKey});
+    const facts=await loadLockedFacts(c,{packageId:x.packageId,revision:x.revision,ownerKey:pack.owner_key,actorKey});
+    const preview=buildCorrectionPreview({...facts,packageId:x.packageId,revision:x.revision,ownerKey:pack.owner_key,actorKey});
     const [result]=await c.execute("INSERT IGNORE INTO opmx_tg_correction_previews_v1 (package_id,revision,preview_hash,owner_key,preview_receipt,preview_json,state,created_at) VALUES (?,?,?,?,?,?,'PREVIEWED',UTC_TIMESTAMP(6))",[x.packageId,x.revision,preview.previewHash,actorKey,x.receiptId,JSON.stringify(preview)]);
     if(result.affectedRows!==1)return {status:'PREVIEW_EXISTS',preview};
     return {status:'PREVIEW_READY',preview};
@@ -65,7 +65,7 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     if(pack.state!=='OPEN'||Number(pack.revision)!==x.revision)return {status:'NOT_AVAILABLE'};
     if(row.state!=='PREVIEWED')return {status:'NOT_AVAILABLE'};
     let preview;try{preview=JSON.parse(row.preview_json)}catch{throw Error('CORRECTION_PREVIEW_UNCONFIRMED')}
-    if(!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:row.owner_key,currentRevision:x.revision,explicitAction:x.action}))return {status:'PREVIEW_MISMATCH'};
+    if(!validateCorrectionConfirmation({preview,previewHash:x.previewHash,actorKey,ownerKey:pack.owner_key,currentRevision:x.revision,explicitAction:x.action}))return {status:'PREVIEW_MISMATCH'};
     // No result is committed if the existing event and the preview consumption
     // do not both succeed; exceptions roll the entire transaction back.
     const eventId=await commitConfirmed(c,{preview,actorKey,previewReceipt:row.preview_receipt,confirmationReceipt:x.receiptId});

@@ -11,12 +11,12 @@ const id=/^tg_[a-f0-9]{40}$/, hash=/^[a-f0-9]{64}$/;
 // separately reconciled update path that this provider deliberately rejects.
 export function createCorrectionFactsReader({readLockedSelection}) {
  if(typeof readLockedSelection!=='function')throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
- return async function readFacts(c,{packageId,revision,ownerKey}) {
-  if(!c?.execute||!id.test(packageId??'')||!hash.test(ownerKey??'')||!Number.isSafeInteger(revision)||revision<2||revision>=4294967295)fail();
+ return async function readFacts(c,{packageId,revision,ownerKey,actorKey=ownerKey}) {
+  if(!c?.execute||!id.test(packageId??'')||!hash.test(ownerKey??'')||!hash.test(actorKey??'')||!Number.isSafeInteger(revision)||revision<2||revision>=4294967295)fail();
   const [leases]=await c.execute('SELECT actor_key,owner_key,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[packageId]);
-  if(leases.length!==1||leases[0].owner_key!==ownerKey||leases[0].actor_key!==ownerKey)fail();
+  if(leases.length!==1||leases[0].owner_key!==ownerKey||leases[0].actor_key!==actorKey)fail();
   const baseRevision=Number(leases[0].opening_revision)-1;if(!Number.isSafeInteger(baseRevision)||baseRevision<1||baseRevision>=revision)fail();
-  const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[ownerKey]);
+  const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[actorKey]);
   if(sessions.length!==1||sessions[0].package_id!==packageId)fail();
   const [snapshots]=await c.execute('SELECT owner_key,snapshot_json FROM opmx_tg_revision_snapshots_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,baseRevision]);
   if(snapshots.length!==1||snapshots[0].owner_key!==ownerKey)fail();
@@ -26,12 +26,12 @@ export function createCorrectionFactsReader({readLockedSelection}) {
   if(!items.length||items.some(x=>x.state==='PENDING'))fail();
   const close=items.at(-1);
   // Reuse the same immutable-inventory and attested-close checks as Motor.
-  try{resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey:ownerKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
-  const selection=await readLockedSelection(c,{packageId,revision,ownerKey});
+  try{resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
+  const selection=await readLockedSelection(c,{packageId,revision,ownerKey,actorKey});
   if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||selection.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
   let destination;try{destination=destinationLabel(resolveDestinations(selection.destination));if(destination!==selection.destination)fail()}catch{fail()}
   const visible=list=>list.filter(x=>x.sha256!==null).map(x=>({itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{})}));
   if(!Array.isArray(snapshot.items))fail();
-  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{}};
+  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{},authorizedEditorKey:actorKey};
  };
 }
