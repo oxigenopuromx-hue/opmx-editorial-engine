@@ -13,6 +13,10 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget:legacyTargetBegin});
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer});
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:recovery.readConfirmedCorrection});
- return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm:corrections.confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPublicationBegin:recovery.telegramPublicationBegin,targetBegin:recovery.targetBegin});
+ // Ordinary sealing initializes the outbox before opening its transaction.
+ // Confirmed recovery seals directly within the confirmation transaction, so
+ // initialize it here as well; DDL must never run inside the seal transaction.
+ const confirm=async input=>{await events.initialize();return corrections.confirm(input)};
+ return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPublicationBegin:recovery.telegramPublicationBegin,targetBegin:recovery.targetBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}

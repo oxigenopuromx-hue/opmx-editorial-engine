@@ -17,3 +17,8 @@ test('wired guard requires the existing bearer before recovery access',async()=>
  const server=createRecoveryGuard(options);await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{const status=await new Promise((resolve,reject)=>{const q=request({hostname:'127.0.0.1',port:server.address().port,path:'/v1/telegram/packages/reopen',method:'POST',headers:{authorization:'Bearer '+'b'.repeat(64),'content-type':'application/json'}},r=>{r.resume();r.on('end',()=>resolve(r.statusCode))});q.on('error',reject);q.end('{}')});assert.equal(status,401)}finally{await new Promise(r=>server.close(r))}
 });
+test('an unavailable outbox stops recovery confirmation before any DB transaction',async()=>{
+ let dbCalls=0,initCalls=0;
+ const w=createRecoveryWiring({...options,pool:{async getConnection(){dbCalls++;throw Error('unexpected DB')}},events:{...events,async initialize(){initCalls++;throw Error('OUTBOX_UNAVAILABLE')}}});
+ await assert.rejects(()=>w.telegramCorrections.confirm({}),/OUTBOX_UNAVAILABLE/);assert.equal(initCalls,1);assert.equal(dbCalls,0);
+});
