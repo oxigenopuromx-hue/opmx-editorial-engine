@@ -7,10 +7,11 @@ const id=/^tg_[a-f0-9]{40}$/, hash=/^[a-f0-9]{64}$/;
 // Called under the quota and package locks held by the confirmation store.
 // The selection provider must read choices recorded from authenticated direct
 // Telegram commands, under this transaction. Source material is never a choice.
-// CREATE is the only supported action; existing WordPress posts require a
-// separately reconciled update path that this provider deliberately rejects.
-export function createCorrectionFactsReader({readLockedSelection}) {
- if(typeof readLockedSelection!=='function')throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
+// UPDATE additionally requires a server-owned provider which binds verified
+// post IDs to this exact package, base revision, decision and destination.
+// It is absent by default; a Telegram message must never provide these IDs.
+export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpdatePosts=null}) {
+ if(typeof readLockedSelection!=='function'||(readVerifiedUpdatePosts!==null&&typeof readVerifiedUpdatePosts!=='function'))throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
  return async function readFacts(c,{packageId,revision,ownerKey,actorKey=ownerKey}) {
   if(!c?.execute||!id.test(packageId??'')||!hash.test(ownerKey??'')||!hash.test(actorKey??'')||!Number.isSafeInteger(revision)||revision<2||revision>=4294967295)fail();
   const [leases]=await c.execute('SELECT actor_key,owner_key,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[packageId]);
@@ -28,13 +29,21 @@ export function createCorrectionFactsReader({readLockedSelection}) {
   // Reuse the same immutable-inventory and attested-close checks as Motor.
   let verifiedPolicy;try{verifiedPolicy=resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
   const selection=await readLockedSelection(c,{packageId,revision,ownerKey,actorKey});
-  if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||selection.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
+  if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||!['CREATE','UPDATE'].includes(selection.action)||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
   let destination;try{destination=destinationLabel(resolveDestinations(selection.destination));if(destination!==selection.destination)fail()}catch{fail()}
+  let verifiedPosts={};
+  if(selection.action==='UPDATE'){
+   if(!readVerifiedUpdatePosts)fail();
+   const evidence=await readVerifiedUpdatePosts(c,{packageId,revision,baseRevision,ownerKey,actorKey,destination});
+   const destinations=resolveDestinations(destination);
+   if(!evidence||evidence.packageId!==packageId||evidence.revision!==revision||evidence.baseRevision!==baseRevision||evidence.ownerKey!==ownerKey||evidence.actorKey!==actorKey||evidence.destination!==destination||evidence.verified!==true||!evidence.posts||typeof evidence.posts!=='object'||Array.isArray(evidence.posts)||Object.keys(evidence.posts).length!==destinations.length||destinations.some(d=>!Object.hasOwn(evidence.posts,d)||!Number.isSafeInteger(evidence.posts[d])||evidence.posts[d]<1))fail();
+   verifiedPosts={...evidence.posts};
+  }
   const visible=list=>list.filter(x=>x.sha256!==null).map(x=>{
    if(x.kind==='FILE'&&(!x.attachment||typeof x.attachment.file_name!=='string'||typeof x.text!=='string'))fail();
    return {itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{fileName:x.attachment.file_name,caption:x.text})};
   });
   if(!Array.isArray(snapshot.items))fail();
-  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{},authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids};
+  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:selection.action,mode:selection.mode,destination,verifiedPosts,authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids};
  };
 }

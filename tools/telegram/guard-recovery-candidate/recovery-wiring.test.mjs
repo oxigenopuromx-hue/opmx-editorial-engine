@@ -14,10 +14,11 @@ test('wires the existing guard, event store and recovery paths without starting 
  assert.ok(Object.isFrozen(w));
  assert.equal(w.telegramUpdateClaims,null);
 });
-test('update claims remain absent unless both server-owned providers exist',()=>{
+test('update claims remain absent unless all server-owned providers exist',()=>{
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{pool,loadVerifiedDecision:async()=>null,loadVerifiedPayloadEvidence:async()=>null}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
- const w=createRecoveryWiring({...options,updateProviders:{loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false}});assert.equal(typeof w.telegramUpdateClaims.begin,'function');
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders:{loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
+ const w=createRecoveryWiring({...options,updateProviders:{loadVerifiedPayloadEvidence:async()=>null,readVerifiedUpdatePosts:async()=>null,verifyUpdateReadiness:async()=>false}});assert.equal(typeof w.telegramUpdateClaims.begin,'function');
 });
 test('wired guard requires the existing bearer before recovery access',async()=>{
  const server=createRecoveryGuard(options);await new Promise(r=>server.listen(0,'127.0.0.1',r));

@@ -6,9 +6,9 @@ const run=(context,result)=>new Function('$input','$',code)({first:()=>({json:re
 const pkg='tg_'+'a'.repeat(40),item='ti_'+'b'.repeat(40);
 const selection={package_operation:'SELECT',packageId:pkg,package_revision:11,selection_mode:'LITERAL',selection_destination:'OPOL,LIBERAL'};
 test('selection acknowledges only the requested revision and options',()=>{
- const result={status:'SELECTED',packageId:pkg,revision:12,mode:'LITERAL',destination:'OPOL,LIBERAL'};
+ const result={status:'SELECTED',packageId:pkg,revision:12,action:'CREATE',mode:'LITERAL',destination:'OPOL,LIBERAL'};
  assert.match(run(selection,result).reply_text,/Opciones registradas/);
- for(const bad of [{...result,revision:13},{...result,mode:'EDITORIAL'},{...result,packageId:'bad'},{...result,destination:'OPURO'}])assert.match(run(selection,bad).reply_text,/No pude confirmar/);
+ for(const bad of [{...result,revision:13},{...result,action:'UPDATE'},{...result,mode:'EDITORIAL'},{...result,packageId:'bad'},{...result,destination:'OPURO'}])assert.match(run(selection,bad).reply_text,/No pude confirmar/);
  assert.match(run(selection,{status:'SELECTION_REPLAY',revision:12}).reply_text,/Opciones registradas/);
 });
 test('confirmation only claims queuing and never claims publication',()=>{

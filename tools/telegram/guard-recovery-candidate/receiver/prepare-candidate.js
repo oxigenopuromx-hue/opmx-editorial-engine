@@ -14,9 +14,9 @@ function preparePackageIntent(input) {
  if(cmd==='/start'||cmd==='/ayuda')return response({...x,kind:'COMMAND'},help);
  if(cmd==='/nuevo')return {...x,kind:'COMMAND',package_operation:'OPEN',requires_storage:true,storage_action:'open',storage_body:{...who(x),receiptId:x.receipt_id}};
  const discard=/^\/descartar (ti_[a-f0-9]{40})$/.exec(cmd);
- const options=/^\/opciones[ \t]+(literal|editorial)[ \t]+([A-Za-z, ]+)$/i.exec(cmd);
+ const options=/^\/opciones[ \t]+(?:(crear|actualizar)[ \t]+)?(literal|editorial)[ \t]+([A-Za-z, ]+)$/i.exec(cmd);
  const confirmation=/^\/confirmar[ \t]+(crear|actualizar)[ \t]+([1-9][0-9]{0,9})[ \t]+([a-f0-9]{64})$/i.exec(cmd);
  const op=cmd==='/listo'?'SEAL':cmd==='/estado'?'STATUS':discard?'DISCARD':options?'SELECT':confirmation?'CONFIRM':'CONTENT';
- return {...x,kind:op==='CONTENT'?x.kind:'COMMAND',discard_item_id:discard?.[1]??null,selection_mode:options?.[1]?.toUpperCase()??null,selection_destination:options?.[2]??null,confirmation_action:confirmation?(confirmation[1].toLowerCase()==='actualizar'?'UPDATE':'CREATE'):null,confirmation_revision:confirmation?Number(confirmation[2]):null,confirmation_hash:confirmation?.[3]?.toLowerCase()??null,package_operation:op,requires_storage:true,storage_action:'current',storage_body:who(x)};
+ return {...x,kind:op==='CONTENT'?x.kind:'COMMAND',discard_item_id:discard?.[1]??null,selection_action:options?(options[1]?.toLowerCase()==='actualizar'?'UPDATE':'CREATE'):null,selection_mode:options?.[2]?.toUpperCase()??null,selection_destination:options?.[3]??null,confirmation_action:confirmation?(confirmation[1].toLowerCase()==='actualizar'?'UPDATE':'CREATE'):null,confirmation_revision:confirmation?Number(confirmation[2]):null,confirmation_hash:confirmation?.[3]?.toLowerCase()??null,package_operation:op,requires_storage:true,storage_action:'current',storage_body:who(x)};
 }
 return [{json:preparePackageIntent($input.first().json)}];

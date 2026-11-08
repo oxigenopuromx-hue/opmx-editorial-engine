@@ -37,3 +37,14 @@ test('incorrect lease, session, material, selection or pending files fail closed
   const {s,c,read}=setup();change(s);await assert.rejects(()=>read(c,{packageId,revision,ownerKey}),/CORRECTION_FACTS_UNCONFIRMED/);
  }
 });
+test('update preview requires server-verified IDs bound to the exact revision and actor',async()=>{
+ const {s,c}=setup();s.selection.action='UPDATE';s.selection.destination='AMBOS';
+ const input={packageId,revision,ownerKey,actorKey:ownerKey};
+ let evidence={...input,baseRevision,destination:'AMBOS',verified:true,posts:{OPURO:123,OPOL:456}};
+ const read=createCorrectionFactsReader({readLockedSelection:async()=>s.selection,readVerifiedUpdatePosts:async()=>evidence});
+ const facts=await read(c,input),preview=buildCorrectionPreview({...facts,...input});
+ assert.equal(preview.action,'UPDATE');assert.deepEqual(preview.posts,[{destination:'OPURO',postId:123},{destination:'OPOL',postId:456}]);
+ for(const bad of [{...evidence,revision:revision-1},{...evidence,baseRevision:baseRevision-1},{...evidence,actorKey:'c'.repeat(64)},{...evidence,verified:false},{...evidence,posts:{OPURO:123}},{...evidence,posts:{OPURO:123,OPOL:0}},{...evidence,posts:{OPURO:123,OPOL:456,LIBERAL:9}}]){
+  evidence=bad;await assert.rejects(()=>read(c,input),/CORRECTION_FACTS_UNCONFIRMED/);
+ }
+});

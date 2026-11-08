@@ -45,8 +45,8 @@ function confirmPackageOperation(context,result) {
   let label;try{label=destinationLabel(resolveDestinations(context.selection_destination))}catch{return response(context,'No pude confirmar las opciones.')}
   const validMode=['LITERAL','EDITORIAL'].includes(context.selection_mode);
   if(validMode&&['SELECTED','SELECTION_REPLAY'].includes(result?.status)&&Number.isSafeInteger(context.package_revision)&&result.revision===context.package_revision+1&&
-     (result.status==='SELECTION_REPLAY'||(result.packageId===context.packageId&&result.mode===context.selection_mode&&result.destination===label)))
-   return response(context,'Opciones registradas: '+context.selection_mode+' para '+label+'. Agrega material o solicita la vista con /listo.');
+     (result.status==='SELECTION_REPLAY'||(result.packageId===context.packageId&&result.action===(context.selection_action??'CREATE')&&result.mode===context.selection_mode&&result.destination===label)))
+   return response(context,'Opciones registradas: '+((context.selection_action??'CREATE')==='UPDATE'?'actualizar notas existentes':'crear nota')+', '+context.selection_mode+' para '+label+'. Agrega material o solicita la vista con /listo.');
   return response(context,'No pude confirmar las opciones. Revisa /estado antes de volver a intentarlo.');
  }
  if(context.package_operation==='CONFIRM'){

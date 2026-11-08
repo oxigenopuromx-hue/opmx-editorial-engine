@@ -88,7 +88,7 @@ function resolvePackageSession(intent,result) {
  let action,body={...who(x),packageId:x.packageId};
  if(x.package_operation==='SELECT'){
   if(!x.recovery_session||!Number.isSafeInteger(result.revision)||x.mode_attested!==true)return response(intent,'Las opciones sólo pueden elegirse directamente en un paquete reabierto.');
-  action='corrections/select';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,mode:x.selection_mode,destination:x.selection_destination});
+  action='corrections/select';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,action:x.selection_action,mode:x.selection_mode,destination:x.selection_destination});
  }
  else if(x.package_operation==='CONFIRM'){
   if(!x.recovery_session||x.mode_attested!==true||!['CREATE','UPDATE'].includes(x.confirmation_action)||result.revision!==x.confirmation_revision)return response(intent,'La vista previa ya no corresponde a la revisión actual; vuelve a pedirla con /listo.');

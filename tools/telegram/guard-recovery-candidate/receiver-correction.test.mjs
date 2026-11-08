@@ -8,7 +8,12 @@ const run=(code,input,prior)=>new Function('$input','$',code)({first:()=>({json:
 const msg=(text,forwarded=false)=>({update:{update_id:121,message:{message_id:21,chat:{id:123,type:'private'},from:{id:123,is_bot:false},text,...(forwarded?{forward_date:100}:{})}},config:{allowedUserIds:['123'],allowedChatIds:['123']}});
 test('direct selection is routed to the guard and is not saved as source material',()=>{
  const intent=run(prepare,run(normal,msg('/opciones literal OPOL,LIBERAL')));const out=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
- assert.equal(out.next_action,'corrections/select');assert.equal(out.next_url,'https://publisher.oxigenopuro.com.mx/v1/telegram/corrections/select');assert.deepEqual(out.next_body,{owner:'123',chat:'123',packageId:pkg,revision:11,receiptId:'telegram-123-21-121',mode:'LITERAL',destination:'OPOL,LIBERAL'});
+ assert.equal(out.next_action,'corrections/select');assert.equal(out.next_url,'https://publisher.oxigenopuro.com.mx/v1/telegram/corrections/select');assert.deepEqual(out.next_body,{owner:'123',chat:'123',packageId:pkg,revision:11,receiptId:'telegram-123-21-121',action:'CREATE',mode:'LITERAL',destination:'OPOL,LIBERAL'});
+});
+test('update selection is a separate direct command, not a forwarded source',()=>{
+ const command='/opciones actualizar literal OPURO';assert.equal(run(normal,msg(command,true)).kind,'REJECTED');
+ const intent=run(prepare,run(normal,msg(command)));const out=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
+ assert.equal(out.next_body.action,'UPDATE');assert.equal(out.next_body.mode,'LITERAL');assert.equal(out.next_body.destination,'OPURO');
 });
 test('blocked list is a read-only guard operation and does not promise safe reopening',()=>{
  const intent=run(prepare,run(normal,msg('/bloqueados')));
