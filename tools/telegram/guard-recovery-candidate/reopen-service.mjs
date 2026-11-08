@@ -45,7 +45,7 @@ export function createReopenService({db,adminUserIds=[]}) {
       if(!pkg || (pkg.ownerKey!==actor&&!adminKeys.has(actor)))return {status:'NOT_FOUND'};
       const session=await tx.lockSession(actor), lease=await tx.lockLease(id);
       if(session && session.packageId!==id)return {status:'SESSION_BUSY'};
-      if(pkg.state==='OPEN' && session?.packageId===id && lease?.actorKey===actor)
+      if(pkg.state==='OPEN' && session?.packageId===id && lease?.actorKey===actor && lease?.ownerKey===pkg.ownerKey)
         return {status:'OPEN_REPLAY',packageId:id,revision:pkg.revision};
       if(session || lease || pkg.state!=='READY')return {status:'NOT_REOPENABLE'};
       if(!Number.isSafeInteger(pkg.revision)||pkg.revision<1||pkg.revision>=Number.MAX_SAFE_INTEGER)throw Error('INVALID_REVISION');
