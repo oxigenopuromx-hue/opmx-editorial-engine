@@ -24,13 +24,14 @@ export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,aut
   // Text is data for the owner's preview, never an operational command. Its
   // bytes must match the stored digest; captions/files remain identified by ID.
   if(x.text!==undefined&&x.text!==null&&(typeof x.text!=='string'||Buffer.byteLength(x.text)>16384))fail();
+  if(x.kind==='FILE'&&(typeof x.fileName!=='string'||Buffer.byteLength(x.fileName)>1024||typeof x.caption!=='string'||Buffer.byteLength(x.caption)>16384))fail();
   if(x.kind==='TEXT'&&typeof x.text==='string'&&sha(x.text)!==x.sha256)fail();
-  out.set(x.itemId,{itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'&&typeof x.text==='string'?{text:x.text}:{})});
+  out.set(x.itemId,{itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'&&typeof x.text==='string'?{text:x.text}:{}),...(x.kind==='FILE'&&x.fileName!==undefined?{fileName:x.fileName}:{}),...(x.kind==='FILE'&&x.caption!==undefined?{caption:x.caption}:{})});
  }return out};
  const old=read(before),current=read(after),changes=[];
  if(!Array.isArray(controlItemIds)||new Set(controlItemIds).size!==controlItemIds.length||controlItemIds.some(id=>!itemId.test(id??'')||current.get(id)?.state!=='STORED'))fail();
- for(const [id,item] of old){const now=current.get(id);if(!now||now.kind!==item.kind||now.sha256!==item.sha256)fail();if(item.state==='DISCARDED'&&now.state!=='DISCARDED')fail();if(item.state==='STORED'&&now.state==='DISCARDED')changes.push({itemId:id,kind:item.kind,change:'REMOVED',sha256:item.sha256,...(item.text!==undefined?{text:item.text}:{})});}
- for(const [id,item] of current)if(!old.has(id)&&item.state==='STORED')changes.push({itemId:id,kind:item.kind,change:'ADDED',sha256:item.sha256,...(item.text!==undefined?{text:item.text}:{})});
+ for(const [id,item] of old){const now=current.get(id);if(!now||now.kind!==item.kind||now.sha256!==item.sha256||now.fileName!==item.fileName||now.caption!==item.caption)fail();if(item.state==='DISCARDED'&&now.state!=='DISCARDED')fail();if(item.state==='STORED'&&now.state==='DISCARDED')changes.push({itemId:id,kind:item.kind,change:'REMOVED',sha256:item.sha256,...(item.text!==undefined?{text:item.text}:{}),...(item.fileName!==undefined?{fileName:item.fileName}:{}),...(item.caption!==undefined?{caption:item.caption}:{})});}
+ for(const [id,item] of current)if(!old.has(id)&&item.state==='STORED')changes.push({itemId:id,kind:item.kind,change:'ADDED',sha256:item.sha256,...(item.text!==undefined?{text:item.text}:{}),...(item.fileName!==undefined?{fileName:item.fileName}:{}),...(item.caption!==undefined?{caption:item.caption}:{})});
  if(![...current.values()].some(x=>x.state==='STORED'))fail();
  const posts=destinations.map(d=>({destination:d,postId:verifiedPosts[d]??null}));
  // Bind the complete retained inventory, not just the delta. Otherwise an

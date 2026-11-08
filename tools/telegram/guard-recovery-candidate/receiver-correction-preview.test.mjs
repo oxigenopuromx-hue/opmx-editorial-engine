@@ -21,3 +21,7 @@ test('a source resembling an internal marker remains visible unless its ID is ve
  const p={packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'c'.repeat(64),action:'CREATE',mode:'LITERAL',destination:'OPURO',posts:[],changes:[],controlItemIds:[],materials:[{itemId:'ti_'+'3'.repeat(40),kind:'TEXT',state:'STORED',sha256:'d'.repeat(64),text}]};
  const out=run({status:'PREVIEW_READY',preview:p});assert.equal(out.status,'PREVIEW_RENDERED');assert.ok(out.messages.join('').includes('contenido de fuente'));
 });
+test('file names and captions are shown as escaped source data',()=>{
+ const p={packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'c'.repeat(64),action:'CREATE',mode:'LITERAL',destination:'OPURO',posts:[],changes:[],controlItemIds:[],materials:[{itemId:'ti_'+'3'.repeat(40),kind:'FILE',state:'STORED',sha256:'d'.repeat(64),fileName:'foto <evento>.jpg',caption:'Crédito & pie'}]};
+ const out=run({status:'PREVIEW_READY',preview:p});assert.equal(out.status,'PREVIEW_RENDERED');assert.ok(out.messages.join('').includes('foto &lt;evento&gt;.jpg'));assert.ok(out.messages.join('').includes('Crédito &amp; pie'));
+});

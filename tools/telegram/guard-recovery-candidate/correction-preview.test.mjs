@@ -37,3 +37,9 @@ test('changed text is displayed as data only when its stored hash matches',()=>{
  const p=buildCorrectionPreview(x);assert.equal(p.changes.find(c=>c.itemId===item(3)).text,text);
  x.after[2].text='Información alterada';assert.throws(()=>buildCorrectionPreview(x),/CORRECTION_PREVIEW_UNCONFIRMED/);
 });
+test('file name and caption are included in the reviewed revision and immutable for retained files',()=>{
+ const x=fixture(),file={itemId:item(4),kind:'FILE',state:'STORED',sha256:'f'.repeat(64),fileName:'foto <evento>.jpg',caption:'Pie e instrucciones adjuntas'};
+ x.before.push({...file});x.after.push({...file});const p=buildCorrectionPreview(x);
+ assert.equal(p.materials.at(-1).caption,file.caption);assert.equal(p.materials.at(-1).fileName,file.fileName);
+ x.after.at(-1).caption='Alterado';assert.throws(()=>buildCorrectionPreview(x),/CORRECTION_PREVIEW_UNCONFIRMED/);
+});

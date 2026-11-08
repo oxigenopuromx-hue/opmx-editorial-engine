@@ -30,7 +30,10 @@ export function createCorrectionFactsReader({readLockedSelection}) {
   const selection=await readLockedSelection(c,{packageId,revision,ownerKey,actorKey});
   if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||selection.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
   let destination;try{destination=destinationLabel(resolveDestinations(selection.destination));if(destination!==selection.destination)fail()}catch{fail()}
-  const visible=list=>list.filter(x=>x.sha256!==null).map(x=>({itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{})}));
+  const visible=list=>list.filter(x=>x.sha256!==null).map(x=>{
+   if(x.kind==='FILE'&&(!x.attachment||typeof x.attachment.file_name!=='string'||typeof x.text!=='string'))fail();
+   return {itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{fileName:x.attachment.file_name,caption:x.text})};
+  });
   if(!Array.isArray(snapshot.items))fail();
   return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{},authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids};
  };
