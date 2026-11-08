@@ -51,6 +51,11 @@ test('a recovered editor can request an image without changing the original dest
   const result=resolveRecoveredPolicy(input);assert.equal(result.destination,'OPURO,LIBERAL');assert.equal(result.mode,'PUBLISH');
  }
 });
+test('a second preview may retain a previous authenticated close control',()=>{
+ const x=fixture();const earlier=item(6,prefix+'/listo\n'+JSON.stringify({policy:'publish-todos-v2',package_id:pkg,message_id:99}),admin);x.items.splice(x.items.length-1,0,earlier);
+ assert.deepEqual(resolveRecoveredPolicy(x).control_item_ids,[id(1),id(3),id(6),id(5)]);
+ earlier.text=prefix+'/listo\n{}';earlier.sha256=hash(earlier.text);earlier.contentBytes=Buffer.byteLength(earlier.text);assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/);
+});
 test('image-like commands cannot introduce a new destination',()=>{
  for(const text of ['/publicar TODOS','/imagen generar extra','/borrador LIBERAL']){
   const input=fixture();input.items[3]=item(4,prefix+text,admin);

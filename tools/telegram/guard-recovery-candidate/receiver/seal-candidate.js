@@ -4,6 +4,10 @@ function prepareSeal(context, reserved) {
   const stored = reserved?.status==='STORED' && reserved.packageId===context.packageId && validItem(reserved.itemId);
   const replay = reserved?.status==='RESERVATION_REPLAY' && reserved.state==='STORED' && validItem(reserved.itemId);
   if (!stored && !replay) return { seal_requested:false,passthrough:{status:'CLOSE_NOT_CONFIRMED'} };
+  if(context.recovery_session){
+   if(!Number.isSafeInteger(reserved.revision)||reserved.revision<1)return {seal_requested:false,passthrough:{status:'CLOSE_NOT_CONFIRMED'}};
+   return {seal_requested:false,preview_requested:true,preview_body:{owner:context.user_id,chat:context.chat_id,packageId:context.packageId,revision:reserved.revision,receiptId:context.receipt_id}};
+  }
   return { seal_requested:true, seal_body:{owner:context.user_id,chat:context.chat_id,packageId:context.packageId,receiptId:context.receipt_id} };
 }
 return [{json:prepareSeal($('Resolver paquete Telegram').first(0,0).json,$input.first().json)}];

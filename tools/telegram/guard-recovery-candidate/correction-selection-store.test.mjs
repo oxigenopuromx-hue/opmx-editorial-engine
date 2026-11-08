@@ -13,7 +13,7 @@ function setup(){let data={pack:{owner_key:ownerKey,state:'OPEN',revision:10},se
   if(sql.includes('ORDER BY revision DESC'))return [data.selections.slice(-1)];
   if(sql.startsWith('INSERT INTO opmx_tg_correction_selections')){data.selections.push({package_id:args[0],revision:args[1],owner_key:args[2],receipt_key:args[3],message_id:args[4],mode:args[5],destination:args[6]});return [{affectedRows:1}]}
   if(sql.startsWith('UPDATE opmx_tg_packages')){if(data.pack.revision!==args[2])return [{affectedRows:0}];data.pack.revision=args[0];return [{affectedRows:1}]}
-  if(sql.includes('WHERE package_id=? AND revision=?'))return [data.selections.filter(x=>x.package_id===args[0]&&x.revision===args[1])];
+  if(sql.includes('JOIN opmx_tg_recovery_leases'))return [data.selections.filter(x=>x.package_id===args[0]&&x.revision<=args[1]&&x.revision>=2).slice(-1)];
   throw Error(sql);
  }};return {c,store:createCorrectionSelectionStore({pool:{async getConnection(){return c}}}),get data(){return data}};
 }
@@ -22,6 +22,7 @@ test('selection advances revision and reads only the exact stored decision',asyn
  const f=setup(),out=await f.store.select(request);assert.equal(out.revision,11);assert.equal(out.destination,'AMBOS');
  assert.equal((await f.store.select(request)).status,'SELECTION_REPLAY');
  assert.equal((await readCorrectionSelectionInTransaction(f.c,{packageId,revision:11,ownerKey})).destination,'AMBOS');
+ assert.equal((await readCorrectionSelectionInTransaction(f.c,{packageId,revision:12,ownerKey})).destination,'AMBOS');
  assert.equal(await readCorrectionSelectionInTransaction(f.c,{packageId,revision:10,ownerKey}),null);
 });
 test('revision conflicts, different users, replay changes and delayed selections do not overwrite',async()=>{

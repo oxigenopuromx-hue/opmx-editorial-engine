@@ -10,6 +10,11 @@ const hashPattern=/^[a-f0-9]{64}$/;
 // the production image selector. It conveys image intent, never publication
 // authorization; mode commands remain forbidden in the recovery additions.
 const directImage=/^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i;
+function validClose(text,packageId){
+ if(typeof text!=='string'||!text.startsWith(prefix+'/listo\n'))return false;
+ let c;try{c=JSON.parse(text.slice((prefix+'/listo\n').length))}catch{return false}
+ return object(c)&&Object.keys(c).sort().join(',')==='message_id,package_id,policy'&&c.package_id===packageId&&['publish-ambos-v1','publish-todos-v2'].includes(c.policy)&&Number.isSafeInteger(c.message_id)&&c.message_id>0;
+}
 
 // Candidate only. All arguments must come from guard-owned immutable snapshots,
 // closure records and item/contribution rows under one consistent read. Never
@@ -40,6 +45,7 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
  if(new Set(prior.controls).size!==prior.controls.length||prior.controls.some(id=>!before.has(id)))fail();
  const extra=items.filter(i=>!before.has(i.itemId));
  if(!extra.length||extra.at(-1).itemId!==closure.closeItemId||items.at(-1)?.itemId!==closure.closeItemId)fail();
+ const additionalCloses=[];
  for(const item of extra){
   if(item.ownerKey!==prior.ownerKey||!['STORED','DISCARDED'].includes(item.state)||item.actorKey!==closure.actorKey||!['TEXT','FILE'].includes(item.kind))fail();
   // Stored discards retain bytes and quota; pending file reservations can be
@@ -51,14 +57,12 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
   }
   if(item.kind==='TEXT'){
    if(typeof item.text!=='string'||hash(item.text)!==item.sha256||Buffer.byteLength(item.text)!==item.contentBytes)fail();
-   if(item.text.startsWith(prefix)&&item.itemId!==closure.closeItemId&&!directImage.test(item.text.slice(prefix.length)))fail();
+   if(item.text.startsWith(prefix)&&item.itemId!==closure.closeItemId&&!directImage.test(item.text.slice(prefix.length))){if(!validClose(item.text,packageId))fail();additionalCloses.push(item.itemId)}
   }
  }
  const close=extra.at(-1);
- if(close.kind!=='TEXT'||close.receiptKey!==closure.closeReceiptKey||!close.text.startsWith(prefix+'/listo\n'))fail();
- let control;try{control=JSON.parse(close.text.slice((prefix+'/listo\n').length));}catch{fail();}
- if(!object(control)||Object.keys(control).sort().join(',')!=='message_id,package_id,policy'||control.package_id!==packageId||!['publish-ambos-v1','publish-todos-v2'].includes(control.policy)||!Number.isSafeInteger(control.message_id)||control.message_id<1)fail();
+ if(close.kind!=='TEXT'||close.receiptKey!==closure.closeReceiptKey||!validClose(close.text,packageId))fail();
  const selected=['OPURO','OPOL','LIBERAL'].filter(d=>prior.destinations.includes(d));
  const destination=selected.length===3?'TODOS':selected.join(',')==='OPURO,OPOL'?'AMBOS':selected.join(',');
- return {mode:auth.mode,authorized:true,explicit:auth.explicit,authorization:auth.authorization,destination,control_item_ids:[...prior.controls,closure.closeItemId]};
+ return {mode:auth.mode,authorized:true,explicit:auth.explicit,authorization:auth.authorization,destination,control_item_ids:[...prior.controls,...additionalCloses,closure.closeItemId]};
 }

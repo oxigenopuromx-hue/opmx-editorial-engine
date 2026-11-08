@@ -32,6 +32,8 @@ function parseDestinationCommand(text) {
     destination: destinationLabel(destinations), destinations };
 }
 function isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }
+function isCorrectionOptions(s) { const m=/^\/opciones[ \t]+(literal|editorial)[ \t]+([A-Za-z, ]+)$/i.exec(s);if(!m)return false;try{resolveDestinations(m[2]);return true}catch{return false} }
+function isCorrectionConfirmation(s) { return /^\/confirmar[ \t]+crear[ \t]+[1-9][0-9]{0,9}[ \t]+[a-f0-9]{64}$/i.test(s); }
 function validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }
 function normalizeTelegramUpdate(update,config={}) {
  const m=update?.message;
@@ -46,13 +48,13 @@ function normalizeTelegramUpdate(update,config={}) {
  if(typeof m.text==='string'&&!m.document&&!m.photo){
   const command=m.text.trim();
   const looksCommand=/^\/[a-z][a-z0-9_]*(?:@[a-z0-9_]+)?(?=\s|$)/i.test(command);
-  const valid=/^\/(?:id|start|ayuda|nuevo|listo|estado)$/.test(command)||/^\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(command)||isMode(command)||/^\/imagen\s+generar$/i.test(command);
+  const valid=/^\/(?:id|start|ayuda|nuevo|listo|estado)$/.test(command)||/^\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(command)||isMode(command)||isCorrectionOptions(command)||isCorrectionConfirmation(command)||/^\/imagen\s+generar$/i.test(command);
   if(looksCommand&&!valid)return {...identity,kind:'REJECTED',has_file:false,reply_text:'Comando inválido. Usa /publicar o /borrador con opuro, opol, liberal, ambos, todos o una lista separada por comas. Escribe el comando correcto como mensaje aparte.'};
  }
  // Only commands typed directly by the authenticated operator select mode.
- if(typeof m.text==='string' && (isMode(m.text.trim()) || /^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim())) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
+ if(typeof m.text==='string' && (isMode(m.text.trim()) || isCorrectionOptions(m.text.trim()) || isCorrectionConfirmation(m.text.trim()) || /^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim())) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
  if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
- const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&(isMode(m.text.trim()) || /^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim()));
+ const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&(isMode(m.text.trim()) || isCorrectionOptions(m.text.trim()) || isCorrectionConfirmation(m.text.trim()) || /^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim()));
  const maxBytes=config.maxBytes??10*1024*1024;
  if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
  let attachment=null;

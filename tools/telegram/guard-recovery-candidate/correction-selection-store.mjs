@@ -46,7 +46,9 @@ export function createCorrectionSelectionStore({pool}){
 // Must be called by the guard on the same transaction that locks the package.
 export async function readCorrectionSelectionInTransaction(c,{packageId,revision,ownerKey}){
  if(!c?.execute||!packagePattern.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!/^[a-f0-9]{64}$/.test(ownerKey??''))throw Error('INVALID_SELECTION');
- const [rows]=await c.execute('SELECT owner_key,mode,destination FROM opmx_tg_correction_selections_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+ // A choice remains valid as materials and /listo advance the revision, but
+ // must never be inherited from a previous recovery lease.
+ const [rows]=await c.execute('SELECT s.owner_key,s.mode,s.destination FROM opmx_tg_correction_selections_v1 s JOIN opmx_tg_recovery_leases_v1 l ON l.package_id=s.package_id AND l.owner_key=s.owner_key WHERE s.package_id=? AND s.revision<=? AND s.revision>=l.opening_revision ORDER BY s.revision DESC LIMIT 1 FOR UPDATE',[packageId,revision]);
  if(rows.length!==1||rows[0].owner_key!==ownerKey)return null;
  return {packageId,revision,ownerKey,action:'CREATE',mode:rows[0].mode,destination:rows[0].destination};
 }

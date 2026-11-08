@@ -135,7 +135,11 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         const finish=async result=>{await c.commit();committed=true;return result;};
         if(action==='current') {
           const [session]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=?',[ownerKey]);
-          return await finish(session.length?{status:'OPEN',packageId:session[0].package_id}:{status:'NO_OPEN_PACKAGE'});
+          if(!session.length)return await finish({status:'NO_OPEN_PACKAGE'});
+          if(!recoveryEnabled)return await finish({status:'OPEN',packageId:session[0].package_id});
+          const [current]=await c.execute('SELECT p.state,p.revision,l.actor_key FROM opmx_tg_packages_v1 p LEFT JOIN opmx_tg_recovery_leases_v1 l ON l.package_id=p.package_id WHERE p.package_id=?',[session[0].package_id]);
+          if(current.length!==1||current[0].state!=='OPEN'||(current[0].actor_key&&current[0].actor_key!==actorKey)||!Number.isSafeInteger(Number(current[0].revision)))return await finish({status:'NO_OPEN_PACKAGE'});
+          return await finish({status:'OPEN',packageId:session[0].package_id,revision:Number(current[0].revision),recovery:current[0].actor_key===actorKey});
         }
         if(action==='open') {
           const id='tg_'+digest(`${ownerKey}:${input.receiptId}`).slice(0,40);
@@ -216,7 +220,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           }
           const a=input.attachment,receiptKey=digest(input.receiptId),fingerprint=digest(JSON.stringify([input.packageId,input.kind,input.text,a?[a.file_name,a.mime_type,a.declared_bytes]:null]));
           const [prior]=await c.execute('SELECT item_id,package_id,fingerprint,state FROM opmx_tg_items_v1 WHERE receipt_key=?',[receiptKey]);
-          if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state});
+          if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state,...(recoveryEnabled&&lease?{revision:Number(pack.revision)}:{})});
           const reserved=input.kind==='TEXT'?Buffer.byteLength(input.text):input.attachment.declared_bytes??PACKAGE_LIMITS.fileBytes;
           const close=isAttestedClose(input)&&reserved<=CLOSE_CONTROL_ALLOWANCE;
           const itemLimit=lease?RECOVERY_ITEM_LIMIT-(close?0:1):PACKAGE_LIMITS.items+(close?1:0);
@@ -231,7 +235,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           if(lease)await c.execute('INSERT INTO opmx_tg_recovery_contributions_v1 (item_id,package_id,actor_key,created_at) VALUES (?,?,?,UTC_TIMESTAMP(6))',[id,input.packageId,actorKey]);
           await c.execute('UPDATE opmx_tg_packages_v1 SET item_count=item_count+1,used_bytes=used_bytes+?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[reserved,input.packageId]);
           await c.execute('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes+? WHERE id=1',[reserved]);
-          return await finish({status:textOnly?'STORED':'RESERVED',packageId:input.packageId,itemId:id});
+          return await finish({status:textOnly?'STORED':'RESERVED',packageId:input.packageId,itemId:id,...(recoveryEnabled&&lease?{revision:Number(pack.revision)+1}:{})});
         }
         const [items]=await c.execute('SELECT * FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=?',[input.itemId,input.packageId,ownerKey]);
         if(!items.length)return await finish({status:'NOT_FOUND'});const item=items[0];

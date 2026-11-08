@@ -78,9 +78,17 @@ function resolvePackageSession(intent,result) {
  }
  if(result?.status==='NO_OPEN_PACKAGE')return response(intent,'No hay una nota abierta. Envía /nuevo y después sus textos, fotos y documentos.');
  if(result?.status!=='OPEN'||!validPackage(result.packageId))return response(intent,'No pude consultar tu paquete. No confirmé almacenamiento de este mensaje.');
- const x={...intent,packageId:result.packageId,requires_operation:true};
+ const x={...intent,packageId:result.packageId,requires_operation:true,recovery_session:result.recovery===true};
  let action,body={...who(x),packageId:x.packageId};
- if(x.package_operation==='SEAL'){action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:'TEXT',text:attestedControl('/listo',x.packageId,x.message_id),attachment:null});}
+ if(x.package_operation==='SELECT'){
+  if(!x.recovery_session||!Number.isSafeInteger(result.revision)||x.mode_attested!==true)return response(intent,'Las opciones sólo pueden elegirse directamente en un paquete reabierto.');
+  action='corrections/select';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,mode:x.selection_mode,destination:x.selection_destination});
+ }
+ else if(x.package_operation==='CONFIRM'){
+  if(!x.recovery_session||x.mode_attested!==true||result.revision!==x.confirmation_revision)return response(intent,'La vista previa ya no corresponde a la revisión actual; vuelve a pedirla con /listo.');
+  action='corrections/confirm';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,previewHash:x.confirmation_hash,action:'CREATE'});
+ }
+ else if(x.package_operation==='SEAL'){action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:'TEXT',text:attestedControl('/listo',x.packageId,x.message_id),attachment:null});}
  else if(x.package_operation==='STATUS')action='manifest';
  else if(x.package_operation==='DISCARD'){action='discard';body.itemId=x.discard_item_id;}
  else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
