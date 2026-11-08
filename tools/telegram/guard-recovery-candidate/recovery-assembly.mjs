@@ -19,7 +19,7 @@ import {createPreviewDeliveryStore} from './preview-delivery-store.mjs';
 // this object must not enable production; the caller must install and migrate
 // schemas, wire the package store, event consumer and every relevant writer,
 // and provide evidence backed by authoritative records and an effective fence.
-export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget,verifyLiteralEnforcement=async()=>false}) {
+export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false}) {
   if(!pool?.getConnection||!Array.isArray(adminUserIds)||typeof lockTrustedSafetyBarrier!=='function'||
      typeof captureTrustedRevision!=='function'||typeof beginLegacyTarget!=='function')throw Error('RECOVERY_CONFIGURATION_INCOMPLETE');
   const db=createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier,captureTrustedRevision,
@@ -30,7 +30,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     targetBegin:createClassifiedTargetRouter(beginLegacyTarget),
     telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
-    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement}),
+    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement,verifyUpdateEnforcement}),
     initializeMotorAttempt,
     readRecoveredPolicy:readRecoveredPolicyInTransaction,
     readConfirmedCorrection:readConfirmedCorrectionInTransaction,
@@ -39,9 +39,9 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
 
 // These callbacks must be real, authoritative deployment integrations. Their
 // existence or test doubles does not establish that production is safe.
-export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget,verifyLiteralEnforcement=async()=>false}) {
+export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,beginLegacyTarget,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false}) {
   const evidence=createNeverWrittenEvidence({verifyTerminalRun,verifyWriterCoverage});
-  return createCandidateRecoverySubsystem({pool,adminUserIds,beginLegacyTarget,verifyLiteralEnforcement,
+  return createCandidateRecoverySubsystem({pool,adminUserIds,beginLegacyTarget,verifyLiteralEnforcement,verifyUpdateEnforcement,
     lockTrustedSafetyBarrier:evidence.lockSafetyBarrier,
     captureTrustedRevision:createRevisionCapture({lockVerifiedBlockedOutcomes:evidence.lockVerifiedBlockedOutcomes})});
 }

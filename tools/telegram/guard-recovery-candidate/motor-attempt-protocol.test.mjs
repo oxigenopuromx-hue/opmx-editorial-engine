@@ -26,5 +26,7 @@ test('decision acknowledgement binds exact structured fields and accepts only it
  const request=classifyMotorAttempt(call('reconocer_decision_telegram_opmx',args),base,identity).request;assert.equal(request.action,'decision');assert.equal(request.body.previewHash,args.preview_hash);
  assert.equal(formatMotorAttempt(request,{status:'DECISION_ACKNOWLEDGED',packageId:package_id,revision}).response.result.structuredContent.status,'DECISION_ACKNOWLEDGED');
  assert.equal(formatMotorAttempt(request,{status:'DECISION_ACKNOWLEDGED',packageId:'tg_'+'d'.repeat(40),revision}).response.result.structuredContent.status,'ATTEMPT_UNCONFIRMED');
- assert.equal(classifyMotorAttempt(call('reconocer_decision_telegram_opmx',{...args,action:'UPDATE'}),base,identity).response.error.code,-32602);
+ const update=classifyMotorAttempt(call('reconocer_decision_telegram_opmx',{...args,action:'UPDATE'}),base,identity).request;
+ assert.equal(update.body.action,'UPDATE');assert.equal(formatMotorAttempt(update,{status:'UPDATE_ENFORCEMENT_UNCONFIRMED'}).response.result.structuredContent.retryPermitted,false);
+ assert.equal(classifyMotorAttempt(call('reconocer_decision_telegram_opmx',{...args,action:'OTHER'}),base,identity).response.error.code,-32602);
 });

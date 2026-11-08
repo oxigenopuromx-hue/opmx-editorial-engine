@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 const packageId='tg_'+'a'.repeat(40),revision=7,eventId='evt_'+'b'.repeat(48),token='c'.repeat(64);
-function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVerified=false}={}){
+function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVerified=false,updateVerified=false}={}){
  let state={attempt:'QUEUED',fence,tokenHash:null};let chain=Promise.resolve(),locked;
  const pool={async getConnection(){
   let release;const prior=chain;chain=new Promise(r=>release=r);
@@ -19,7 +19,7 @@ function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVe
    throw Error('unexpected SQL '+sql);
   }};
  }};
- return {store:createMotorAttemptStore({pool,tokenFactory:()=>token,readDecision:async()=>decision,verifyLiteralEnforcement:async()=>literalVerified}),get state(){return state}};
+ return {store:createMotorAttemptStore({pool,tokenFactory:()=>token,readDecision:async()=>decision,readUpdateDecision:async()=>decision,verifyLiteralEnforcement:async()=>literalVerified,verifyUpdateEnforcement:async()=>updateVerified}),get state(){return state}};
 }
 test('one claim wins, and a blocked attempt freezes its revision atomically',async()=>{
  const f=fixture(),input={packageId,revision,eventId};
@@ -79,4 +79,15 @@ test('literal choice remains fenced when writer enforcement is unverified',async
 test('a recovered attempt may freeze before acknowledgement but cannot write',async()=>{
  const f=fixture({fence:'AWAITING_DECISION'}),key={packageId,revision,eventId};assert.equal((await f.store.begin(key)).status,'ATTEMPT_STARTED');
  assert.equal((await f.store.block({...key,token})).status,'ATTEMPT_BLOCKED');assert.equal(f.state.fence,'RECONCILING');
+});
+test('update acknowledgement stays fenced unless exact target IDs and writer enforcement are proven',async()=>{
+ const previewHash='d'.repeat(64),key={packageId,revision,eventId},decision={packageId,revision,previewHash,destination:'AMBOS',contentMode:'EDITORIAL',action:'UPDATE',posts:[{destination:'OPURO',postId:12},{destination:'OPOL',postId:34}]};
+ const ack={...key,token,previewHash,destination:'AMBOS',contentMode:'EDITORIAL',action:'UPDATE'};
+ const blocked=fixture({fence:'AWAITING_DECISION',decision});await blocked.store.begin(key);
+ assert.equal((await blocked.store.acknowledgeDecision(ack)).status,'UPDATE_ENFORCEMENT_UNCONFIRMED');assert.equal(blocked.state.fence,'AWAITING_DECISION');
+ const mismatch=fixture({fence:'AWAITING_DECISION',decision:{...decision,posts:[{destination:'OPURO',postId:0},{destination:'OPOL',postId:34}]},updateVerified:true});await mismatch.store.begin(key);
+ assert.equal((await mismatch.store.acknowledgeDecision(ack)).status,'UPDATE_ENFORCEMENT_UNCONFIRMED');assert.equal(mismatch.state.fence,'AWAITING_DECISION');
+ const good=fixture({fence:'AWAITING_DECISION',decision,updateVerified:true});await good.store.begin(key);
+ assert.equal((await good.store.acknowledgeDecision({...ack,previewHash:'f'.repeat(64)})).status,'DECISION_MISMATCH');
+ assert.equal((await good.store.acknowledgeDecision(ack)).status,'DECISION_ACKNOWLEDGED');assert.equal(good.state.fence,'READY_TO_WRITE');
 });
