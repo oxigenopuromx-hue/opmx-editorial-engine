@@ -9,4 +9,6 @@ function preparePreviewReceipt(context,result){
   return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};
  return {status:'RECEIPT_READY',body:{owner:x.owner,chat:x.chat,packageId:x.packageId,revision:x.revision,previewHash:x.previewHash,part:c.part,token:c.token,telegramChat:x.chat,telegramMessageId:m.message_id}};
 }
-return [{json:preparePreviewReceipt($('Preparar envío de vista').first(0,0).json,$input.first().json)}];
+// The sender executes once per part. Select the matching execution, never the
+// first iteration, or a later Telegram response could be bound to an old token.
+return [{json:preparePreviewReceipt($('Preparar envío de vista').first(0,$runIndex).json,$input.first().json)}];
