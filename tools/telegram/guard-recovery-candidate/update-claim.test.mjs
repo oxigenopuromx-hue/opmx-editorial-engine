@@ -3,6 +3,7 @@ const input={packageId:'tg_'+'a'.repeat(40),revision:12,destination:'OPURO',post
 function setup({fence='READY_TO_WRITE',verified=true,validDecision=true,commitFails=false}={}){
  let state={fence,claim:null};let chain=Promise.resolve();
  const pool={async getConnection(){let release,snapshot;const prior=chain;chain=new Promise(r=>release=r);return {async beginTransaction(){await prior;snapshot=structuredClone(state)},async commit(){if(commitFails)throw Error('commit uncertain');release()},async rollback(){state=snapshot;release()},release(){},async execute(sql,args){
+  if(sql.startsWith('SELECT id FROM opmx_tg_quota'))return [[{id:1}]];
   if(sql.startsWith('SELECT state,revision FROM opmx_tg_packages'))return [[{state:'READY',revision:12}]];
   if(sql.startsWith('SELECT state FROM opmx_tg_publication_fence'))return [[{state:state.fence}]];
   if(sql.startsWith('SELECT state FROM opmx_tg_update_claims'))return [state.claim?[{state:'WRITING'}]:[]];

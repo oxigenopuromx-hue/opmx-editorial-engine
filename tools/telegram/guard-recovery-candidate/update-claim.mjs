@@ -23,6 +23,9 @@ export function createUpdateClaimStore({pool,loadVerifiedDecision,loadVerifiedPa
   const c=await pool.getConnection();let committed=false;
   try{
    await c.beginTransaction();
+   // Follow the same quota-first order as reopen, seal and preview so a
+   // concurrent package edit cannot deadlock against an update claim.
+   const [quota]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(quota.length!==1)throw Error('QUOTA_MISSING');
    const [packages]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[x.packageId]);
    if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==x.revision){await c.rollback();return {status:'STALE_REVISION',retryPermitted:false}}
    const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[x.packageId,x.revision]);
