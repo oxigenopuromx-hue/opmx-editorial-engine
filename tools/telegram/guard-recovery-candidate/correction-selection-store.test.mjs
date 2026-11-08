@@ -8,9 +8,9 @@ function setup({editor='123'}={}){let editorKey=hash(`opmx:telegram:v1:${editor}
   if(sql.includes('FROM opmx_tg_quota'))return [[{id:1}]];
   if(sql.includes('FROM opmx_tg_packages'))return [[data.pack]];
   if(sql.includes('WHERE receipt_key='))return [data.selections.filter(x=>x.receipt_key===args[0])];
-  if(sql.includes('FROM opmx_tg_recovery_leases'))return [[{actor_key:editorKey,owner_key:ownerKey,receipt_id:`telegram-${editor}-1-1`}]];
+  if(sql.includes('FROM opmx_tg_recovery_leases'))return [[{actor_key:editorKey,owner_key:ownerKey,receipt_id:`telegram-${editor}-1-1`,opening_revision:8}]];
   if(sql.includes('FROM opmx_tg_sessions'))return [[{package_id:packageId}]];
-  if(sql.includes('ORDER BY revision DESC'))return [data.selections.slice(-1)];
+  if(sql.includes('ORDER BY revision DESC'))return [data.selections.filter(x=>x.package_id===args[0]&&x.owner_key===args[1]&&x.revision>=args[2]).slice(-1)];
   if(sql.startsWith('INSERT INTO opmx_tg_correction_selections')){data.selections.push({package_id:args[0],revision:args[1],owner_key:args[2],receipt_key:args[3],message_id:args[4],mode:args[5],destination:args[6]});return [{affectedRows:1}]}
   if(sql.startsWith('UPDATE opmx_tg_packages')){if(data.pack.revision!==args[2])return [{affectedRows:0}];data.pack.revision=args[0];return [{affectedRows:1}]}
   if(sql.includes('JOIN opmx_tg_recovery_leases'))return [data.selections.filter(x=>args[0]===ownerKey&&x.package_id===args[1]&&x.revision<=args[2]&&x.revision>=2).slice(-1)];
@@ -39,4 +39,9 @@ test('the leased administrator can select without taking package ownership',asyn
  assert.equal(out.status,'SELECTED');assert.equal(f.data.pack.owner_key,ownerKey);assert.equal(f.data.selections[0].owner_key,actorKey);
  assert.equal((await readCorrectionSelectionInTransaction(f.c,{packageId,revision:11,ownerKey,actorKey})).destination,'AMBOS');
  assert.equal(await readCorrectionSelectionInTransaction(f.c,{packageId,revision:11,ownerKey,actorKey:ownerKey}),null);
+});
+test('message ordering is confined to the current editor and recovery lease',async()=>{
+ const f=setup({editor:'456'});f.data.selections.push({package_id:packageId,revision:7,owner_key:ownerKey,receipt_key:'old',message_id:'99999',mode:'EDITORIAL',destination:'OPURO'});
+ const out=await f.store.select({...request,owner:'456',chat:'456',receiptId:'telegram-456-4-20'});
+ assert.equal(out.status,'SELECTED');assert.equal(f.data.selections.length,2);
 });

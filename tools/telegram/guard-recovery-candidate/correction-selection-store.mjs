@@ -29,11 +29,14 @@ export function createCorrectionSelectionStore({pool}){
    const [prior]=await c.execute('SELECT package_id,revision,owner_key,mode,destination FROM opmx_tg_correction_selections_v1 WHERE receipt_key=? FOR UPDATE',[receiptKey]);
    if(prior.length){const p=prior[0],same=p.package_id===input.packageId&&p.owner_key===ownerKey&&Number(p.revision)===input.revision+1&&p.mode===input.mode&&p.destination===destination;await c.commit();committed=true;return same?{status:'SELECTION_REPLAY',revision:Number(p.revision)}:{status:'RECEIPT_CONFLICT'}}
    if(packages[0].state!=='OPEN'||Number(packages[0].revision)!==input.revision){await c.commit();committed=true;return {status:'STALE_REVISION'}}
-   const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
+   const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
    const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[ownerKey]);
    const opened=leases.length===1?receiptPattern.exec(leases[0].receipt_id??''):null;
-   if(!opened||leases[0].actor_key!==ownerKey||leases[0].owner_key!==packages[0].owner_key||opened[1]!==input.chat||BigInt(receipt[2])<=BigInt(opened[2])||sessions.length!==1||sessions[0].package_id!==input.packageId){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
-   const [last]=await c.execute('SELECT message_id FROM opmx_tg_correction_selections_v1 WHERE package_id=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId]);
+   const openingRevision=Number(leases[0]?.opening_revision);
+   if(!opened||leases[0].actor_key!==ownerKey||leases[0].owner_key!==packages[0].owner_key||!Number.isSafeInteger(openingRevision)||openingRevision<1||openingRevision>input.revision||opened[1]!==input.chat||BigInt(receipt[2])<=BigInt(opened[2])||sessions.length!==1||sessions[0].package_id!==input.packageId){await c.commit();committed=true;return {status:'NOT_AVAILABLE'}}
+   // Telegram message IDs are ordered only within a chat; do not compare an
+   // administrator's commands against a prior editor's session or chat.
+   const [last]=await c.execute('SELECT message_id FROM opmx_tg_correction_selections_v1 WHERE package_id=? AND owner_key=? AND revision>=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,ownerKey,openingRevision]);
    if(last.length&&BigInt(receipt[2])<=BigInt(last[0].message_id)){await c.commit();committed=true;return {status:'STALE_SELECTION'}}
    const revision=input.revision+1;
    await c.execute('INSERT INTO opmx_tg_correction_selections_v1 (package_id,revision,owner_key,receipt_key,message_id,mode,destination,created_at) VALUES (?,?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,revision,ownerKey,receiptKey,receipt[2],input.mode,destination]);
