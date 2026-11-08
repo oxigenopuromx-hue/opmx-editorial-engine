@@ -1,4 +1,5 @@
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
+import {destinationLabel} from './original-destinations.mjs';
 const labels=['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'];
 const valid=(id,r)=>/^tg_[a-f0-9]{40}$/.test(id??'')&&Number.isSafeInteger(r)&&r>0&&r<=4294967295;
 const exactProof=(x,id,revision,eventId,key)=>x&&x.packageId===id&&x.revision===revision&&x.eventId===eventId&&x[key]===true;
@@ -40,8 +41,9 @@ export function createNeverWrittenEvidence({verifyTerminalRun,verifyWriterCovera
   if(!c?.execute||!valid(decision?.packageId,decision?.revision)||!Array.isArray(decision.destinations)||!decision.destinations.length||decision.destinations.some(x=>!['OPURO','OPOL','LIBERAL'].includes(x)))return null;
   const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[decision.packageId,decision.revision]);
   if(f.length!==1||f[0].state!=='SAFE_TO_REOPEN')return null;
-  const expected=labels.map(destination=>expectedDraftRequestId({packageId:decision.packageId,revision:decision.revision,destination}));
-  if(!expected.includes(decision.requestId))return null;
+  let label;try{label=destinationLabel(decision.destinations)}catch{return null}
+  if(new Set(decision.destinations).size!==decision.destinations.length||
+     decision.requestId!==expectedDraftRequestId({packageId:decision.packageId,revision:decision.revision,destination:label}))return null;
   return decision.destinations.map(destination=>({destination,status:'BLOCKED',publicationVerdict:'NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'}));
  }
  return {lockSafetyBarrier,lockVerifiedBlockedOutcomes};
