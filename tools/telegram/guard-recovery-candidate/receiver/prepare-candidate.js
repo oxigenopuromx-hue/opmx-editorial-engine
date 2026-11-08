@@ -10,6 +10,7 @@ function preparePackageIntent(input) {
  const cmd=x.kind==='TEXT'?x.text.trim():'';
  const reopen=/^\/abrir[ \t]+(tg_[a-f0-9]{40})$/.exec(cmd);
  if(reopen)return {...x,kind:'COMMAND',package_operation:'REOPEN',requires_storage:true,storage_action:'reopen',storage_body:{...who(x),packageId:reopen[1],receiptId:x.receipt_id}};
+ if(cmd==='/bloqueados')return {...x,kind:'COMMAND',package_operation:'BLOCKED_LIST',requires_storage:true,storage_action:'blocked',storage_body:who(x)};
  if(cmd==='/start'||cmd==='/ayuda')return response({...x,kind:'COMMAND'},help);
  if(cmd==='/nuevo')return {...x,kind:'COMMAND',package_operation:'OPEN',requires_storage:true,storage_action:'open',storage_body:{...who(x),receiptId:x.receipt_id}};
  const discard=/^\/descartar (ti_[a-f0-9]{40})$/.exec(cmd);

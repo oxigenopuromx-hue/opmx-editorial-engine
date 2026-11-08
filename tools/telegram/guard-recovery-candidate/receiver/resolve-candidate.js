@@ -63,6 +63,12 @@ const who=x=>({owner:x.user_id,chat:x.chat_id});
 const response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});
 const help="Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.";
 function resolvePackageSession(intent,result) {
+ if(intent.package_operation==='BLOCKED_LIST'){
+  if(result?.status!=='BLOCKED_LIST'||!Array.isArray(result.packages)||result.packages.length>20||typeof result.more!=='boolean'||result.packages.some(p=>!validPackage(p?.packageId)||!Number.isSafeInteger(p.revision)||p.revision<1)||new Set(result.packages.map(p=>p.packageId)).size!==result.packages.length)return response(intent,'No pude consultar los paquetes bloqueados.');
+  if(!result.packages.length)return response(intent,'No hay bloqueos registrados en el seguimiento nuevo. Los paquetes anteriores pueden requerir conciliación.');
+  const lines=result.packages.map(p=>`Revisión ${p.revision}: /abrir ${p.packageId}`);
+  return response(intent,`Paquetes bloqueados registrados:\n${lines.join('\n')}\nLa reapertura requiere conciliación; esta lista no confirma que sea segura.${result.more?'\nHay más resultados.':''}`);
+ }
  if(intent.package_operation==='REOPEN') {
   if(['OPEN','OPEN_REPLAY'].includes(result?.status)&&result.packageId===intent.storage_body.packageId&&Number.isSafeInteger(result.revision))return response(intent,`Paquete reabierto: <code>${result.packageId}</code>. Agrega información o instrucciones y envía /listo para solicitar otra revisión.`,{packageId:result.packageId,package_state:'OPEN',package_revision:result.revision});
   if(result?.status==='SESSION_BUSY')return response(intent,'Ya tienes otro paquete abierto. Termínalo antes de abrir este.');

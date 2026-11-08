@@ -10,6 +10,12 @@ test('direct selection is routed to the guard and is not saved as source materia
  const intent=run(prepare,run(normal,msg('/opciones literal OPOL,LIBERAL')));const out=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
  assert.equal(out.next_action,'corrections/select');assert.deepEqual(out.next_body,{owner:'123',chat:'123',packageId:pkg,revision:11,receiptId:'telegram-123-21-121',mode:'LITERAL',destination:'OPOL,LIBERAL'});
 });
+test('blocked list is a read-only guard operation and does not promise safe reopening',()=>{
+ const intent=run(prepare,run(normal,msg('/bloqueados')));
+ assert.equal(intent.storage_action,'blocked');assert.deepEqual(intent.storage_body,{owner:'123',chat:'123'});
+ const out=run(resolve,{status:'BLOCKED_LIST',packages:[{packageId:pkg,revision:7}],more:false},intent);
+ assert.ok(out.reply_text.includes(`/abrir ${pkg}`));assert.ok(out.reply_text.includes('requiere conciliación'));assert.equal(out.requires_operation,false);
+});
 test('forwarded instructions and ordinary packages cannot select correction options',()=>{
  assert.equal(run(normal,msg('/opciones literal OPURO',true)).kind,'REJECTED');
  const intent=run(prepare,run(normal,msg('/opciones literal OPURO')));assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).requires_operation,false);

@@ -18,6 +18,14 @@ function post(port,path,body,token=secret){return new Promise((resolve,reject)=>
 test('reopen endpoint remains absent without configured provider',async()=>withServer({},async port=>{
  assert.equal((await post(port,'/v1/telegram/packages/reopen',{})).status,404);
 }));
+test('blocked-package listing is opt-in and authenticated',async()=>{
+ const input={owner:'123',chat:'123'};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/packages/blocked',input)).status,404));
+ await withServer({telegramBlockedList:async x=>{calls++;assert.deepEqual(x,input);return {status:'BLOCKED_LIST',packages:[],more:false}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/packages/blocked',input,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  assert.equal((await post(port,'/v1/telegram/packages/blocked',input)).body.status,'BLOCKED_LIST');assert.equal(calls,1);
+ });
+});
 test('reopen endpoint enforces bearer authentication and delegates once',async()=>{
  let seen=[];const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),receiptId:'telegram-123-1-2'};
  await withServer({telegramRecovery:async x=>{seen.push(x);return {status:'RECONCILIATION_REQUIRED'}}},async port=>{
