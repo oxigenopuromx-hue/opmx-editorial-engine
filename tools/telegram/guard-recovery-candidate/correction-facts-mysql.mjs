@@ -26,12 +26,12 @@ export function createCorrectionFactsReader({readLockedSelection}) {
   if(!items.length||items.some(x=>x.state==='PENDING'))fail();
   const close=items.at(-1);
   // Reuse the same immutable-inventory and attested-close checks as Motor.
-  try{resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
+  let verifiedPolicy;try{verifiedPolicy=resolveRecoveredPolicy({packageId,revision:revision+1,snapshot,closure:{packageId,revision:revision+1,snapshotRevision:baseRevision,actorKey,closeItemId:close.itemId,closeReceiptKey:close.receiptKey},items})}catch{fail()}
   const selection=await readLockedSelection(c,{packageId,revision,ownerKey,actorKey});
   if(!selection||selection.packageId!==packageId||selection.revision!==revision||selection.ownerKey!==ownerKey||selection.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(selection.mode))fail();
   let destination;try{destination=destinationLabel(resolveDestinations(selection.destination));if(destination!==selection.destination)fail()}catch{fail()}
   const visible=list=>list.filter(x=>x.sha256!==null).map(x=>({itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{})}));
   if(!Array.isArray(snapshot.items))fail();
-  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{},authorizedEditorKey:actorKey};
+  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:'CREATE',mode:selection.mode,destination,verifiedPosts:{},authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids};
  };
 }

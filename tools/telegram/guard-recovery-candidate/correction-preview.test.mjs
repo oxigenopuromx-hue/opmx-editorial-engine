@@ -9,6 +9,12 @@ test('preview identifies exact changed items and existing post',()=>{
  const p=buildCorrectionPreview(fixture());assert.equal(p.mode,'LITERAL');assert.deepEqual(p.posts,[{destination:'OPURO',postId:10268}]);assert.deepEqual(p.changes.map(x=>[x.itemId,x.change]),[[item(1),'REMOVED'],[item(3),'ADDED']]);
  assert.equal(validateCorrectionConfirmation({preview:p,previewHash:p.previewHash,actorKey:owner,ownerKey:owner,currentRevision:10,explicitAction:'UPDATE'}),true);
 });
+test('preview binds unchanged active materials as well as changes',()=>{
+ const x=fixture(),p=buildCorrectionPreview(x);
+ assert.deepEqual(p.materials.map(x=>x.itemId),[item(2),item(3)]);
+ x.before[1].sha256='f'.repeat(64);x.after[1].sha256='f'.repeat(64);
+ assert.notEqual(buildCorrectionPreview(x).previewHash,p.previewHash);
+});
 test('confirmation fails on stale version, another sender, changed preview or wrong action',()=>{
  const p=buildCorrectionPreview(fixture()),v={preview:p,previewHash:p.previewHash,actorKey:owner,ownerKey:owner,currentRevision:10,explicitAction:'UPDATE'};
  for(const change of [{currentRevision:11},{actorKey:other},{actorKey:other,ownerKey:other},{explicitAction:'CREATE'},{preview:{...p,destination:'TODOS'}},{previewHash:'a'.repeat(64)}])assert.equal(validateCorrectionConfirmation({...v,...change}),false);
