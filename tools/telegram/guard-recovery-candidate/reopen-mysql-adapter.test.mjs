@@ -28,3 +28,9 @@ test('a missing persistent fence rolls back and prevents writes',async()=>{const
 test('trusted provider drives parameterized snapshot and state writes within one transaction',async()=>{const {calls,service}=setup({barrier:true});assert.equal((await service(req)).status,'OPEN');const snapshot=calls.find(c=>c.sql?.startsWith('INSERT INTO opmx_tg_revision_snapshots'));assert.equal(snapshot.args[0],id);const saved=JSON.parse(snapshot.args[3]);assert.equal(saved.items[0].text,'source');assert.equal(saved.prior.requestId,'req-7');assert.deepEqual(saved.prior.destinations,['OPURO','OPOL','LIBERAL']);assert.equal(saved.prior.authorization.mode,'PUBLISH');assert.equal(saved.prior.results.length,3);assert.ok(calls.some(c=>c.sql?.includes("state='READY'")));assert.ok(calls.includes('COMMIT'));assert.equal(calls.at(-1),'RELEASE');});
 test('a failed session insert rolls the transaction back',async()=>{const {calls,service}=setup({barrier:true,failAt:'INSERT INTO opmx_tg_sessions'});await assert.rejects(service(req),/FAULT/);assert.ok(calls.includes('ROLLBACK'));assert.ok(!calls.includes('COMMIT'));assert.equal(calls.at(-1),'RELEASE');});
 test('schema is returned explicitly and caller cannot mutate the stored copy',()=>{const first=recoverySchema();assert.equal(first.length,5);first.pop();assert.equal(recoverySchema().length,5);});
+test('locked lease returns the editor and the original owner together',async()=>{
+ const actor='c'.repeat(64), owner='d'.repeat(64);
+ const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql,args){assert.match(sql,/SELECT actor_key,owner_key/);assert.deepEqual(args,[id]);return [[{actor_key:actor,owner_key:owner}]]}};
+ const db=createRecoveryMysqlAdapter({async getConnection(){return c}});
+ assert.deepEqual(await db.transaction(tx=>tx.lockLease(id)),{actorKey:actor,ownerKey:owner});
+});
