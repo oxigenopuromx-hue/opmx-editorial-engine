@@ -8,5 +8,5 @@ test('composition refuses to turn on without both server-owned evidence provider
 });
 test('composition exposes server functions but never takes policy from HTTP',()=>{
  const service=createCandidateRecoverySubsystem({pool,adminUserIds:['255516723'],lockTrustedSafetyBarrier:async()=>null,captureTrustedRevision:async()=>null,beginLegacyTarget:async()=>({status:'not_reserved'})});
- assert.deepEqual(Object.keys(service).sort(),['initializeMotorAttempt','initializePublicationFence','motorAttempts','readConfirmedCorrection','readRecoveredPolicy','targetBegin','telegramBlockedList','telegramPublicationBegin','telegramRecovery']);assert.ok(Object.isFrozen(service));
+ assert.deepEqual(Object.keys(service).sort(),['initializeMotorAttempt','initializePublicationFence','mediaBegin','motorAttempts','readConfirmedCorrection','readRecoveredPolicy','targetBegin','telegramBlockedList','telegramPublicationBegin','telegramRecovery']);assert.ok(Object.isFrozen(service));
 });

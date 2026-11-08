@@ -106,3 +106,8 @@ test('unknown or legacy-classified Telegram IDs never use the legacy writer',asy
   const r=createClassifiedTargetRouter(async()=>{legacy++});assert.equal((await r({async getConnection(){return c}},input)).status,'NOT_BOUND');assert.equal(legacy,0);assert.equal(inserts,0);
  }
 });
+test('malformed and differently cased Telegram prefixes cannot fall through to legacy',async()=>{
+ for(const requestId of ['tg_not_a_valid_request','TG_'+'a'.repeat(64),'tg_'+'g'.repeat(64)]){let legacy=0,inserts=0;const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){if(sql.startsWith('INSERT'))inserts++;return [[]]}};
+  const route=createClassifiedTargetRouter(async()=>{legacy++});assert.equal((await route({async getConnection(){return c}},{...input,requestId})).status,'NOT_BOUND');assert.equal(legacy,0);assert.equal(inserts,0);
+ }
+});

@@ -4,6 +4,7 @@ import {createGuard} from './deployed-guard/guard-server.mjs';
 import {request} from 'node:http';
 import {createReopenService} from './reopen-service.mjs';
 import {createClassifiedTargetRouter} from './fenced-target-candidate.mjs';
+import {createClassifiedMediaRouter} from './fenced-media-candidate.mjs';
 
 const secret='a'.repeat(64),pool={async getConnection(){throw Error('unexpected database access')}};
 async function withServer(options,fn){
@@ -38,6 +39,17 @@ test('target begin delegates only through the configured writer hook',async()=>{
  await withServer({targetBegin:async(p,x)=>{calls++;assert.equal(p,pool);assert.deepEqual(x,input);return {status:'already_started'}}},async port=>{
   const r=await post(port,'/v1/targets/begin',input);assert.equal(r.status,409);assert.equal(calls,1);
  });
+});
+test('the authenticated media route cannot bypass a recovered revision fence',async()=>{
+ let connections=0,legacy=0,inserts=0;
+ const classification={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(){return [[{kind:'TELEGRAM'}]]}};
+ const media={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){if(sql.startsWith('SELECT package_id'))return [[{package_id:'tg_'+'b'.repeat(40),revision:7}]];if(sql.startsWith('SELECT state'))return [[{state:'RECOVERY_FENCED'}]];inserts++;throw Error('unexpected write')}};
+ const p={async getConnection(){return ++connections===1?classification:media}},server=createGuard({pool:p,secret,mediaBegin:createClassifiedMediaRouter(async()=>{legacy++;return {status:'upload_started'}})});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-prueba',destination:'OPURO',role:'hero'};
+  assert.equal((await post(server.address().port,'/v1/media/begin',input,'b'.repeat(64))).status,401);assert.equal(connections,0);
+  const r=await post(server.address().port,'/v1/media/begin',input);assert.equal(r.status,409);assert.equal(r.body.status,'WRITE_NOT_PERMITTED');assert.equal(legacy,0);assert.equal(inserts,0);
+ }finally{await new Promise(resolve=>server.close(resolve))}
 });
 test('real reopen handler rejects spoofed identity and fails closed without a safety provider',async()=>{
  let transactions=0;

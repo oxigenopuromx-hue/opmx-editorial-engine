@@ -63,7 +63,10 @@ export function createClassifiedTargetRouter(beginLegacyTarget) {
       // The Telegram namespace can only be registered by package sealing.
       // An unknown or pre-existing LEGACY entry must never fall through to
       // a writer that does not hold the revision fence.
-      const telegramNamespace=/^tg_[a-f0-9]{64}$/.test(requestId);
+      // Reserve the whole prefix, including malformed or differently cased
+      // identifiers. Otherwise a typo could be classified as an unfenced
+      // legacy operation and reach a writer.
+      const telegramNamespace=/^tg_/i.test(requestId);
       if(!telegramNamespace)await c.execute("INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'LEGACY')",[requestId]);
       const [rows]=await c.execute('SELECT kind FROM opmx_tg_request_class_v1 WHERE request_id=? FOR UPDATE',[requestId]);
       if(telegramNamespace&&(rows.length!==1||rows[0].kind!=='TELEGRAM')){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'};}

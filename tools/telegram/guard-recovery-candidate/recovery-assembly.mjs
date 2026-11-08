@@ -2,6 +2,8 @@ import {createRecoveryMysqlAdapter} from './reopen-mysql-adapter.mjs';
 import {createReopenService} from './reopen-service.mjs';
 import {claimFenceInTransaction} from './publication-fence-candidate.mjs';
 import {createClassifiedTargetRouter,initializeRevisionBindings,initializeDecisionPendingBindings} from './fenced-target-candidate.mjs';
+import {createClassifiedMediaRouter} from './fenced-media-candidate.mjs';
+import {beginMediaUpload} from './deployed-guard/media-progress.mjs';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 import {createNeverWrittenEvidence} from './never-written-evidence.mjs';
 import {createRevisionCapture} from './revision-capture.mjs';
@@ -28,6 +30,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     telegramRecovery:createReopenService({db,adminUserIds}),
     telegramBlockedList:createBlockedList({pool,adminUserIds}),
     targetBegin:createClassifiedTargetRouter(beginLegacyTarget),
+    mediaBegin:createClassifiedMediaRouter(beginMediaUpload),
     telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
     motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement,verifyUpdateEnforcement}),

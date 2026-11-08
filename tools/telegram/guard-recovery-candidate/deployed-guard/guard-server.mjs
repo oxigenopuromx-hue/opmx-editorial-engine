@@ -7,9 +7,9 @@ import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-pro
 const MAX_BODY=4096;
 // Integration candidate derived from the verified last-source blob 7881ae8.
 // Recovery and writer hooks are opt-in; production is not changed by this file.
-export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramCorrections=null,telegramSelections=null,telegramPreviewDelivery=null,telegramPublicationBegin=null,telegramUpdateClaims=null,targetBegin=beginTargetWrite}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramCorrections=null,telegramSelections=null,telegramPreviewDelivery=null,telegramPublicationBegin=null,telegramUpdateClaims=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
-  if ((telegramRecovery!==null&&typeof telegramRecovery!=='function') || (telegramBlockedList!==null&&typeof telegramBlockedList!=='function') || (telegramAttempts!==null&&(!telegramAttempts||typeof telegramAttempts.begin!=='function'||typeof telegramAttempts.block!=='function')) || (telegramCorrections!==null&&(!telegramCorrections||typeof telegramCorrections.preview!=='function'||typeof telegramCorrections.confirm!=='function')) || (telegramSelections!==null&&(!telegramSelections||typeof telegramSelections.select!=='function')) || (telegramPreviewDelivery!==null&&(!telegramPreviewDelivery||!['initialize','claim','report'].every(k=>typeof telegramPreviewDelivery[k]==='function'))) || (telegramPublicationBegin!==null&&typeof telegramPublicationBegin!=='function') || (telegramUpdateClaims!==null&&(!telegramUpdateClaims||typeof telegramUpdateClaims.begin!=='function')) || typeof targetBegin!=='function') throw new Error('Configuración incompleta');
+  if ((telegramRecovery!==null&&typeof telegramRecovery!=='function') || (telegramBlockedList!==null&&typeof telegramBlockedList!=='function') || (telegramAttempts!==null&&(!telegramAttempts||typeof telegramAttempts.begin!=='function'||typeof telegramAttempts.block!=='function')) || (telegramCorrections!==null&&(!telegramCorrections||typeof telegramCorrections.preview!=='function'||typeof telegramCorrections.confirm!=='function')) || (telegramSelections!==null&&(!telegramSelections||typeof telegramSelections.select!=='function')) || (telegramPreviewDelivery!==null&&(!telegramPreviewDelivery||!['initialize','claim','report'].every(k=>typeof telegramPreviewDelivery[k]==='function'))) || (telegramPublicationBegin!==null&&typeof telegramPublicationBegin!=='function') || (telegramUpdateClaims!==null&&(!telegramUpdateClaims||typeof telegramUpdateClaims.begin!=='function')) || typeof targetBegin!=='function'||typeof mediaBegin!=='function') throw new Error('Configuración incompleta');
   const expected=Buffer.from('Bearer '+secret);
   let windowStart=Date.now(), requestCount=0;
   return createServer(async(req,res)=>{
@@ -77,8 +77,8 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
       if(req.url.startsWith('/v1/media/')) {
         const expectedKeys=req.url==='/v1/media/report'?'destination,mediaId,requestId,role,slug':'destination,requestId,role,slug';
         if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!==expectedKeys) return end(400,{error:'invalid_request'});
-        const result=req.url==='/v1/media/begin'?await beginMediaUpload(pool,input):req.url==='/v1/media/report'?await recordMediaUpload(pool,input):await inspectMediaUpload(pool,input);
-        return end(['already_started','not_started','not_updated'].includes(result.status)?409:200,result);
+        const result=req.url==='/v1/media/begin'?await mediaBegin(pool,input):req.url==='/v1/media/report'?await recordMediaUpload(pool,input):await inspectMediaUpload(pool,input);
+        return end(['already_started','not_started','not_updated','NOT_BOUND','WRITE_NOT_PERMITTED'].includes(result.status)?409:200,result);
       }
       if(req.url.startsWith('/v1/targets/')) {
         const expectedKeys=req.url==='/v1/targets/report'?'destination,postId,requestId,slug':'destination,requestId,slug';
@@ -101,7 +101,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
         const diagnostic = allowed.includes(error.diagnostic) ? error.diagnostic : 'OTHER';
         try { diagnosticLogger(`guard.media.begin: ${diagnostic}`); } catch { /* logging must not change fail-closed behavior */ }
       }
-      return end(error.message==='Solicitud inválida'||error.message==='INVALID_ATTEMPT'||error instanceof SyntaxError?400:503,{error:'not_confirmed'});
+      return end(['Solicitud inválida','INVALID_ATTEMPT','INVALID_MEDIA_REQUEST'].includes(error.message)||error instanceof SyntaxError?400:503,{error:'not_confirmed'});
     }
   });
 }
