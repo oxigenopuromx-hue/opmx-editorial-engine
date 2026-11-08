@@ -22,7 +22,7 @@ export function createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier=null,c
         async lockQuota(){const [rows]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(rows.length!==1)throw Error('QUOTA_MISSING');},
         async lockPackage(id){const [rows]=await c.execute('SELECT package_id,owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[id]);if(!rows.length)return null;const p=rows[0];return {id:p.package_id,ownerKey:p.owner_key,state:p.state,revision:Number(p.revision)};},
         async lockSession(actor){const [rows]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[actor]);return rows.length?{packageId:rows[0].package_id}:null;},
-        async lockLease(id){const [rows]=await c.execute('SELECT actor_key FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[id]);return rows.length?{actorKey:rows[0].actor_key}:null;},
+        async lockLease(id){const [rows]=await c.execute('SELECT actor_key,owner_key FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[id]);return rows.length===1?{actorKey:rows[0].actor_key,ownerKey:rows[0].owner_key}:null;},
         async lockSafetyBarrier(id,revision){return lockTrustedSafetyBarrier?await lockTrustedSafetyBarrier(c,id,revision):null;},
         async captureTrustedRevision(id,revision,ownerKey,items){return captureTrustedRevision?await captureTrustedRevision(c,id,revision,ownerKey,items):null;},
         async claimRecoveryFence(id,revision,barrier){return claimTrustedRecoveryFence?await claimTrustedRecoveryFence(c,id,revision,barrier):false;},
