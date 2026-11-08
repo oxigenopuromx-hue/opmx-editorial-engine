@@ -94,6 +94,15 @@ test('selection route is opt-in and guarded by the existing bearer',async()=>{
   assert.equal((await post(port,'/v1/telegram/corrections/select',body)).body.status,'SELECTED');assert.equal(called,1);
  });
 });
+test('preview delivery routes remain opt-in and require the guard bearer',async()=>{
+ const body={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,previewHash:'c'.repeat(64)};let count=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/previews/delivery/claim',body)).status,404));
+ const delivery={async initialize(){throw Error('unused')},async report(){throw Error('unused')},async claim(x){count++;assert.deepEqual(x,body);return {status:'DELIVERY_NOT_READY'}}};
+ await withServer({telegramPreviewDelivery:delivery},async port=>{
+  assert.equal((await post(port,'/v1/telegram/previews/delivery/claim',body,'b'.repeat(64))).status,401);assert.equal(count,0);
+  assert.equal((await post(port,'/v1/telegram/previews/delivery/claim',body)).body.status,'DELIVERY_NOT_READY');assert.equal(count,1);
+ });
+});
 test('publication claim route is opt-in, authenticated and refuses uncertain writes',async()=>{
  let count=0;const body={requestId:'tg_'+'a'.repeat(64),slug:'nota-prueba',targets:[{destination:'OPURO',postId:123}]};
  await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/publications/begin',body)).status,404));

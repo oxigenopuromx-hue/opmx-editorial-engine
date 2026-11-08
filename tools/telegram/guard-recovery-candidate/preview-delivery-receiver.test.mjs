@@ -1,0 +1,19 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
+const code=await readFile(new URL('./receiver/preview-delivery-ack-candidate.js',import.meta.url),'utf8');
+const sendCode=await readFile(new URL('./receiver/preview-delivery-send-candidate.js',import.meta.url),'utf8');
+const run=(context,result)=>new Function('$input','$',code)({first:()=>({json:result})},()=>({first:()=>({json:context})}))[0].json;
+const send=(identity,claim)=>new Function('$input','$',sendCode)({first:()=>({json:claim})},()=>({first:()=>({json:identity})}))[0].json;
+const context={identity:{owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'b'.repeat(64)},claim:{status:'PART_CLAIMED',part:1,parts:2,token:'c'.repeat(64)}};
+test('only an acknowledged response for the same Telegram chat produces a receipt',()=>{
+ const out=run(context,{message_id:999,chat:{id:123}});assert.equal(out.status,'RECEIPT_READY');assert.equal(out.body.telegramMessageId,999);assert.equal(out.body.token,context.claim.token);
+});
+test('send mapping excludes the guard capability from Telegram fields',()=>{
+ const claim={...context.claim,text:'Vista privada',parseMode:'HTML'},out=send(context.identity,claim);
+ assert.equal(out.status,'SEND_READY');assert.deepEqual(out.telegram,{chatId:'123',text:'Vista privada',parseMode:'HTML'});assert.ok(!JSON.stringify(out.telegram).includes(claim.token));
+ assert.equal(send(context.identity,{...claim,status:'DELIVERY_UNCERTAIN'}).status,'DELIVERY_UNCERTAIN');
+});
+test('missing response, wrong chat, missing message ID and unclaimed parts stay uncertain',()=>{
+ for(const [c,r] of [[context,{}],[context,{message_id:1,chat:{id:456}}],[context,{chat:{id:123}}],[{...context,claim:{...context.claim,status:'DELIVERY_UNCERTAIN'}},{message_id:1,chat:{id:123}}]]){
+  const out=run(c,r);assert.equal(out.status,'DELIVERY_UNCERTAIN');assert.equal(out.retryPermitted,false);assert.equal(out.body,undefined);
+ }
+});

@@ -13,6 +13,7 @@ import {createCorrectionFactsReader} from './correction-facts-mysql.mjs';
 import {createCorrectionSelectionStore,readCorrectionSelectionInTransaction} from './correction-selection-store.mjs';
 import {beginFencedPublication} from './fenced-publication-candidate.mjs';
 import {createBlockedList} from './blocked-list.mjs';
+import {createPreviewDeliveryStore} from './preview-delivery-store.mjs';
 
 // Explicitly composed by the server, never by HTTP input. Merely constructing
 // this object must not enable production; the caller must install and migrate
@@ -48,9 +49,10 @@ export function createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRu
 // Opt-in composition for isolated integration tests. No production startup
 // calls this; the facts provider and consumer attestation must be real before
 // an event may be emitted. It reuses the existing event store, not a consumer.
-export function createCandidateCorrectionSubsystem({pool,events,loadLockedFacts=null,readLockedSelection=null,verifyDecisionConsumer,verifyPreviewDelivery}){
+export function createCandidateCorrectionSubsystem({pool,events,loadLockedFacts=null,readLockedSelection=null,verifyDecisionConsumer}){
  if(loadLockedFacts!==null&&readLockedSelection!==null)throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
  const facts=loadLockedFacts??createCorrectionFactsReader({readLockedSelection:readLockedSelection??readCorrectionSelectionInTransaction});
  const commitConfirmed=createConfirmedRecoverySeal({events,initializePublicationFence:initializeRevisionBindings,initializeMotorAttempt,verifyDecisionConsumer});
- return {...createCorrectionConfirmationStore({pool,loadLockedFacts:facts,commitConfirmed,verifyPreviewDelivery}),...createCorrectionSelectionStore({pool})};
+ const previewDelivery=createPreviewDeliveryStore({pool});
+ return {...createCorrectionConfirmationStore({pool,loadLockedFacts:facts,commitConfirmed,verifyPreviewDelivery:previewDelivery.verifyPreviewDelivery}),...createCorrectionSelectionStore({pool}),previewDelivery};
 }

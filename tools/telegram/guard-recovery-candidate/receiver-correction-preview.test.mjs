@@ -1,6 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 const code=await readFile(new URL('./receiver/correction-preview-candidate.js',import.meta.url),'utf8');
+const canonical=await readFile(new URL('./correction-preview-renderer.mjs',import.meta.url),'utf8');
 const run=result=>new Function('$input',code)({first:()=>({json:result})})[0].json;
+test('the n8n renderer matches the server renderer exactly',()=>{
+ assert.equal(code,canonical.replace('export function renderCorrectionPreview','function renderCorrectionPreview')+'return [{json:renderCorrectionPreview($input.first().json)}];\n');
+});
 test('preview preserves all text in bounded escaped chunks and hides internal controls',()=>{
  const p={packageId:'tg_'+'a'.repeat(40),revision:8,previewHash:'c'.repeat(64),action:'CREATE',mode:'LITERAL',destination:'OPURO',posts:[{destination:'OPURO',postId:null}],changes:[{itemId:'ti_'+'1'.repeat(40),kind:'TEXT',change:'ADDED',sha256:'b'.repeat(64),text:'<&😀'.repeat(1500)},{itemId:'ti_'+'2'.repeat(40),kind:'TEXT',change:'ADDED',sha256:'b'.repeat(64),text:'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo'}]};
  p.materials=[{itemId:'ti_'+'3'.repeat(40),kind:'TEXT',state:'STORED',sha256:'d'.repeat(64),text:'Texto original conservado'}, {...p.changes[1],state:'STORED'}];

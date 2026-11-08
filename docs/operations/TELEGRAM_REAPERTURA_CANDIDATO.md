@@ -177,3 +177,7 @@ En phpMyAdmin de QA18 se ejecutó la consulta de listado con un dueño sintétic
 
 
 En QA18 se insertaron transitoriamente tres paquetes sintéticos y tres intentos: dos dueños distintos y un intento de revisión anterior. La consulta de listado restringida al primer dueño devolvió únicamente el paquete de ese dueño con revisión vigente. Tras ROLLBACK, una consulta independiente devolvió cero paquetes y cero intentos de la prueba. No se ejercitó la ruta HTTP ni Telegram contra MySQL.
+
+## Acuse de vista previa candidato
+
+Se añadió un registro candidato de entregas por fragmento, ligado al paquete, revisión, hash, editor y contenido renderizado. Cada fragmento se reclama una sola vez; un resultado incierto no permite reenvío automático y la confirmación exige todos los acuses ordenados. El receptor candidato sólo prepara un acuse con respuesta de Telegram para el mismo chat y no envía la capacidad al usuario. El renderizador del guard y el de n8n se comparan en pruebas. Se ejecutaron 204 pruebas locales con dobles. En QA18 se probó el esquema en una tabla **temporal**, con `PENDING → SENDING → SENT`, lectura del ID sintético y ROLLBACK; quedaron cero filas en esa tabla temporal. La aplicación Node, el envío real y el workflow no se probaron contra Telegram/MySQL ni se desplegaron. El receptor y guard de producción aún no están conectados a este proveedor; no habilitar la ruta hasta completar la integración y las barreras restantes.
