@@ -84,7 +84,7 @@ function resolvePackageSession(intent,result) {
  }
  if(result?.status==='NO_OPEN_PACKAGE')return response(intent,'No hay una nota abierta. Envía /nuevo y después sus textos, fotos y documentos.');
  if(result?.status!=='OPEN'||!validPackage(result.packageId))return response(intent,'No pude consultar tu paquete. No confirmé almacenamiento de este mensaje.');
- const x={...intent,packageId:result.packageId,requires_operation:true,recovery_session:result.recovery===true};
+ const x={...intent,packageId:result.packageId,package_revision:result.revision,requires_operation:true,recovery_session:result.recovery===true};
  let action,body={...who(x),packageId:x.packageId};
  if(x.package_operation==='SELECT'){
   if(!x.recovery_session||!Number.isSafeInteger(result.revision)||x.mode_attested!==true)return response(intent,'Las opciones sólo pueden elegirse directamente en un paquete reabierto.');
@@ -101,6 +101,8 @@ function resolvePackageSession(intent,result) {
   action='discard';body.itemId=x.discard_item_id;
  }
  else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
- return {...x,next_action:action,next_body:body,seal_after_close:x.package_operation==='SEAL'};
+ const paths={reserve:'packages/reserve',manifest:'packages/manifest',discard:'packages/discard','corrections/select':'corrections/select','corrections/confirm':'corrections/confirm'};
+ if(!Object.hasOwn(paths,action))return response(intent,'No pude confirmar la operación solicitada.');
+ return {...x,next_action:action,next_url:'https://publisher.oxigenopuro.com.mx/v1/telegram/'+paths[action],next_body:body,seal_after_close:x.package_operation==='SEAL'};
 }
 return [{json:resolvePackageSession($('Preparar paquete Telegram').first(0,0).json,$input.first().json)}];
