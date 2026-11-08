@@ -32,6 +32,6 @@ export async function beginFencedPublication(pool,input){
   }
   await c.execute('INSERT INTO opmx_tg_publication_claims_v1 (request_id,package_id,revision,slug,destinations,created_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(6))',[input.requestId,b.package_id,b.revision,input.slug,destinations]);
   if(fences[0].state==='READY_TO_WRITE'){const [updated]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='READY_TO_WRITE'",[b.package_id,b.revision]);if(updated.affectedRows!==1)throw Error('FENCE_CONFLICT')}
-  await c.commit();committed=true;return {status:'PUBLICATION_STARTED',packageId:b.package_id,revision:Number(b.revision),destination:destinations};
+  await c.commit();committed=true;return {status:'PUBLICATION_STARTED',requestId:input.requestId,packageId:b.package_id,revision:Number(b.revision),destination:destinations};
  }catch(e){if(!committed)try{await c.rollback()}catch{}if(e?.code==='ER_DUP_ENTRY'||e?.errno===1062)return {status:'ALREADY_STARTED',action:'manual_reconciliation'};throw Error('PUBLICATION_CLAIM_UNCONFIRMED',{cause:e})}finally{c.release()}
 }
