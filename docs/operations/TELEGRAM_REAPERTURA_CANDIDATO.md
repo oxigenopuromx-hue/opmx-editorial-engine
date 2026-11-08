@@ -164,3 +164,7 @@ La vista candidata ahora incorpora en su hash todo el inventario activo y el for
 La selección candidata compara números de mensaje sólo dentro de la lease y el editor actuales: una selección de otro chat o una recuperación anterior ya no invalida una orden nueva. La prueba local reproduce un mensaje anterior con número mayor en otro chat; 188 pruebas locales simuladas pasan. Sin despliegue ni prueba integrada.
 
 El receptor candidato rechaza `/descartar` reenviado y exige que sea una orden directa durante una sesión de recuperación. Antes podía tramitarse como comando reenviado. La prueba cubre orden directa, reenvío y sesión ordinaria; pasan 189 pruebas locales simuladas. No está desplegado.
+
+## Protección temporal del Motor activo
+
+El Motor activo estaba fijado a `c15e01082216796e4e7d3bb332c9f3953fe057d6`, cuyo selector no lee `confirmed_correction`: ante una futura decisión corregida habría conservado silenciosamente el destino anterior. El 7 de noviembre se agregó al inicio del prompt de la automatización existente `Motor — recepción Telegram` una instrucción de bloqueo temporal al detectar esa propiedad, antes de generar o escribir. Se comprobó por lectura posterior que la automatización sigue habilitada y conserva íntegro el prompt anterior. Es una instrucción de defensa, no una barrera transaccional ni evidencia de ejecución real; no habilita la recuperación. Debe reemplazarse únicamente tras integrar y verificar el consumo de decisiones, modo literal y barreras de todos los escritores.
