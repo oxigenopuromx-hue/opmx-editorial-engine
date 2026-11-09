@@ -8,6 +8,7 @@ import {readVerifiedUpdatePosts,loadVerifiedUpdateTarget} from './verified-updat
 import {createUpdateExecutor,createVerifiedUpdateDecisionLoader} from './update-executor.mjs';
 import {createUpdatePayloadStore} from './update-payload-store.mjs';
 import {verifyConfirmedUpdatePayload} from './confirmed-payload-verifier.mjs';
+import {createPreviewPayloadStore} from './preview-payload-store.mjs';
 
 // Explicit integration seam for the existing guard and outbox. It does not
 // start a server, migrate tables, subscribe, or provide any proof by itself.
@@ -18,7 +19,8 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
  if(updateProviders!==null&&(!updateProviders||typeof updateProviders!=='object'||Array.isArray(updateProviders)||Object.keys(updateProviders).sort().join(',')!=='verifyCmsPreflight,verifyPayload,verifyUpdateEnforcement,verifyUpdateReadiness'||!Object.values(updateProviders).every(x=>typeof x==='function')))throw Error('UPDATE_CLAIM_CONFIGURATION_INCOMPLETE');
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
- const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,readFinalPayloads,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
+ const previewPayloads=updateProviders?createPreviewPayloadStore({pool}):null;
+ const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:recovery.readConfirmedCorrection});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
@@ -32,6 +34,6 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const telegramUpdateClaims=payloadStore===null?null:createUpdateClaimStore({pool,loadVerifiedDecision:readVerifiedUpdateDecisionInTransaction,loadVerifiedPayloadEvidence:payloadStore.verifyClaim});
  if(updateExecution!==null&&(!telegramUpdateClaims||!updateExecution||typeof updateExecution!=='object'||Array.isArray(updateExecution)||Object.keys(updateExecution).sort().join(',')!=='wordpress'||typeof updateExecution.wordpress?.read!=='function'||typeof updateExecution.wordpress?.update!=='function'))throw Error('UPDATE_EXECUTOR_INCOMPLETE');
  const telegramUpdateExecutor=updateExecution===null?null:createUpdateExecutor({loadDecision:createVerifiedUpdateDecisionLoader(pool),loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress:updateExecution.wordpress});
- return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
+ return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stage}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}

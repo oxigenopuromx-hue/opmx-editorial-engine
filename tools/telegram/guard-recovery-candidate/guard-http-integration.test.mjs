@@ -156,3 +156,11 @@ test('existing-post update claim is absent by default and requires the guard bea
   const r=await post(port,'/v1/telegram/updates/begin',input);assert.equal(r.status,409);assert.equal(r.body.retryPermitted,false);assert.equal(calls,1);
  });
 });
+test('preview payload staging route is opt-in, authenticated and fails closed',async()=>{
+ const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:12,destination:'OPURO',payload:{title:'Prueba'}};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/previews/payload',input)).status,404));
+ await withServer({telegramPreviewPayloads:{async stage(x){calls++;assert.deepEqual(x,input);return {status:'SELECTION_UNCONFIRMED'}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/previews/payload',input,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  const r=await post(port,'/v1/telegram/previews/payload',input);assert.equal(r.status,409);assert.equal(r.body.status,'SELECTION_UNCONFIRMED');assert.equal(calls,1)
+ });
+});
