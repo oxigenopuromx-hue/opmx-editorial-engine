@@ -13,6 +13,13 @@ test('wires the existing guard, event store and recovery paths without starting 
  for(const [key,methods] of [['telegramAttempts',['begin','block','start']],['telegramCorrections',['preview','confirm']],['telegramSelections',['select']],['telegramPreviewDelivery',['initialize','claim','report']]])for(const method of methods)assert.equal(typeof w[key][method],'function');
  assert.ok(Object.isFrozen(w));
  assert.equal(w.telegramUpdateClaims,null);
+ assert.equal(w.telegramUpdateExecutor,null);
+});
+test('the executor is unavailable without both the one-use claim and server-owned transports',()=>{
+ assert.throws(()=>createRecoveryWiring({...options,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null,update:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ const updateProviders={loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false};
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ const w=createRecoveryWiring({...options,updateProviders,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null,update:async()=>null}}});assert.equal(typeof w.telegramUpdateExecutor.execute,'function');
 });
 test('update claims remain absent unless all server-owned providers exist',()=>{
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);

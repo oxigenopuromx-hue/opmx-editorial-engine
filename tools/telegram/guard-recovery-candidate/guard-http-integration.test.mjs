@@ -98,6 +98,14 @@ test('decision acknowledgement is opt-in and never bypasses the guard bearer',as
  const attempts={async begin(){},async block(){},async acknowledgeDecision(x){count++;assert.deepEqual(x,input);return {status:'DECISION_MISMATCH',retryPermitted:false}}};
  await withServer({telegramAttempts:attempts},async port=>{assert.equal((await post(port,'/v1/telegram/attempts/decision',input,'b'.repeat(64))).status,401);assert.equal(count,0);assert.equal((await post(port,'/v1/telegram/attempts/decision',input)).body.status,'DECISION_MISMATCH');assert.equal(count,1)});
 });
+test('update execution is absent by default and requires the existing guard bearer',async()=>{
+ const body={packageId:'tg_'+'a'.repeat(40),revision:9,previewHash:'b'.repeat(64),destination:'OPURO'};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/updates/execute',body)).status,404));
+ await withServer({telegramUpdateExecutor:{async execute(x){calls++;assert.deepEqual(x,body);return {status:'UPDATE_UNCERTAIN',retryPermitted:false}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/updates/execute',body,'c'.repeat(64))).status,401);assert.equal(calls,0);
+  const out=await post(port,'/v1/telegram/updates/execute',body);assert.equal(out.status,409);assert.equal(out.body.status,'UPDATE_UNCERTAIN');assert.equal(calls,1);
+ });
+});
 test('correction preview and confirmation routes are opt-in and authenticated',async()=>{
  const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100'};let calls=[];
  await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).status,404));
