@@ -106,6 +106,14 @@ test('update execution is absent by default and requires the existing guard bear
   const out=await post(port,'/v1/telegram/updates/execute',body);assert.equal(out.status,409);assert.equal(out.body.status,'UPDATE_UNCERTAIN');assert.equal(calls,1);
  });
 });
+test('staging update content is opt-in, authenticated and does not itself write WordPress',async()=>{
+ const body={packageId:'tg_'+'a'.repeat(40),revision:9,previewHash:'b'.repeat(64),destination:'OPURO',payload:{title:'QA'}};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/updates/payload',body)).status,404));
+ await withServer({telegramUpdatePayloads:{async stage(x){calls++;assert.deepEqual(x,body);return {status:'PAYLOAD_UNCONFIRMED'}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/updates/payload',body,'c'.repeat(64))).status,401);assert.equal(calls,0);
+  const out=await post(port,'/v1/telegram/updates/payload',body);assert.equal(out.status,409);assert.equal(out.body.status,'PAYLOAD_UNCONFIRMED');assert.equal(calls,1);
+ });
+});
 test('correction preview and confirmation routes are opt-in and authenticated',async()=>{
  const input={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:10,receiptId:'telegram-123-10-100'};let calls=[];
  await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/corrections/preview',input)).status,404));

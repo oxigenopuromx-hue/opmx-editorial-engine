@@ -14,18 +14,19 @@ test('wires the existing guard, event store and recovery paths without starting 
  assert.ok(Object.isFrozen(w));
  assert.equal(w.telegramUpdateClaims,null);
  assert.equal(w.telegramUpdateExecutor,null);
+ assert.equal(w.telegramUpdatePayloads,null);
 });
 test('the executor is unavailable without both the one-use claim and server-owned transports',()=>{
- assert.throws(()=>createRecoveryWiring({...options,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null,update:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
- const updateProviders={loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false};
- assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
- const w=createRecoveryWiring({...options,updateProviders,updateExecution:{loadPayload:async()=>null,wordpress:{read:async()=>null,update:async()=>null}}});assert.equal(typeof w.telegramUpdateExecutor.execute,'function');
+ assert.throws(()=>createRecoveryWiring({...options,updateExecution:{wordpress:{read:async()=>null,update:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ const updateProviders={verifyPayload:async()=>null,verifyCmsPreflight:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false};
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{wordpress:{read:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ const w=createRecoveryWiring({...options,updateProviders,updateExecution:{wordpress:{read:async()=>null,update:async()=>null}}});assert.equal(typeof w.telegramUpdateExecutor.execute,'function');assert.equal(typeof w.telegramUpdatePayloads.stage,'function');
 });
 test('update claims remain absent unless all server-owned providers exist',()=>{
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{pool,loadVerifiedDecision:async()=>null,loadVerifiedPayloadEvidence:async()=>null}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
- const w=createRecoveryWiring({...options,updateProviders:{loadVerifiedPayloadEvidence:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false}});assert.equal(typeof w.telegramUpdateClaims.begin,'function');
+ const w=createRecoveryWiring({...options,updateProviders:{verifyPayload:async()=>null,verifyCmsPreflight:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false}});assert.equal(typeof w.telegramUpdateClaims.begin,'function');
 });
 test('wired guard requires the existing bearer before recovery access',async()=>{
  const server=createRecoveryGuard(options);await new Promise(r=>server.listen(0,'127.0.0.1',r));

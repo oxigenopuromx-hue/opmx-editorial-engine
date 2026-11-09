@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {destinationLabel,resolveDestinations} from './original-destinations.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 import {copyVerifiedOutcomes} from './verified-outcomes.mjs';
+import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
 
 // Read IDs from a guard-owned snapshot and the existing target ledger while
 // the package is locked. This is identity evidence for a preview only. It
@@ -20,7 +21,7 @@ export async function readVerifiedUpdatePosts(c,input){
  if(!prior||prior.packageId!==packageId||prior.revision!==baseRevision||prior.ownerKey!==ownerKey||!copyVerifiedOutcomes(prior.destinations,prior.results)||!barrier||barrier.packageId!==packageId||barrier.revision!==baseRevision||barrier.writesFenced!==true||barrier.terminalBlocked!==true||barrier.noActiveAttempts!==true||barrier.noPublicationSideEffects!==false||barrier.allPublicationOutcomesVerified!==true)return null;
  let originalLabel;try{originalLabel=destinationLabel(prior.destinations);if(resolveDestinations(originalLabel).length!==prior.destinations.length||prior.requestId!==expectedDraftRequestId({packageId,revision:baseRevision,destination:originalLabel}))return null}catch{return null}
  if(selected.some(d=>!prior.destinations.includes(d)))return null;
- const posts={};
+ const posts={},slugs={};
  for(const destination of selected){
   const result=prior.results.find(x=>x?.destination===destination);
   if(!result||result.publicationVerdict!=='CMS_RECORD_CONFIRMED'||result.cmsVerified!==true||!['PUBLISHED','DRAFT'].includes(result.status)||(result.status==='PUBLISHED'?result.wordpressStatus!=='publish':result.wordpressStatus!=='draft')||!Number.isSafeInteger(result.postId)||result.postId<1||typeof result.slug!=='string'||result.slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(result.slug))return null;
@@ -28,6 +29,19 @@ export async function readVerifiedUpdatePosts(c,input){
   const [ledger]=await c.execute('SELECT target_key,status,post_id FROM opmx_mcp_target_progress WHERE target_key=? AND request_id=? AND destination=? FOR UPDATE',[key,prior.requestId,destination]);
   if(ledger.length!==1||ledger[0].target_key!==key||ledger[0].status!=='reported'||String(ledger[0].post_id)!==String(result.postId))return null;
   posts[destination]=result.postId;
+  slugs[destination]=result.slug;
  }
- return {packageId,revision,baseRevision,ownerKey,actorKey,destination,verified:true,posts};
+ return {packageId,revision,baseRevision,ownerKey,actorKey,destination,verified:true,posts,slugs};
+}
+
+// Resolve a slug and ID exclusively from the confirmed decision, the locked
+// original snapshot and the existing target ledger. No caller-supplied slug
+// becomes authority. This is still not a live CMS preflight or write permit.
+export async function loadVerifiedUpdateTarget(c,scope){
+ if(!c?.execute||!scope||typeof scope!=='object'||!/^tg_[a-f0-9]{40}$/.test(scope.packageId??'')||!Number.isSafeInteger(scope.revision)||scope.revision<2||!['OPURO','OPOL','LIBERAL'].includes(scope.destination)||!Number.isSafeInteger(scope.postId)||scope.postId<1||!/^[a-f0-9]{64}$/.test(scope.previewHash??'')||!/^[a-f0-9]{64}$/.test(scope.payloadHash??''))return null;
+ let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId:scope.packageId,revision:scope.revision})}catch{return null}
+ if(!d||d.action!=='UPDATE'||d.previewHash!==scope.previewHash||d.posts.filter(x=>x.destination===scope.destination&&x.postId===scope.postId).length!==1)return null;
+ const evidence=await readVerifiedUpdatePosts(c,{packageId:scope.packageId,revision:scope.revision-1,baseRevision:d.baseRevision,ownerKey:d.ownerKey,actorKey:d.actorKey,destination:scope.destination});
+ if(!evidence||evidence.verified!==true||evidence.posts[scope.destination]!==scope.postId||typeof evidence.slugs[scope.destination]!=='string')return null;
+ return {...scope,slug:evidence.slugs[scope.destination]};
 }

@@ -25,11 +25,11 @@ async function readConfirmedDecision(c,packageId,revision,expectedAction){
  const [events]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE event_id=? AND package_id=? AND revision=? FOR UPDATE',[records[0].event_id,packageId,revision]);if(events.length!==1)fail();
  const [closures]=await c.execute('SELECT snapshot_revision,actor_key,close_receipt_key FROM opmx_tg_recovery_closures_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
  if(closures.length!==1||Number(closures[0].snapshot_revision)!==decision.baseRevision||closures[0].actor_key!==decision.actorKey||closures[0].close_receipt_key!==digest(records[0].preview_receipt))fail();
- return {package_id:packageId,revision,action:expectedAction,destination:decision.destination,content_mode:decision.mode,preview_hash:hash,posts:decision.posts.map(p=>({destination:p.destination,postId:p.postId}))};
+ return {package_id:packageId,revision,action:expectedAction,destination:decision.destination,content_mode:decision.mode,preview_hash:hash,owner_key:decision.ownerKey,actor_key:decision.actorKey,base_revision:decision.baseRevision,posts:decision.posts.map(p=>({destination:p.destination,postId:p.postId}))};
 }
 // The Motor's existing creation path must keep refusing UPDATE until its
 // separate, explicit update workflow is implemented and verified.
-export async function readConfirmedCorrectionInTransaction(c,packageId,revision){const d=await readConfirmedDecision(c,packageId,revision,'CREATE');if(!d)return null;const {posts,...result}=d;return result}
+export async function readConfirmedCorrectionInTransaction(c,packageId,revision){const d=await readConfirmedDecision(c,packageId,revision,'CREATE');if(!d)return null;const {posts,owner_key,actor_key,base_revision,...result}=d;return result}
 // Only the server-owned update claim uses this adapter. It does not by itself
 // authorize a WordPress write or prove payload/readback integrity.
-export async function readVerifiedUpdateDecisionInTransaction(c,{packageId,revision}){const d=await readConfirmedDecision(c,packageId,revision,'UPDATE');if(!d)return null;return {packageId,revision,action:d.action,destination:d.destination,contentMode:d.content_mode,previewHash:d.preview_hash,posts:d.posts}}
+export async function readVerifiedUpdateDecisionInTransaction(c,{packageId,revision}){const d=await readConfirmedDecision(c,packageId,revision,'UPDATE');if(!d)return null;return {packageId,revision,action:d.action,destination:d.destination,contentMode:d.content_mode,previewHash:d.preview_hash,ownerKey:d.owner_key,actorKey:d.actor_key,baseRevision:d.base_revision,posts:d.posts}}
