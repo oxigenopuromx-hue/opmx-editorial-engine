@@ -10,8 +10,8 @@ const id=/^tg_[a-f0-9]{40}$/, hash=/^[a-f0-9]{64}$/;
 // UPDATE additionally requires a server-owned provider which binds verified
 // post IDs to this exact package, base revision, decision and destination.
 // It is absent by default; a Telegram message must never provide these IDs.
-export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpdatePosts=null}) {
- if(typeof readLockedSelection!=='function'||(readVerifiedUpdatePosts!==null&&typeof readVerifiedUpdatePosts!=='function'))throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
+export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpdatePosts=null,readFinalPayloads=null}) {
+ if(typeof readLockedSelection!=='function'||(readVerifiedUpdatePosts!==null&&typeof readVerifiedUpdatePosts!=='function')||(readFinalPayloads!==null&&typeof readFinalPayloads!=='function'))throw Error('CORRECTION_FACTS_CONFIGURATION_INCOMPLETE');
  return async function readFacts(c,{packageId,revision,ownerKey,actorKey=ownerKey}) {
   if(!c?.execute||!id.test(packageId??'')||!hash.test(ownerKey??'')||!hash.test(actorKey??'')||!Number.isSafeInteger(revision)||revision<2||revision>=4294967295)fail();
   const [leases]=await c.execute('SELECT actor_key,owner_key,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[packageId]);
@@ -51,6 +51,13 @@ export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpd
    return {itemId:x.itemId,kind:x.kind,state:x.state,sha256:x.sha256,...(x.kind==='TEXT'?{text:x.text}:{fileName:x.attachment.file_name,caption:x.text})};
   });
   if(!Array.isArray(snapshot.items))fail();
-  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:selection.action,mode:selection.mode,destination,verifiedPosts,authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids};
+  let finalPayloads=null;
+  if(selection.action==='UPDATE'&&readFinalPayloads){
+   const scope={packageId,revision,baseRevision,ownerKey,actorKey,destination};
+   const result=await readFinalPayloads(c,scope);
+   if(!result||Object.keys(scope).some(k=>result[k]!==scope[k])||!result.finalPayloads||typeof result.finalPayloads!=='object'||Array.isArray(result.finalPayloads))fail();
+   finalPayloads=result.finalPayloads;
+  }
+  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:selection.action,mode:selection.mode,destination,verifiedPosts,authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids,...(finalPayloads?{finalPayloads}:{})};
  };
 }

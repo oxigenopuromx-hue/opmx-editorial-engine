@@ -1,18 +1,13 @@
 import {createHash} from 'node:crypto';
 import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
+import {canonicalUpdateValue} from './canonical-json.mjs';
+export {canonicalUpdateValue} from './canonical-json.mjs';
 
 const pkg=/^tg_[a-f0-9]{40}$/,hash=/^[a-f0-9]{64}$/;
 const sites=new Set(['OPURO','OPOL','LIBERAL']);
 const allowed=new Set(['title','content','excerpt','featured_media','author','categories','tags','meta','status']);
 const sha=x=>createHash('sha256').update(x).digest('hex');
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&Object.getPrototypeOf(x)===Object.prototype;
-export function canonicalUpdateValue(x){
- if(x===null||typeof x==='boolean'||typeof x==='string')return JSON.stringify(x);
- if(typeof x==='number'&&Number.isSafeInteger(x))return JSON.stringify(x);
- if(Array.isArray(x))return '['+x.map(canonicalUpdateValue).join(',')+']';
- if(!object(x)||Object.keys(x).some(k=>['__proto__','prototype','constructor'].includes(k)))throw Error('INVALID_UPDATE_PAYLOAD');
- return '{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canonicalUpdateValue(x[k])).join(',')+'}';
-}
 function freezeDeep(x){if(x&&typeof x==='object'){for(const v of Object.values(x))freezeDeep(v);Object.freeze(x)}return x}
 export function validUpdatePayload(payload){
  if(!object(payload)||!Object.keys(payload).length||Object.keys(payload).some(k=>!allowed.has(k)))return false;

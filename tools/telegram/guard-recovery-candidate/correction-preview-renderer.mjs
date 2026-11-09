@@ -15,7 +15,7 @@ export function renderCorrectionPreview(result){
   if(x.kind==='FILE'&&typeof x.caption==='string'&&x.caption)lines.push(`Texto adjunto: ${x.caption}`);
  }
  if(!changes)lines.push('Sin cambios de material.');
- lines.push('Materiales activos de esta revisión (la nota final todavía no está generada):');
+ lines.push(Object.hasOwn(p,'finalPayloads')?'Materiales activos de esta revisión:':'Materiales activos de esta revisión (la nota final todavía no está generada):');
  let materials=0;const seen=new Set();
  for(const x of p.materials){
   if(!/^ti_[a-f0-9]{40}$/.test(x?.itemId??'')||seen.has(x.itemId)||!['TEXT','FILE'].includes(x.kind)||x.state!=='STORED'||!/^[a-f0-9]{64}$/.test(x.sha256??'')||(x.kind==='TEXT'&&typeof x.text!=='string')||(x.kind==='FILE'&&(typeof x.fileName!=='string'||typeof x.caption!=='string')))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
@@ -25,6 +25,12 @@ export function renderCorrectionPreview(result){
   if(x.kind==='FILE'&&typeof x.caption==='string'&&x.caption)lines.push(`Texto adjunto: ${x.caption}`);
  }
  if(!materials||[...controls].some(id=>!seen.has(id)))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
+ if(Object.hasOwn(p,'finalPayloads')){
+  if(p.action!=='UPDATE'||!p.finalPayloads||typeof p.finalPayloads!=='object'||Array.isArray(p.finalPayloads)||Object.keys(p.finalPayloads).length!==expected.length||expected.some(d=>!Object.hasOwn(p.finalPayloads,d)))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
+  let encoded;try{encoded=JSON.stringify(p.finalPayloads)}catch{return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']}}
+  if(typeof encoded!=='string'||encoded.length>16384)return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
+  for(const d of expected)lines.push(`Contenido exacto de actualización para ${d}:\n${JSON.stringify(p.finalPayloads[d])}`);
+ }
  lines.push(`Para confirmar esta revisión, escribe:\n/confirmar ${p.action==='UPDATE'?'actualizar':'crear'} ${p.revision} ${p.previewHash}`);
  // Escape one code point at a time so no HTML entity or surrogate pair is
  // split across Telegram messages. The caller must deliver all parts in order.
