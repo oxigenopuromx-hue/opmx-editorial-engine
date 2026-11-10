@@ -69,10 +69,12 @@ function confirmPackageOperation(context,result) {
  }
  if(context.package_operation==='STATUS') {
   if(result?.status!=='FOUND'||result.packageId!==context.packageId||!Array.isArray(result.items))return response(context,'No pude confirmar el estado del paquete.');
-  const stored=result.items.filter(i=>i.state==='STORED').length,pending=result.items.filter(i=>i.state==='PENDING').length;
-  return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending} pendiente(s). Para terminar: /listo.`);
+  const stored=result.items.filter(i=>i.state==='STORED').length,pending=result.items.filter(i=>i.state==='PENDING');
+  if(pending.some(i=>!validItem(i.item_id)))return response(context,'No pude confirmar el inventario pendiente del paquete.');
+  const pendingHelp=pending.length?'\nReservas pendientes:\n'+pending.map(i=>`<code>/descartar ${i.item_id}</code>`).join('\n')+'\nDescarta sólo el archivo que no se guardó.':'';
+  return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending.length} pendiente(s).${pendingHelp}\nPara terminar: /listo.`);
  }
- if(context.package_operation==='DISCARD')return response(context,result?.status==='DISCARDED'?'Reserva pendiente descartada. No se borraron originales guardados.':'No se descartó la reserva: sólo pueden descartarse archivos pendientes, sin original guardado.');
+ if(context.package_operation==='DISCARD')return response(context,['DISCARDED','DISCARDED_REPLAY'].includes(result?.status)&&result.itemId===context.discard_item_id?'Reserva pendiente descartada. No se borraron originales guardados.':'No se descartó la reserva: sólo pueden descartarse archivos pendientes, sin original guardado.');
  if(result?.status==='RESERVED'&&context.kind==='FILE'&&result.packageId===context.packageId&&validItem(result.itemId))return {...context,itemId:result.itemId,has_file:true};
  if(result?.status==='RESERVATION_REPLAY'&&validItem(result.itemId)) {
   if(result.state==='PENDING'&&context.kind==='FILE')return {...context,itemId:result.itemId,has_file:true};
