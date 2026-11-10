@@ -66,3 +66,9 @@ test('the snapshot and target ledger feed the exact ID into an update preview',a
  assert.equal(preview.action,'UPDATE');assert.deepEqual(preview.posts,[{destination:'OPURO',postId:321}]);
  s.selection.action='CREATE';await assert.rejects(()=>read(c,{packageId,revision,ownerKey,actorKey:ownerKey}),/CORRECTION_FACTS_UNCONFIRMED/);
 });
+
+test('a missing generated payload yields only a bound generation scope',async()=>{
+ const {s,c}=setup();s.selection.action='UPDATE';s.selection.destination='OPURO';
+ const read=createCorrectionFactsReader({readLockedSelection:async()=>s.selection,readVerifiedUpdatePosts:async(c,scope)=>({...scope,verified:true,posts:{OPURO:123}}),readFinalPayloads:async()=>null});
+ assert.deepEqual(await read(c,{packageId,revision,ownerKey,actorKey:ownerKey}),{previewGenerationRequired:true,previewScope:{packageId,revision,baseRevision,ownerKey,actorKey:ownerKey,destination:'OPURO'}});
+});
