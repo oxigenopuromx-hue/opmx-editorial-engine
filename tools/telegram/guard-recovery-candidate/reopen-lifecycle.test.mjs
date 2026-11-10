@@ -37,6 +37,7 @@ test('admin reopens, contributes, and seals once while preserving the owner',asy
   if(sql.startsWith('SELECT i.item_id,i.kind')){const item=state.items.find(i=>i.receiptKey===args[1]);return [item?[{item_id:item.itemId,kind:item.kind,text_content:item.text,state:item.state,actor_key:admin}]:[]];}
   if(sql.startsWith('SELECT item_id FROM opmx_tg_items'))return [[{item_id:state.items.at(-1).itemId}]];
   if(sql.startsWith('SELECT COUNT(*) AS total'))return [[{total:state.items.length,pending:0,stored:state.items.length}]];
+  if(sql.startsWith('SELECT COUNT(*) AS pending'))return [[{pending:state.items.filter(i=>i.state==='PENDING').length}]];
   if(sql.startsWith("UPDATE opmx_tg_packages_v1 SET state='READY'")){state.pkg.state='READY';state.pkg.revision++;return [{affectedRows:1}];}
   if(sql.startsWith('DELETE FROM opmx_tg_sessions')){assert.equal(args[0],admin);state.session=null;return [{affectedRows:1}];}
   if(sql.startsWith('DELETE FROM opmx_tg_recovery_leases')){state.lease=null;return [{affectedRows:1}];}
