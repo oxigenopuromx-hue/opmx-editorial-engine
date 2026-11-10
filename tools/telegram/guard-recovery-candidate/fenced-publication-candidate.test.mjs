@@ -12,12 +12,15 @@ function fixture({state='READY_TO_WRITE',bound=true,postId=123,targetStatus='rep
   if(sql.startsWith('SELECT state'))return [[{state:fence}]];
   if(sql.startsWith('SELECT status,post_id'))return [[{status:targetStatus,post_id:postId}]];
   if(sql.startsWith('INSERT INTO opmx_tg_publication_claims')){if(duplicate)throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});claimed=true;return [{affectedRows:1}]}
-  if(sql.startsWith('UPDATE opmx_tg_publication_fence')){fence='WRITING';return [{affectedRows:1}]}
+  if(sql.startsWith('UPDATE opmx_tg_publication_fence')){fence=sql.includes("SET state='HISTORICAL_WRITING'")?'HISTORICAL_WRITING':'WRITING';return [{affectedRows:1}]}
   throw Error(sql);
  }};return {pool:{async getConnection(){return c}},statements,get fence(){return fence},get claimed(){return claimed}};
 }
 test('publication claims the bound revision and exact post in one transaction',async()=>{
  const f=fixture();const result=await beginFencedPublication(f.pool,input);assert.equal(result.status,'PUBLICATION_STARTED');assert.equal(f.fence,'WRITING');assert.equal(f.claimed,true);assert.ok(f.statements.find(x=>x.includes('opmx_mcp_target_progress')&&x.includes('FOR UPDATE')));
+});
+test('historical publication may finish without clearing reconciliation',async()=>{
+ const f=fixture({state:'HISTORICAL_UNRECONCILED'});assert.equal((await beginFencedPublication(f.pool,input)).status,'PUBLICATION_STARTED');assert.equal(f.fence,'HISTORICAL_WRITING');
 });
 test('missing binding, wrong post, fenced revision and duplicate never permit a write',async()=>{
  for(const opts of [{bound:false},{packageState:'OPEN'},{packageRevision:revision+1},{postId:124},{targetStatus:'writing'},{state:'RECOVERY_FENCED'},{state:'RECONCILING'},{duplicate:true}]){const f=fixture(opts);const result=await beginFencedPublication(f.pool,input);assert.notEqual(result.status,'PUBLICATION_STARTED');assert.equal(f.claimed,false);assert.equal(f.fence,opts.state??'READY_TO_WRITE')}
