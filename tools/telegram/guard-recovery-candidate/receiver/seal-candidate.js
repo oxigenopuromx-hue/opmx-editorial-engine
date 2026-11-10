@@ -3,7 +3,7 @@ function prepareSeal(context, reserved) {
   const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);
   const stored = reserved?.status==='STORED' && reserved.packageId===context.packageId && validItem(reserved.itemId);
   const replay = reserved?.status==='RESERVATION_REPLAY' && reserved.state==='STORED' && validItem(reserved.itemId);
-  if (!stored && !replay) return { seal_requested:false,passthrough:{status:'CLOSE_NOT_CONFIRMED'} };
+  if (!stored && !replay) return { seal_requested:false,passthrough:reserved?.status==='NOT_READY'?reserved:{status:'CLOSE_NOT_CONFIRMED'} };
   if(context.recovery_session){
    if(!Number.isSafeInteger(reserved.revision)||reserved.revision<1)return {seal_requested:false,passthrough:{status:'CLOSE_NOT_CONFIRMED'}};
    return {seal_requested:false,preview_requested:true,preview_body:{owner:context.user_id,chat:context.chat_id,packageId:context.packageId,revision:reserved.revision,receiptId:context.receipt_id}};
