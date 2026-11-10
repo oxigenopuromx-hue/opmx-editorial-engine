@@ -12,7 +12,12 @@ export function auditWriterGraph({nodes,connections,mode}){
  const writes=nodes.filter(n=>n.type==='n8n-nodes-base.httpRequest'&&!n.disabled&&['POST','PUT','PATCH','DELETE'].includes(String(n.parameters?.method??'GET').toUpperCase())&&String(n.parameters?.url??'').includes('/wp-json/wp/v2/'));
  if(!writes.length)throw Error('CMS_WRITES_MISSING');
  return writes.map(n=>{
-  const url=String(n.parameters.url),matched=sites.filter(s=>url.includes(expectedHosts[s]));
+  // A substring match accepts e.g. cms.oxigenopuro.com.mx.attacker.test
+  // or an expected hostname in a query string. Dynamic URLs cannot establish
+  // their destination from a graph snapshot and must fail closed as unknown.
+  const url=String(n.parameters.url);let host=null;
+  try{const parsed=new URL(url);if(parsed.protocol==='https:'&&!parsed.username&&!parsed.password&&!parsed.port)host=parsed.hostname.toLowerCase();}catch{}
+  const matched=sites.filter(s=>host===expectedHosts[s]);
   if(matched.length!==1)return {name:n.name,site:null,guarded:false,reason:'UNKNOWN_HOST'};
   const site=matched[0],guard=mode==='draft'?draftGuard[site]:'Preflight conjunto publicación';
   // n8n can pass data through a disabled node. Merely seeing its name on the
