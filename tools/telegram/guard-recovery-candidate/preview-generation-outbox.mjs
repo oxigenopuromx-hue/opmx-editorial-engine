@@ -63,10 +63,10 @@ export function createPreviewGenerationDispatcher({pool,deliver,readSelection,to
    const token=tokenFactory();if(!hex.test(token??''))throw Error('INVALID_PREVIEW_DISPATCH_TOKEN');const claimHash=hash(token);
    const [updated]=await c.execute("UPDATE opmx_tg_preview_generation_v1 SET state='DISPATCHING',claim_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE job_id=? AND state='PENDING'",[claimHash,j.job_id]);
    if(updated.affectedRows!==1)throw Error('PREVIEW_DISPATCH_CONFLICT');
-   return {jobId:j.job_id,claimHash,event:{name:'opmx.package.preview',data:{queue_id:'telegram-editorial',package_id:j.package_id,revision,state:'OPEN'},eventId:'preview_'+j.job_id}};
+   return {jobId:j.job_id,ownerKey:j.owner_key,claimHash,event:{name:'opmx.package.preview',data:{queue_id:'telegram-editorial',package_id:j.package_id,revision,state:'OPEN'},eventId:'preview_'+j.job_id}};
   });
   if(!claim||claim.status)return claim??{status:'NO_PREVIEW_REQUEST'};
-  let delivered=false;try{const result=await deliver(claim.event);delivered=result?.accepted===true}catch{}
+  let delivered=false;try{const result=await deliver(claim.event,{ownerKey:claim.ownerKey,jobId:claim.jobId});delivered=result?.accepted===true}catch{}
   return tx(async c=>{
    const state=delivered?'DISPATCHED':'UNCERTAIN';
    const [r]=await c.execute("UPDATE opmx_tg_preview_generation_v1 SET state=?,updated_at=UTC_TIMESTAMP(6) WHERE job_id=? AND state='DISPATCHING' AND claim_hash=?",[state,claim.jobId,claim.claimHash]);
