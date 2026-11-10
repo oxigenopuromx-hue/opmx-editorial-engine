@@ -55,6 +55,10 @@ export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpd
   if(selection.action==='UPDATE'&&readFinalPayloads){
    const scope={packageId,revision,baseRevision,ownerKey,actorKey,destination};
    const result=await readFinalPayloads(c,scope);
+   // No proposal yet is different from an invalid proposal. Signal the
+   // authenticated request to the server-owned preview producer; never
+   // manufacture a preview or authorise an update from missing bytes.
+   if(result===null)return {previewGenerationRequired:true,previewScope:scope};
    if(!result||Object.keys(scope).some(k=>result[k]!==scope[k])||!result.finalPayloads||typeof result.finalPayloads!=='object'||Array.isArray(result.finalPayloads))fail();
    finalPayloads=result.finalPayloads;
   }
