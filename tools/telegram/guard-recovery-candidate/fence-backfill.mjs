@@ -31,15 +31,17 @@ export async function backfillHistoricalFences(pool,{onlyRequestId=null}={}){
    // Historical state is UNKNOWN, not READY_TO_WRITE or SAFE_TO_REOPEN.
    // A separate, authoritative reconciliation must classify each revision.
    await c.execute("INSERT IGNORE INTO opmx_tg_publication_fence_v1 (package_id,revision,state,updated_at) VALUES (?,?,'HISTORICAL_UNRECONCILED',UTC_TIMESTAMP(6))",[id,revision]);
-   for(const destination of labels){
-    const requestId=expectedDraftRequestId({packageId:id,revision,destination});
-    await c.execute("INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES (?,'TELEGRAM')",[requestId]);
-    const [classes]=await c.execute('SELECT kind FROM opmx_tg_request_class_v1 WHERE request_id=? FOR UPDATE',[requestId]);
-    if(classes.length!==1||classes[0].kind!=='TELEGRAM')throw Error('HISTORICAL_CLASS_CONFLICT');
-    await c.execute('INSERT IGNORE INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES (?,?,?)',[requestId,id,revision]);
-    const [bindings]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
-    if(bindings.length!==1||bindings[0].package_id!==id||Number(bindings[0].revision)!==revision)throw Error('HISTORICAL_BINDING_CONFLICT');
-   }
+   // Batch the seven deterministic identities per revision. This keeps the
+   // quota lock short without weakening the all-or-nothing migration: every
+   // inserted or pre-existing row is still locked and checked before commit.
+   const requestIds=labels.map(destination=>expectedDraftRequestId({packageId:id,revision,destination}));
+   const slots=requestIds.map(()=>'?').join(',');
+   await c.execute(`INSERT IGNORE INTO opmx_tg_request_class_v1 (request_id,kind) VALUES ${requestIds.map(()=>"(?,'TELEGRAM')").join(',')}`,requestIds);
+   const [classes]=await c.execute(`SELECT request_id,kind FROM opmx_tg_request_class_v1 WHERE request_id IN (${slots}) FOR UPDATE`,requestIds);
+   if(classes.length!==requestIds.length||new Set(classes.map(x=>x.request_id)).size!==requestIds.length||classes.some(x=>x.kind!=='TELEGRAM'||!requestIds.includes(x.request_id)))throw Error('HISTORICAL_CLASS_CONFLICT');
+   await c.execute(`INSERT IGNORE INTO opmx_tg_request_binding_v1 (request_id,package_id,revision) VALUES ${requestIds.map(()=>' (?,?,?)').join(',')}`,requestIds.flatMap(requestId=>[requestId,id,revision]));
+   const [bindings]=await c.execute(`SELECT request_id,package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id IN (${slots}) FOR UPDATE`,requestIds);
+   if(bindings.length!==requestIds.length||new Set(bindings.map(x=>x.request_id)).size!==requestIds.length||bindings.some(x=>!requestIds.includes(x.request_id)||x.package_id!==id||Number(x.revision)!==revision))throw Error('HISTORICAL_BINDING_CONFLICT');
   }
   await c.commit();done=true;return {status:'HISTORICAL_BINDINGS_RECORDED',revisions:processed,recoveryEnabled:false};
  }catch(error){if(!done)try{await c.rollback()}catch{}throw error}finally{c.release()}
