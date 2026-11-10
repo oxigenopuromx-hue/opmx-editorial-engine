@@ -115,7 +115,7 @@ export async function beginFencedTarget(pool,input) {
       await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'};
     }
     const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[b.package_id,b.revision]);
-    if(fences.length!==1 || !['READY_TO_WRITE','WRITING'].includes(fences[0].state)){
+    if(fences.length!==1 || !['READY_TO_WRITE','WRITING','HISTORICAL_UNRECONCILED','HISTORICAL_WRITING'].includes(fences[0].state)){
       await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'};
     }
     const [confirmed]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
@@ -124,6 +124,10 @@ export async function beginFencedTarget(pool,input) {
     }
     if(fences[0].state==='READY_TO_WRITE') {
       const [change]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='READY_TO_WRITE'",[b.package_id,b.revision]);
+      if(change.affectedRows!==1)throw Error('FENCE_CONFLICT');
+    }
+    if(fences[0].state==='HISTORICAL_UNRECONCILED') {
+      const [change]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='HISTORICAL_WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='HISTORICAL_UNRECONCILED'",[b.package_id,b.revision]);
       if(change.affectedRows!==1)throw Error('FENCE_CONFLICT');
     }
     const [insert]=await c.execute("INSERT INTO opmx_mcp_target_progress (target_key,request_id,destination,status,post_id,updated_at) SELECT target_key,request_id,?,'writing',NULL,UTC_TIMESTAMP(6) FROM opmx_mcp_targets WHERE target_key=? AND request_id=?",[destination,targetKey,requestId]);
