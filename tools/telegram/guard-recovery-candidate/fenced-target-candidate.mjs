@@ -108,6 +108,12 @@ export async function beginFencedTarget(pool,input) {
     const [bindings]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=?',[requestId]);
     if(bindings.length!==1){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'};}
     const b=bindings[0];
+    // A fence alone is not enough: even a mistakenly open historical fence
+    // must not allow writes after the package advances or is reopened.
+    const [packages]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[b.package_id]);
+    if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==Number(b.revision)){
+      await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'};
+    }
     const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[b.package_id,b.revision]);
     if(fences.length!==1 || !['READY_TO_WRITE','WRITING'].includes(fences[0].state)){
       await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'};

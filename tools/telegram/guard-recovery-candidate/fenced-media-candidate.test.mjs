@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {beginFencedMedia,createClassifiedMediaRouter} from './fenced-media-candidate.mjs';
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'OPURO',role:'hero'};
-function fixture({state='WRITING',bound=true,target=true,duplicate=false,lostCommit=false,changedBinding=false}={}){
+function fixture({state='WRITING',bound=true,target=true,duplicate=false,lostCommit=false,changedBinding=false,packageState='READY',packageRevision=7}={}){
  let reads=0;const calls=[],c={async beginTransaction(){calls.push('begin')},async commit(){calls.push('commit');if(lostCommit)throw Error('lost')},async rollback(){calls.push('rollback')},release(){calls.push('release')},async execute(sql,args){calls.push({sql,args});
   if(sql.startsWith('SELECT package_id')){reads++;return [bound?[{package_id:'tg_'+(changedBinding&&reads===2?'c':'b').repeat(40),revision:7}]:[]]}
+  if(sql.startsWith('SELECT state,revision'))return [[{state:packageState,revision:packageRevision}]];
   if(sql.startsWith('SELECT state'))return [state===null?[]:[{state}]];
   if(sql.startsWith('SELECT target_key'))return [target?[{target_key:'d'.repeat(64)}]:[]];
   if(sql.startsWith('INSERT')){if(duplicate)throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});return [{affectedRows:1}]}
@@ -13,10 +14,10 @@ function fixture({state='WRITING',bound=true,target=true,duplicate=false,lostCom
 }
 test('media claim locks the same revision fence before target and insert',async()=>{
  const f=fixture();assert.deepEqual(await beginFencedMedia(f.pool,input),{status:'upload_started'});
- const q=f.calls.filter(x=>x.sql);assert.doesNotMatch(q[0].sql,/FOR UPDATE/);assert.match(q[1].sql,/publication_fence.*FOR UPDATE/);assert.match(q[2].sql,/request_binding.*FOR UPDATE/);assert.match(q[3].sql,/target_progress.*FOR UPDATE/);assert.match(q[4].sql,/INSERT INTO opmx_mcp_media_progress/);assert.ok(f.calls.includes('commit'));
+ const q=f.calls.filter(x=>x.sql);assert.doesNotMatch(q[0].sql,/FOR UPDATE/);assert.match(q[1].sql,/packages.*FOR UPDATE/);assert.match(q[2].sql,/publication_fence.*FOR UPDATE/);assert.match(q[3].sql,/request_binding.*FOR UPDATE/);assert.match(q[4].sql,/target_progress.*FOR UPDATE/);assert.match(q[5].sql,/INSERT INTO opmx_mcp_media_progress/);assert.ok(f.calls.includes('commit'));
 });
 test('missing, changed or fenced binding and missing target cannot start media',async()=>{
- for(const opt of [{bound:false},{changedBinding:true},{state:'READY_TO_WRITE'},{state:'RECONCILING'},{state:'RECOVERY_FENCED'},{state:null},{target:false}]){
+ for(const opt of [{bound:false},{packageState:'OPEN'},{packageRevision:8},{changedBinding:true},{state:'READY_TO_WRITE'},{state:'RECONCILING'},{state:'RECOVERY_FENCED'},{state:null},{target:false}]){
   const f=fixture(opt);assert.notEqual((await beginFencedMedia(f.pool,input)).status,'upload_started');assert.ok(f.calls.includes('rollback'));assert.equal(f.calls.some(x=>x.sql?.startsWith('INSERT')),false);
  }
 });

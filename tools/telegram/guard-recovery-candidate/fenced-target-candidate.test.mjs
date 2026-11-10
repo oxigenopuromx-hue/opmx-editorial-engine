@@ -4,11 +4,12 @@ import {beginFencedTarget,initializeRevisionFence,initializeRevisionBindings,ini
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 
 const input={requestId:'tg_'+'a'.repeat(64),slug:'nota-de-prueba',destination:'LIBERAL'};
-function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=false,commitError=false}={}){
+function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=false,commitError=false,packageState='READY',packageRevision=7}={}){
   const calls=[];let current=state,initial=state;
   const c={async beginTransaction(){calls.push('begin');initial=current},async commit(){calls.push('commit');if(commitError)throw Error('lost commit response')},async rollback(){calls.push('rollback');current=initial},release(){calls.push('release')},async execute(sql,params){
     calls.push({sql,params});
     if(sql.startsWith('SELECT package_id'))return [bound?[{package_id:'tg_'+'b'.repeat(40),revision:7}]:[]];
+    if(sql.startsWith('SELECT state,revision'))return [[{state:packageState,revision:packageRevision}]];
     if(sql.startsWith('SELECT state'))return [current===null?[]:[{state:current}]];
     if(sql.startsWith('UPDATE')){current='WRITING';return [{affectedRows:1}];}
     if(sql.startsWith('INSERT')){if(duplicate)throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});return [{affectedRows:reserved?1:0}];}
@@ -19,18 +20,19 @@ function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=fals
 test('reserves the actual target inside the same transaction as the fence',async()=>{
   const f=fixture();assert.deepEqual(await beginFencedTarget(f.pool,input),{status:'write_started'});
   assert.equal(f.state,'WRITING');assert.deepEqual(f.calls.filter(x=>typeof x==='string'),['begin','commit','release']);
-  const statements=f.calls.filter(x=>x.sql);assert.doesNotMatch(statements[0].sql,/FOR UPDATE/);assert.match(statements[1].sql,/FOR UPDATE/);assert.match(statements[2].sql,/FOR UPDATE/);assert.match(statements[4].sql,/INSERT INTO opmx_mcp_target_progress/);
+  const statements=f.calls.filter(x=>x.sql);assert.doesNotMatch(statements[0].sql,/FOR UPDATE/);assert.match(statements[1].sql,/FOR UPDATE/);assert.match(statements[2].sql,/FOR UPDATE/);assert.match(statements[5].sql,/INSERT INTO opmx_mcp_target_progress/);
 });
 test('a binding changed after discovery cannot grant permission to write',async()=>{
   let reads=0,writes=0;const c={async beginTransaction(){},async commit(){throw Error('must not commit')},async rollback(){},release(){},async execute(sql){
     if(sql.startsWith('SELECT package_id'))return [[{package_id:'tg_'+(++reads===1?'b':'c').repeat(40),revision:7}]];
+    if(sql.startsWith('SELECT state,revision'))return [[{state:'READY',revision:7}]];
     if(sql.startsWith('SELECT state'))return [[{state:'READY_TO_WRITE'}]];
     writes++;throw Error('unexpected write');
   }};
   assert.equal((await beginFencedTarget({async getConnection(){return c}},input)).status,'NOT_BOUND');assert.equal(writes,0);
 });
 test('a fenced or unknown revision and an unbound request never acquire a target',async()=>{
-  for(const options of [{bound:false},{state:'AWAITING_DECISION'},{state:'RECOVERY_FENCED'},{state:'SAFE_TO_REOPEN'},{state:null}]){
+  for(const options of [{bound:false},{packageState:'OPEN'},{packageRevision:8},{state:'AWAITING_DECISION'},{state:'RECOVERY_FENCED'},{state:'SAFE_TO_REOPEN'},{state:null}]){
     const f=fixture(options);assert.notEqual((await beginFencedTarget(f.pool,input)).status,'write_started');
     assert.equal(f.calls.some(x=>x.sql?.startsWith('INSERT')),false);assert.ok(f.calls.includes('rollback'));
   }
