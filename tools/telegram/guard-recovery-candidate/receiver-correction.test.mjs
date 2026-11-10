@@ -25,11 +25,11 @@ test('forwarded instructions and ordinary packages cannot select correction opti
  assert.equal(run(normal,msg('/opciones literal OPURO',true)).kind,'REJECTED');
  const intent=run(prepare,run(normal,msg('/opciones literal OPURO')));assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).requires_operation,false);
 });
-test('discard requires a direct command and a recovery session',()=>{
+test('discard requires a direct command and works in an ordinary or recovery session',()=>{
  const command=`/descartar ${item}`;
  assert.equal(run(normal,msg(command,true)).kind,'REJECTED');
  const intent=run(prepare,run(normal,msg(command)));
- assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).requires_operation,false);
+ assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:false},intent).next_action,'discard');
  const accepted=run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},intent);
  assert.equal(accepted.next_action,'discard');assert.equal(accepted.next_url,'https://publisher.oxigenopuro.com.mx/v1/telegram/packages/discard');assert.equal(accepted.next_body.itemId,item);
  const forged={...intent,mode_attested:false};assert.equal(run(resolve,{status:'OPEN',packageId:pkg,revision:11,recovery:true},forged).requires_operation,false);
