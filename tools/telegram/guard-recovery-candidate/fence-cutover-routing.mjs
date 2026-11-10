@@ -13,7 +13,7 @@ export function withCutoverBackfill(route,{backfill=backfillHistoricalFences}={}
   const c=await pool.getConnection();let rows;
   try{[rows]=await c.execute('SELECT request_id FROM opmx_tg_request_binding_v1 WHERE request_id=?',[id])}finally{c.release()}
   if(!Array.isArray(rows)||rows.length>1)throw Error('CUTOVER_BINDING_UNCONFIRMED');
-  if(rows.length===0)await backfill(pool);
+  if(rows.length===0)await backfill(pool,{onlyRequestId:id});
   // The wrapped handler rechecks binding, package state/revision, fence and
   // target under its own transaction. A failed backfill cannot grant writes.
   return route(pool,input);
