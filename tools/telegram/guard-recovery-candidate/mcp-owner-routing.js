@@ -1,6 +1,6 @@
 const envelope=$('MCP Publisher POST').first().json;let message=envelope?.body??envelope;if(typeof message==='string'){try{message=JSON.parse(message)}catch{message={}}}
 const args=message?.params?.arguments??{},rows=$input.all().map(x=>x.json);
-const subscriber={owner:'255516723',chat:'255516723'},privateTools=new Set(['leer_paquete_telegram_opmx','leer_fuente_telegram_opmx','informar_revision_telegram_opmx','informar_bloqueo_telegram_opmx','iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx','actualizar_nota_telegram_opmx']);
+const subscriber={owner:'255516723',chat:'255516723'},privateTools=new Set(['leer_paquete_telegram_opmx','leer_fuente_telegram_opmx','informar_revision_telegram_opmx','informar_bloqueo_telegram_opmx','iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx','actualizar_nota_telegram_opmx','preparar_vista_actualizacion_telegram_opmx']);
 const valid=s=>typeof s==='string'&&/^[1-9][0-9]{0,15}$/.test(s);
 let identity=subscriber,noticeIdentity=null;
 if(message.method==='tools/call'&&privateTools.has(message.params?.name)){
