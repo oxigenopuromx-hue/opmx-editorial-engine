@@ -223,6 +223,13 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state,...(recoveryEnabled&&lease?{revision:Number(pack.revision)}:{})});
           const reserved=input.kind==='TEXT'?Buffer.byteLength(input.text):input.attachment.declared_bytes??PACKAGE_LIMITS.fileBytes;
           const close=isAttestedClose(input)&&reserved<=CLOSE_CONTROL_ALLOWANCE;
+          // Do not accumulate a new /listo control on every attempt while a
+          // file reservation is unresolved. The quota lock serializes this
+          // check with complete/discard and the later reservation.
+          if(close){
+            const [counts]=await c.execute("SELECT COUNT(*) AS pending FROM opmx_tg_items_v1 WHERE package_id=? AND state='PENDING'",[input.packageId]);
+            if(Number(counts[0]?.pending)>0)return await finish({status:'NOT_READY',pending:Number(counts[0].pending)});
+          }
           const itemLimit=lease?RECOVERY_ITEM_LIMIT-(close?0:1):PACKAGE_LIMITS.items+(close?1:0);
           // Keep byte accounting exact. Allow only verified close controls a
           // bounded overage, at most 1 KiB per package in the global quota.
