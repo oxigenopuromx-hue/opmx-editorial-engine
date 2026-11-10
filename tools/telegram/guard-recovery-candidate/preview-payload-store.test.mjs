@@ -51,3 +51,18 @@ test('Motor resolves an authorized administrator from the lease without transfer
  assert.equal((await store.stageFromMotor({...request,owner:'999',chat:'999'})).status,'NOT_AVAILABLE');
  state.receipt='telegram-999-22-33';assert.equal((await store.stageFromMotor(request)).status,'NOT_AVAILABLE');
 });
+test('Motor receives only the verified selection and existing post IDs for the open preview job',async()=>{
+ const own=hash('opmx:telegram:v1:123:123'),admin=hash('opmx:telegram:v1:456:456'),state={pkg:'OPEN',job:'DISPATCHED',choice:'OPURO'};
+ const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql){
+  if(sql.includes('FROM opmx_tg_quota'))return [[{id:1}]];
+  if(sql.includes('FROM opmx_tg_packages'))return [[{owner_key:own,state:state.pkg,revision}]];
+  if(sql.includes('FROM opmx_tg_recovery_leases'))return [[{owner_key:own,actor_key:admin,opening_revision:8,receipt_id:'telegram-456-22-33'}]];
+  if(sql.includes('FROM opmx_tg_preview_generation'))return [[{owner_key:own,actor_key:admin,base_revision:7,destination:'OPURO',state:state.job}]];
+  if(sql.includes('FROM opmx_tg_sessions'))return [[{package_id:packageId}]];
+  throw Error(sql);
+ }};
+ const store=createPreviewPayloadStore({pool:{async getConnection(){return c}},adminUserIds:['456'],readSelection:async()=>({packageId,revision,ownerKey:own,action:'UPDATE',mode:'LITERAL',destination:state.choice}),readPosts:async(c,scope)=>({...scope,verified:true,posts:{OPURO:1234}})});
+ const req={owner:'123',chat:'123',packageId,revision},v=await store.contextFromMotor(req);
+ assert.deepEqual(v,{status:'PREVIEW_CONTEXT',packageId,revision,mode:'LITERAL',destination:'OPURO',posts:[{destination:'OPURO',postId:1234}],publicationAuthorized:false});
+ state.choice='OPOL';assert.equal((await store.contextFromMotor(req)).status,'NOT_AVAILABLE');state.choice='OPURO';state.pkg='READY';assert.equal((await store.contextFromMotor(req)).status,'NOT_AVAILABLE');state.pkg='OPEN';state.job='PENDING';assert.equal((await store.contextFromMotor(req)).status,'NOT_AVAILABLE');
+});
