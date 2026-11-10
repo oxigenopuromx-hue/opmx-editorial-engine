@@ -54,3 +54,20 @@ test('stale revision, earlier message and a different user cannot confirm',async
  assert.equal((await f.store.confirm({...x,owner:'456',chat:'456',receiptId:'telegram-456-20-200'})).status,'NOT_AVAILABLE');
  f.state.pack.revision=11;assert.equal((await f.store.confirm(x)).status,'NOT_AVAILABLE');assert.deepEqual(f.state.events,[]);
 });
+
+test('generation requests are enqueued in the same transaction without sealing or publishing',async()=>{
+ let calls=[],committed=false;const c={async beginTransaction(){},async commit(){committed=true},async rollback(){},release(){},async execute(sql){if(sql.startsWith('SELECT id FROM opmx_tg_quota'))return [[{id:1}]];if(sql.startsWith('SELECT owner_key,state,revision'))return [[{owner_key:ownerKey,state:'OPEN',revision}]];throw Error(sql)}};
+ const scope={packageId,revision,baseRevision:8,ownerKey,actorKey:ownerKey,destination:'OPURO'};
+ const config={pool:{async getConnection(){return c}},loadLockedFacts:async()=>({previewGenerationRequired:true,previewScope:scope}),commitConfirmed:async()=>{throw Error('MUST_NOT_PUBLISH')},verifyPreviewDelivery:async()=>false};
+ const absent=createCorrectionConfirmationStore(config);assert.deepEqual(await absent.preview(request),{status:'PREVIEW_GENERATION_UNAVAILABLE'});
+ const store=createCorrectionConfirmationStore({...config,enqueuePreviewGeneration:async(conn,input)=>{assert.equal(conn,c);calls.push(input);return {status:'PREVIEW_QUEUED'}}});
+ assert.deepEqual(await store.preview(request),{status:'PREVIEW_GENERATION_REQUESTED'});assert.equal(committed,true);assert.deepEqual(calls,[{...scope,receiptId:request.receiptId}]);
+});
+
+test('an unbound request is not enqueued and an outbox failure rolls back',async()=>{
+ let rollbacks=0,calls=0,scope={packageId,revision,baseRevision:8,ownerKey,actorKey:'f'.repeat(64),destination:'OPURO'};
+ const c={async beginTransaction(){},async commit(){},async rollback(){rollbacks++},release(){},async execute(sql){if(sql.startsWith('SELECT id FROM opmx_tg_quota'))return [[{id:1}]];if(sql.startsWith('SELECT owner_key,state,revision'))return [[{owner_key:ownerKey,state:'OPEN',revision}]];throw Error(sql)}};
+ const store=createCorrectionConfirmationStore({pool:{async getConnection(){return c}},loadLockedFacts:async()=>({previewGenerationRequired:true,previewScope:scope}),commitConfirmed:async()=>{throw Error('MUST_NOT_PUBLISH')},verifyPreviewDelivery:async()=>false,enqueuePreviewGeneration:async()=>{calls++;throw Error('QUEUE_FAILED')}});
+ assert.equal((await store.preview(request)).status,'PREVIEW_GENERATION_UNAVAILABLE');assert.equal(calls,0);
+ scope={...scope,actorKey:ownerKey};await assert.rejects(()=>store.preview(request),/QUEUE_FAILED/);assert.equal(rollbacks,1);
+});
