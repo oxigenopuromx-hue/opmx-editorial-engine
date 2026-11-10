@@ -11,7 +11,7 @@ function fixture({bound=true,state='READY_TO_WRITE',reserved=true,duplicate=fals
     if(sql.startsWith('SELECT package_id'))return [bound?[{package_id:'tg_'+'b'.repeat(40),revision:7}]:[]];
     if(sql.startsWith('SELECT state,revision'))return [[{state:packageState,revision:packageRevision}]];
     if(sql.startsWith('SELECT state'))return [current===null?[]:[{state:current}]];
-    if(sql.startsWith('UPDATE')){current='WRITING';return [{affectedRows:1}];}
+    if(sql.startsWith('UPDATE')){current=sql.includes("SET state='HISTORICAL_WRITING'")?'HISTORICAL_WRITING':'WRITING';return [{affectedRows:1}];}
     if(sql.startsWith('INSERT')){if(duplicate)throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});return [{affectedRows:reserved?1:0}];}
     throw Error('unexpected SQL');
   }};
@@ -45,6 +45,10 @@ test('recovery bindings start behind the decision fence and retain all seven can
 test('an already writing request may start another reserved destination',async()=>{
   const f=fixture({state:'WRITING'});assert.equal((await beginFencedTarget(f.pool,input)).status,'write_started');
   assert.equal(f.calls.some(x=>x.sql?.startsWith('UPDATE')),false);
+});
+test('historical current revisions can finish without becoming safe to reopen',async()=>{
+ const f=fixture({state:'HISTORICAL_UNRECONCILED'});assert.equal((await beginFencedTarget(f.pool,input)).status,'write_started');assert.equal(f.state,'HISTORICAL_WRITING');
+ const stale=fixture({state:'HISTORICAL_WRITING',packageState:'OPEN'});assert.equal((await beginFencedTarget(stale.pool,input)).status,'WRITE_NOT_PERMITTED');
 });
 test('unreserved and repeated targets roll back instead of granting a write',async()=>{
   for(const options of [{reserved:false},{duplicate:true}]){
