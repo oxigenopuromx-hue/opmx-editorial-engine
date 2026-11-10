@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {validateTelegramDownload} from './intake.mjs';
 
-export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:100});
+export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:1000});
 // An explicitly reopened package can accept additional information while
 // retaining every original. The final slot is reserved for the attested /listo.
 export const RECOVERY_ITEM_LIMIT=40;
@@ -240,7 +240,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         const [items]=await c.execute('SELECT * FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=?',[input.itemId,input.packageId,ownerKey]);
         if(!items.length)return await finish({status:'NOT_FOUND'});const item=items[0];
         if(action==='discard') {
-          if(lease&&item.state==='DISCARDED')return await finish({status:'DISCARDED_REPLAY',itemId:input.itemId});
+          if(item.state==='DISCARDED')return await finish({status:'DISCARDED_REPLAY',itemId:input.itemId});
           if(lease&&item.state==='STORED'){
             // Preserve originals and their byte reservations for audit. The
             // existing quota counts retained blobs, even when not selected.
@@ -253,9 +253,17 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
             return await finish({status:'DISCARDED',itemId:input.itemId});
           }
           if(item.state!=='PENDING')return await finish({status:'NOT_PENDING'});
-          await c.execute("UPDATE opmx_tg_items_v1 SET state='DISCARDED',reserved_bytes=0 WHERE item_id=?",[input.itemId]);
-          await c.execute('UPDATE opmx_tg_packages_v1 SET used_bytes=used_bytes-?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[item.reserved_bytes,input.packageId]);
-          await c.execute('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes-? WHERE id=1',[item.reserved_bytes]);
+          // A pending file has no committed original. Release its slot and
+          // reservation together, retaining its row and receipt for audit.
+          // Conditional updates plus the transaction make retries idempotent.
+          const reserved=Number(item.reserved_bytes);
+          if(!Number.isSafeInteger(reserved)||reserved<0||Number(pack.item_count)<1||Number(pack.used_bytes)<reserved||Number(quota[0].used_bytes)<reserved)throw Error('DISCARD_ACCOUNTING_CONFLICT');
+          const [discarded]=await c.execute("UPDATE opmx_tg_items_v1 SET state='DISCARDED',reserved_bytes=0 WHERE item_id=? AND package_id=? AND state='PENDING'",[input.itemId,input.packageId]);
+          if(discarded.affectedRows!==1)throw Error('DISCARD_ACCOUNTING_CONFLICT');
+          const [released]=await c.execute('UPDATE opmx_tg_packages_v1 SET item_count=item_count-1,used_bytes=used_bytes-?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND item_count>0 AND used_bytes>=?',[reserved,input.packageId,reserved]);
+          if(released.affectedRows!==1)throw Error('DISCARD_ACCOUNTING_CONFLICT');
+          const [quotaReleased]=await c.execute('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes-? WHERE id=1 AND used_bytes>=?',[reserved,reserved]);
+          if(quotaReleased.affectedRows!==1)throw Error('DISCARD_ACCOUNTING_CONFLICT');
           return await finish({status:'DISCARDED',itemId:input.itemId});
         }
         if(action==='complete') {
