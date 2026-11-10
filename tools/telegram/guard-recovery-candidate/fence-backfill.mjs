@@ -7,8 +7,8 @@ const valid=(id,revision)=>/^tg_[a-f0-9]{40}$/.test(id??'')&&Number.isSafeIntege
 // lock used by the package store. This records identities, not a proof of
 // safety or termination. Existing fences and claims are never reset.
 // All schema DDL must be installed separately before this transaction.
-export async function backfillHistoricalFences(pool){
- if(!pool?.getConnection)throw Error('FENCE_BACKFILL_CONFIGURATION_INVALID');
+export async function backfillHistoricalFences(pool,{onlyRequestId=null}={}){
+ if(!pool?.getConnection||(onlyRequestId!==null&&!/^tg_[a-f0-9]{64}$/.test(onlyRequestId)))throw Error('FENCE_BACKFILL_CONFIGURATION_INVALID');
  const c=await pool.getConnection();let done=false;
  try{
   await c.beginTransaction();
@@ -23,8 +23,11 @@ export async function backfillHistoricalFences(pool){
    if(prior&&prior!==row.event_id)throw Error('HISTORICAL_EVENT_CONFLICT');
    revisions.set(key,row.event_id);
   }
+  let processed=0;
   for(const [key] of revisions){
    const sep=key.lastIndexOf(':'),id=key.slice(0,sep),revision=Number(key.slice(sep+1));
+   if(onlyRequestId&&!labels.some(destination=>expectedDraftRequestId({packageId:id,revision,destination})===onlyRequestId))continue;
+   processed++;
    // Historical state is UNKNOWN, not READY_TO_WRITE or SAFE_TO_REOPEN.
    // A separate, authoritative reconciliation must classify each revision.
    await c.execute("INSERT IGNORE INTO opmx_tg_publication_fence_v1 (package_id,revision,state,updated_at) VALUES (?,?,'HISTORICAL_UNRECONCILED',UTC_TIMESTAMP(6))",[id,revision]);
@@ -38,6 +41,6 @@ export async function backfillHistoricalFences(pool){
     if(bindings.length!==1||bindings[0].package_id!==id||Number(bindings[0].revision)!==revision)throw Error('HISTORICAL_BINDING_CONFLICT');
    }
   }
-  await c.commit();done=true;return {status:'HISTORICAL_BINDINGS_RECORDED',revisions:revisions.size,recoveryEnabled:false};
+  await c.commit();done=true;return {status:'HISTORICAL_BINDINGS_RECORDED',revisions:processed,recoveryEnabled:false};
  }catch(error){if(!done)try{await c.rollback()}catch{}throw error}finally{c.release()}
 }
