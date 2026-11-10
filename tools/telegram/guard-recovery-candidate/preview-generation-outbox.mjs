@@ -11,6 +11,7 @@ export const previewGenerationSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_preview
  actor_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  destination VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  receipt_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ receipt_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  state VARCHAR(16) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
  claim_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
  created_at DATETIME(6) NOT NULL, updated_at DATETIME(6) NOT NULL,
@@ -34,10 +35,10 @@ export async function enqueuePreviewGeneration(c,input){
  const {packageId,revision,baseRevision,ownerKey,actorKey,destination,receiptId}=input;
  const jobId=hash(JSON.stringify(['opmx-preview-v1',packageId,revision,baseRevision,ownerKey,actorKey,destination]));
  const receiptHash=hash(receiptId);
- const [insert]=await c.execute("INSERT IGNORE INTO opmx_tg_preview_generation_v1 (job_id,package_id,revision,base_revision,owner_key,actor_key,destination,receipt_hash,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,'PENDING',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",[jobId,packageId,revision,baseRevision,ownerKey,actorKey,destination,receiptHash]);
- const [rows]=await c.execute('SELECT job_id,package_id,revision,base_revision,owner_key,actor_key,destination,state FROM opmx_tg_preview_generation_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+ const [insert]=await c.execute("INSERT IGNORE INTO opmx_tg_preview_generation_v1 (job_id,package_id,revision,base_revision,owner_key,actor_key,destination,receipt_hash,receipt_id,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,'PENDING',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",[jobId,packageId,revision,baseRevision,ownerKey,actorKey,destination,receiptHash,receiptId]);
+ const [rows]=await c.execute('SELECT job_id,package_id,revision,base_revision,owner_key,actor_key,destination,receipt_hash,receipt_id,state FROM opmx_tg_preview_generation_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
  const row=rows[0];
- if(rows.length!==1||row.job_id!==jobId||row.package_id!==packageId||Number(row.revision)!==revision||Number(row.base_revision)!==baseRevision||row.owner_key!==ownerKey||row.actor_key!==actorKey||row.destination!==destination||!['PENDING','DISPATCHING','DISPATCHED'].includes(row.state))throw Error('PREVIEW_GENERATION_CONFLICT');
+ if(rows.length!==1||row.job_id!==jobId||row.package_id!==packageId||Number(row.revision)!==revision||Number(row.base_revision)!==baseRevision||row.owner_key!==ownerKey||row.actor_key!==actorKey||row.destination!==destination||!hex.test(row.receipt_hash??'')||hash(row.receipt_id??'')!==row.receipt_hash||!['PENDING','DISPATCHING','DISPATCHED'].includes(row.state))throw Error('PREVIEW_GENERATION_CONFLICT');
  return {status:insert.affectedRows===1?'PREVIEW_QUEUED':'PREVIEW_ALREADY_QUEUED',jobId};
 }
 
