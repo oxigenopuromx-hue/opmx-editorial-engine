@@ -1,0 +1,11 @@
+--- a/tools/telegram/package-store.mjs
++++ b/tools/telegram/package-store.mjs
+@@ -1,7 +1,7 @@
+ import {createHash} from 'node:crypto';
+ import {validateTelegramDownload} from './intake.mjs';
+ 
+-export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:100});
++export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:1000});
+ const digest = value => createHash('sha256').update(value).digest('hex');
+ const bad = () => {throw new Error('Solicitud inválida');};
+ const exact = (value, keys) => {
