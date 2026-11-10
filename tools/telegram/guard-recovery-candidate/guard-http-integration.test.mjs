@@ -164,3 +164,11 @@ test('preview payload staging route is opt-in, authenticated and fails closed',a
   const r=await post(port,'/v1/telegram/previews/payload',input);assert.equal(r.status,409);assert.equal(r.body.status,'SELECTION_UNCONFIRMED');assert.equal(calls,1)
  });
 });
+test('preview context route remains absent by default and requires the guard bearer',async()=>{
+ const body={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:9};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/previews/context',body)).status,404));
+ await withServer({telegramPreviewPayloads:{async stage(){throw Error('unused')},async context(input){calls++;assert.deepEqual(input,body);return {status:'PREVIEW_CONTEXT'}}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/previews/context',body,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  assert.equal((await post(port,'/v1/telegram/previews/context',body)).status,200);assert.equal(calls,1);
+ });
+});
