@@ -29,3 +29,10 @@ test('candidate reader passes only complete, attributable recovery decisions',as
  result.recoveredPolicy={mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND',destination:'OPURO,LIBERAL',control_item_ids:[itemId]};
  result.recoveredPolicy.control_item_ids=['ti_'+'c'.repeat(40)];assert.equal(read().status,'SOURCE_NOT_CONFIRMED');
 });
+test('preview event is separately catalogued and routed without enabling publication',()=>{
+ function invoke(message){const input={first:()=>({json:{identity:{owner:'123',chat:'123'},envelope:{body:{jsonrpc:'2.0',id:7,...message}}}})};return new Function('$input',protocol)(input)[0].json}
+ const catalog=invoke({method:'events/list',params:{}}).response.result.events,ready=catalog.find(e=>e.name==='opmx.package.ready'),preview=catalog.find(e=>e.name==='opmx.package.preview');
+ assert.deepEqual(ready.payloadSchema.properties.state.enum,['READY']);assert.deepEqual(preview.payloadSchema.properties.state.enum,['OPEN']);
+ const params={name:'opmx.package.preview',arguments:{queue_id:'telegram-editorial'},delivery:{mode:'webhook',url:'https://chatgpt.com/callback',secret:'whsec_example'}};
+ const route=invoke({method:'events/subscribe',params});assert.equal(route.route,'telegram-events');assert.equal(route.request.body.params.name,'opmx.package.preview');
+});
