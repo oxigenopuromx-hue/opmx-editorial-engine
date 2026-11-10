@@ -22,6 +22,15 @@ test('the executor is unavailable without both the one-use claim and server-owne
  assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{wordpress:{read:async()=>null}}}),/UPDATE_EXECUTOR_INCOMPLETE/);
  const w=createRecoveryWiring({...options,updateProviders,updateExecution:{wordpress:{read:async()=>null,update:async()=>null}}});assert.equal(typeof w.telegramUpdateExecutor.execute,'function');assert.equal(typeof w.telegramUpdatePayloads.stage,'function');
 });
+test('the pinned CMS transport is opt-in and cannot bypass the existing update providers',()=>{
+ const credentials={OPURO:'Basic dXNlcjpwYXNz',OPOL:'Basic b3BvbDpwYXNz',LIBERAL:'Basic bGliZXJhbDpwYXNz'};
+ const updateProviders={verifyPayload:async()=>null,verifyCmsPreflight:async()=>null,verifyUpdateReadiness:async()=>false,verifyUpdateEnforcement:async()=>false};
+ assert.throws(()=>createRecoveryWiring({...options,updateExecution:{credentials}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{credentials:{OPURO:credentials.OPURO}}}),/CMS_TRANSPORT_CONFIGURATION_INVALID/);
+ assert.throws(()=>createRecoveryWiring({...options,updateProviders,updateExecution:{credentials,host:'https://evil.example'}}),/UPDATE_EXECUTOR_INCOMPLETE/);
+ const w=createRecoveryWiring({...options,updateProviders,updateExecution:{credentials}});
+ assert.equal(typeof w.telegramUpdateExecutor.execute,'function');
+});
 test('update claims remain absent unless all server-owned providers exist',()=>{
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);
  assert.throws(()=>createRecoveryWiring({...options,updateProviders:{pool,loadVerifiedDecision:async()=>null,loadVerifiedPayloadEvidence:async()=>null}}),/UPDATE_CLAIM_CONFIGURATION_INCOMPLETE/);

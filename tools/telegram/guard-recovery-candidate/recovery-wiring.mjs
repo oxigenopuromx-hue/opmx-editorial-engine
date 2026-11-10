@@ -9,6 +9,7 @@ import {createUpdateExecutor,createVerifiedUpdateDecisionLoader} from './update-
 import {createUpdatePayloadStore} from './update-payload-store.mjs';
 import {verifyConfirmedUpdatePayload} from './confirmed-payload-verifier.mjs';
 import {createPreviewPayloadStore} from './preview-payload-store.mjs';
+import {createWordPressTransport} from './wordpress-transport.mjs';
 
 // Explicit integration seam for the existing guard and outbox. It does not
 // start a server, migrate tables, subscribe, or provide any proof by itself.
@@ -32,8 +33,15 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   return enforcement&&Object.keys(confirmed).every(k=>enforcement[k]===confirmed[k])?confirmed:null;
  },verifyCmsPreflight:updateProviders.verifyCmsPreflight});
  const telegramUpdateClaims=payloadStore===null?null:createUpdateClaimStore({pool,loadVerifiedDecision:readVerifiedUpdateDecisionInTransaction,loadVerifiedPayloadEvidence:payloadStore.verifyClaim});
- if(updateExecution!==null&&(!telegramUpdateClaims||!updateExecution||typeof updateExecution!=='object'||Array.isArray(updateExecution)||Object.keys(updateExecution).sort().join(',')!=='wordpress'||typeof updateExecution.wordpress?.read!=='function'||typeof updateExecution.wordpress?.update!=='function'))throw Error('UPDATE_EXECUTOR_INCOMPLETE');
- const telegramUpdateExecutor=updateExecution===null?null:createUpdateExecutor({loadDecision:createVerifiedUpdateDecisionLoader(pool),loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress:updateExecution.wordpress});
+ let wordpress=null;
+ if(updateExecution!==null){
+  if(!telegramUpdateClaims||!updateExecution||typeof updateExecution!=='object'||Array.isArray(updateExecution))throw Error('UPDATE_EXECUTOR_INCOMPLETE');
+  const keys=Object.keys(updateExecution).sort().join(',');
+  if(keys==='wordpress'&&typeof updateExecution.wordpress?.read==='function'&&typeof updateExecution.wordpress?.update==='function')wordpress=updateExecution.wordpress;
+  else if(keys==='credentials')wordpress=createWordPressTransport({credentials:updateExecution.credentials});
+  else throw Error('UPDATE_EXECUTOR_INCOMPLETE');
+ }
+ const telegramUpdateExecutor=wordpress===null?null:createUpdateExecutor({loadDecision:createVerifiedUpdateDecisionLoader(pool),loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress});
  return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stage}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}
