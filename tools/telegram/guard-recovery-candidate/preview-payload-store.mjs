@@ -21,8 +21,9 @@ const identity=x=>typeof x==='string'&&/^[1-9][0-9]{0,15}$/.test(x);
 // Caller must be the existing authenticated receiver or Motor. The request
 // proposes bytes only; selection, ownership, lease and revision are loaded
 // under lock. The later confirmation authorizes exactly the delivered preview.
-export function createPreviewPayloadStore({pool,readSelection=readCorrectionSelectionInTransaction}){
- if(!pool?.getConnection||typeof readSelection!=='function')throw Error('PREVIEW_PAYLOAD_CONFIGURATION_INCOMPLETE');
+export function createPreviewPayloadStore({pool,readSelection=readCorrectionSelectionInTransaction,adminUserIds=[]}){
+ if(!pool?.getConnection||typeof readSelection!=='function'||!Array.isArray(adminUserIds)||adminUserIds.some(x=>!identity(x)))throw Error('PREVIEW_PAYLOAD_CONFIGURATION_INCOMPLETE');
+ const admins=new Set(adminUserIds);
  async function stage(input){
   if(!input||Object.keys(input).sort().join(',')!=='chat,destination,owner,packageId,payload,revision'||!identity(input.owner)||input.owner!==input.chat||!validId(input.packageId)||!Number.isSafeInteger(input.revision)||input.revision<2||input.revision>=4294967295||!['OPURO','OPOL','LIBERAL'].includes(input.destination)||!validUpdatePayload(input.payload))throw Error('INVALID_PREVIEW_PAYLOAD');
   const encoded=canonicalUpdateValue(input.payload);if(encoded.length>12000)throw Error('PREVIEW_PAYLOAD_TOO_LARGE');
@@ -54,5 +55,20 @@ export function createPreviewPayloadStore({pool,readSelection=readCorrectionSele
   if(canonicalUpdateValue(finalPayloads).length>16384)return null;
   return {...scope,finalPayloads};
  }
- return {stage,read};
+ // The existing Motor resolves the original owner's identity from routing.
+ // A reopened package can instead be edited by an administrator. Resolve the
+ // actual editor only from the guard's persisted lease, then stage() re-locks
+ // and checks that same lease/session/revision before writing the proposal.
+ async function stageFromMotor(input){
+  if(!input||Object.keys(input).sort().join(',')!=='chat,destination,owner,packageId,payload,revision'||!identity(input.owner)||input.owner!==input.chat||!validId(input.packageId)||!Number.isSafeInteger(input.revision)||input.revision<2||input.revision>=4294967295)return {status:'NOT_AVAILABLE'};
+  const ownerKey=digest(`opmx:telegram:v1:${input.owner}:${input.chat}`),c=await pool.getConnection();let rows;
+  try{[rows]=await c.execute("SELECT p.owner_key,p.state,p.revision,l.actor_key,l.owner_key AS lease_owner,l.receipt_id FROM opmx_tg_packages_v1 p JOIN opmx_tg_recovery_leases_v1 l ON l.package_id=p.package_id WHERE p.package_id=?",[input.packageId])}finally{c.release()}
+  if(rows.length!==1||rows[0].state!=='OPEN'||Number(rows[0].revision)!==input.revision||rows[0].owner_key!==ownerKey||rows[0].lease_owner!==ownerKey)return {status:'NOT_AVAILABLE'};
+  const receipt=/^telegram-([1-9][0-9]{0,15})-[0-9]{1,16}-[0-9]{1,16}$/.exec(rows[0].receipt_id??'');
+  if(!receipt)return {status:'NOT_AVAILABLE'};
+  const editor=receipt[1],actor=digest(`opmx:telegram:v1:${editor}:${editor}`);
+  if(rows[0].actor_key!==actor||(editor!==input.owner&&!admins.has(editor)))return {status:'NOT_AVAILABLE'};
+  return stage({...input,owner:editor,chat:editor});
+ }
+ return {stage,stageFromMotor,read};
 }
