@@ -9,6 +9,7 @@ import {createUpdateExecutor,createVerifiedUpdateDecisionLoader} from './update-
 import {createUpdatePayloadStore} from './update-payload-store.mjs';
 import {verifyConfirmedUpdatePayload} from './confirmed-payload-verifier.mjs';
 import {createPreviewPayloadStore} from './preview-payload-store.mjs';
+import {createPreviewMaterializer} from './preview-materializer.mjs';
 import {createWordPressTransport} from './wordpress-transport.mjs';
 import {createHash} from 'node:crypto';
 
@@ -43,6 +44,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
  const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds}):null;
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
+ const telegramPreviewMaterializer=previewPayloads?createPreviewMaterializer({pool,preview:corrections.preview,adminUserIds}):null;
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
@@ -64,6 +66,6 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   if(!decision||(decision.actorKey!==actorKey&&decision.ownerKey!==actorKey)||decision.previewHash!==scope.previewHash)return {status:'UPDATE_NOT_READY',retryPermitted:false};
   return executor.execute(scope);
  }};
- return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stageFromMotor,context:previewPayloads.contextFromMotor}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
+ return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewMaterializer,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stageFromMotor,context:previewPayloads.contextFromMotor}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}
