@@ -1,0 +1,7 @@
+# Continuidad del incidente #18 — 10 de noviembre de 2026
+
+El usuario confirmó que `/nuevo` volvió a funcionar después del despliegue de la ampliación de cuota del incidente #22. El Guard activo se actualizó con un límite de 1000 paquetes; el resto de límites de bytes no cambió. La recuperación candidata debe conservar ese límite al integrarse.
+
+En `guard-recovery-candidate/package-store.mjs`, la cancelación de una reserva PENDING conserva la fila y el recibo para auditoría y libera de forma transaccional la reserva de bytes y un lugar de elementos. Una repetición de un descarte devuelve DISCARDED_REPLAY. El código comprueba contadores antes de disminuirlos y revierte ante conflicto. Este cambio sólo aplica a nuevas operaciones de descarte; no recalcula los contadores históricos de filas previamente descartadas. No elimina originales STORED ni crea eventos.
+
+El cambio es candidato y no está desplegado. Por instrucción del usuario no se realizaron pruebas ni verificaciones adicionales para esta integración. La reapertura y edición completas siguen sin habilitarse: faltan conectar la evidencia autoritativa de fin del intento, la cobertura de todos los escritores, el productor real de vistas previas y las credenciales al guard existente, además de conectar el receptor y Motor existentes. Se mantienen las barreras que impiden duplicar o editar sin autorización. No asumir que los comandos de recuperación ya funcionan en producción.
