@@ -41,7 +41,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   return {...input,authenticatedCmsPreflight:true};
  }:null);
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
- const previewPayloads=updateProviders?createPreviewPayloadStore({pool}):null;
+ const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds}):null;
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction});
  // Ordinary sealing initializes the outbox before opening its transaction.
@@ -64,6 +64,6 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   if(!decision||(decision.actorKey!==actorKey&&decision.ownerKey!==actorKey)||decision.previewHash!==scope.previewHash)return {status:'UPDATE_NOT_READY',retryPermitted:false};
   return executor.execute(scope);
  }};
- return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stage}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
+ return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stageFromMotor}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}
