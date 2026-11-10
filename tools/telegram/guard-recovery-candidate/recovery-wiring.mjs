@@ -10,6 +10,7 @@ import {createUpdatePayloadStore} from './update-payload-store.mjs';
 import {verifyConfirmedUpdatePayload} from './confirmed-payload-verifier.mjs';
 import {createPreviewPayloadStore} from './preview-payload-store.mjs';
 import {createWordPressTransport} from './wordpress-transport.mjs';
+import {createHash} from 'node:crypto';
 
 // Explicit integration seam for the existing guard and outbox. It does not
 // start a server, migrate tables, subscribe, or provide any proof by itself.
@@ -53,7 +54,16 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   return enforcement&&Object.keys(confirmed).every(k=>enforcement[k]===confirmed[k])?confirmed:null;
  },verifyCmsPreflight});
  const telegramUpdateClaims=payloadStore===null?null:createUpdateClaimStore({pool,loadVerifiedDecision:readVerifiedUpdateDecisionInTransaction,loadVerifiedPayloadEvidence:payloadStore.verifyClaim});
- const telegramUpdateExecutor=wordpress===null?null:createUpdateExecutor({loadDecision:createVerifiedUpdateDecisionLoader(pool),loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress});
+ const loadUpdateDecision=createVerifiedUpdateDecisionLoader(pool);
+ const executor=wordpress===null?null:createUpdateExecutor({loadDecision:loadUpdateDecision,loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress});
+ const telegramUpdateExecutor=executor===null?null:{async execute(input){
+  if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='chat,destination,owner,packageId,previewHash,revision'||typeof input.owner!=='string'||input.owner!==input.chat||!/^[1-9][0-9]{0,15}$/.test(input.owner))return {status:'UPDATE_NOT_READY',retryPermitted:false};
+  const scope={packageId:input.packageId,revision:input.revision,destination:input.destination,previewHash:input.previewHash};
+  const actorKey=createHash('sha256').update(`opmx:telegram:v1:${input.owner}:${input.chat}`).digest('hex');
+  let decision;try{decision=await loadUpdateDecision({packageId:scope.packageId,revision:scope.revision})}catch{return {status:'UPDATE_NOT_READY',retryPermitted:false}}
+  if(!decision||(decision.actorKey!==actorKey&&decision.ownerKey!==actorKey)||decision.previewHash!==scope.previewHash)return {status:'UPDATE_NOT_READY',retryPermitted:false};
+  return executor.execute(scope);
+ }};
  return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stage}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}

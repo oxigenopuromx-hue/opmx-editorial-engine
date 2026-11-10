@@ -32,9 +32,16 @@ export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
  const result={mode:p.mode,authorized:true,explicit:p.explicit,authorization:p.authorization,destination:p.destination,control_item_ids:[...p.control_item_ids]};
  if(Object.hasOwn(inventory,'confirmed_correction')){
   const c=inventory.confirmed_correction;
-  if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||c.action!=='CREATE'||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();
+  if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||!['CREATE','UPDATE'].includes(c.action)||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();
   try{if(destinationLabel(resolveDestinations(c.destination))!==c.destination)fail()}catch{fail()}
   result.destination=c.destination;result.content_mode=c.content_mode;result.confirmed_preview_hash=c.preview_hash;
+  if(c.action==='UPDATE'){
+   const destinations=resolveDestinations(c.destination);
+   if(!Array.isArray(c.posts)||c.posts.length!==destinations.length||c.posts.some((post,i)=>!post||Object.keys(post).sort().join(',')!=='destination,post_id'||post.destination!==destinations[i]||!Number.isSafeInteger(post.post_id)||post.post_id<1))fail();
+   // The legacy Motor only accepts PUBLISH or DRAFT. A separate UPDATE mode
+   // must never fall through the creation or publication path.
+   result.mode='UPDATE';result.action='UPDATE';result.posts=c.posts.map(post=>({destination:post.destination,post_id:post.post_id}));
+  }
  }
  return result;
 }
