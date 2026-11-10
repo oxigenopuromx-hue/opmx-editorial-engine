@@ -3,6 +3,7 @@ import {canonicalUpdateValue} from './canonical-json.mjs';
 import {validUpdatePayload} from './update-executor.mjs';
 import {resolveDestinations} from './original-destinations.mjs';
 import {readCorrectionSelectionInTransaction} from './correction-selection-store.mjs';
+import {readVerifiedUpdatePosts} from './verified-update-posts.mjs';
 
 // Explicit migration only. This is a proposal for a preview, never authority
 // to update WordPress. Contents are immutable for the current revision.
@@ -21,8 +22,8 @@ const identity=x=>typeof x==='string'&&/^[1-9][0-9]{0,15}$/.test(x);
 // Caller must be the existing authenticated receiver or Motor. The request
 // proposes bytes only; selection, ownership, lease and revision are loaded
 // under lock. The later confirmation authorizes exactly the delivered preview.
-export function createPreviewPayloadStore({pool,readSelection=readCorrectionSelectionInTransaction,adminUserIds=[]}){
- if(!pool?.getConnection||typeof readSelection!=='function'||!Array.isArray(adminUserIds)||adminUserIds.some(x=>!identity(x)))throw Error('PREVIEW_PAYLOAD_CONFIGURATION_INCOMPLETE');
+export function createPreviewPayloadStore({pool,readSelection=readCorrectionSelectionInTransaction,readPosts=readVerifiedUpdatePosts,adminUserIds=[]}){
+ if(!pool?.getConnection||typeof readSelection!=='function'||typeof readPosts!=='function'||!Array.isArray(adminUserIds)||adminUserIds.some(x=>!identity(x)))throw Error('PREVIEW_PAYLOAD_CONFIGURATION_INCOMPLETE');
  const admins=new Set(adminUserIds);
  async function stage(input){
   if(!input||Object.keys(input).sort().join(',')!=='chat,destination,owner,packageId,payload,revision'||!identity(input.owner)||input.owner!==input.chat||!validId(input.packageId)||!Number.isSafeInteger(input.revision)||input.revision<2||input.revision>=4294967295||!['OPURO','OPOL','LIBERAL'].includes(input.destination)||!validUpdatePayload(input.payload))throw Error('INVALID_PREVIEW_PAYLOAD');
@@ -70,5 +71,26 @@ export function createPreviewPayloadStore({pool,readSelection=readCorrectionSele
   if(rows[0].actor_key!==actor||(editor!==input.owner&&!admins.has(editor)))return {status:'NOT_AVAILABLE'};
   return stage({...input,owner:editor,chat:editor});
  }
- return {stage,stageFromMotor,read};
+ // Resolve the OPEN event only against server-owned job, lease, selection and
+ // verified existing IDs. The Motor cannot provide an editor or target ID.
+ async function contextFromMotor(input){
+  if(!input||Object.keys(input).sort().join(',')!=='chat,owner,packageId,revision'||!identity(input.owner)||input.owner!==input.chat||!validId(input.packageId)||!Number.isSafeInteger(input.revision)||input.revision<2||input.revision>=4294967295)return {status:'NOT_AVAILABLE'};
+  const ownerKey=digest(`opmx:telegram:v1:${input.owner}:${input.chat}`),c=await pool.getConnection();let done=false;
+  try{await c.beginTransaction();
+   const [quota]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(quota.length!==1)throw Error('QUOTA_MISSING');
+   const [packs]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
+   const [leases]=await c.execute('SELECT owner_key,actor_key,opening_revision,receipt_id FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
+   const [jobs]=await c.execute('SELECT owner_key,actor_key,base_revision,destination,state FROM opmx_tg_preview_generation_v1 WHERE package_id=? AND revision=? FOR UPDATE',[input.packageId,input.revision]);
+   const l=leases[0],j=jobs[0],receipt=/^telegram-([1-9][0-9]{0,15})-[0-9]{1,16}-[0-9]{1,16}$/.exec(l?.receipt_id??''),editor=receipt?.[1],actorKey=editor?digest(`opmx:telegram:v1:${editor}:${editor}`):null;
+   if(packs.length!==1||packs[0].owner_key!==ownerKey||packs[0].state!=='OPEN'||Number(packs[0].revision)!==input.revision||leases.length!==1||l.owner_key!==ownerKey||l.actor_key!==actorKey||(editor!==input.owner&&!admins.has(editor))||jobs.length!==1||j.owner_key!==ownerKey||j.actor_key!==actorKey||!['DISPATCHING','DISPATCHED'].includes(j.state)||Number(l.opening_revision)-1!==Number(j.base_revision)){await c.commit();done=true;return {status:'NOT_AVAILABLE'}}
+   const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[actorKey]);
+   const scope={packageId:input.packageId,revision:input.revision,ownerKey,actorKey},selection=await readSelection(c,scope);
+   if(sessions.length!==1||sessions[0].package_id!==input.packageId||!selection||selection.packageId!==input.packageId||selection.revision!==input.revision||selection.ownerKey!==ownerKey||selection.action!=='UPDATE'||!['LITERAL','EDITORIAL'].includes(selection.mode)||selection.destination!==j.destination){await c.commit();done=true;return {status:'NOT_AVAILABLE'}}
+   const baseRevision=Number(j.base_revision),evidence=await readPosts(c,{...scope,baseRevision,destination:j.destination});
+   let destinations;try{destinations=resolveDestinations(j.destination)}catch{destinations=[]}
+   if(!evidence||evidence.packageId!==scope.packageId||evidence.revision!==scope.revision||evidence.baseRevision!==baseRevision||evidence.ownerKey!==ownerKey||evidence.actorKey!==actorKey||evidence.destination!==j.destination||evidence.verified!==true||!evidence.posts||Object.keys(evidence.posts).length!==destinations.length||!destinations.length||destinations.some(d=>!Object.hasOwn(evidence.posts,d)||!Number.isSafeInteger(evidence.posts[d])||evidence.posts[d]<1)){await c.commit();done=true;return {status:'NOT_AVAILABLE'}}
+   await c.commit();done=true;return {status:'PREVIEW_CONTEXT',packageId:input.packageId,revision:input.revision,mode:selection.mode,destination:j.destination,posts:destinations.map(destination=>({destination,postId:evidence.posts[destination]})),publicationAuthorized:false};
+  }catch(error){if(!done)try{await c.rollback()}catch{}throw error}finally{c.release()}
+ }
+ return {stage,stageFromMotor,contextFromMotor,read};
 }
