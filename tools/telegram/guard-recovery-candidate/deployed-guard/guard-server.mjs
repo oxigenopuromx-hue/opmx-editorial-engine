@@ -32,17 +32,18 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
     const selectionAction=telegramSelections&&req.url==='/v1/telegram/corrections/select';
     const deliveryAction=telegramPreviewDelivery&&/^\/v1\/telegram\/previews\/delivery\/(initialize|claim|report)$/.exec(req.url)?.[1];
     const previewPayloadAction=telegramPreviewPayloads&&req.url==='/v1/telegram/previews/payload';
+    const previewContextAction=telegramPreviewPayloads&&typeof telegramPreviewPayloads.context==='function'&&req.url==='/v1/telegram/previews/context';
     const publicationAction=telegramPublicationBegin&&req.url==='/v1/telegram/publications/begin';
     const updateAction=telegramUpdateClaims&&req.url==='/v1/telegram/updates/begin';
     const updateExecute=telegramUpdateExecutor&&req.url==='/v1/telegram/updates/execute';
     const updatePayload=telegramUpdatePayloads&&req.url==='/v1/telegram/updates/payload';
     const eventAction=telegramEvents&&/^\/v1\/telegram\/events\/(subscribe|unsubscribe|status|emit)$/.exec(req.url)?.[1];
     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||(!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||publicationAction||updateAction||updateExecute||updatePayload) {
+      if(telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||previewContextAction||publicationAction||updateAction||updateExecute||updatePayload) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
@@ -52,6 +53,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,telegram
         if(correctionAction)return end(200,await telegramCorrections[correctionAction](input));
         if(selectionAction)return end(200,await telegramSelections.select(input));
         if(deliveryAction)return end(200,await telegramPreviewDelivery[deliveryAction](input));
+        if(previewContextAction){const r=await telegramPreviewPayloads.context(input);return end(r.status==='PREVIEW_CONTEXT'?200:409,r)}
         if(previewPayloadAction){const r=await telegramPreviewPayloads.stage(input);return end(['PREVIEW_PAYLOAD_STAGED','PREVIEW_PAYLOAD_REPLAY'].includes(r.status)?200:409,r)}
         if(publicationAction){const r=await telegramPublicationBegin(pool,input);return end(r.status==='PUBLICATION_STARTED'?200:409,r)}
         if(updateAction){const r=await telegramUpdateClaims.begin(input);return end(r.status==='UPDATE_STARTED'?200:409,r)}
