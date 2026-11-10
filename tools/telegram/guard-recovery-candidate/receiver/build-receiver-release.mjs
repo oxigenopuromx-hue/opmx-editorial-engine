@@ -3,8 +3,8 @@ import {buildPreviewOperations} from './build-preview-operations.mjs';
 // Prepare operations for the one existing receiver; no operation is applied
 // here. The version check is not an n8n compare-and-swap: re-read immediately
 // before applying and do not apply if another edit may have intervened.
-export function buildReceiverRelease({workflow,scripts,guardCredential,telegramCredential}){
- if(!workflow||workflow.id!=='OSi8AcnzLlI0csRu'||workflow.active!==true||workflow.versionId!=='45bebad0-f9e8-45e0-915e-afe5de7a1ea2'||workflow.activeVersionId!==workflow.versionId||!Array.isArray(workflow.nodes)||!workflow.connections)throw Error('RECEIVER_VERSION_CHANGED');
+export function buildReceiverRelease({workflow,scripts,guardCredential,telegramCredential,expectedVersion='69c2a2c7-3fc0-4221-99a3-3eeaba784c1c'}){
+ if(!workflow||workflow.id!=='OSi8AcnzLlI0csRu'||workflow.active!==true||workflow.versionId!==expectedVersion||workflow.activeVersionId!==workflow.versionId||!Array.isArray(workflow.nodes)||!workflow.connections)throw Error('RECEIVER_VERSION_CHANGED');
  const byName=new Map(workflow.nodes.map(x=>[x.name,x]));if(byName.size!==workflow.nodes.length)throw Error('RECEIVER_GRAPH_CHANGED');
  const codeNodes={normalize:'Normalizar entrada Telegram',prepare:'Preparar paquete Telegram',resolve:'Resolver paquete Telegram',seal:'Preparar sellado con cierre acreditado',confirm:'Confirmar operación de paquete Telegram'};
  for(const [key,name] of Object.entries(codeNodes))if(typeof scripts?.[key]!=='string'||!scripts[key].trim()||byName.get(name)?.type!=='n8n-nodes-base.code')throw Error('RECEIVER_GRAPH_CHANGED');
