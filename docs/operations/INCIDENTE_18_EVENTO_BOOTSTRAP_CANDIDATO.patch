@@ -1,0 +1,22 @@
+--- a/tools/mcp-publisher/guard-start.mjs
++++ b/tools/mcp-publisher/guard-start.mjs
+@@ -2,6 +2,8 @@
+ import {createGuard} from './guard-server.mjs';
+ import {createTelegramPackageStore} from '../telegram/package-store.mjs';
+ import {createMcpEventStore} from '../telegram/event-store.mjs';
++import * as eventDelivery from '../telegram/event-delivery.mjs';
++import {preparePreviewIntegration} from '../telegram/guard-recovery-candidate/preview-integration.mjs';
+ import {createTelegramReviewStore} from '../telegram/review-store.mjs';
+ 
+ // In Hostinger this must be a local DB socket/host on the same hosting account.
+@@ -10,7 +12,9 @@
+ const pool=mysql.createPool({host:'127.0.0.1',port:3306,user:OPMX_DB_USER,password:OPMX_DB_PASSWORD,database:OPMX_DB_NAME,connectionLimit:4,connectTimeout:5000});
+ let sharedOperators=null;
+ if(OPMX_TELEGRAM_SHARED_OPERATORS){try{sharedOperators=JSON.parse(OPMX_TELEGRAM_SHARED_OPERATORS);}catch{throw new Error('Invalid shared event configuration');}}
+-const telegramEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
++const readyEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
++// Bootstrap only: accept a preview subscription but do not dispatch any jobs.
++const {telegramEvents}=await preparePreviewIntegration({pool,guardSecret:OPMX_GUARD_SECRET,readyEvents,delivery:eventDelivery,logger:console.error,sharedOperators});
+ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,telegramStore:createTelegramPackageStore(pool,{events:telegramEvents}),telegramEvents,telegramReviews:createTelegramReviewStore(pool)});
+ server.requestTimeout=60000;server.headersTimeout=10000;
+ server.listen(Number(PORT)||3000,'0.0.0.0');
