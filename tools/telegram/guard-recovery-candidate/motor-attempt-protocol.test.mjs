@@ -4,7 +4,7 @@ const package_id='tg_'+'a'.repeat(40),event_id='evt_'+'b'.repeat(48),attempt_tok
 const call=(name,args)=>({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}});
 const identity={owner:'123',chat:'123'};
 test('catalog exposes narrowly scoped attempt operations without a consumer',()=>{
- const x=classifyMotorAttempt({method:'tools/list'},base);assert.deepEqual(x.response.result.tools.map(t=>t.name),['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx']);assert.equal(base.response.result.tools.length,0);
+ const x=classifyMotorAttempt({method:'tools/list'},base);assert.deepEqual(x.response.result.tools.map(t=>t.name),['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx','actualizar_nota_telegram_opmx','preparar_vista_actualizacion_telegram_opmx']);assert.equal(base.response.result.tools.length,0);
 });
 test('webhook package and revision select the guard operation with no invented event ID',()=>{
  const x=classifyMotorAttempt(call('iniciar_intento_telegram_opmx',{package_id,revision}),base,identity);assert.equal(x.route,'telegram-attempt');assert.deepEqual(x.request.body,{packageId:package_id,revision,owner:'123',chat:'123'});assert.equal(x.request.action,'start');
