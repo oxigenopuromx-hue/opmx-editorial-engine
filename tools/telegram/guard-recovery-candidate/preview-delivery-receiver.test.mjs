@@ -38,3 +38,8 @@ test('the receipt uses the corresponding sender execution on subsequent parts',(
  const out=new Function('$input','$','$runIndex',code)({first:()=>({json:{message_id:1000,chat:{id:123}}})},()=>({first:(branch,run)=>({json:contexts[run]})}),1)[0].json;
  assert.equal(out.body.part,2);assert.equal(out.body.token,'d'.repeat(64));
 });
+test('queued generation is acknowledged only for the active recovery request',()=>{
+ const c={user_id:'123',chat_id:'123',packageId:context.identity.packageId,recovery_session:true},request={preview_requested:true,preview_body:{owner:'123',chat:'123',packageId:c.packageId,revision:8}};
+ const read=(ctx,req)=>new Function('$input','$',identityCode)({first:()=>({json:{status:'PREVIEW_GENERATION_REQUESTED'}})},name=>({first:()=>({json:name==='Resolver paquete Telegram'?ctx:req})}))[0].json;
+ assert.equal(read(c,request).status,'GENERATION_REQUESTED');assert.equal(read({...c,recovery_session:false},request).status,'PREVIEW_NOT_CONFIRMED');assert.equal(read(c,{...request,preview_body:{...request.preview_body,owner:'456'}}).status,'PREVIEW_NOT_CONFIRMED');
+});
