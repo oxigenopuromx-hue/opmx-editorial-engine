@@ -64,7 +64,7 @@ function confirmPackageOperation(context,result) {
 
  if(context.package_operation==='SEAL') {
   if(result?.status==='READY'&&result.packageId===context.packageId&&Number.isSafeInteger(result.revision))return response(context,`Paquete cerrado: <code>${context.packageId}</code>, versión ${result.revision}. Material guardado y listo para validación automática en el Motor. Recibirás en este chat los avances y el resultado. No se ha generado ni publicado una nota.`,{package_state:'READY',package_revision:result.revision});
-  if(result?.status==='NOT_READY')return response(context,`Aún no puedo cerrar: ${Number(result.pending)||0} archivo(s) pendiente(s), ${Number(result.stored)||0} elemento(s) guardado(s). Espera sus confirmaciones y vuelve a usar /listo.`);
+  if(result?.status==='NOT_READY')return response(context,`Aún no puedo cerrar: ${Number(result.pending)||0} archivo(s) pendiente(s). Usa /estado para identificarlos y vuelve a enviar /listo cuando estén resueltos.`);
   return response(context,`No pude confirmar el cierre. Conserva el identificador <code>${escape(context.packageId)}</code> para revisar el resultado antes de reenviar este material.`);
  }
  if(context.package_operation==='STATUS') {
