@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {preparePreviewIntegration} from './preview-integration.mjs';
+const c={release(){},async execute(sql){if(sql.startsWith('CREATE TABLE'))return [{}];throw Error(sql)}};
+const ready={async initialize(){},async enqueue(){return 'evt'},async run(){return {old:true}},start(){},stop(){}};
+const delivery={subscriptionCipher:()=>({}),validateCallbackUrl:x=>new URL(x),webhookSigningKey:()=>Buffer.alloc(32),verifyEventCallback:async()=>{},signedCallbackPost:async()=>({status:200}),safeCallbackPost:async()=>({status:200})};
+test('bootstrap serves the existing events while dispatch stays unconfigured',async()=>{const v=await preparePreviewIntegration({pool:{async getConnection(){return c}},guardSecret:'a'.repeat(64),readyEvents:ready,delivery});assert.deepEqual(await v.telegramEvents.run('status',{}),{old:true});assert.equal(typeof v.enqueuePreviewGeneration,'function');v.telegramEvents.stop()});
+test('invalid subscription configuration is rejected',async()=>{await assert.rejects(()=>preparePreviewIntegration({pool:{getConnection(){}},guardSecret:'a'.repeat(64),readyEvents:ready,delivery,allowedSubscriptionId:'bad'}),/PREVIEW_INTEGRATION_INCOMPLETE/)});
