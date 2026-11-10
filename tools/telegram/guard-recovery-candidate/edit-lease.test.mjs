@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {createTelegramPackageStore,PACKAGE_LIMITS} from './package-store.mjs';
 const k=id=>createHash('sha256').update(`opmx:telegram:v1:${id}:${id}`).digest('hex');
 const packageId='tg_'+'a'.repeat(40);
-function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,closeActor='456',lastItem='close-item',failClosure=false,discardItem=null,controls=['ti_'+'c'.repeat(40)]}={}){
+function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,pending=0,closeActor='456',lastItem='close-item',failClosure=false,discardItem=null,controls=['ti_'+'c'.repeat(40)]}={}){
   const calls=[];
   const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql,args=[]){
     calls.push({sql,args});
@@ -19,6 +19,7 @@ function fixture({actor='456',session=true,itemCount=2,usedBytes=0,totalBytes=0,
     if(sql.startsWith('SELECT i.item_id,i.kind'))return [[{item_id:'close-item',kind:'TEXT',text_content:'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo\n'+JSON.stringify({policy:'publish-todos-v2',package_id:packageId,message_id:2}),state:'STORED',actor_key:k(closeActor)}]];
     if(sql.startsWith('SELECT item_id FROM opmx_tg_items'))return [[{item_id:lastItem}]];
     if(sql.startsWith('SELECT COUNT(*) AS total'))return [[{total:1,pending:0,stored:1}]];
+    if(sql.startsWith('SELECT COUNT(*) AS pending'))return [[{pending}]];
     if(failClosure&&sql.startsWith('INSERT INTO opmx_tg_recovery_closures'))throw Error('closure insert failed');
     if(sql.startsWith('INSERT')||sql.startsWith('UPDATE')||sql.startsWith('DELETE'))return [{affectedRows:1}];
     throw Error('unexpected query '+sql);
@@ -46,6 +47,16 @@ test('a verified close can use its bounded reserve when byte quotas are full',as
   assert.equal((await store.run('reserve',make(text))).status,'STORED');
   const accounted=calls.find(c=>c.sql.startsWith('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes+'));
   assert.equal(accounted.args[0],Buffer.byteLength(text));
+});
+test('pending reservations prevent new close controls and report the count',async()=>{
+ const {store,base,calls}=fixture({pending:2});const text='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n/listo\n'+JSON.stringify({policy:'publish-todos-v2',package_id:packageId,message_id:2});
+ const r=await store.run('reserve',{...base,receiptId:'telegram-456-2-2',kind:'TEXT',text,attachment:null});assert.deepEqual(r,{status:'NOT_READY',pending:2});assert.equal(calls.some(x=>x.sql.startsWith('INSERT INTO opmx_tg_items')),false);
+});
+test('discarding a pending reservation releases one slot and the exact reserved bytes',async()=>{
+ const itemId='ti_'+'9'.repeat(40),{store,base,calls}=fixture({itemCount:20,usedBytes:101,totalBytes:101,discardItem:{state:'PENDING',reserved_bytes:101}});
+ const r=await store.run('discard',{...base,itemId});assert.equal(r.status,'DISCARDED');
+ const pack=calls.find(x=>x.sql.startsWith('UPDATE opmx_tg_packages_v1 SET item_count=item_count-1'));assert.deepEqual(pack.args,[101,packageId,101]);
+ const quota=calls.find(x=>x.sql.startsWith('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes-'));assert.deepEqual(quota.args,[101,101]);
 });
 
 test('a delayed close from before reopen cannot reserve or seal',async()=>{
