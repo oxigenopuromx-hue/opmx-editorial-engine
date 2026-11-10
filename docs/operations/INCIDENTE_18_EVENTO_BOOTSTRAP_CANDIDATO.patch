@@ -9,25 +9,24 @@
  import {createTelegramReviewStore} from '../telegram/review-store.mjs';
  
  // In Hostinger this must be a local DB socket/host on the same hosting account.
-@@ -10,8 +12,16 @@
+@@ -10,7 +12,19 @@
  const pool=mysql.createPool({host:'127.0.0.1',port:3306,user:OPMX_DB_USER,password:OPMX_DB_PASSWORD,database:OPMX_DB_NAME,connectionLimit:4,connectTimeout:5000});
  let sharedOperators=null;
  if(OPMX_TELEGRAM_SHARED_OPERATORS){try{sharedOperators=JSON.parse(OPMX_TELEGRAM_SHARED_OPERATORS);}catch{throw new Error('Invalid shared event configuration');}}
 -const telegramEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
--const server=createGuard({pool,secret:OPMX_GUARD_SECRET,telegramStore:createTelegramPackageStore(pool,{events:telegramEvents}),telegramEvents,telegramReviews:createTelegramReviewStore(pool)});
--server.requestTimeout=60000;server.headersTimeout=10000;
--server.listen(Number(PORT)||3000,'0.0.0.0');
--telegramEvents.start();server.on('close',()=>telegramEvents.stop());
 +const readyEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
-+// Bootstrap only: accept a preview subscription but do not dispatch any jobs.
-+// LiteSpeed loads the entry point via require(); a top-level await anywhere in
-+// its ESM graph prevents the process from starting. Initialize asynchronously
-+// inside a function and bind only after database schema setup succeeds.
-+async function start(){
-+ const {telegramEvents}=await preparePreviewIntegration({pool,guardSecret:OPMX_GUARD_SECRET,readyEvents,delivery:eventDelivery,logger:console.error,sharedOperators});
-+ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,telegramStore:createTelegramPackageStore(pool,{events:telegramEvents}),telegramEvents,telegramReviews:createTelegramReviewStore(pool)});
-+ server.requestTimeout=60000;server.headersTimeout=10000;
-+ server.listen(Number(PORT)||3000,'0.0.0.0');
-+ telegramEvents.start();server.on('close',()=>telegramEvents.stop());
-+}
-+void start().catch(error=>{console.error('guard.start: initialization_failed',error?.code??'unknown');process.exitCode=1;});
++// Preserve the original synchronous listen: LiteSpeed loads this ESM graph via
++// require(), and existing READY traffic must not wait on preview initialization.
++// The preview dispatcher is deliberately disabled until its subscriber is set.
++const previewSetup=preparePreviewIntegration({pool,guardSecret:OPMX_GUARD_SECRET,readyEvents,delivery:eventDelivery,logger:console.error,sharedOperators});
++let previewIntegration=null,closed=false;
++const telegramEvents={
++ initialize:(...args)=>readyEvents.initialize(...args),
++ enqueue:(...args)=>readyEvents.enqueue(...args),
++ run:(action,input)=>input?.params?.name==='opmx.package.preview'?previewSetup.then(x=>x.telegramEvents.run(action,input)).catch(()=>({rpcError:{code:-32603,message:'Preview event unavailable'}})):readyEvents.run(action,input),
++ start(){readyEvents.start();previewSetup.then(x=>{previewIntegration=x;if(!closed)x.telegramEvents.start()}).catch(()=>console.error('guard.preview: initialization_failed'))},
++ stop(){closed=true;if(previewIntegration)previewIntegration.telegramEvents.stop();else readyEvents.stop()}
++};
+ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,telegramStore:createTelegramPackageStore(pool,{events:telegramEvents}),telegramEvents,telegramReviews:createTelegramReviewStore(pool)});
+ server.requestTimeout=60000;server.headersTimeout=10000;
+ server.listen(Number(PORT)||3000,'0.0.0.0');
