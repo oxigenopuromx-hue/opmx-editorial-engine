@@ -172,3 +172,11 @@ test('preview context route remains absent by default and requires the guard bea
   assert.equal((await post(port,'/v1/telegram/previews/context',body)).status,200);assert.equal(calls,1);
  });
 });
+test('preview materializer requires the guard bearer and is opt-in',async()=>{
+ const body={owner:'123',chat:'123',packageId:'tg_'+'a'.repeat(40),revision:9};let calls=0;
+ await withServer({},async port=>assert.equal((await post(port,'/v1/telegram/previews/materialize',body)).status,404));
+ await withServer({telegramPreviewMaterializer:async input=>{calls++;assert.deepEqual(input,body);return {status:'PREVIEW_MATERIALIZED'}}},async port=>{
+  assert.equal((await post(port,'/v1/telegram/previews/materialize',body,'b'.repeat(64))).status,401);assert.equal(calls,0);
+  assert.equal((await post(port,'/v1/telegram/previews/materialize',body)).status,200);assert.equal(calls,1);
+ });
+});
