@@ -97,7 +97,7 @@ function resolvePackageSession(intent,result) {
  else if(x.package_operation==='SEAL'){action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:'TEXT',text:attestedControl('/listo',x.packageId,x.message_id),attachment:null});}
  else if(x.package_operation==='STATUS')action='manifest';
  else if(x.package_operation==='DISCARD'){
-  if(!x.recovery_session||x.mode_attested!==true)return response(intent,'Para retirar un material, escribe /descartar directamente en un paquete reabierto.');
+  if(x.mode_attested!==true)return response(intent,'Para descartar una reserva pendiente, escribe /descartar y su identificador directamente en este chat.');
   action='discard';body.itemId=x.discard_item_id;
  }
  else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
