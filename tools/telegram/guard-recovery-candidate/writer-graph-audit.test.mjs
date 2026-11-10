@@ -8,3 +8,7 @@ test('structural guard checks are never presented as a verified recovery fence',
  assert.equal(auditWriterGraph({...x,fenceEnabled:true})[0].atomicFenceVerified,false);assert.equal(auditWriterGraph(x)[0].claimGatePresent,false);
 });
 test('unknown hosts and missing triggers are not considered verified',()=>{const x=fixture();x.nodes[2].parameters.url='https://unknown.example/wp-json/wp/v2/posts';assert.equal(auditWriterGraph(x)[0].guarded,false);x.nodes.shift();assert.throws(()=>auditWriterGraph(x),/TRIGGER_MISSING/)});
+test('a disabled or replaced gate cannot be treated as protection',()=>{
+ for(const change of [n=>n.disabled=true,n=>n.type='n8n-nodes-base.noOp']){const x=fixture();change(x.nodes[1]);assert.equal(auditWriterGraph(x)[0].guarded,false)}
+ const x=fixture();x.mode='publication';x.nodes[1].name='Publicación — Reclamo confirmado';x.nodes[1].disabled=true;x.connections.In.main[0][0].node=x.nodes[1].name;x.connections[x.nodes[1].name]=x.connections['GUARD OPOL — Verificar destino'];delete x.connections['GUARD OPOL — Verificar destino'];assert.equal(auditWriterGraph(x)[0].claimGatePresent,false);
+});
