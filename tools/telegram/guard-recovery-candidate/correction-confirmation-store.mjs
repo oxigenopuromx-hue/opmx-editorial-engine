@@ -29,8 +29,8 @@ function exact(x,keys){if(!x||Object.keys(x).sort().join(',')!==keys.sort().join
 // owned: loadLockedFacts must derive sources and post IDs from trusted records;
 // commitConfirmed must validate the fence, seal and enqueue the *existing*
 // event atomically on the supplied connection. No client can provide either.
-export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitConfirmed,verifyPreviewDelivery}){
- if(!pool?.getConnection||typeof loadLockedFacts!=='function'||typeof commitConfirmed!=='function'||typeof verifyPreviewDelivery!=='function')throw Error('CORRECTION_CONFIGURATION_INCOMPLETE');
+export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitConfirmed,verifyPreviewDelivery,enqueuePreviewGeneration=null}){
+ if(!pool?.getConnection||typeof loadLockedFacts!=='function'||typeof commitConfirmed!=='function'||typeof verifyPreviewDelivery!=='function'||(enqueuePreviewGeneration!==null&&typeof enqueuePreviewGeneration!=='function'))throw Error('CORRECTION_CONFIGURATION_INCOMPLETE');
  async function tx(f){const c=await pool.getConnection();let committed=false;try{await c.beginTransaction();const result=await f(c);await c.commit();committed=true;return result}catch(e){if(!committed)try{await c.rollback()}catch{}throw e}finally{c.release()}}
  async function lockPackage(c,x,actor){
   // Same quota-first ordering as the package store and reopen operation.
@@ -46,6 +46,13 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     const pack=await lockPackage(c,x,actorKey);
     if(!pack||pack.state!=='OPEN'||Number(pack.revision)!==x.revision)return {status:'NOT_AVAILABLE'};
     const facts=await loadLockedFacts(c,{packageId:x.packageId,revision:x.revision,ownerKey:pack.owner_key,actorKey});
+    if(facts?.previewGenerationRequired===true){
+     const scope=facts.previewScope;
+     if(!enqueuePreviewGeneration||!scope||scope.packageId!==x.packageId||scope.revision!==x.revision||scope.ownerKey!==pack.owner_key||scope.actorKey!==actorKey)return {status:'PREVIEW_GENERATION_UNAVAILABLE'};
+     const queued=await enqueuePreviewGeneration(c,{...scope,receiptId:x.receiptId});
+     if(!queued||!['PREVIEW_QUEUED','PREVIEW_ALREADY_QUEUED'].includes(queued.status))throw Error('PREVIEW_GENERATION_UNCONFIRMED');
+     return {status:'PREVIEW_GENERATION_REQUESTED'};
+    }
     const preview=buildCorrectionPreview({...facts,packageId:x.packageId,revision:x.revision,ownerKey:pack.owner_key,actorKey});
     const [result]=await c.execute("INSERT IGNORE INTO opmx_tg_correction_previews_v1 (package_id,revision,preview_hash,owner_key,preview_receipt,preview_json,state,created_at) VALUES (?,?,?,?,?,?,'PREVIEWED',UTC_TIMESTAMP(6))",[x.packageId,x.revision,preview.previewHash,actorKey,x.receiptId,JSON.stringify(preview)]);
     if(result.affectedRows!==1)return {status:'PREVIEW_EXISTS',preview};
