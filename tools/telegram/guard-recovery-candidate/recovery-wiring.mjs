@@ -17,7 +17,7 @@ import {createHash} from 'node:crypto';
 // Production must supply independent, authoritative verifiers only after all
 // writers and the Motor have been wired and checked. No HTTP input, source
 // document or environment boolean can substitute for those providers.
-export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null}){
+export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,enqueuePreviewGeneration=null}){
  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
  if(updateProviders!==null&&(!updateProviders||typeof updateProviders!=='object'||Array.isArray(updateProviders)||!['verifyCmsPreflight,verifyPayload,verifyUpdateEnforcement,verifyUpdateReadiness','verifyUpdateEnforcement,verifyUpdateReadiness'].includes(Object.keys(updateProviders).sort().join(','))||!Object.values(updateProviders).every(x=>typeof x==='function')))throw Error('UPDATE_CLAIM_CONFIGURATION_INCOMPLETE');
  let wordpress=null;
@@ -42,7 +42,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  }:null);
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
  const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds}):null;
- const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
+ const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
