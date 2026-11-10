@@ -30,6 +30,21 @@ async function readConfirmedDecision(c,packageId,revision,expectedAction){
 // The Motor's existing creation path must keep refusing UPDATE until its
 // separate, explicit update workflow is implemented and verified.
 export async function readConfirmedCorrectionInTransaction(c,packageId,revision){const d=await readConfirmedDecision(c,packageId,revision,'CREATE');if(!d)return null;const {posts,owner_key,actor_key,base_revision,...result}=d;return result}
+// Manifest reader for the existing Motor. The action is taken from the
+// persisted, server-owned decision and is then checked together with the
+// preview, closure and event by readConfirmedDecision. Updating remains a
+// distinct operation: a manifest is not a write permit.
+export async function readConfirmedCorrectionManifestInTransaction(c,packageId,revision){
+ if(!c?.execute||!/^tg_[a-f0-9]{40}$/.test(packageId??'')||!Number.isSafeInteger(revision)||revision<2)fail();
+ const [rows]=await c.execute('SELECT decision_json FROM opmx_tg_confirmed_decisions_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+ if(!rows.length)return null;if(rows.length!==1)fail();
+ let saved;try{saved=JSON.parse(rows[0].decision_json)}catch{fail()}
+ if(!['CREATE','UPDATE'].includes(saved?.action))fail();
+ const d=await readConfirmedDecision(c,packageId,revision,saved.action);if(!d)fail();
+ const result={package_id:d.package_id,revision:d.revision,action:d.action,destination:d.destination,content_mode:d.content_mode,preview_hash:d.preview_hash};
+ if(d.action==='UPDATE')result.posts=d.posts;
+ return result;
+}
 // Only the server-owned update claim uses this adapter. It does not by itself
 // authorize a WordPress write or prove payload/readback integrity.
 export async function readVerifiedUpdateDecisionInTransaction(c,{packageId,revision}){const d=await readConfirmedDecision(c,packageId,revision,'UPDATE');if(!d)return null;return {packageId,revision,action:d.action,destination:d.destination,contentMode:d.content_mode,previewHash:d.preview_hash,ownerKey:d.owner_key,actorKey:d.actor_key,baseRevision:d.base_revision,posts:d.posts,...(d.final_payloads?{finalPayloads:d.final_payloads}:{})}}

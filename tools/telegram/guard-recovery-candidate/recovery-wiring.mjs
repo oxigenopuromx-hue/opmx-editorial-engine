@@ -3,7 +3,7 @@ import {beginTargetWrite} from './deployed-guard/target-progress.mjs';
 import {createTelegramPackageStore} from './package-store.mjs';
 import {createCandidateFirstRecovery,createCandidateCorrectionSubsystem} from './recovery-assembly.mjs';
 import {createUpdateClaimStore} from './update-claim.mjs';
-import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
+import {readVerifiedUpdateDecisionInTransaction,readConfirmedCorrectionManifestInTransaction} from './confirmed-correction-reader.mjs';
 import {readVerifiedUpdatePosts,loadVerifiedUpdateTarget} from './verified-update-posts.mjs';
 import {createUpdateExecutor,createVerifiedUpdateDecisionLoader} from './update-executor.mjs';
 import {createUpdatePayloadStore} from './update-payload-store.mjs';
@@ -42,7 +42,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
  const previewPayloads=updateProviders?createPreviewPayloadStore({pool}):null;
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
- const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:recovery.readConfirmedCorrection});
+ const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
  // initialize it here as well; DDL must never run inside the seal transaction.
