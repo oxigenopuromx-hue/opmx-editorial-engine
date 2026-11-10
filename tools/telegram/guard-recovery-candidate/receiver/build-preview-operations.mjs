@@ -27,7 +27,7 @@ export function buildPreviewOperations({scripts,guardCredential,telegramCredenti
  cond(names.ackIf,"$json.status === 'RECEIPT_READY'",3540,880);
  post(names.report,'previews/delivery/report','$json.body',3760,840);
  for(const nodeName of [names.preview,names.init,names.claim,names.telegram,names.report])ops.push({type:'setNodeSettings',nodeName,settings:{retryOnFail:false,onError:'continueRegularOutput'}});
- code(names.fail,"const c=$('Resolver paquete Telegram').first(0,0).json; return [{json:{...c,has_file:false,reply_text:'No pude confirmar la entrega completa de la vista. No se envió la revisión al Motor; consulta el estado antes de reintentar.'}}];",3320,1180);
+ code(names.fail,"const c=$('Resolver paquete Telegram').first(0,0).json;let pending=false;try{pending=$('Preparar identidad de vista').first(0,0).json.status==='GENERATION_REQUESTED'}catch{}return [{json:{...c,has_file:false,reply_text:pending?'Estoy preparando la vista previa de la actualización. La recibirás aquí para revisarla y confirmarla antes de cualquier cambio.':'No pude confirmar la entrega completa de la vista. Consulta el estado antes de reintentar.'}}];",3320,1180);
  ops.push({type:'removeConnection',source:'¿Cierre acreditado guardado?',sourceIndex:1,target:'Conservar operación sin sellado'});
  connect('¿Cierre acreditado guardado?',names.branch,1);connect(names.branch,names.preview);connect(names.branch,'Conservar operación sin sellado',1);
  connect(names.preview,names.identity);connect(names.identity,names.identityIf);connect(names.identityIf,names.init);connect(names.identityIf,names.fail,1);
