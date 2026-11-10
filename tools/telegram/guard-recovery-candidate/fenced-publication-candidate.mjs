@@ -24,7 +24,7 @@ export async function beginFencedPublication(pool,input){
   const [packages]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[b.package_id]);
   if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==Number(b.revision)){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
   const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[b.package_id,b.revision]);
-  if(fences.length!==1||!['READY_TO_WRITE','WRITING'].includes(fences[0].state)){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
+  if(fences.length!==1||!['READY_TO_WRITE','WRITING','HISTORICAL_UNRECONCILED','HISTORICAL_WRITING'].includes(fences[0].state)){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
   const [check]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[input.requestId]);
   if(check.length!==1||check[0].package_id!==b.package_id||Number(check[0].revision)!==Number(b.revision)){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'}}
   for(const t of [...input.targets].sort((a,b)=>a.destination.localeCompare(b.destination))){
@@ -34,6 +34,7 @@ export async function beginFencedPublication(pool,input){
   }
   await c.execute('INSERT INTO opmx_tg_publication_claims_v1 (request_id,package_id,revision,slug,destinations,created_at) VALUES (?,?,?,?,?,UTC_TIMESTAMP(6))',[input.requestId,b.package_id,b.revision,input.slug,destinations]);
   if(fences[0].state==='READY_TO_WRITE'){const [updated]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='READY_TO_WRITE'",[b.package_id,b.revision]);if(updated.affectedRows!==1)throw Error('FENCE_CONFLICT')}
+  if(fences[0].state==='HISTORICAL_UNRECONCILED'){const [updated]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='HISTORICAL_WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='HISTORICAL_UNRECONCILED'",[b.package_id,b.revision]);if(updated.affectedRows!==1)throw Error('FENCE_CONFLICT')}
   await c.commit();committed=true;return {status:'PUBLICATION_STARTED',requestId:input.requestId,packageId:b.package_id,revision:Number(b.revision),destination:destinations};
  }catch(e){if(!committed)try{await c.rollback()}catch{}if(e?.code==='ER_DUP_ENTRY'||e?.errno===1062)return {status:'ALREADY_STARTED',action:'manual_reconciliation'};throw Error('PUBLICATION_CLAIM_UNCONFIRMED',{cause:e})}finally{c.release()}
 }
