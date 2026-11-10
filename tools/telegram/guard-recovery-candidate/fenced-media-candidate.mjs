@@ -37,11 +37,15 @@ export async function beginFencedMedia(pool,input){
   const [packages]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[b.package_id]);
   if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==Number(b.revision)){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
   const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[b.package_id,b.revision]);
-  if(fences.length!==1||fences[0].state!=='WRITING'){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
+  if(fences.length!==1||!['WRITING','HISTORICAL_WRITING','HISTORICAL_UNRECONCILED'].includes(fences[0].state)){await c.rollback();return {status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'}}
   const [again]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
   if(again.length!==1||again[0].package_id!==b.package_id||Number(again[0].revision)!==Number(b.revision)){await c.rollback();return {status:'NOT_BOUND',action:'manual_reconciliation'}}
   const [target]=await c.execute("SELECT target_key FROM opmx_mcp_target_progress WHERE target_key=? AND request_id=? AND destination=? AND status='writing' FOR UPDATE",[key,requestId,destination]);
   if(target.length!==1){await c.rollback();return {status:'not_started',action:'manual_reconciliation'}}
+  if(fences[0].state==='HISTORICAL_UNRECONCILED'){
+   const [changed]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='HISTORICAL_WRITING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='HISTORICAL_UNRECONCILED'",[b.package_id,b.revision]);
+   if(changed.affectedRows!==1)throw Error('FENCE_CONFLICT');
+  }
   phase='insert';const [insert]=await c.execute("INSERT INTO opmx_mcp_media_progress (target_key,request_id,role,status,media_id,updated_at) VALUES (?,?,?,'uploading',NULL,UTC_TIMESTAMP(6))",[key,requestId,role]);
   if(insert.affectedRows!==1)throw Error('MEDIA_INSERT_UNCONFIRMED');
   phase='commit';await c.commit();committed=true;return {status:'upload_started'};
