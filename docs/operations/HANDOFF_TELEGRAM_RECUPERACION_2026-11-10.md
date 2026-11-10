@@ -28,3 +28,7 @@ Hay módulos candidatos con pruebas locales, un transportador de WordPress de ho
 5. Ejecutar pruebas aisladas reales de rechazo, concurrencia y recuperación, incluida entrega completa y acuse de Telegram, actualización y publicación donde estén expresamente autorizadas; documentar IDs de ejecuciones, alcance y resultados. Conservar los bloqueos hasta superar las pruebas de seguridad y el recorrido completo.
 
 El usuario autorizó implementar, probar y desplegar cuando las comprobaciones demuestren que es seguro; continuar sin pedir confirmaciones técnicas rutinarias y sin detenerse tras cada prueba. No afirmar que una prueba simulada o un cambio de candidato es un despliegue.
+
+## Integración posterior
+
+Se conectó en el código candidato la lectura autenticada de WordPress con el preflight del reclamo de actualización por ID. Se resuelve el destino y slug desde la decisión confirmada y el historial del Guard; un error, ID o slug distintos, papelera o estado no editable impiden el reclamo. Los proveedores de preparación y cobertura del escritor siguen siendo obligatorios. Commit `337b59b8eeb0fa28e3b22dba1cc8453ea2bde9ef`. Por instrucción expresa del usuario no se ejecutaron pruebas ni verificaciones de este cambio. No está desplegado; quedan pendientes la conexión efectiva del Motor, la barrera de todos los escritores y la conciliación.
