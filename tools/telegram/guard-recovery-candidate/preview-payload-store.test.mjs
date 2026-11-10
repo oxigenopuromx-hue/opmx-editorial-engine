@@ -33,3 +33,21 @@ test('tampered bytes, extra destinations and forged target fields are rejected',
  const f=fixture();await f.store.stage(f.request);await f.store.stage({...f.request,destination:'OPOL'});f.s.rows[0].payload_json='{"title":"alterado"}';assert.equal(await f.store.read(f.c,f.scope),null);
  for(const bad of [{postId:123},{previewHash:'b'.repeat(64)},{exactPayload:true}])await assert.rejects(()=>f.store.stage({...f.request,...bad}),/INVALID_PREVIEW_PAYLOAD/);
 });
+test('Motor resolves an authorized administrator from the lease without transferring ownership',async()=>{
+ const own=hash('opmx:telegram:v1:123:123'),admin=hash('opmx:telegram:v1:456:456'),state={actor:admin,receipt:'telegram-456-22-33',rows:[]};
+ const c={async beginTransaction(){},async commit(){},async rollback(){},release(){},async execute(sql,args=[]){
+  if(sql.includes('JOIN opmx_tg_recovery_leases'))return [[{owner_key:own,state:'OPEN',revision,actor_key:state.actor,lease_owner:own,receipt_id:state.receipt}]];
+  if(sql.includes('FROM opmx_tg_quota'))return [[{id:1}]];
+  if(sql.includes('FROM opmx_tg_packages'))return [[{owner_key:own,state:'OPEN',revision}]];
+  if(sql.includes('FROM opmx_tg_recovery_leases'))return [[{actor_key:state.actor,owner_key:own,opening_revision:8}]];
+  if(sql.includes('FROM opmx_tg_sessions'))return [args[0]===admin?[{package_id:packageId}]:[]];
+  if(sql.startsWith('SELECT actor_key,payload_hash'))return [[]];
+  if(sql.startsWith('INSERT INTO opmx_tg_preview_payloads')){state.rows.push(args);return [{affectedRows:1}]}
+  throw Error(sql);
+ }};
+ const store=createPreviewPayloadStore({pool:{async getConnection(){return c}},adminUserIds:['456'],readSelection:async()=>({packageId,revision,ownerKey:own,action:'UPDATE',destination:'OPURO'})});
+ const request={owner:'123',chat:'123',packageId,revision,destination:'OPURO',payload:{title:'Propuesta'}};
+ assert.equal((await store.stageFromMotor(request)).status,'PREVIEW_PAYLOAD_STAGED');assert.equal(state.rows[0][3],admin);
+ assert.equal((await store.stageFromMotor({...request,owner:'999',chat:'999'})).status,'NOT_AVAILABLE');
+ state.receipt='telegram-999-22-33';assert.equal((await store.stageFromMotor(request)).status,'NOT_AVAILABLE');
+});
