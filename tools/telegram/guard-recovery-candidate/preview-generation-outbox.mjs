@@ -42,7 +42,8 @@ export async function enqueuePreviewGeneration(c,input){
 }
 
 // The supplied delivery function must target the existing Motor's verified
-// event subscription. A 2xx is delivery only, never proof of completion.
+// event subscription. Acceptance proves only that the dispatcher accepted
+// the event, never that the Motor received it or completed the proposal.
 // Unknown responses are retained as UNCERTAIN and are never retried here.
 export function createPreviewGenerationDispatcher({pool,deliver,readSelection,tokenFactory=()=>randomBytes(32).toString('hex')}){
  if(!pool?.getConnection||typeof deliver!=='function'||typeof readSelection!=='function'||typeof tokenFactory!=='function')throw Error('PREVIEW_DISPATCH_CONFIGURATION_INCOMPLETE');
@@ -70,7 +71,7 @@ export function createPreviewGenerationDispatcher({pool,deliver,readSelection,to
    const state=delivered?'DISPATCHED':'UNCERTAIN';
    const [r]=await c.execute("UPDATE opmx_tg_preview_generation_v1 SET state=?,updated_at=UTC_TIMESTAMP(6) WHERE job_id=? AND state='DISPATCHING' AND claim_hash=?",[state,claim.jobId,claim.claimHash]);
    if(r.affectedRows!==1)throw Error('PREVIEW_DISPATCH_CONFLICT');
-   return {status:delivered?'PREVIEW_DELIVERED':'PREVIEW_DELIVERY_UNCERTAIN',retryPermitted:false};
+   return {status:delivered?'PREVIEW_EVENT_ACCEPTED':'PREVIEW_DELIVERY_UNCERTAIN',retryPermitted:false};
   });
  }};
 }
