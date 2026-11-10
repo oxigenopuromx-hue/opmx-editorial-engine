@@ -8,6 +8,7 @@ function fixture({state='WRITING',bound=true,target=true,duplicate=false,lostCom
   if(sql.startsWith('SELECT state,revision'))return [[{state:packageState,revision:packageRevision}]];
   if(sql.startsWith('SELECT state'))return [state===null?[]:[{state}]];
   if(sql.startsWith('SELECT target_key'))return [target?[{target_key:'d'.repeat(64)}]:[]];
+  if(sql.startsWith('UPDATE opmx_tg_publication_fence'))return [{affectedRows:1}];
   if(sql.startsWith('INSERT')){if(duplicate)throw Object.assign(Error('duplicate'),{code:'ER_DUP_ENTRY'});return [{affectedRows:1}]}
   throw Error('unexpected SQL');
  }};return {pool:{async getConnection(){return c}},calls};
@@ -15,6 +16,11 @@ function fixture({state='WRITING',bound=true,target=true,duplicate=false,lostCom
 test('media claim locks the same revision fence before target and insert',async()=>{
  const f=fixture();assert.deepEqual(await beginFencedMedia(f.pool,input),{status:'upload_started'});
  const q=f.calls.filter(x=>x.sql);assert.doesNotMatch(q[0].sql,/FOR UPDATE/);assert.match(q[1].sql,/packages.*FOR UPDATE/);assert.match(q[2].sql,/publication_fence.*FOR UPDATE/);assert.match(q[3].sql,/request_binding.*FOR UPDATE/);assert.match(q[4].sql,/target_progress.*FOR UPDATE/);assert.match(q[5].sql,/INSERT INTO opmx_mcp_media_progress/);assert.ok(f.calls.includes('commit'));
+});
+test('historical writing may finish its media while recovery stays fenced',async()=>{
+ const f=fixture({state:'HISTORICAL_WRITING'});assert.equal((await beginFencedMedia(f.pool,input)).status,'upload_started');
+ const g=fixture({state:'HISTORICAL_UNRECONCILED'});assert.equal((await beginFencedMedia(g.pool,input)).status,'upload_started');assert.ok(g.calls.some(x=>x.sql?.includes("SET state='HISTORICAL_WRITING'")));
+ const h=fixture({state:'HISTORICAL_UNRECONCILED',target:false});assert.equal((await beginFencedMedia(h.pool,input)).status,'not_started');assert.equal(h.calls.some(x=>x.sql?.startsWith('UPDATE')),false);
 });
 test('missing, changed or fenced binding and missing target cannot start media',async()=>{
  for(const opt of [{bound:false},{packageState:'OPEN'},{packageRevision:8},{changedBinding:true},{state:'READY_TO_WRITE'},{state:'RECONCILING'},{state:'RECOVERY_FENCED'},{state:null},{target:false}]){
