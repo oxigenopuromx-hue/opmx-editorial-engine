@@ -32,6 +32,6 @@ test('dispatcher binds the existing Motor event to the open revision and never r
    throw Error(sql);
   }};
   const dispatcher=createPreviewGenerationDispatcher({pool:{async getConnection(){return c}},readSelection:async()=>({packageId:x.packageId,revision:x.revision,ownerKey:x.ownerKey,action:'UPDATE',destination:x.destination}),tokenFactory:()=> 'a'.repeat(64),deliver:async event=>{events.push(event);return {accepted:ok}}});
-  const result=await dispatcher.dispatchNext();assert.equal(result.status,ok?'PREVIEW_DELIVERED':'PREVIEW_DELIVERY_UNCERTAIN');assert.equal(result.retryPermitted,false);assert.equal(events.length,1);assert.equal(events[0].data.state,'OPEN');assert.equal(events[0].data.package_id,x.packageId);assert.equal(state,ok?'DISPATCHED':'UNCERTAIN');assert.equal((await dispatcher.dispatchNext()).status,'NO_PREVIEW_REQUEST');
+  const result=await dispatcher.dispatchNext();assert.equal(result.status,ok?'PREVIEW_EVENT_ACCEPTED':'PREVIEW_DELIVERY_UNCERTAIN');assert.equal(result.retryPermitted,false);assert.equal(events.length,1);assert.equal(events[0].data.state,'OPEN');assert.equal(events[0].data.package_id,x.packageId);assert.equal(state,ok?'DISPATCHED':'UNCERTAIN');assert.equal((await dispatcher.dispatchNext()).status,'NO_PREVIEW_REQUEST');
  }
 });
