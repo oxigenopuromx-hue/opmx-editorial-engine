@@ -1,0 +1,19 @@
+{
+  "workflowId": "bnzVMNkZuGO1GQCZ",
+  "activeVersionId": "76ef3bfe-db0a-4fb4-996c-ad703ab1639a",
+  "graphHash": "aae5cfd44fa8472234233961569e8075729ab8d60f8618ad5ab77a9833977284",
+  "node": {
+    "id": "b3fd8ddd-20ca-4c44-9cf3-4617328d8636",
+    "name": "Resolver identidad de solicitud",
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      220,
+      0
+    ],
+    "parameters": {
+      "mode": "runOnceForAllItems",
+      "jsCode": "// Rows come from the private reception ledger. The original opening is\n// immutable ownership evidence; later administrator ALREADY_OPEN records are\n// not ownership transfers. Any non-admin conflict remains a hard failure.\nfunction originalRoutingIdentity(rows,packageId,subscriber){\n const valid=s=>typeof s==='string'&&/^[1-9][0-9]{0,15}$/.test(s);\n const relevant=rows.filter(r=>r.package_id===packageId&&['QUEUED','ROUTING'].includes(r.stage)),routing=relevant.filter(r=>r.stage==='ROUTING'),matches=routing.length?routing:relevant.filter(r=>r.stage==='QUEUED');\n if(!matches.length)return subscriber;\n if(matches.some(r=>!valid(r.chat_id)))return null;\n const owners=new Set(matches.map(r=>r.chat_id));if(owners.size===1)return {owner:matches[0].chat_id,chat:matches[0].chat_id};\n if(matches.some(r=>!Number.isSafeInteger(Number(r.id))||Number(r.id)<1)||new Set(matches.map(r=>Number(r.id))).size!==matches.length)return null;\n const first=matches.slice().sort((a,b)=>Number(a.id)-Number(b.id))[0];\n if(matches.some(r=>r.chat_id!==first.chat_id&&r.chat_id!==subscriber.owner))return null;\n return {owner:first.chat_id,chat:first.chat_id};\n}\n\nconst envelope=$('MCP Publisher POST').first().json;let message=envelope?.body??envelope;if(typeof message==='string'){try{message=JSON.parse(message)}catch{message={}}}\nconst args=message?.params?.arguments??{},rows=$input.all().map(x=>x.json);\nconst subscriber={owner:'255516723',chat:'255516723'},privateTools=new Set(['leer_paquete_telegram_opmx','leer_fuente_telegram_opmx','informar_revision_telegram_opmx','informar_bloqueo_telegram_opmx','iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','finalizar_intento_telegram_opmx','reconocer_decision_telegram_opmx','actualizar_nota_telegram_opmx','leer_contexto_vista_telegram_opmx','entregar_vista_telegram_opmx','preparar_vista_actualizacion_telegram_opmx']);\nconst valid=s=>typeof s==='string'&&/^[1-9][0-9]{0,15}$/.test(s);\nlet identity=subscriber,noticeIdentity=null;\nif(message.method==='tools/call'&&privateTools.has(message.params?.name)){\n const all=rows.filter(r=>r.package_id===args.package_id&&['QUEUED','ROUTING'].includes(r.stage));\n // ROUTING is recorded at the original /nuevo, before an administrator can reopen.\n // QUEUED may name the later editor, so use it only if no original route exists.\n const routing=all.filter(r=>r.stage==='ROUTING');\n const matches=routing.length?routing:all.filter(r=>r.stage==='QUEUED');\n identity=originalRoutingIdentity(rows,args.package_id,subscriber);\n}\nif(message.method==='tools/call'&&/^(preparar_borrador_opmx|publicar_nota_opmx)$/.test(message.params?.name??'')&&typeof args.request_id==='string'){\n const matches=rows.filter(r=>r.request_id===args.request_id&&r.stage==='REQUEST_'+args.destino);\n const invalid=matches.some(r=>!valid(r.chat_id)||!/^tg_[a-f0-9]{40}$/.test(r.package_id??'')||!Number.isSafeInteger(r.revision));\n const keys=new Set(matches.map(r=>r.package_id+':'+r.revision+':'+r.chat_id));\n if(matches.length&&!invalid&&keys.size===1){noticeIdentity={owner:matches[0].chat_id,chat:matches[0].chat_id};}\n}\nreturn [{json:{envelope,identity,noticeIdentity}}];\n"
+    }
+  }
+}
