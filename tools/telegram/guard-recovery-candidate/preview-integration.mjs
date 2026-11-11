@@ -1,6 +1,6 @@
 import {createMcpPreviewEventStore} from './preview-event-store.mjs';
 import {enqueuePreviewGeneration,createPreviewGenerationDispatcher,previewGenerationSchema} from './preview-generation-outbox.mjs';
-import {readCorrectionSelectionInTransaction} from './correction-selection-store.mjs';
+import {readRecoverySelectionInTransaction as readCorrectionSelectionInTransaction} from './recovery-selection-default.mjs';
 
 // Explicitly assembled into the existing Guard only when the existing Motor
 // has subscribed to the preview event. No server, subscription or migration is
