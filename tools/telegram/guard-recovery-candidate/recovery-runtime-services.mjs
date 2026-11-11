@@ -14,6 +14,7 @@ import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-re
 import {canonicalUpdateValue,validUpdatePayload} from './update-executor.mjs';
 import {readCompletedWriterReceipt} from './writer-receipt-store.mjs';
 import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
+import {createRecoveredCreationGate} from './recovered-creation-gate.mjs';
 
 const sha=x=>createHash('sha256').update(x).digest('hex');
 // No environment switch grants a recovery or a CMS write. The two legacy
@@ -62,5 +63,5 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
   verifyCompletedWrites:readCompletedWriterReceipt,
   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
  });
- return Object.freeze({...wiring,telegramUpdateDeliveries:{consume:transport.consume}});
+ return Object.freeze({...wiring,creationWriteAllowed:createRecoveredCreationGate({pool}),telegramUpdateDeliveries:{consume:transport.consume}});
 }
