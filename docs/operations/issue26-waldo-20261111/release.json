@@ -1,0 +1,52 @@
+{
+  "schema": "opmx.waldo-unwritten-reconciliation-release.v1",
+  "date": "2026-11-11",
+  "issue": 26,
+  "sourceCommit": "e1410223770592c0dcb9fc9ae3fd5f956db98481",
+  "sourceBranch": "feat/telegram-reopen-recovery",
+  "packageId": "tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+  "revision": 8,
+  "originalRequestIdTodos": "tg_65fb7d5cb95fea298719c8d70290586e3c2afda9eb92e8e3ca0e1a2339cf93cf",
+  "baselineArchive": "opmx-guard-liberal-author3.zip",
+  "baselineSha256": "6fd89065fd675f0836847a6bbe1daf9a045e8d7c3ce5fe4859d859420a32e5f1",
+  "archive": "opmx-guard-waldo-reconciliation.zip",
+  "archiveSha256": "f995fe7aa1f0de60d2f3f44abeec0c089e90023e63720f9e3fea99a48fcccbe3",
+  "sourceFiles": [
+    {
+      "path": "tools/telegram/guard-recovery-candidate/deployed-guard/guard-server.mjs",
+      "sha256": "c8a58c817dc363bf990d6fa525f79dd5f4be574fe7743260ec730036925fe125"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+      "sha256": "a8998afdbf2df442a37be8053a3d2f3b1e3c98d73232697fe71c83ee04f437d2"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+      "sha256": "a844dfb5d6ebfc82a4c4c17ce5b63f5712dce5ff8b5f090a9c3a8741da74c6f5"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/unwritten-attempt-freeze.mjs",
+      "sha256": "68775ffa55f055117063c41dbb3ae981ee75d8245a37754c02f314e7149c05f2"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/unwritten-attempt-freeze.test.mjs",
+      "sha256": "d9d14347a1f3700090f17804ac98c6a01add04b70a984fba87f29b01caa0cb1e"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/unwritten-freeze-http.test.mjs",
+      "sha256": "d7cc8e8f8bc0e6a87604ae960641f7a03dccf76525b99eb4203290d56662e3c2"
+    }
+  ],
+  "checks": {
+    "unitAndIntegrationPassed": 523,
+    "freezeTestsPassed": 52,
+    "startupFailClosedPassed": true,
+    "assembledRuntimePassed": true
+  },
+  "scope": {
+    "cmsWrites": false,
+    "cancellations": false,
+    "newMotor": false,
+    "subscriptionChanges": false
+  }
+}
