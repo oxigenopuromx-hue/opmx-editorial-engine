@@ -4,7 +4,7 @@ const package_id='tg_'+'a'.repeat(40),event_id='evt_'+'b'.repeat(48),attempt_tok
 const call=(name,args)=>({jsonrpc:'2.0',id:1,method:'tools/call',params:{name,arguments:args}});
 const identity={owner:'123',chat:'123'};
 test('catalog exposes narrowly scoped attempt operations without a consumer',()=>{
- const x=classifyMotorAttempt({method:'tools/list'},base);assert.deepEqual(x.response.result.tools.map(t=>t.name),['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx','actualizar_nota_telegram_opmx','entregar_vista_telegram_opmx','leer_contexto_vista_telegram_opmx','preparar_vista_actualizacion_telegram_opmx']);assert.equal(base.response.result.tools.length,0);
+ const x=classifyMotorAttempt({method:'tools/list'},base);assert.deepEqual(x.response.result.tools.map(t=>t.name),['iniciar_intento_telegram_opmx','bloquear_intento_telegram_opmx','reconocer_decision_telegram_opmx','finalizar_intento_telegram_opmx','actualizar_nota_telegram_opmx','entregar_vista_telegram_opmx','leer_contexto_vista_telegram_opmx','preparar_vista_actualizacion_telegram_opmx']);assert.equal(base.response.result.tools.length,0);
 });
 test('webhook package and revision select the guard operation with no invented event ID',()=>{
  const x=classifyMotorAttempt(call('iniciar_intento_telegram_opmx',{package_id,revision}),base,identity);assert.equal(x.route,'telegram-attempt');assert.deepEqual(x.request.body,{packageId:package_id,revision,owner:'123',chat:'123'});assert.equal(x.request.action,'start');
@@ -42,4 +42,12 @@ test('preview context is read-only and cannot accept caller-supplied post IDs',(
 test('preview delivery permits no caller-supplied chat or message text',()=>{
  const name='entregar_vista_telegram_opmx',m=classifyMotorAttempt(call(name,{package_id,revision}),base,identity);assert.equal(m.route,'telegram-preview-deliver');assert.deepEqual(m.request.body,{packageId:package_id,revision,owner:'123',chat:'123'});
  for(const extra of [{chat_id:'999'},{text:'publicar'},{post_id:123}])assert.equal(classifyMotorAttempt(call(name,{package_id,revision,...extra}),base,identity).response.error.code,-32602);
+});
+
+test('completion requires the exact attempt capability and matching server scope',()=>{
+ const args={package_id,revision,event_id,attempt_token},request=classifyMotorAttempt(call('finalizar_intento_telegram_opmx',args),base,identity).request;assert.equal(request.action,'complete');assert.deepEqual(request.body,{packageId:package_id,revision,eventId:event_id,token:attempt_token});
+ assert.equal(classifyMotorAttempt(call('finalizar_intento_telegram_opmx',{...args,receiptHash:'d'.repeat(64)}),base,identity).response.error.code,-32602);
+ assert.equal(formatMotorAttempt(request,{status:'ATTEMPT_COMPLETED',packageId:package_id,revision}).response.result.structuredContent.status,'ATTEMPT_COMPLETED');
+ assert.equal(formatMotorAttempt(request,{status:'ATTEMPT_COMPLETED',packageId:package_id,revision:revision+1}).response.result.structuredContent.status,'ATTEMPT_UNCONFIRMED');
+ assert.equal(formatMotorAttempt(request,{status:'WRITER_COMPLETION_UNCONFIRMED'}).response.result.structuredContent.reopenPermitted,false);
 });
