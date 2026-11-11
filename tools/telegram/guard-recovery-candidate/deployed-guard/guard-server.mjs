@@ -7,8 +7,9 @@ import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-pro
 const MAX_BODY=4096;
 // Integration candidate derived from the verified last-source blob 7881ae8.
 // Recovery and writer hooks are opt-in; production is not changed by this file.
-export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramCorrections=null,telegramSelections=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramReconciliation=null,telegramCorrections=null,telegramSelections=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
+  if(telegramReconciliation!==null&&typeof telegramReconciliation!=='function')throw new Error('Configuración incompleta');
   if(telegramWriterReceipts!==null&&typeof telegramWriterReceipts?.report!=='function')throw new Error('Configuración incompleta');
   if(runtimeObserver!==null&&typeof runtimeObserver!=='function')throw new Error('Configuración incompleta');
   if(telegramPreviewMaterializer!==null&&typeof telegramPreviewMaterializer!=='function')throw new Error('Configuración incompleta');
@@ -42,17 +43,19 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
     const updateExecute=telegramUpdateExecutor&&req.url==='/v1/telegram/updates/execute';
     const updatePayload=telegramUpdatePayloads&&req.url==='/v1/telegram/updates/payload';
     const eventAction=telegramEvents&&/^\/v1\/telegram\/events\/(subscribe|unsubscribe|status|emit)$/.exec(req.url)?.[1];
+    const reconciliationAction=telegramReconciliation&&req.url==='/v1/telegram/reconciliation/observe';
     const writerReceiptAction=telegramWriterReceipts&&req.url==='/v1/telegram/writers/report';
     const runtimeAction=runtimeObserver&&req.url==='/v1/telegram/runtime/observe';
     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||(!reconciliationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+      if(reconciliationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(reconciliationAction)return end(200,await telegramReconciliation(input));
         if(writerReceiptAction){const r=await telegramWriterReceipts.report(input);return end(['WRITER_RECEIPT_RECORDED','WRITER_RECEIPT_REPLAY'].includes(r.status)?200:409,r)}
         if(runtimeAction){const r=await runtimeObserver(input);const {workflows,...summary}=r;return end(r.status==='RUNTIME_OBSERVED'?200:503,{...summary,...(workflows?{workflows:workflows.map(w=>({id:w.id,activeVersionId:w.activeVersionId,nodeCount:w.graph.nodes.length}))}:{})})}
         if(recoverAction)return end(200,await telegramRecovery(input));
