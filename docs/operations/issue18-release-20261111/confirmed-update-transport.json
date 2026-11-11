@@ -1,0 +1,359 @@
+{
+  "workflowId": "qBmLf0DmcMSfuWvm",
+  "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+  "nodes": [
+    {
+      "id": "4e12981c-7c1e-46e3-834b-ed8ddaf6769e",
+      "name": "Actualización confirmada privada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opmx-confirmed-update-v1",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson"
+      },
+      "webhookId": "a15e6f14-1573-4587-87f9-e8cfc39ca1a5",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "31c21f3f-93dd-4703-925c-9996be8d43af",
+      "name": "Validar trabajo opaco",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers embedded into the technical n8n transport. The webhook accepts\n// only an opaque one-use job; content and target IDs must be returned by Guard.\nfunction parseUpdateDeliveryJob(body){\n if(!body||Object.keys(body).sort().join(',')!=='jobId,token'||!/^uj_[a-f0-9]{48}$/.test(body.jobId??'')||!/^[a-f0-9]{64}$/.test(body.token??''))throw Error('INVALID_UPDATE_DELIVERY_JOB');\n return {jobId:body.jobId,token:body.token};\n}\nfunction acceptUpdateDeliveryGrant(job,response){\n const b=response?.body;\n if(response?.statusCode!==200||b?.status!=='UPDATE_PAYLOAD_GRANTED'||b.jobId!==job?.jobId||!['OPURO','OPOL','LIBERAL'].includes(b.destination)||!Number.isSafeInteger(b.postId)||b.postId<1||b.retryPermitted!==false||!b.payload||typeof b.payload!=='object'||Array.isArray(b.payload)||!Object.keys(b.payload).length||Object.keys(b.payload).some(k=>!['title','content','excerpt','featured_media','author','categories','tags','meta','status'].includes(k))||JSON.stringify(b.payload).length>4*1024*1024)throw Error('UPDATE_DELIVERY_NOT_GRANTED');\n return {jobId:b.jobId,destination:b.destination,postId:b.postId,payload:JSON.parse(JSON.stringify(b.payload))};\n}\nfunction updateDeliveryResult(grant,response){\n const code=response?.statusCode;\n if(!Number.isInteger(code)||code<200||code>=300||response?.body?.id!==grant?.postId)return {status:'UPDATE_TRANSPORT_UNCERTAIN',retryPermitted:false};\n return {status:'UPDATE_TRANSPORT_CONFIRMED',jobId:grant.jobId,destination:grant.destination,postId:grant.postId,statusCode:code,retryPermitted:false};\n}\n\nreturn [{json:parseUpdateDeliveryJob($input.first().json.body)}];"
+      }
+    },
+    {
+      "id": "0d663ab0-953f-4439-a6c9-5ecbf1d7a65c",
+      "name": "Consumir capacidad Guard",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        496,
+        320
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/update-deliveries/consume",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {jobId:$json.jobId,token:$json.token} }}",
+        "options": {
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "e6140612-0d54-46e3-abf5-aec6fcc3d995",
+      "name": "Exigir contenido confirmado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers embedded into the technical n8n transport. The webhook accepts\n// only an opaque one-use job; content and target IDs must be returned by Guard.\nfunction parseUpdateDeliveryJob(body){\n if(!body||Object.keys(body).sort().join(',')!=='jobId,token'||!/^uj_[a-f0-9]{48}$/.test(body.jobId??'')||!/^[a-f0-9]{64}$/.test(body.token??''))throw Error('INVALID_UPDATE_DELIVERY_JOB');\n return {jobId:body.jobId,token:body.token};\n}\nfunction acceptUpdateDeliveryGrant(job,response){\n const b=response?.body;\n if(response?.statusCode!==200||b?.status!=='UPDATE_PAYLOAD_GRANTED'||b.jobId!==job?.jobId||!['OPURO','OPOL','LIBERAL'].includes(b.destination)||!Number.isSafeInteger(b.postId)||b.postId<1||b.retryPermitted!==false||!b.payload||typeof b.payload!=='object'||Array.isArray(b.payload)||!Object.keys(b.payload).length||Object.keys(b.payload).some(k=>!['title','content','excerpt','featured_media','author','categories','tags','meta','status'].includes(k))||JSON.stringify(b.payload).length>4*1024*1024)throw Error('UPDATE_DELIVERY_NOT_GRANTED');\n return {jobId:b.jobId,destination:b.destination,postId:b.postId,payload:JSON.parse(JSON.stringify(b.payload))};\n}\nfunction updateDeliveryResult(grant,response){\n const code=response?.statusCode;\n if(!Number.isInteger(code)||code<200||code>=300||response?.body?.id!==grant?.postId)return {status:'UPDATE_TRANSPORT_UNCERTAIN',retryPermitted:false};\n return {status:'UPDATE_TRANSPORT_CONFIRMED',jobId:grant.jobId,destination:grant.destination,postId:grant.postId,statusCode:code,retryPermitted:false};\n}\n\nreturn [{json:acceptUpdateDeliveryGrant($('Validar trabajo opaco').first().json,$input.first().json)}];"
+      }
+    },
+    {
+      "id": "47725705-5992-468f-9ee8-b4b2aec57f1d",
+      "name": "CMS autorizado",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        944,
+        304
+      ],
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ ['OPURO','OPOL','LIBERAL'].indexOf($json.destination) }}"
+      }
+    },
+    {
+      "id": "95f7b33c-f1ae-483d-895b-c848ebdaf14c",
+      "name": "Actualizar OPURO por ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1168,
+        128
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/' + $json.postId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "KItac8AMmbUVUbWY",
+          "name": "Publisher oxigenopuro"
+        }
+      }
+    },
+    {
+      "id": "e9b7f3e8-b285-4f52-9a37-375cff4f0686",
+      "name": "Resultado sin contenido ni capacidad",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Pure helpers embedded into the technical n8n transport. The webhook accepts\n// only an opaque one-use job; content and target IDs must be returned by Guard.\nfunction parseUpdateDeliveryJob(body){\n if(!body||Object.keys(body).sort().join(',')!=='jobId,token'||!/^uj_[a-f0-9]{48}$/.test(body.jobId??'')||!/^[a-f0-9]{64}$/.test(body.token??''))throw Error('INVALID_UPDATE_DELIVERY_JOB');\n return {jobId:body.jobId,token:body.token};\n}\nfunction acceptUpdateDeliveryGrant(job,response){\n const b=response?.body;\n if(response?.statusCode!==200||b?.status!=='UPDATE_PAYLOAD_GRANTED'||b.jobId!==job?.jobId||!['OPURO','OPOL','LIBERAL'].includes(b.destination)||!Number.isSafeInteger(b.postId)||b.postId<1||b.retryPermitted!==false||!b.payload||typeof b.payload!=='object'||Array.isArray(b.payload)||!Object.keys(b.payload).length||Object.keys(b.payload).some(k=>!['title','content','excerpt','featured_media','author','categories','tags','meta','status'].includes(k))||JSON.stringify(b.payload).length>4*1024*1024)throw Error('UPDATE_DELIVERY_NOT_GRANTED');\n return {jobId:b.jobId,destination:b.destination,postId:b.postId,payload:JSON.parse(JSON.stringify(b.payload))};\n}\nfunction updateDeliveryResult(grant,response){\n const code=response?.statusCode;\n if(!Number.isInteger(code)||code<200||code>=300||response?.body?.id!==grant?.postId)return {status:'UPDATE_TRANSPORT_UNCERTAIN',retryPermitted:false};\n return {status:'UPDATE_TRANSPORT_CONFIRMED',jobId:grant.jobId,destination:grant.destination,postId:grant.postId,statusCode:code,retryPermitted:false};\n}\n\nreturn [{json:updateDeliveryResult($('Exigir contenido confirmado').first().json,$input.first().json)}];"
+      }
+    },
+    {
+      "id": "f1cd916b-c2dd-44b4-a1d3-3e83bb292108",
+      "name": "Actualizar OPOL por ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1168,
+        320
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/' + $json.postId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "9mL9HGLYoSVIGfQ1",
+          "name": "Oxigeno Politico"
+        }
+      }
+    },
+    {
+      "id": "28f08a0e-2cb6-4694-940a-e245dabc8221",
+      "name": "Actualizar LIBERAL por ID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1168,
+        512
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://cms.elliberal.mx/wp-json/wp/v2/posts/' + $json.postId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.payload }}",
+        "options": {
+          "timeout": 20000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "wordpressApi": {
+          "id": "UI3HOKE26hMVLvH0",
+          "name": "El Liberal producción — Publisher"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Actualización confirmada privada": {
+      "main": [
+        [
+          {
+            "node": "Validar trabajo opaco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar trabajo opaco": {
+      "main": [
+        [
+          {
+            "node": "Consumir capacidad Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consumir capacidad Guard": {
+      "main": [
+        [
+          {
+            "node": "Exigir contenido confirmado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exigir contenido confirmado": {
+      "main": [
+        [
+          {
+            "node": "CMS autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CMS autorizado": {
+      "main": [
+        [
+          {
+            "node": "Actualizar OPURO por ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar OPOL por ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar LIBERAL por ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar OPURO por ID": {
+      "main": [
+        [
+          {
+            "node": "Resultado sin contenido ni capacidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar OPOL por ID": {
+      "main": [
+        [
+          {
+            "node": "Resultado sin contenido ni capacidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar LIBERAL por ID": {
+      "main": [
+        [
+          {
+            "node": "Resultado sin contenido ni capacidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 60
+  }
+}
