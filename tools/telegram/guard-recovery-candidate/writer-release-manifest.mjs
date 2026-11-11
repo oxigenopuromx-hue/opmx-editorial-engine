@@ -1,4 +1,4 @@
-// Audited candidate: activate only with the matching guarded runtime.
+// Audited writer release: LIBERAL editorial author3; credentials and fences preserved.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
@@ -7,12 +7,12 @@ export default {
       "graphHash": "aae5cfd44fa8472234233961569e8075729ab8d60f8618ad5ab77a9833977284"
     },
     "Mt7ts2EGPbyaTC2o": {
-      "versionId": "0a0af4ac-fe0d-4aff-a662-7e45bf87a320",
-      "graphHash": "f99c6b5d3cf575afdabe090c311fac2e60696714d393d764a5ca0c2a8acf0897"
+      "versionId": "bf4cc77c-6853-4303-a25b-2f58dc057d8e",
+      "graphHash": "b3e09e66d95ef214accc079df6fd552509f21a3afc1a3d200f5d84250ce70e82"
     },
     "4o7K5TmKc7joScqB": {
-      "versionId": "cce524a4-660e-4d05-af66-39e003c6338b",
-      "graphHash": "768a7bc50ad119a1a30720292b066a7eb4f10fd7775b1069d790209f3def384b"
+      "versionId": "c7610e14-994b-45bd-8748-bdef90e0fc78",
+      "graphHash": "623efab2bcf508878ec71e5f370b3ea24c3b6571dd1b777ae913f2e54009ded7"
     },
     "qBmLf0DmcMSfuWvm": {
       "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
