@@ -80,7 +80,7 @@ function resolvePackageSession(intent,result) {
   if(!['OPEN','ALREADY_OPEN','OPEN_REPLAY'].includes(result?.status)||!validPackage(result.packageId))return response(intent,'No pude confirmar la apertura del paquete. Conserva tus archivos; todavía no los envíes.');
   const closed=result.state==='READY';
   const notice=openingNotice(result,intent.message_id);
-  return response(intent,notice.reply,{packageId:result.packageId,package_state:closed?'READY':'OPEN',default_policy_candidate:notice.newPolicy});
+  return response(intent,notice.reply,{packageId:result.packageId,package_state:closed?'READY':'OPEN',default_policy_candidate:notice.newPolicy,routing_owner_confirmed:['OPEN','OPEN_REPLAY'].includes(result.status)});
  }
  if(result?.status==='NO_OPEN_PACKAGE')return response(intent,'No hay una nota abierta. Envía /nuevo y después sus textos, fotos y documentos.');
  if(result?.status!=='OPEN'||!validPackage(result.packageId))return response(intent,'No pude consultar tu paquete. No confirmé almacenamiento de este mensaje.');
