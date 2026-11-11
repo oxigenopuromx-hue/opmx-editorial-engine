@@ -8,9 +8,9 @@ import {createRuntimeObserver} from './runtime-observation-client.mjs';
 // This installs only future attempt registration and writer acknowledgements.
 // It does not reopen a package, migrate historical attempts to a safe state,
 // grant update/literal permission, or create a second event consumer.
-export async function prepareMotorRuntimeServices({pool,secret}){
+export async function prepareMotorRuntimeServices({pool,secret,adminUserIds=[]}){
  const readWordPress=createCmsObserver({secret});
- const attempts=createMotorAttemptStore({pool,verifyCompletedWrites:readCompletedWriterReceipt});
+ const attempts=createMotorAttemptStore({pool,adminUserIds,verifyCompletedWrites:readCompletedWriterReceipt});
  const receipts=createWriterReceiptStore({pool,readWordPress});
  const observeTarget=createRequestTargetReconciler({pool,readWordPress});
  const checkRevision=createReconciliationCheck({pool,readWordPress,observeRuntime:createRuntimeObserver({secret})});
