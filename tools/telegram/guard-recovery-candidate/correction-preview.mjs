@@ -13,7 +13,7 @@ const obj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 // This function has no HTTP endpoint or publisher side effects. Its arguments
 // must come from an authenticated session and locked, server-owned records.
 // It is a preview of package changes, not an authorization to publish.
-export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,authorizedEditorKey,baseRevision,before,after,action,mode,destination,verifiedPosts,controlItemIds=[],finalPayloads=null}){
+export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,authorizedEditorKey,baseRevision,before,after,action,mode,destination,verifiedPosts,controlItemIds=[],finalPayloads=null,publicationMode=null}){
  if(!pkgId.test(packageId??'')||!validRevision(revision)||!validRevision(baseRevision)||baseRevision>=revision||!hash.test(ownerKey??'')||!hash.test(actorKey??'')||(actorKey!==ownerKey&&authorizedEditorKey!==actorKey)||!Array.isArray(before)||!Array.isArray(after)||!['CREATE','UPDATE'].includes(action)||!['LITERAL','EDITORIAL'].includes(mode))fail();
  let destinations;try{destinations=resolveDestinations(destination)}catch{fail()}
  if(!obj(verifiedPosts)||Object.keys(verifiedPosts).some(x=>!['OPURO','OPOL','LIBERAL'].includes(x)))fail();
@@ -39,6 +39,7 @@ export function buildCorrectionPreview({packageId,revision,ownerKey,actorKey,aut
  // editor cannot review unchanged text or determine which files remain active.
  const materials=[...current.values()].filter(x=>x.state==='STORED');
  const preview={packageId,revision,baseRevision,ownerKey,actorKey,action,mode,destination:destinationLabel(destinations),posts,changes,materials,controlItemIds:[...controlItemIds]};
+ if(publicationMode!==null){if(action!=='CREATE'||!['DRAFT','PUBLISH'].includes(publicationMode))fail();preview.publicationMode=publicationMode;}
  // Optional server-generated final output, reviewed before confirmation. No
  // content from a Telegram source can supply this property as a command.
  if(finalPayloads!==null){
