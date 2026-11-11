@@ -71,8 +71,26 @@ function confirmPackageOperation(context,result) {
   if(result?.status!=='FOUND'||result.packageId!==context.packageId||!Array.isArray(result.items))return response(context,'No pude confirmar el estado del paquete.');
   const stored=result.items.filter(i=>i.state==='STORED').length,pending=result.items.filter(i=>i.state==='PENDING');
   if(pending.some(i=>!validItem(i.item_id)))return response(context,'No pude confirmar el inventario pendiente del paquete.');
-  const pendingHelp=pending.length?'\nReservas pendientes:\n'+pending.map(i=>`<code>/descartar ${i.item_id}</code>`).join('\n')+'\nDescarta sólo el archivo que no se guardó.':'';
-  return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending.length} pendiente(s).${pendingHelp}\nPara terminar: /listo.`);
+  const pendingHelp=pending.length?'\nReservas pendientes:\n'+pending.slice(0,5).map(i=>`<code>/descartar ${i.item_id}</code>`).join('\n')+'\nDescarta sólo el archivo que no se guardó.':'';
+  const d=result.diagnostic;
+  if(d?.schema==='opmx.package-diagnostic.v1'){
+   const lines=[`Paquete <code>${context.packageId}</code> · revisión ${Number(result.revision)} · ${escape(result.state)}`];
+   lines.push(d.origin==='OTHER_ACCOUNT'?'Origen: otra cuenta. Estás gestionándolo desde la sesión administrativa.':'Origen: tu cuenta.');
+   if(d.topic)lines.push('Tema del material: '+escape(d.topic));
+   lines.push(`Material disponible: ${Number(d.substantiveTexts)||0} texto(s) de contenido, ${Number(d.files)||0} archivo(s); ${pending.length} pendiente(s).`);
+   if(d.urls?.length)lines.push('Enlaces guardados:\n'+d.urls.slice(0,3).map(x=>escape(String(x).slice(0,300))).join('\n'));
+   if(!d.substantiveTexts&&d.urls?.length)lines.push('Falta texto de respaldo: sólo hay enlaces como fuente textual. Si la página no puede leerse, pega su contenido aquí; conserva la atribución.');
+   if(d.previousResults?.length)lines.push('Resultado anterior conciliado:\n'+d.previousResults.map(x=>escape(x.destination)+': '+(x.status==='BLOCKED'?'sin nota creada':escape(x.status)+(x.postId?' · ID '+Number(x.postId):''))).join('\n'));
+   if(d.action)lines.push('Acción prevista: '+(d.action==='CREATE'?'crear nota nueva':'actualizar notas existentes')+' · '+escape(d.contentMode)+' · '+escape(d.destination)+(d.originalMode?' · '+(d.originalMode==='DRAFT'?'borrador':'publicación')+' conservada':''));
+   if(pending.length)lines.push(pendingHelp);
+   else if(d.confirmationCommand)lines.push('Vista completamente entregada. Para autorizar esta revisión:\n<code>'+escape(d.confirmationCommand)+'</code>');
+   else if(d.next==='CHECK_UNCERTAIN_DELIVERY')lines.push('La entrega de la vista está incierta. No repitas /listo ni confirmes otra revisión hasta conciliar el envío.');
+   else if(d.next==='RECONCILE_OPTIONS')lines.push('Las opciones requieren conciliación. No se enviará a publicar ni se inferirá una acción.');
+   else if(d.recovery)lines.push('Puedes agregar aquí texto, fotos o instrucciones. Después envía /listo para recibir la revisión y su comando de confirmación. /listo no publica por sí solo este paquete reabierto.');
+   else lines.push('Para cerrar y procesar según la orden registrada: /listo.');
+   return response(context,lines.join('\n\n'));
+  }
+  return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending.length} pendiente(s).${pendingHelp}\n${context.recovery_session?'Agrega material y envía /listo para solicitar una vista; después debes confirmarla.':'Para terminar: /listo.'}`);
  }
  if(context.package_operation==='DISCARD')return response(context,['DISCARDED','DISCARDED_REPLAY'].includes(result?.status)&&result.itemId===context.discard_item_id?'Reserva pendiente descartada. No se borraron originales guardados.':'No se descartó la reserva: sólo pueden descartarse archivos pendientes, sin original guardado.');
  if(result?.status==='RESERVED'&&context.kind==='FILE'&&result.packageId===context.packageId&&validItem(result.itemId))return {...context,itemId:result.itemId,has_file:true};
