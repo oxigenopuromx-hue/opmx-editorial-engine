@@ -60,9 +60,9 @@ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRu
  telegramUpdateClaims:{begin:async(...args)=>(await requireRecovery()).telegramUpdateClaims.begin(...args)},
  telegramUpdatePayloads:{stage:async(...args)=>(await requireRecovery()).telegramUpdatePayloads.stage(...args)},
  telegramReconciliation:async(...args)=>(await requireMotor()).telegramReconciliation(...args),
- targetBegin:async(...args)=>(await requireFence()).targetBegin(...args),
- mediaBegin:async(...args)=>(await requireFence()).mediaBegin(...args),
- telegramPublicationBegin:async(...args)=>(await requireFence()).telegramPublicationBegin(...args),
+ targetBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).targetBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
+ mediaBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).mediaBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
+ telegramPublicationBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).telegramPublicationBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
  telegramPreviewPayloads:{stage:async(...args)=>(await requireRecovery()).telegramPreviewPayloads.stage(...args),context:async(...args)=>(await requireRecovery()).telegramPreviewPayloads.context(...args)},
  telegramPreviewMaterializer:async(...args)=>(await requireRecovery()).telegramPreviewMaterializer(...args),
  telegramPreviewDelivery:Object.fromEntries(['initialize','claim','report'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramPreviewDelivery[method](...args)]))
