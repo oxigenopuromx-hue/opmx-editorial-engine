@@ -1,5 +1,6 @@
 import {recoverySchema} from './reopen-mysql-adapter.mjs';
-import {correctionSelectionSchema,readCorrectionSelectionInTransaction} from './correction-selection-store.mjs';
+import {correctionSelectionSchema} from './correction-selection-store.mjs';
+import {readRecoverySelectionInTransaction as readCorrectionSelectionInTransaction} from './recovery-selection-default.mjs';
 import {correctionConfirmationSchema,createCorrectionConfirmationStore} from './correction-confirmation-store.mjs';
 import {previewPayloadSchema,createPreviewPayloadStore} from './preview-payload-store.mjs';
 import {previewDeliverySchema,createPreviewDeliveryStore} from './preview-delivery-store.mjs';
@@ -14,7 +15,7 @@ import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
 // migration creates empty structures and never manufactures those records.
 export async function preparePreviewServices({pool,adminUserIds=[]}){
  if(!pool?.getConnection)throw Error('PREVIEW_SERVICES_INCOMPLETE');
- const payloads=createPreviewPayloadStore({pool,adminUserIds});
+ const payloads=createPreviewPayloadStore({pool,adminUserIds,readSelection:readCorrectionSelectionInTransaction});
  const delivery=createPreviewDeliveryStore({pool});
  const facts=createCorrectionFactsReader({readLockedSelection:readCorrectionSelectionInTransaction,readVerifiedUpdatePosts,readFinalPayloads:payloads.read});
  const corrections=createCorrectionConfirmationStore({pool,loadLockedFacts:facts,verifyPreviewDelivery:delivery.verifyPreviewDelivery,enqueuePreviewGeneration,
