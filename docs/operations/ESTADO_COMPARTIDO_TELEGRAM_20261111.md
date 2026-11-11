@@ -1,6 +1,6 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
-Corte: 11 de noviembre de 2026, 14:30, America/Mexico_City.
+Corte inicial: 11 de noviembre de 2026, 14:30, America/Mexico_City. Actualización Waldo:14:48.
 Este índice está en main para todas las conversaciones. Es un registro de despliegues y evidencia; no implica que los exports históricos de main coincidan con producción. La consulta de issues abiertos no equivale a volver a conciliar todos sus paquetes.
 
 ## Leer antes de modificar producción
@@ -65,13 +65,29 @@ Fuentes:
 
 Reversión conjunta de Form/Shared: versiones anteriores0a0af4ac-fe0d-4aff-a662-7e45bf87a320/cce524a4-660e-4d05-af66-39e003c6338b y el manifiesto Guard compatible anterior. No revertir únicamente un escritor dejando pins incompatibles. El permiso WordPress es una decisión separada; no revocarlo ni alterar roles durante una reversión técnica sin revisar su uso.
 
-## Issues importantes que siguen abiertos
+## Conciliación durable del intento de Waldo — issue26
+
+Actualización posterior al corte inicial del11nov2026. Se separó el trabajo de cancelación a28 y se atendió primero Waldo.
+
+- Paquete `tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f`, revisión8. La clave original se conserva; no se generó otra solicitud de publicación.
+- Ejecución34438, HTTP200: `UNWRITTEN_ATTEMPT_FROZEN`; intento `REVOKED`, barrera `RECONCILING`, resultados OPURO/OPOL/LIBERAL `BLOCKED`.
+- `writeAuthorized=false`, `reopenAuthorized=false`, `retryPermitted=false`. La conciliación no entrega capacidad de escribir, reabrir ni reintentar; tampoco afirma terminación física de un proceso ChatGPT.
+- Relectura del paquete: `READY8`, cinco elementos y sus cinco SHA idénticos. No se crearon/actualizaron notas ni medios, no se cancelaron paquetes y no se alteró la suscripción del Motor.
+- Este resultado permite cerrar26 como **conciliación del intento**, no como entrega/publicación de Waldo. La publicación permanece pendiente de su flujo autorizado posterior; no usar `iniciar_intento` otra vez sobre revisión8.
+- Guard activo posterior: `opmx-guard-waldo-reconciliation.zip`, SHA256 `f995fe7aa1f0de60d2f3f44abeec0c089e90023e63720f9e3fea99a48fcccbe3`; código fuente `e1410223770592c0dcb9fc9ae3fd5f956db98481`.
+
+[Informe de verificación de Waldo](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/blob/5928d1d2c186f69601cb44e1338dbd89eae11718/docs/operations/issue26-waldo-20261111/VERIFICACION.md), con release y acuses de producción. Pasaron523 pruebas, incluidas52 del freeze. La comprobación posterior34444 confirmó nuevamente el gate real con ROLLBACK; el diagnóstico temporal quedó restaurado e inactivo sin retención. La reapertura posterior exige un `/abrir` real y recibo auténtico de Telegram; no fabricar ese recibo ni reciclar la revisión8.
+
+Este ZIP es posterior al del cambio de autor3. La ficha de autoría anterior conserva la evidencia de su propio despliegue histórico; no debe interpretarse como el último ZIP activo ni usarse para revertir esta conciliación.
+
+## Seguimiento de issues importantes
 
 La prioridad es propuesta en este corte, no una etiqueta ya existente del repositorio.
 
 | Prioridad propuesta | Issue | Pendiente real | Qué ya se resolvió |
 | --- | --- | --- | --- |
-| Alta operativa | [26](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/26) | Cancelación segura y conciliación del intento Waldo reclamado; revisar revisiones/órdenes actuales antes de actuar. | La orden de cancelación de Milenio fue sustituida después por recuperación; READY19 quedó bloqueado por duplicado, no cancelado. No volver a aplicar la orden antigua automáticamente. |
+| Conciliación resuelta; publicación pendiente | [26](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/26) | La conciliación del intento Waldo8 quedó confirmada; esto no ejecutó la publicación ni habilita reintentar. | Ejecución34438: UNWRITTEN_ATTEMPT_FROZEN, intentoREVOKED, barreraRECONCILING, tres destinosBLOCKED. PaqueteREADY8 y cinco SHA conservados. |
+| Diferida — después de Waldo | [28](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/28) | Revisar la cancelación de paquetes duplicados cuando el usuario retome esta parte; releer revisiones y órdenes vigentes. | La orden antigua de cancelar Milenio rev8 fue sustituida por recuperación; READY19 quedó ATTEMPT_BLOCKED, no CANCELLED. No se ejecutó ninguna cancelación al dividir los issues. |
 | Alta | [18](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/18) | Aceptación completa de recuperación, creación nueva multidestino, parciales/respuesta perdida, cuotas/retención y demás criterios del issue. | Reapertura/vista/confirmación, ensayo UPDATE OPURO y recuperación pre-ACK documentados; no equivalen a cerrar todo el issue. |
 | Alta | [19](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/19) | Modo literal autorizado automático, títulos largos, múltiples subtítulos y normalización de blancos sin alterar textos. | Frank Aguirre y Ealy recuperados manualmente. CREATE LITERAL aún no se habilita. |
 | Alta | [21](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/21) | Clasificación general de rechazos deterministas previos a escritura: no presentarlos indebidamente como UNCERTAIN. | Comprobación previa de etiquetas/extracto desplegada; casos editoriales documentados recuperados. |
@@ -85,4 +101,5 @@ También siguen abiertos13 (exclusiones de portada por categoría) y11 (score Ra
 
 ## Próximo trabajo recomendado
 
-Primero26 (cancelación/conciliación operativa) y19 (literal), coordinados con18. Después21 y15 para reducir falsos bloqueos y mejorar diagnóstico;24/25 para interrupciones y enlaces. Antes de tocar un paquete histórico, releer su estado y orden vigente. Este corte sólo revisa/documenta: no publica, cancela, reintenta ni modifica workflows.
+La conciliación prioritaria del26 ya tiene resultado durable: el intento previo está revocado y sin permiso de escritura. La publicación de Waldo no se ejecutó y requiere el siguiente flujo autorizado de recuperación; no repetir iniciar_intento para la revisión8. La cancelación separada en28 permanece para más adelante. Continuar19 (literal), coordinado con18, y21/15 para reducir falsos bloqueos y mejorar diagnóstico;24/25 para interrupciones y enlaces. Antes de tocar un paquete histórico, releer su estado y orden vigente. El cierre de26 como conciliación no acredita publicación ni cancelación.
+
