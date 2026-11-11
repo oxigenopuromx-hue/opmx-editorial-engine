@@ -58,6 +58,28 @@ export function createMotorAttemptStore({pool,adminUserIds=[],tokenFactory=()=>r
     return {status:'ATTEMPT_STARTED',token};
    });
   },
+  // Recover only an unacknowledged decision. The locked fence proves that
+  // no writer has been permitted. Revoking the old capability atomically also
+  // makes a delayed original worker fail before acknowledgement or writes.
+  // This is not a retry of start(), nor recovery of an uncertain CMS write.
+  async recoverUnacknowledged(input={}){
+   const {owner,chat,packageId,revision,eventId,previewHash}=input??{};
+   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='chat,eventId,owner,packageId,previewHash,revision'||owner!==chat||!admins.has(owner)||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??'')||!/^[a-f0-9]{64}$/.test(previewHash??''))return {status:'RECOVERY_NOT_AUTHORIZED',retryPermitted:false};
+   return transaction(async c=>{
+    const [p]=await c.execute('SELECT state,revision,owner_key FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
+    if(p.length!==1||p[0].state!=='READY'||Number(p[0].revision)!==revision)return {status:'STALE_REVISION',retryPermitted:false};
+    const [a]=await c.execute('SELECT state,event_id,token_hash FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+    if(a.length!==1||a[0].state!=='RUNNING'||a[0].event_id!==eventId)return {status:'RECOVERY_NOT_PERMITTED',retryPermitted:false};
+    const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+    if(f.length!==1||f[0].state!=='AWAITING_DECISION')return {status:'RECONCILIATION_REQUIRED',retryPermitted:false};
+    let d;try{d=await readDecision(c,packageId,revision)}catch{return {status:'DECISION_UNCONFIRMED',retryPermitted:false}}
+    if(!d||d.package_id!==packageId||d.revision!==revision||d.preview_hash!==previewHash)return {status:'DECISION_MISMATCH',retryPermitted:false};
+    const token=tokenFactory();if(!/^[a-f0-9]{64}$/.test(token)||equal(digest(token),a[0].token_hash))throw Error('INVALID_ATTEMPT_TOKEN');
+    const [changed]=await c.execute("UPDATE opmx_tg_motor_attempts_v1 SET token_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='RUNNING' AND token_hash=?",[digest(token),packageId,revision,a[0].token_hash]);
+    if(changed.affectedRows!==1)throw Error('ATTEMPT_RECOVERY_CONFLICT');
+    return {status:'UNACKNOWLEDGED_ATTEMPT_RECOVERED',eventId,token,retryPermitted:false};
+   });
+  },
   async acknowledgeDecision(input={}){
    const {packageId,revision,eventId,token,previewHash,destination,contentMode,action}=input??{};
    if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='action,contentMode,destination,eventId,packageId,previewHash,revision,token'||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??'')||!/^[a-f0-9]{64}$/.test(token??'')||!/^[a-f0-9]{64}$/.test(previewHash??'')||!['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'].includes(destination)||!['LITERAL','EDITORIAL'].includes(contentMode)||!['CREATE','UPDATE'].includes(action))throw Error('INVALID_ATTEMPT');
