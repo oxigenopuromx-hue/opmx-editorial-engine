@@ -101,7 +101,7 @@ export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).t
     const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
     if(f.length!==1||!['WRITING','HISTORICAL_WRITING'].includes(f[0].state))return {status:'RECONCILIATION_REQUIRED',retryPermitted:false};
     const proof=await verifyCompletedWrites(c,{packageId,revision,eventId});
-    if(!proof||proof.packageId!==packageId||proof.revision!==revision||!['DRAFT','PUBLISH'].includes(proof.phase)||!/^[a-f0-9]{64}$/.test(proof.receiptHash??''))return {status:'WRITER_COMPLETION_UNCONFIRMED',retryPermitted:false};
+    if(!proof||proof.packageId!==packageId||proof.revision!==revision||!['DRAFT','PUBLISH','UPDATE'].includes(proof.phase)||!/^[a-f0-9]{64}$/.test(proof.receiptHash??''))return {status:'WRITER_COMPLETION_UNCONFIRMED',retryPermitted:false};
     const [frozen]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='RECONCILING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state=?",[packageId,revision,f[0].state]);
     if(frozen.affectedRows!==1)throw Error('FENCE_CONFLICT');
     const [changed]=await c.execute("UPDATE opmx_tg_motor_attempts_v1 SET state='COMPLETED',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='RUNNING'",[packageId,revision]);
