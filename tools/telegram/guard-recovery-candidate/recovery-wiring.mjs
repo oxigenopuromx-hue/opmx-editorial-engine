@@ -1,3 +1,5 @@
+import {readPackageDiagnostic} from './package-diagnostic.mjs';
+import {readRecoverySelectionInTransaction} from './recovery-selection-default.mjs';
 import {createGuard} from './deployed-guard/guard-server.mjs';
 import {beginTargetWrite} from './deployed-guard/target-progress.mjs';
 import {createTelegramPackageStore} from './package-store.mjs';
@@ -45,10 +47,10 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const recoveryOptions={pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,verifyCompletedWrites,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin};
  if(reconciliationEvidence!==null&&(typeof reconciliationEvidence.lockSafetyBarrier!=='function'||typeof reconciliationEvidence.lockVerifiedOutcomes!=='function'))throw Error('RECOVERY_WIRING_INCOMPLETE');
  const recovery=reconciliationEvidence?createCandidateRecoverySubsystem({...recoveryOptions,lockTrustedSafetyBarrier:reconciliationEvidence.lockSafetyBarrier,captureTrustedRevision:createRevisionCapture({lockVerifiedBlockedOutcomes:reconciliationEvidence.lockVerifiedOutcomes})}):createCandidateFirstRecovery(recoveryOptions);
- const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds}):null;
- const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
+ const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds,readSelection:readRecoverySelectionInTransaction}):null;
+ const corrections=createCandidateCorrectionSubsystem({pool,events,readLockedSelection:readRecoverySelectionInTransaction,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramPreviewMaterializer=previewPayloads?createPreviewMaterializer({pool,preview:corrections.preview,adminUserIds}):null;
- const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction});
+ const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction,readDiagnostic:readPackageDiagnostic});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
  // initialize it here as well; DDL must never run inside the seal transaction.
