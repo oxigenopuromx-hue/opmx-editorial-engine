@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {buildCorrectionPreview} from './correction-preview.mjs';
-import {readConfirmedCorrectionInTransaction,readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
+import {readConfirmedCorrectionInTransaction,readVerifiedUpdateDecisionInTransaction,readConfirmedCorrectionManifestInTransaction} from './confirmed-correction-reader.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex'),packageId='tg_'+'a'.repeat(40),ownerKey=hash('opmx:telegram:v1:123:123'),eventId='evt_'+'b'.repeat(48),previewReceipt='telegram-123-10-100';
 function fixture(editor='123'){
  const actorKey=hash(`opmx:telegram:v1:${editor}:${editor}`),closeReceipt=`telegram-${editor}-10-100`;
@@ -12,6 +12,7 @@ function fixture(editor='123'){
  const connection={async execute(sql){
   if(sql.startsWith('SELECT owner_key,state,revision'))return [[state.pack]];
   if(sql.startsWith('SELECT preview_hash,decision_json'))return state.decisionMissing?[[]]:[[{preview_hash:state.preview.previewHash,decision_json:JSON.stringify(state.preview)}]];
+  if(sql.startsWith('SELECT decision_json'))return state.decisionMissing?[[]]:[[{decision_json:JSON.stringify(state.preview)}]];
   if(sql.startsWith('SELECT owner_key,preview_receipt'))return [[{owner_key:actorKey,preview_receipt:closeReceipt,confirmation_receipt:state.confirmation??`telegram-${editor}-11-101`,state:state.status??'CONFIRMED',event_id:eventId,preview_json:state.mismatch?'{}':JSON.stringify(state.preview)}]];
   if(sql.startsWith('SELECT event_id FROM opmx_tg_events'))return state.noEvent?[[]]:[[state.event]];
   if(sql.startsWith('SELECT snapshot_revision'))return [[state.closure]];
@@ -35,6 +36,7 @@ test('a confirmed update exposes only the exact destination IDs to the guarded u
  const f=fixture(),old=f.state.preview,item=old.materials[0];
  f.state.preview=buildCorrectionPreview({packageId,revision:10,ownerKey,actorKey:old.actorKey,authorizedEditorKey:old.actorKey,baseRevision:7,before:[item],after:[item],action:'UPDATE',mode:'LITERAL',destination:'OPOL,LIBERAL',verifiedPosts:{OPOL:123,LIBERAL:456}});
  const result=await readVerifiedUpdateDecisionInTransaction(f.connection,{packageId,revision:11});assert.deepEqual(result.posts,[{destination:'OPOL',postId:123},{destination:'LIBERAL',postId:456}]);assert.equal(result.action,'UPDATE');assert.equal(result.previewHash,f.state.preview.previewHash);
+ const manifest=await readConfirmedCorrectionManifestInTransaction(f.connection,packageId,11);assert.deepEqual(manifest.posts,[{destination:'OPOL',post_id:123},{destination:'LIBERAL',post_id:456}]);
  await assert.rejects(()=>readConfirmedCorrectionInTransaction(f.connection,packageId,11),/CONFIRMED_CORRECTION_UNCONFIRMED/);
  f.state.preview.posts[0].postId=789;await assert.rejects(()=>readVerifiedUpdateDecisionInTransaction(f.connection,{packageId,revision:11}),/CONFIRMED_CORRECTION_UNCONFIRMED/);
 });
