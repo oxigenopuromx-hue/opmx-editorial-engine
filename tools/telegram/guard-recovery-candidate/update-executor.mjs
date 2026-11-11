@@ -18,7 +18,7 @@ export function validUpdatePayload(payload){
  if(Object.hasOwn(payload,'status')&&!['publish','draft'].includes(payload.status))return false;
  try{return Buffer.byteLength(canonicalUpdateValue(payload))<=4*1024*1024}catch{return false}
 }
-function cmsMatches(post,id,slug,payload){
+export function cmsMatches(post,id,slug,payload){
  if(!post||post.id!==id||post.type!=='post'||post.slug!==slug||!['publish','draft'].includes(post.status))return false;
  for(const [k,v] of Object.entries(payload)){
   const value=['title','content','excerpt'].includes(k)?post[k]?.raw:post[k];
@@ -55,10 +55,15 @@ export function createUpdateExecutor({loadDecision,loadPayload,claimStore,wordpr
   if(before?.statusCode!==200||before.post?.id!==postId||before.post?.type!=='post'||before.post?.slug!==slug||!['publish','draft'].includes(before.post?.status)||Object.hasOwn(payload,'status')&&payload.status!==before.post.status)return no('CMS_PREFLIGHT_UNCONFIRMED',{postId});
   let claimed;try{claimed=await claimStore.begin({packageId,revision,destination,postId,previewHash,payloadHash,operationId})}catch{return no('CLAIM_UNCONFIRMED',{postId})}
   if(!claimed||claimed.status!=='UPDATE_STARTED'||claimed.packageId!==packageId||claimed.revision!==revision||claimed.destination!==destination||claimed.postId!==postId||claimed.operationId!==operationId)return no('CLAIM_UNCONFIRMED',{postId});
-  let sent;try{sent=await wordpress.update({destination,postId,payload})}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
+  const writeScope={packageId,revision,destination,postId,previewHash,payloadHash,operationId,slug,payload};
+  let sent;try{sent=typeof wordpress.updateConfirmed==='function'?await wordpress.updateConfirmed(writeScope):await wordpress.update({destination,postId,payload})}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
   if(!sent||!Number.isInteger(sent.statusCode)||sent.statusCode<200||sent.statusCode>=300||sent.post?.id!==postId)return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});
   let after;try{after=await wordpress.read({destination,postId})}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
   if(after?.statusCode!==200||after.post?.status!==before.post.status||!cmsMatches(after.post,postId,slug,payload))return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});
+  if(typeof wordpress.recordConfirmation==='function'){
+   let receipt;try{receipt=await wordpress.recordConfirmation(writeScope)}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
+   if(receipt?.status!=='UPDATE_RECEIPT_RECORDED'||receipt.operationId!==operationId)return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});
+  }
   return {status:'CMS_UPDATE_CONFIRMED',packageId,revision,destination,postId,wordpressConfirmation:'CONFIRMED',wordpressStatus:after.post.status,publicVisibility:'NOT_CHECKED',telegramAck:'NOT_CHECKED',retryPermitted:false};
  }};
 }
