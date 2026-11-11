@@ -36,7 +36,9 @@ Motor Editorial OPMX → Publisher n8n → WordPress → Social Distribution Eng
 
 ## Publisher y Telegram — estado operativo
 
-Consultar primero [estado operativo y traspaso al 4 de noviembre de 2026](docs/operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md). La configuración activa incluye servicios y cambios fuera de `main`: los exports v1.2.12 y anteriores son referencias históricas, no una identificación fiable del flujo vigente. Desde la activación de las 22:56 UTC, los paquetes nuevos de Telegram publican en ambos destinos por defecto tras aviso de apertura, `/listo` y validaciones; sólo `/borrador` solicita borradores. No se promueven paquetes cerrados anteriores. Ver [política v1](contracts/TELEGRAM_PUBLICATION_POLICY_v1.0.md).
+Leer primero el [estado compartido del 11 de noviembre de 2026](docs/operations/ESTADO_COMPARTIDO_TELEGRAM_20261111.md): versiones publicadas comprobadas, cambios en n8n/Guard/Motor, autor3 de El Liberal, pruebas, límites y prioridades abiertas. Incluye referencias inmutables al código y los informes de despliegue que están en ramas técnicas.
+
+Los exports antiguos de `main`, el [corte del 4 de noviembre](docs/operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md) y la [política v1](contracts/TELEGRAM_PUBLICATION_POLICY_v1.0.md) son referencias históricas para versiones/defaults y no deben usarse solos para restaurar producción. Comprobar la versión activa y el manifiesto Guard antes de modificar un escritor; conservar borradores de otros chats y la única suscripción del Motor. AMBOS mantiene OPURO+OPOL; TODOS incluye también LIBERAL. La autorización efectiva se obtiene del paquete y su revisión, no de una política histórica.
 
 ## Social vigente — 2026-10-25
 
