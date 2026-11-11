@@ -3,8 +3,8 @@ export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "9c7c0b56-3b19-4219-9aed-4e8787f32c3f",
-      "graphHash": "9b161622d785ba90140dfa974577146ed8ad6659a87efbb8202c6f5f3fe8ef0d"
+      "versionId": "76ef3bfe-db0a-4fb4-996c-ad703ab1639a",
+      "graphHash": "bc235c8cbeb2b816d2d336014b0d498751d8dd7de741800cd9a6e8159e49f457"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "0a0af4ac-fe0d-4aff-a662-7e45bf87a320",
