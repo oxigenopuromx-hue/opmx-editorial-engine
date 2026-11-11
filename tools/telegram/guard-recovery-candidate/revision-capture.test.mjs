@@ -29,3 +29,7 @@ test('unavailable decision evidence never falls back to the original destination
 test('missing recovery policy or unverified outcomes prevents reopening again',async()=>{
  for(const opts of [{badPolicy:true},{badResult:true}]){const {capture,c}=setup(opts);assert.equal(await capture(c,id,revision,owner,[]),null);}
 });
+test('confirmed UPDATE capture preserves exactly the reconciled original IDs',async()=>{
+ const correction={package_id:id,revision,action:'UPDATE',destination:'OPURO',content_mode:'LITERAL',preview_hash:'d'.repeat(64),posts:[{destination:'OPURO',post_id:123}]},c={async execute(){return [[{package_id:id}]]}};
+ for(const postId of [123,999]){const capture=createRevisionCapture({readRecoveredPolicy:async()=>policy,readConfirmedCorrection:async()=>correction,lockVerifiedBlockedOutcomes:async()=>[{destination:'OPURO',status:'DRAFT',publicationVerdict:'CMS_RECORD_CONFIRMED',cmsVerified:true,wordpressStatus:'draft',postId,slug:'qa18',ledgerRequestId:'tg_'+'e'.repeat(64)}]});const r=await capture(c,id,revision,owner,[]);if(postId===123)assert.equal(r.results[0].postId,123);else assert.equal(r,null)}
+});
