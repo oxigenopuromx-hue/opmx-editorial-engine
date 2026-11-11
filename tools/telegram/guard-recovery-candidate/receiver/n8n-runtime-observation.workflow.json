@@ -1,0 +1,390 @@
+{
+  "id": "2HBn1RnSYgyxuHgE",
+  "name": "OPMX — observación técnica runtime #18",
+  "active": true,
+  "activeVersionId": "866b0234-43b7-4dc5-aca4-95bb22d656d9",
+  "nodes": [
+    {
+      "id": "8b47f2fc-5df7-4103-87ed-2cd06f023ff6",
+      "name": "Consultar runtime",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opmx-runtime-observation-v1",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson"
+      },
+      "webhookId": "27d83d85-f3e9-4efd-a134-aecac4e5f30e",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "7314b78a-a74c-4b8b-9488-87b3e48e63d6",
+      "name": "Validar alcance",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body;if(!b||Object.keys(b).sort().join(',')!=='eventId,nonce,packageId,revision'||!/^tg_[a-f0-9]{40}$/.test(b.packageId)||!Number.isSafeInteger(b.revision)||b.revision<1||!/^evt_[a-f0-9]{48}$/.test(b.eventId)||!/^obs_[a-f0-9]{48}$/.test(b.nonce))throw Error('INVALID_OBSERVATION_SCOPE');return [{json:{...b,startedAt:new Date().toISOString()}}];"
+      }
+    },
+    {
+      "id": "121d1b72-28db-404a-ba54-1be4a91f12c5",
+      "name": "Leer versión 0",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/workflows/bnzVMNkZuGO1GQCZ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "847af122-3a32-4460-bb51-711fc35edcef",
+      "name": "Leer versión 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/workflows/Mt7ts2EGPbyaTC2o",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "37b13840-506d-4624-99ba-5b797e5d06f8",
+      "name": "Leer versión 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/workflows/4o7K5TmKc7joScqB",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "f8fa6a00-688a-420f-b7ec-777a468dfe75",
+      "name": "Leer running",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/executions?status=running&limit=100&includeData=false",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "aec725a2-e636-4731-80c9-9ce50ee954f4",
+      "name": "Leer waiting",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1344,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/executions?status=waiting&limit=100&includeData=false",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "6127f06f-6996-4f52-a5d0-aacac9c1f3b4",
+      "name": "Leer new",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1568,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/executions?status=new&limit=100&includeData=false",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "fceb1cfd-cb3e-4ee1-918a-2b0b3f67907a",
+      "name": "Observación sin permiso de recuperación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const scope=$('Validar alcance').first().json;const ids=[\"bnzVMNkZuGO1GQCZ\",\"Mt7ts2EGPbyaTC2o\",\"4o7K5TmKc7joScqB\"];\nconst workflows=ids.map((id,i)=>{const r=$('Leer versión '+i).first().json;const b=r.body,a=b?.activeVersion;if(r.statusCode!==200||b.id!==id||b.active!==true||!a||a.workflowId!==id||a.versionId!==b.activeVersionId||!Array.isArray(a.nodes)||!a.connections)throw Error('ACTIVE_VERSION_UNAVAILABLE');return {id,activeVersionId:b.activeVersionId,graph:{nodes:a.nodes,connections:a.connections}}});\nconst executionPages=['running','waiting','new'].map(status=>{const r=$('Leer '+status).first().json;const b=r.body;if(r.statusCode!==200||!Array.isArray(b?.data))throw Error('EXECUTION_PAGE_UNAVAILABLE');if(b.data.some(x=>x.status!==status||typeof x.id!=='string'||typeof x.workflowId!=='string'))throw Error('EXECUTION_FILTER_MISMATCH');return {status,complete:!b.nextCursor,executions:b.data.filter(x=>ids.includes(x.workflowId)).map(x=>({id:x.id,workflowId:x.workflowId,status:x.status,startedAt:x.startedAt??null,stoppedAt:x.stoppedAt??null}))}});\nreturn [{json:{schema:'opmx.runtime-observation.v1',scope:{packageId:scope.packageId,revision:scope.revision,eventId:scope.eventId,nonce:scope.nonce},startedAt:scope.startedAt,observedAt:new Date().toISOString(),workflows,executionPages,authorizesRecovery:false,motorTerminationVerified:false}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Consultar runtime": {
+      "main": [
+        [
+          {
+            "node": "Validar alcance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar alcance": {
+      "main": [
+        [
+          {
+            "node": "Leer versión 0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer versión 0": {
+      "main": [
+        [
+          {
+            "node": "Leer versión 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer versión 1": {
+      "main": [
+        [
+          {
+            "node": "Leer versión 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer versión 2": {
+      "main": [
+        [
+          {
+            "node": "Leer running",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer running": {
+      "main": [
+        [
+          {
+            "node": "Leer waiting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer waiting": {
+      "main": [
+        [
+          {
+            "node": "Leer new",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer new": {
+      "main": [
+        [
+          {
+            "node": "Observación sin permiso de recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodeGroups": [
+    {
+      "id": "682ede9f-83b9-4a7f-a9d9-c9e0cd94ec0b",
+      "name": "Lecturas de runtime",
+      "nodeNames": [
+        "Leer versión 0",
+        "Leer versión 1",
+        "Leer versión 2",
+        "Leer running",
+        "Leer waiting",
+        "Leer new"
+      ],
+      "description": "Sólo GET con credencial técnica limitada a lectura; fuentes fijas."
+    }
+  ],
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 90
+  },
+  "description": "Lectura fija de versiones activas y ejecuciones n8n. Requiere Header Auth del Guard, no permite URLs arbitrarias ni concede permisos de reapertura. Sin Motor adicional."
+}
