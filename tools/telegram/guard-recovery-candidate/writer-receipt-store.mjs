@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {destinationRegistry,destinationLabel} from './original-destinations.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 import {canonicalUpdateValue} from './canonical-json.mjs';
+import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
 
 export const writerReceiptSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_writer_receipts_v1 (
  request_id VARCHAR(128) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
@@ -61,6 +62,21 @@ export function createWriterReceiptStore({pool,readWordPress}){
 export async function readCompletedWriterReceipt(c,{packageId,revision,eventId}){
  if(!c?.execute||!/^tg_[a-f0-9]{40}$/.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!/^evt_[a-f0-9]{48}$/.test(eventId??''))return null;
  const [events]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? AND event_id=? FOR UPDATE',[packageId,revision,eventId]);if(events.length!==1)return null;
+ const [decisions]=await c.execute('SELECT decision_json FROM opmx_tg_confirmed_decisions_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+ if(decisions.length>1)return null;
+ if(decisions.length){
+  let saved;try{saved=JSON.parse(decisions[0].decision_json)}catch{return null}
+  if(saved?.action==='UPDATE'){
+   let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId,revision})}catch{return null}
+   if(!d?.finalPayloads||!Array.isArray(d.posts)||!d.posts.length)return null;
+   const [claims]=await c.execute('SELECT destination,post_id,preview_hash,payload_hash,operation_id,state FROM opmx_tg_update_claims_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+   const [jobs]=await c.execute('SELECT destination,post_id,preview_hash,payload_hash,operation_id,state FROM opmx_tg_update_deliveries_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+   if(claims.length!==d.posts.length||jobs.length!==d.posts.length||new Set(claims.map(r=>r.destination)).size!==d.posts.length||new Set(jobs.map(r=>r.destination)).size!==d.posts.length)return null;
+   const targets=[];
+   for(const p of d.posts){const h=digest(canonicalUpdateValue(d.finalPayloads[p.destination])),a=claims.find(r=>r.destination===p.destination),j=jobs.find(r=>r.destination===p.destination);if(!a||!j||a.state!=='CONFIRMED'||j.state!=='CONFIRMED'||Number(a.post_id)!==p.postId||Number(j.post_id)!==p.postId||a.preview_hash!==d.previewHash||j.preview_hash!==d.previewHash||a.payload_hash!==h||j.payload_hash!==h||a.operation_id!==j.operation_id)return null;targets.push({destination:p.destination,postId:p.postId,payloadHash:h,operationId:a.operation_id})}
+   const proof={packageId,revision,eventId,phase:'UPDATE',previewHash:d.previewHash,targets};return {...proof,receiptHash:digest(canonicalUpdateValue(proof))};
+  }
+ }
  const [claims]=await c.execute('SELECT request_id FROM opmx_tg_publication_claims_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);if(claims.length>1)return null;
  const phase=claims.length?'PUBLISH':'DRAFT';
  const [rows]=await c.execute('SELECT request_id,phase,receipt_hash,receipt_json FROM opmx_tg_writer_receipts_v1 WHERE package_id=? AND revision=? AND phase=? FOR UPDATE',[packageId,revision,phase]);
