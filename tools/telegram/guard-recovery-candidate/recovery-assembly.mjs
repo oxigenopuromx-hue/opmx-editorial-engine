@@ -33,7 +33,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     mediaBegin:createClassifiedMediaRouter(beginMediaUpload),
     telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
-    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement,verifyUpdateEnforcement,verifyCompletedWrites}),
+    motorAttempts:createMotorAttemptStore({pool,adminUserIds,verifyLiteralEnforcement,verifyUpdateEnforcement,verifyCompletedWrites}),
     initializeMotorAttempt,
     readRecoveredPolicy:readRecoveredPolicyInTransaction,
     readConfirmedCorrection:readConfirmedCorrectionInTransaction,
