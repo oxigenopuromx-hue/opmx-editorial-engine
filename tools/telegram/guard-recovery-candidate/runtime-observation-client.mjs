@@ -1,13 +1,8 @@
+import writerReleaseManifest from './writer-release-manifest.mjs';
 import {randomBytes} from 'node:crypto';
 
 export const runtimeObservationUrl='https://n8n.oxigenopuro.com.mx/webhook/opmx-runtime-observation-v1';
-export const expectedRuntimeVersions=Object.freeze({
- bnzVMNkZuGO1GQCZ:'3f0147c7-7ac0-449d-9342-f4737277562e',
- Mt7ts2EGPbyaTC2o:'0a0af4ac-fe0d-4aff-a662-7e45bf87a320',
- '4o7K5TmKc7joScqB':'cce524a4-660e-4d05-af66-39e003c6338b',
- C4hk6fQQomueYC8f:'1eca0334-b3af-45d9-ac80-341e99a09faa',
- qBmLf0DmcMSfuWvm:'d04fb5c2-ba36-48f9-9cd4-2958ab1f273e'
-});
+export const expectedRuntimeVersions=Object.freeze(Object.fromEntries(Object.entries(writerReleaseManifest.workflows).map(([id,w])=>[id,w.versionId])));
 const states=['running','waiting','new'];
 const scopeValid=s=>s&&Object.keys(s).sort().join(',')==='eventId,packageId,revision'&&/^tg_[a-f0-9]{40}$/.test(s.packageId)&&/^evt_[a-f0-9]{48}$/.test(s.eventId)&&Number.isSafeInteger(s.revision)&&s.revision>0&&s.revision<=4294967295;
 const unavailable=()=>Object.freeze({status:'RUNTIME_OBSERVATION_UNAVAILABLE',authorizesRecovery:false,motorTerminationVerified:false});
