@@ -1,7 +1,8 @@
 import {createGuard} from './deployed-guard/guard-server.mjs';
 import {beginTargetWrite} from './deployed-guard/target-progress.mjs';
 import {createTelegramPackageStore} from './package-store.mjs';
-import {createCandidateFirstRecovery,createCandidateCorrectionSubsystem} from './recovery-assembly.mjs';
+import {createCandidateFirstRecovery,createCandidateCorrectionSubsystem,createCandidateRecoverySubsystem} from './recovery-assembly.mjs';
+import {createRevisionCapture} from './revision-capture.mjs';
 import {createUpdateClaimStore} from './update-claim.mjs';
 import {readVerifiedUpdateDecisionInTransaction,readConfirmedCorrectionManifestInTransaction} from './confirmed-correction-reader.mjs';
 import {readVerifiedUpdatePosts,loadVerifiedUpdateTarget} from './verified-update-posts.mjs';
@@ -18,7 +19,7 @@ import {createHash} from 'node:crypto';
 // Production must supply independent, authoritative verifiers only after all
 // writers and the Motor have been wired and checked. No HTTP input, source
 // document or environment boolean can substitute for those providers.
-export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,enqueuePreviewGeneration=null}){
+export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,verifyCompletedWrites=async()=>null,reconciliationEvidence=null,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,enqueuePreviewGeneration=null}){
  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
  if(updateProviders!==null&&(!updateProviders||typeof updateProviders!=='object'||Array.isArray(updateProviders)||!['verifyCmsPreflight,verifyPayload,verifyUpdateEnforcement,verifyUpdateReadiness','verifyUpdateEnforcement,verifyUpdateReadiness'].includes(Object.keys(updateProviders).sort().join(','))||!Object.values(updateProviders).every(x=>typeof x==='function')))throw Error('UPDATE_CLAIM_CONFIGURATION_INCOMPLETE');
  let wordpress=null;
@@ -41,7 +42,9 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   if(result?.statusCode!==200||post?.id!==input.postId||post?.type!=='post'||post?.slug!==target.slug||!['publish','draft'].includes(post?.status))return null;
   return {...input,authenticatedCmsPreflight:true};
  }:null);
- const recovery=createCandidateFirstRecovery({pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin});
+ const recoveryOptions={pool,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyLiteralEnforcement,verifyCompletedWrites,...(updateProviders?{verifyUpdateEnforcement:updateProviders.verifyUpdateEnforcement}:{}),beginLegacyTarget:legacyTargetBegin};
+ if(reconciliationEvidence!==null&&(typeof reconciliationEvidence.lockSafetyBarrier!=='function'||typeof reconciliationEvidence.lockVerifiedOutcomes!=='function'))throw Error('RECOVERY_WIRING_INCOMPLETE');
+ const recovery=reconciliationEvidence?createCandidateRecoverySubsystem({...recoveryOptions,lockTrustedSafetyBarrier:reconciliationEvidence.lockSafetyBarrier,captureTrustedRevision:createRevisionCapture({lockVerifiedBlockedOutcomes:reconciliationEvidence.lockVerifiedOutcomes})}):createCandidateFirstRecovery(recoveryOptions);
  const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds}):null;
  const corrections=createCandidateCorrectionSubsystem({pool,events,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramPreviewMaterializer=previewPayloads?createPreviewMaterializer({pool,preview:corrections.preview,adminUserIds}):null;
@@ -66,6 +69,17 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
   if(!decision||(decision.actorKey!==actorKey&&decision.ownerKey!==actorKey)||decision.previewHash!==scope.previewHash)return {status:'UPDATE_NOT_READY',retryPermitted:false};
   return executor.execute(scope);
  }};
- return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts:recovery.motorAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewMaterializer,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stageFromMotor,context:previewPayloads.contextFromMotor}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
+ const telegramAttempts={...recovery.motorAttempts,async acknowledgeDecision(input){
+  // Stage every exact confirmed payload before the acknowledgement opens the
+  // fence. The caller supplies no payload; all bytes come from the persisted
+  // preview that the editor received and confirmed.
+  if(input?.action==='UPDATE'&&payloadStore){
+   let d;try{d=await loadUpdateDecision({packageId:input.packageId,revision:input.revision})}catch{return {status:'DECISION_UNCONFIRMED',retryPermitted:false}}
+   if(!d||d.previewHash!==input.previewHash||!d.finalPayloads)return {status:'PAYLOAD_UNCONFIRMED',retryPermitted:false};
+   for(const p of d.posts){const r=await payloadStore.stage({packageId:d.packageId,revision:d.revision,destination:p.destination,previewHash:d.previewHash,payload:d.finalPayloads[p.destination]});if(!['PAYLOAD_STAGED','PAYLOAD_REPLAY'].includes(r.status))return {status:'DECISION_UNCONFIRMED',retryPermitted:false}}
+  }
+  return recovery.motorAttempts.acknowledgeDecision(input);
+ }};
+ return Object.freeze({pool,secret,telegramStore,telegramEvents:events,telegramReviews:reviews,telegramRecovery:recovery.telegramRecovery,telegramBlockedList:recovery.telegramBlockedList,telegramAttempts,telegramCorrections:{preview:corrections.preview,confirm},telegramSelections:{select:corrections.select},telegramPreviewDelivery:corrections.previewDelivery,telegramPreviewMaterializer,telegramPreviewPayloads:previewPayloads?{stage:previewPayloads.stageFromMotor,context:previewPayloads.contextFromMotor}:null,telegramPublicationBegin:recovery.telegramPublicationBegin,telegramUpdatePayloads:payloadStore?{stage:payloadStore.stage}:null,telegramUpdateClaims,telegramUpdateExecutor,targetBegin:recovery.targetBegin,mediaBegin:recovery.mediaBegin});
 }
 export function createRecoveryGuard(options){return createGuard(createRecoveryWiring(options));}
