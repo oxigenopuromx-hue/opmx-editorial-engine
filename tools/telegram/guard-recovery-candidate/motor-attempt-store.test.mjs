@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createMotorAttemptStore,initializeMotorAttempt} from './motor-attempt-store.mjs';
 const packageId='tg_'+'a'.repeat(40),revision=7,eventId='evt_'+'b'.repeat(48),token='c'.repeat(64);
-function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVerified=false,updateVerified=false}={}){
+function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVerified=false,updateVerified=false,completedProof=null,failComplete=false}={}){
  let state={attempt:'QUEUED',fence,tokenHash:null};let chain=Promise.resolve(),locked;
  const pool={async getConnection(){
   let release;const prior=chain;chain=new Promise(r=>release=r);
@@ -15,11 +15,12 @@ function fixture({fence='READY_TO_WRITE',failBlock=false,decision=null,literalVe
    if(sql.includes("SET state='RUNNING'")){state.attempt='RUNNING';state.tokenHash=args[0];return [{affectedRows:1}];}
    if(sql.includes("SET state='READY_TO_WRITE'")){state.fence='READY_TO_WRITE';return [{affectedRows:1}];}
    if(sql.includes("SET state='RECONCILING'")){state.fence='RECONCILING';return [{affectedRows:1}];}
+   if(sql.includes("SET state='COMPLETED'")){if(failComplete)throw Error('FAULT');state.attempt='COMPLETED';return [{affectedRows:1}];}
    if(sql.includes("SET state='BLOCKED'")){if(failBlock)throw Error('FAULT');state.attempt='BLOCKED';return [{affectedRows:1}];}
    throw Error('unexpected SQL '+sql);
   }};
  }};
- return {store:createMotorAttemptStore({pool,tokenFactory:()=>token,readDecision:async()=>decision,readUpdateDecision:async()=>decision,verifyLiteralEnforcement:async()=>literalVerified,verifyUpdateEnforcement:async()=>updateVerified}),get state(){return state}};
+ return {store:createMotorAttemptStore({pool,tokenFactory:()=>token,readDecision:async()=>decision,readUpdateDecision:async()=>decision,verifyLiteralEnforcement:async()=>literalVerified,verifyUpdateEnforcement:async()=>updateVerified,verifyCompletedWrites:async()=>completedProof}),get state(){return state}};
 }
 test('one claim wins, and a blocked attempt freezes its revision atomically',async()=>{
  const f=fixture(),input={packageId,revision,eventId};
@@ -90,4 +91,19 @@ test('update acknowledgement stays fenced unless exact target IDs and writer enf
  const good=fixture({fence:'AWAITING_DECISION',decision,updateVerified:true});await good.store.begin(key);
  assert.equal((await good.store.acknowledgeDecision({...ack,previewHash:'f'.repeat(64)})).status,'DECISION_MISMATCH');
  assert.equal((await good.store.acknowledgeDecision(ack)).status,'DECISION_ACKNOWLEDGED');assert.equal(good.state.fence,'READY_TO_WRITE');
+});
+
+test('a writer acknowledgement and the claimed attempt atomically retire write permission',async()=>{
+ const proof={packageId,revision,phase:'PUBLISH',receiptHash:'d'.repeat(64)},f=fixture({completedProof:proof}),key={packageId,revision,eventId};await f.store.begin(key);f.state.fence='WRITING';
+ const result=await f.store.complete({...key,token});assert.equal(result.status,'ATTEMPT_COMPLETED');assert.equal(result.reopenPermitted,false);assert.equal(f.state.fence,'RECONCILING');assert.equal(f.state.attempt,'COMPLETED');
+ assert.equal((await f.store.complete({...key,token})).status,'COMPLETED_REPLAY');assert.equal((await f.store.begin(key)).status,'ATTEMPT_ALREADY_CLAIMED');
+});
+test('missing, mismatched and malformed writer acknowledgements leave the attempt unresolved',async()=>{
+ for(const proof of [null,{packageId,revision:revision+1,phase:'PUBLISH',receiptHash:'d'.repeat(64)},{packageId,revision,phase:'PUBLISH',receiptHash:'invalid'}]){
+  const f=fixture({completedProof:proof}),key={packageId,revision,eventId};await f.store.begin(key);f.state.fence='WRITING';assert.equal((await f.store.complete({...key,token})).status,'WRITER_COMPLETION_UNCONFIRMED');assert.equal(f.state.fence,'WRITING');assert.equal(f.state.attempt,'RUNNING');
+ }
+});
+test('completion cannot be forged by another capability and rolls back a partial retirement',async()=>{
+ const proof={packageId,revision,phase:'DRAFT',receiptHash:'d'.repeat(64)},f=fixture({completedProof:proof,failComplete:true}),key={packageId,revision,eventId};await f.store.begin(key);f.state.fence='WRITING';
+ assert.equal((await f.store.complete({...key,token:'e'.repeat(64)})).status,'ATTEMPT_NOT_AUTHORIZED');await assert.rejects(()=>f.store.complete({...key,token}),/FAULT/);assert.equal(f.state.fence,'WRITING');assert.equal(f.state.attempt,'RUNNING');
 });
