@@ -47,16 +47,26 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
     const updateDeliveryAction=telegramUpdateDeliveries&&req.url==='/v1/telegram/update-deliveries/consume';
     const reconciliationAction=telegramReconciliation&&req.url==='/v1/telegram/reconciliation/observe';
     const writerReceiptAction=telegramWriterReceipts&&req.url==='/v1/telegram/writers/report';
+    const previewDiagnostic=req.url==='/v1/telegram/previews/diagnostic';
     const runtimeAction=runtimeObserver&&req.url==='/v1/telegram/runtime/observe';
     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!updateDeliveryAction&&!reconciliationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||(!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(updateDeliveryAction||reconciliationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+      if(previewDiagnostic||updateDeliveryAction||reconciliationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(previewDiagnostic){
+         if(!input||Object.keys(input).join(',')!=='packageId'||!/^tg_[a-f0-9]{40}$/.test(input.packageId??''))return end(400,{error:'invalid_diagnostic'});
+         const c=await pool.getConnection();try{
+          const [subscriptions]=await c.execute('SELECT subscription_id,state,expires_at FROM opmx_tg_preview_subscriptions_v1 ORDER BY subscription_id LIMIT 10');
+          const [generation]=await c.execute('SELECT revision,state FROM opmx_tg_preview_generation_v1 WHERE package_id=? ORDER BY revision',[input.packageId]);
+          const [deliveries]=await c.execute('SELECT e.revision,d.state,d.attempts,d.last_status FROM opmx_tg_preview_deliveries_v1 d JOIN opmx_tg_preview_events_v1 e ON e.event_id=d.event_id WHERE e.package_id=? ORDER BY e.revision',[input.packageId]);
+          return end(200,{status:'PREVIEW_DIAGNOSTIC',configuredSubscription:process.env.OPMX_PREVIEW_SUBSCRIPTION_ID??null,subscriptions,generation,deliveries});
+         }finally{c.release()}
+        }
         if(updateDeliveryAction){const r=await telegramUpdateDeliveries.consume(input);return end(r.status==='UPDATE_PAYLOAD_GRANTED'?200:409,r)}
         if(reconciliationAction)return end(200,await telegramReconciliation(input));
         if(writerReceiptAction){const r=await telegramWriterReceipts.report(input);return end(['WRITER_RECEIPT_RECORDED','WRITER_RECEIPT_REPLAY'].includes(r.status)?200:409,r)}
