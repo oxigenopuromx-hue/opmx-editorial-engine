@@ -13,7 +13,7 @@ function fixture(){
  return {state,ledger,c,get reads(){return reads}};
 }
 test('binds IDs to the saved revision, verified CMS observations and locked ledger',async()=>{
- const f=fixture(),out=await readVerifiedUpdatePosts(f.c,input);assert.deepEqual(out,{...input,verified:true,posts:{OPURO:123,OPOL:456},slugs:{OPURO:'nota-opuro',OPOL:'nota-opol'}});assert.equal(f.reads,2);
+ const f=fixture(),out=await readVerifiedUpdatePosts(f.c,input);assert.deepEqual(out,{...input,verified:true,posts:{OPURO:123,OPOL:456},slugs:{OPURO:'nota-opuro',OPOL:'nota-opol'},ledgerRequestIds:{OPURO:requestId,OPOL:requestId}});assert.equal(f.reads,2);
  assert.deepEqual((await readVerifiedUpdatePosts(f.c,{...input,destination:'OPOL'})).posts,{OPOL:456});
 });
 test('missing or altered proof and deleted or uncertain posts remain unavailable',async()=>{
@@ -34,4 +34,8 @@ test('the confirmed decision and locked ledger alone supply the original slug',a
  assert.deepEqual(await loadVerifiedUpdateTarget(c,scope),{...scope,slug:'nota-real'});
  assert.equal(await loadVerifiedUpdateTarget(c,{...scope,postId:124}),null);assert.equal(await loadVerifiedUpdateTarget(c,{...scope,previewHash:'f'.repeat(64)}),null);
  snap.prior.results[0].wordpressStatus='trash';assert.equal(await loadVerifiedUpdateTarget(c,scope),null);
+});
+test('later snapshots retain a creation ledger only through its older immutable package binding',async()=>{
+ const inherited=expectedDraftRequestId({packageId,revision:3,destination:'OPURO'});
+ for(const wrong of [false,true]){const f=fixture();f.state.prior.results[0].ledgerRequestId=inherited;const c={async execute(sql,args){if(sql.includes('FROM opmx_tg_request_binding'))return [[{package_id:wrong?'tg_'+'e'.repeat(40):packageId,revision:3}]];if(sql.includes('FROM opmx_mcp_target_progress')&&args[1]===inherited)return f.c.execute(sql,[args[0],requestId,args[2]]);return f.c.execute(sql,args)}};const r=await readVerifiedUpdatePosts(c,input);if(wrong)assert.equal(r,null);else{assert.equal(r.posts.OPURO,123);assert.equal(r.ledgerRequestIds.OPURO,inherited)}}
 });
