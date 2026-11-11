@@ -10,6 +10,7 @@ import {prepareCutoverFence} from './fence-cutover-wiring.mjs';
 import {preparePreviewIntegration} from './preview-integration.mjs';
 import {preparePreviewServices} from './preview-services.mjs';
 import {createRuntimeObserver} from './runtime-observation-client.mjs';
+import {prepareMotorRuntimeServices} from './motor-runtime-services.mjs';
 
 // Synchronous module evaluation is required by LiteSpeed's require() loader.
 // Initializers may fail independently; a failed fence never restores the old
@@ -23,6 +24,8 @@ if(OPMX_TELEGRAM_SHARED_OPERATORS){try{sharedOperators=JSON.parse(OPMX_TELEGRAM_
 const readyEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
 const fenceReady=prepareCutoverFence({pool,legacyTargetBegin:beginTargetWrite,legacyMediaBegin:beginMediaUpload}).catch(()=>{console.error('guard.fence: initialization_failed');return null});
 const requireFence=async()=>{const fence=await fenceReady;if(!fence)throw Error('FENCE_UNAVAILABLE');return fence};
+const motorReady=prepareMotorRuntimeServices({pool,secret:OPMX_GUARD_SECRET}).catch(()=>{console.error('guard.motor_services: initialization_failed');return null});
+const requireMotor=async()=>{const services=await motorReady;if(!services)throw Error('MOTOR_SERVICES_UNAVAILABLE');return services};
 const servicesReady=preparePreviewServices({pool,adminUserIds:sharedOperators?.subscriber?[sharedOperators.subscriber]:[]}).catch(()=>{console.error('guard.preview_services: initialization_failed');return null});
 const requirePreviewServices=async()=>{const services=await servicesReady;if(!services)throw Error('PREVIEW_SERVICES_UNAVAILABLE');return services};
 // Only a configured, authenticated subscription receives work, and only after
@@ -37,9 +40,11 @@ const telegramEvents={
  start(){readyEvents.start();previewReady.then(x=>{previewIntegration=x;if(x&&!closed)x.telegramEvents.start()})},
  stop(){closed=true;if(previewIntegration)previewIntegration.telegramEvents.stop();else readyEvents.stop()}
 };
-const store=createTelegramPackageStore(pool,{events:telegramEvents,initializePublicationFence:async(...args)=>(await requireFence()).initializePublicationFence(...args)});
-const telegramStore={capabilities:(...args)=>store.capabilities(...args),async run(action,input){if(action==='seal')await requireFence();return store.run(action,input)}};
+const store=createTelegramPackageStore(pool,{events:telegramEvents,initializePublicationFence:async(...args)=>(await requireFence()).initializePublicationFence(...args),initializeMotorAttempt:async(...args)=>(await requireMotor()).initializeMotorAttempt(...args)});
+const telegramStore={capabilities:(...args)=>store.capabilities(...args),async run(action,input){if(action==='seal')await Promise.all([requireFence(),requireMotor()]);return store.run(action,input)}};
 const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:createTelegramReviewStore(pool),
+ telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision'].map(method=>[method,async(...args)=>(await requireMotor()).telegramAttempts[method](...args)])),
+ telegramWriterReceipts:{report:async(...args)=>(await requireMotor()).telegramWriterReceipts.report(...args)},
  targetBegin:async(...args)=>(await requireFence()).targetBegin(...args),
  mediaBegin:async(...args)=>(await requireFence()).mediaBegin(...args),
  telegramPublicationBegin:async(...args)=>(await requireFence()).telegramPublicationBegin(...args),
