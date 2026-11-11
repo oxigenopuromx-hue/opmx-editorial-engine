@@ -10,3 +10,6 @@ test('writer receipts authenticate first and do not turn an unresolved phase int
 test('completion remains behind the existing Guard authentication',async()=>{
  let calls=0;await run({telegramAttempts:{begin(){},block(){},async complete(){calls++;return {status:'WRITER_COMPLETION_UNCONFIRMED'}}}},async url=>{assert.equal((await post(url+'/v1/telegram/attempts/complete',false)).status,401);assert.equal(calls,0);assert.equal((await (await post(url+'/v1/telegram/attempts/complete')).json()).status,'WRITER_COMPLETION_UNCONFIRMED');assert.equal(calls,1)});
 });
+test('reconciliation observations remain private and never report a write permission',async()=>{
+ let calls=0;await run({telegramReconciliation:async()=>{calls++;return {status:'RECONCILIATION_REQUIRED',writeAuthorized:false,consistentSnapshot:false}}},async url=>{assert.equal((await post(url+'/v1/telegram/reconciliation/observe',false)).status,401);assert.equal(calls,0);const body=await (await post(url+'/v1/telegram/reconciliation/observe')).json();assert.equal(body.writeAuthorized,false);assert.equal(body.consistentSnapshot,false);assert.equal(calls,1)});
+});
