@@ -45,6 +45,7 @@ const telegramStore={capabilities:(...args)=>store.capabilities(...args),async r
 const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:createTelegramReviewStore(pool),
  telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision'].map(method=>[method,async(...args)=>(await requireMotor()).telegramAttempts[method](...args)])),
  telegramWriterReceipts:{report:async(...args)=>(await requireMotor()).telegramWriterReceipts.report(...args)},
+ telegramReconciliation:async(...args)=>(await requireMotor()).telegramReconciliation(...args),
  targetBegin:async(...args)=>(await requireFence()).targetBegin(...args),
  mediaBegin:async(...args)=>(await requireFence()).mediaBegin(...args),
  telegramPublicationBegin:async(...args)=>(await requireFence()).telegramPublicationBegin(...args),
