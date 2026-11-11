@@ -1,0 +1,340 @@
+{
+  "workflowId": "F4Ybwst2LZfzKyWS",
+  "versionId": "d925c4b2-db41-4815-81e8-b70a3ce152e3",
+  "nodes": [
+    {
+      "id": "fafd16f7-1d8d-4c4c-a28d-1a3a51d9f1b4",
+      "name": "Consultar registro CMS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        192
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "opmx-cms-observation-v1",
+        "authentication": "headerAuth",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson"
+      },
+      "webhookId": "eef4fa99-d138-4deb-9af4-22e10b76293f",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "b8963e31-209c-4bbf-a66b-5e388a5b1877",
+      "name": "Validar ID y sitio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b=$input.first().json.body;const keys=Object.keys(b??{}).sort().join(',');if(!b||!(keys==='destination,nonce,postId'||keys==='destination,nonce,postId,projection'&&b.projection==='editorial')||!['OPURO','OPOL','LIBERAL'].includes(b.destination)||!Number.isSafeInteger(b.postId)||b.postId<1||!/^cms_[a-f0-9]{48}$/.test(b.nonce))throw Error('INVALID_CMS_OBSERVATION_SCOPE');return [{json:{...b,startedAt:new Date().toISOString()}}];"
+      }
+    },
+    {
+      "id": "db4b9c8b-271d-4a04-8524-ea739efd313e",
+      "name": "Sitio fijo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        176
+      ],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "outputKey": "OPURO",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.destination }}",
+                    "rightValue": "OPURO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "OPOL",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.destination }}",
+                    "rightValue": "OPOL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "LIBERAL",
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.destination }}",
+                    "rightValue": "LIBERAL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f027575f-aa45-4efd-b8b7-af70931fd45b",
+      "name": "Leer OPURO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://cms.oxigenopuro.com.mx/wp-json/wp/v2/posts/' + $json.postId + '?context=edit&_fields=id,type,slug,status,modified_gmt' + ($json.projection==='editorial'?',title,content,excerpt,featured_media,author,categories,tags,meta':'') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "KItac8AMmbUVUbWY",
+          "name": "Publisher oxigenopuro"
+        }
+      }
+    },
+    {
+      "id": "5c227222-1263-4bad-b2a0-850e3d1c0c6b",
+      "name": "Observación CMS sin permiso de escritura",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        192
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json,s=$('Validar ID y sitio').first().json,p=r.body;let post=null;if(r.statusCode===200&&p&&p.id===s.postId&&p.type==='post'&&typeof p.slug==='string'&&['publish','draft','trash','future','private','pending'].includes(p.status)){post={id:p.id,type:p.type,slug:p.slug,status:p.status,modifiedGmt:p.modified_gmt??null};if(s.projection==='editorial'){for(const k of ['title','content','excerpt','featured_media','author','categories','tags','meta'])if(Object.hasOwn(p,k))post[k]=p[k];}}return [{json:{schema:'opmx.cms-observation.v1',destination:s.destination,postId:s.postId,nonce:s.nonce,startedAt:s.startedAt,observedAt:new Date().toISOString(),statusCode:r.statusCode,post,writeAuthorized:false,...(s.projection==='editorial'?{projection:'editorial'}:{})}}];"
+      }
+    },
+    {
+      "id": "2739070a-105f-4ada-a15d-44c184098ac7",
+      "name": "Leer OPOL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        192
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://cms.oxigenopolitico.com.mx/wp-json/wp/v2/posts/' + $json.postId + '?context=edit&_fields=id,type,slug,status,modified_gmt' + ($json.projection==='editorial'?',title,content,excerpt,featured_media,author,categories,tags,meta':'') }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "9mL9HGLYoSVIGfQ1",
+          "name": "Oxigeno Politico"
+        }
+      }
+    },
+    {
+      "id": "f1543359-9419-4548-a117-3d6b2958e074",
+      "name": "Leer LIBERAL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        384
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://cms.elliberal.mx/wp-json/wp/v2/posts/' + $json.postId + '?context=edit&_fields=id,type,slug,status,modified_gmt' + ($json.projection==='editorial'?',title,content,excerpt,featured_media,author,categories,tags,meta':'') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "wordpressApi",
+        "options": {
+          "timeout": 10000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "wordpressApi": {
+          "id": "UI3HOKE26hMVLvH0",
+          "name": "El Liberal producción — Publisher"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Consultar registro CMS": {
+      "main": [
+        [
+          {
+            "node": "Validar ID y sitio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar ID y sitio": {
+      "main": [
+        [
+          {
+            "node": "Sitio fijo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sitio fijo": {
+      "main": [
+        [
+          {
+            "node": "Leer OPURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer OPOL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Leer LIBERAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer OPURO": {
+      "main": [
+        [
+          {
+            "node": "Observación CMS sin permiso de escritura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer OPOL": {
+      "main": [
+        [
+          {
+            "node": "Observación CMS sin permiso de escritura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer LIBERAL": {
+      "main": [
+        [
+          {
+            "node": "Observación CMS sin permiso de escritura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "saveManualExecutions": false,
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "executionTimeout": 45
+  }
+}
