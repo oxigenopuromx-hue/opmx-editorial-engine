@@ -42,7 +42,7 @@ export async function readConfirmedCorrectionManifestInTransaction(c,packageId,r
  if(!['CREATE','UPDATE'].includes(saved?.action))fail();
  const d=await readConfirmedDecision(c,packageId,revision,saved.action);if(!d)fail();
  const result={package_id:d.package_id,revision:d.revision,action:d.action,destination:d.destination,content_mode:d.content_mode,preview_hash:d.preview_hash};
- if(d.action==='UPDATE')result.posts=d.posts;
+ if(d.action==='UPDATE')result.posts=d.posts.map(p=>({destination:p.destination,post_id:p.postId}));
  return result;
 }
 // Only the server-owned update claim uses this adapter. It does not by itself
