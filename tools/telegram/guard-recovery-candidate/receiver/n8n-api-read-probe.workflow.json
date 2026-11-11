@@ -1,0 +1,100 @@
+{
+  "id": "7IDUF9PeHQ5v331Z",
+  "name": "OPMX — comprobación API lectura #18",
+  "active": false,
+  "versionId": "57e3d058-6809-4f12-a93b-ef8c5b7db5ac",
+  "description": "Prueba manual aislada: GET del workflow MCP. No modifica workflows ni paquetes. Salida resumida sin contenido editorial.",
+  "nodes": [
+    {
+      "id": "e8dce360-6d16-4871-b505-e5372341c5d6",
+      "name": "Comprobar API",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "cd691643-f122-4538-9b36-cfd6c7e89fc4",
+      "name": "Leer workflow MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/workflows/bnzVMNkZuGO1GQCZ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "n8nApi": {
+          "id": "yRxTuHbfoeZZWGL7",
+          "name": "OPMX — n8n verificación sólo lectura #18"
+        }
+      }
+    },
+    {
+      "id": "43da6c0d-5e4f-43df-b94d-4036db93c675",
+      "name": "Resumen sin contenido editorial",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r=$input.first().json; const b=r.body||{}; if(r.statusCode!==200||b.id!=='bnzVMNkZuGO1GQCZ'||!b.activeVersionId) throw new Error('N8N_READ_VERIFICATION_FAILED_HTTP_'+String(r.statusCode)); return [{json:{authenticated:true,id:b.id,active:b.active===true,versionId:b.versionId,activeVersionId:b.activeVersionId,hasActiveVersion:!!b.activeVersion,activeVersionKeys:b.activeVersion?Object.keys(b.activeVersion):[]}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Comprobar API": {
+      "main": [
+        [
+          {
+            "node": "Leer workflow MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer workflow MCP": {
+      "main": [
+        [
+          {
+            "node": "Resumen sin contenido editorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  }
+}
