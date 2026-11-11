@@ -1,0 +1,129 @@
+{
+  "freeze": {
+    "executionId": "34438",
+    "statusCode": 200,
+    "body": {
+      "status": "UNWRITTEN_ATTEMPT_FROZEN",
+      "packageId": "tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+      "revision": 8,
+      "attemptState": "REVOKED",
+      "fenceState": "RECONCILING",
+      "results": [
+        {
+          "destination": "OPURO",
+          "status": "BLOCKED"
+        },
+        {
+          "destination": "OPOL",
+          "status": "BLOCKED"
+        },
+        {
+          "destination": "LIBERAL",
+          "status": "BLOCKED"
+        }
+      ],
+      "writeAuthorized": false,
+      "reopenAuthorized": false,
+      "retryPermitted": false,
+      "processTerminationClaimed": false
+    }
+  },
+  "postReadOnly": {
+    "executionId": "34444",
+    "statusCode": 200,
+    "body": {
+      "status": "RECONCILIATION_VERIFIED",
+      "packageId": "tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+      "revision": 8,
+      "results": [
+        {
+          "destination": "OPURO",
+          "status": "BLOCKED"
+        },
+        {
+          "destination": "OPOL",
+          "status": "BLOCKED"
+        },
+        {
+          "destination": "LIBERAL",
+          "status": "BLOCKED"
+        }
+      ],
+      "writesRolledBack": true,
+      "writeAuthorized": false,
+      "processTerminationClaimed": false
+    }
+  },
+  "package": {
+    "status": "PACKAGE_FOUND",
+    "package_id": "tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+    "state": "READY",
+    "revision": 8,
+    "items": [
+      {
+        "item_id": "ti_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+        "kind": "TEXT",
+        "state": "STORED",
+        "mime_type": "text/plain",
+        "file_name": null,
+        "text_bytes": 207,
+        "original_bytes": 0,
+        "sha256": "2c1be4dc7d3d782c427151d840eb702abcee60c497c6181e0de7e783328122d6"
+      },
+      {
+        "item_id": "ti_5a2b703b8279f18a11e39b8a61b6b43f160704bb",
+        "kind": "TEXT",
+        "state": "STORED",
+        "mime_type": "text/plain",
+        "file_name": null,
+        "text_bytes": 164,
+        "original_bytes": 0,
+        "sha256": "e9d2e8f641d68fa838b4b57d66c1d647d6f16c24361888d4431ba7b3e8eb3749"
+      },
+      {
+        "item_id": "ti_3933a4352733a3f78dab3d9a358e41c8b6514d90",
+        "kind": "FILE",
+        "state": "STORED",
+        "mime_type": "image/jpeg",
+        "file_name": "telegram-photo.jpg",
+        "text_bytes": 0,
+        "original_bytes": 211027,
+        "sha256": "92ec0f1edbd62020b2c31f71bf086173f6cdaa2265b8322022d4a3fe59ba8394"
+      },
+      {
+        "item_id": "ti_908bc1a1993f5734033a9ace91789a11e89e8ca7",
+        "kind": "TEXT",
+        "state": "STORED",
+        "mime_type": "text/plain",
+        "file_name": null,
+        "text_bytes": 191,
+        "original_bytes": 0,
+        "sha256": "9782fc204decd10b0e05ef7edb381c2cca2dc61a1695ad07d0f1a15612664318"
+      },
+      {
+        "item_id": "ti_94a6200b3d41c454038c2fef22e59d3b02bc67e9",
+        "kind": "TEXT",
+        "state": "STORED",
+        "mime_type": "text/plain",
+        "file_name": null,
+        "text_bytes": 182,
+        "original_bytes": 0,
+        "sha256": "1b6461f29eb3771e90b14ab20a5a5bcc0ea57dca412d0f1acf44d64a3aa31385"
+      }
+    ]
+  },
+  "probeRestored": {
+    "workflowId": "7IDUF9PeHQ5v331Z",
+    "active": false,
+    "nodeCount": 3,
+    "versionId": "b14c3e30-2454-4182-970d-7f35c42a1c63",
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true,
+      "saveManualExecutions": false,
+      "saveDataErrorExecution": "none",
+      "saveDataSuccessExecution": "none",
+      "saveExecutionProgress": false
+    }
+  }
+}
