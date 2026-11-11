@@ -11,6 +11,7 @@ import {preparePreviewIntegration} from './preview-integration.mjs';
 import {preparePreviewServices} from './preview-services.mjs';
 import {createRuntimeObserver} from './runtime-observation-client.mjs';
 import {prepareMotorRuntimeServices} from './motor-runtime-services.mjs';
+import {prepareRecoveryRuntimeServices} from './recovery-runtime-services.mjs';
 
 // Synchronous module evaluation is required by LiteSpeed's require() loader.
 // Initializers may fail independently; a failed fence never restores the old
@@ -40,18 +41,31 @@ const telegramEvents={
  start(){readyEvents.start();previewReady.then(x=>{previewIntegration=x;if(x&&!closed)x.telegramEvents.start()})},
  stop(){closed=true;if(previewIntegration)previewIntegration.telegramEvents.stop();else readyEvents.stop()}
 };
-const store=createTelegramPackageStore(pool,{events:telegramEvents,initializePublicationFence:async(...args)=>(await requireFence()).initializePublicationFence(...args),initializeMotorAttempt:async(...args)=>(await requireMotor()).initializeMotorAttempt(...args)});
-const telegramStore={capabilities:(...args)=>store.capabilities(...args),async run(action,input){if(action==='seal')await Promise.all([requireFence(),requireMotor()]);return store.run(action,input)}};
-const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:createTelegramReviewStore(pool),
- telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision'].map(method=>[method,async(...args)=>(await requireMotor()).telegramAttempts[method](...args)])),
+const reviews=createTelegramReviewStore(pool);
+const recoveryReady=Promise.all([fenceReady,motorReady,servicesReady]).then(async([f,m,p])=>{
+ if(!f||!m||!p)return null;
+ return prepareRecoveryRuntimeServices({pool,secret:OPMX_GUARD_SECRET,events:telegramEvents,reviews,adminUserIds:sharedOperators?.subscriber?[sharedOperators.subscriber]:[],readWordPress:m.readWordPress});
+}).catch(()=>{console.error('guard.recovery_services: initialization_failed');return null});
+const requireRecovery=async()=>{const s=await recoveryReady;if(!s)throw Error('RECOVERY_SERVICES_UNAVAILABLE');return s};
+const telegramStore={capabilities:async(...args)=>(await requireRecovery()).telegramStore.capabilities(...args),async run(action,input){if(action==='seal')await Promise.all([requireFence(),requireMotor()]);return (await requireRecovery()).telegramStore.run(action,input)}};
+const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:reviews,
+ telegramRecovery:async(...args)=>(await requireRecovery()).telegramRecovery(...args),
+ telegramBlockedList:async(...args)=>(await requireRecovery()).telegramBlockedList(...args),
+ telegramCorrections:Object.fromEntries(['preview','confirm'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramCorrections[method](...args)])),
+ telegramSelections:{select:async(...args)=>(await requireRecovery()).telegramSelections.select(...args)},
+ telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramAttempts[method](...args)])),
  telegramWriterReceipts:{report:async(...args)=>(await requireMotor()).telegramWriterReceipts.report(...args)},
+ telegramUpdateDeliveries:{consume:async(...args)=>(await requireRecovery()).telegramUpdateDeliveries.consume(...args)},
+ telegramUpdateExecutor:{execute:async(...args)=>(await requireRecovery()).telegramUpdateExecutor.execute(...args)},
+ telegramUpdateClaims:{begin:async(...args)=>(await requireRecovery()).telegramUpdateClaims.begin(...args)},
+ telegramUpdatePayloads:{stage:async(...args)=>(await requireRecovery()).telegramUpdatePayloads.stage(...args)},
  telegramReconciliation:async(...args)=>(await requireMotor()).telegramReconciliation(...args),
  targetBegin:async(...args)=>(await requireFence()).targetBegin(...args),
  mediaBegin:async(...args)=>(await requireFence()).mediaBegin(...args),
  telegramPublicationBegin:async(...args)=>(await requireFence()).telegramPublicationBegin(...args),
- telegramPreviewPayloads:{stage:async(...args)=>(await requirePreviewServices()).telegramPreviewPayloads.stage(...args),context:async(...args)=>(await requirePreviewServices()).telegramPreviewPayloads.context(...args)},
- telegramPreviewMaterializer:async(...args)=>(await requirePreviewServices()).telegramPreviewMaterializer(...args),
- telegramPreviewDelivery:Object.fromEntries(['initialize','claim','report'].map(method=>[method,async(...args)=>(await requirePreviewServices()).telegramPreviewDelivery[method](...args)]))
+ telegramPreviewPayloads:{stage:async(...args)=>(await requireRecovery()).telegramPreviewPayloads.stage(...args),context:async(...args)=>(await requireRecovery()).telegramPreviewPayloads.context(...args)},
+ telegramPreviewMaterializer:async(...args)=>(await requireRecovery()).telegramPreviewMaterializer(...args),
+ telegramPreviewDelivery:Object.fromEntries(['initialize','claim','report'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramPreviewDelivery[method](...args)]))
 });
 server.requestTimeout=60000;server.headersTimeout=10000;
 server.listen(Number(PORT)||3000,'0.0.0.0');
