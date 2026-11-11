@@ -8,7 +8,8 @@ export function copyVerifiedOutcomes(destinations,outcomes){
   const x=outcomes.find(v=>v.destination===destination);
   if(x.status==='BLOCKED'&&x.publicationVerdict==='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED'){result.push({destination,status:x.status,publicationVerdict:x.publicationVerdict});continue}
   if(!['PUBLISHED','DRAFT'].includes(x.status)||x.publicationVerdict!=='CMS_RECORD_CONFIRMED'||x.cmsVerified!==true||(x.status==='PUBLISHED'?x.wordpressStatus!=='publish':x.wordpressStatus!=='draft')||!Number.isSafeInteger(x.postId)||x.postId<1||typeof x.slug!=='string'||x.slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(x.slug))return null;
-  result.push({destination,status:x.status,publicationVerdict:x.publicationVerdict,cmsVerified:true,wordpressStatus:x.wordpressStatus,postId:x.postId,slug:x.slug});
+  if(x.ledgerRequestId!==undefined&&!/^tg_[a-f0-9]{64}$/.test(x.ledgerRequestId))return null;
+  result.push({...(x.ledgerRequestId?{ledgerRequestId:x.ledgerRequestId}:{}),destination,status:x.status,publicationVerdict:x.publicationVerdict,cmsVerified:true,wordpressStatus:x.wordpressStatus,postId:x.postId,slug:x.slug});
  }
  return result;
 }
