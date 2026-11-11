@@ -18,3 +18,9 @@ test('arbitrary URLs and malformed IDs make no network request',async()=>{
  let calls=0;const read=createCmsObserver({secret,fetchImpl:async()=>{calls++;throw Error('must not call')}});
  for(const value of [{...input,site:'https://cms.oxigenopuro.com.mx.attacker.test'},{...input,postId:0},{...input,postId:'10423'},{...input,url:'https://example.test'}])assert.equal((await read(value)).statusCode,0);assert.equal(calls,0);
 });
+test('raw editorial fields require an explicitly requested, scope-bound projection',async()=>{
+ const body={...data(),projection:'editorial'};body.post.title={raw:'Título exacto'};body.post.content={raw:'<!-- wp:paragraph --><p>Texto</p><!-- /wp:paragraph -->'};
+ const read=createCmsObserver({secret,editorial:true,now:()=>clock,nonceFactory:()=>nonce,fetchImpl:async(url,options)=>{assert.equal(JSON.parse(options.body).projection,'editorial');return {status:200,json:async()=>body}}});
+ assert.deepEqual((await read(input)).post.content,body.post.content);assert.equal(Object.hasOwn((await observer(body)(input)).post,'content'),false);
+ delete body.projection;assert.equal((await read(input)).statusCode,0);
+});
