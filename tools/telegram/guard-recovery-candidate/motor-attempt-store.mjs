@@ -23,8 +23,8 @@ export async function initializeMotorAttempt(connection,{packageId,revision,even
  if(!connection?.execute||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??''))throw Error('INVALID_ATTEMPT');
  await connection.execute("INSERT INTO opmx_tg_motor_attempts_v1 (package_id,revision,event_id,state,token_hash,updated_at) VALUES (?,?,?,'QUEUED',NULL,UTC_TIMESTAMP(6))",[packageId,revision,eventId]);
 }
-export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).toString('hex'),readDecision=readConfirmedCorrectionInTransaction,readUpdateDecision=readVerifiedUpdateDecisionInTransaction,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false}){
- if(!pool?.getConnection||typeof tokenFactory!=='function'||typeof readDecision!=='function'||typeof readUpdateDecision!=='function'||typeof verifyLiteralEnforcement!=='function'||typeof verifyUpdateEnforcement!=='function')throw Error('INVALID_ATTEMPT_CONFIGURATION');
+export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).toString('hex'),readDecision=readConfirmedCorrectionInTransaction,readUpdateDecision=readVerifiedUpdateDecisionInTransaction,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false,verifyCompletedWrites=async()=>null}){
+ if(!pool?.getConnection||typeof tokenFactory!=='function'||typeof readDecision!=='function'||typeof readUpdateDecision!=='function'||typeof verifyLiteralEnforcement!=='function'||typeof verifyUpdateEnforcement!=='function'||typeof verifyCompletedWrites!=='function')throw Error('INVALID_ATTEMPT_CONFIGURATION');
  async function transaction(fn){const c=await pool.getConnection();let committed=false;try{await c.beginTransaction();const result=await fn(c);await c.commit();committed=true;return result}catch(e){if(!committed)try{await c.rollback()}catch{}throw e}finally{c.release()}}
  const store={
   // The existing webhook payload contains package/revision, not eventId.
@@ -82,6 +82,31 @@ export function createMotorAttemptStore({pool,tokenFactory=()=>randomBytes(32).t
     const [changed]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='READY_TO_WRITE',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='AWAITING_DECISION'",[packageId,revision]);
     if(changed.affectedRows!==1)throw Error('FENCE_CONFLICT');
     return {status:'DECISION_ACKNOWLEDGED',packageId,revision,retryPermitted:false};
+   });
+  },
+  // A completed publishing attempt is a protocol state, not a claim that the
+  // ChatGPT process exited. The exact writer acknowledgement is required and
+  // the same transaction permanently removes this revision's write permission.
+  async complete(input={}){
+   const {packageId,revision,eventId,token}=input??{};
+   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='eventId,packageId,revision,token'||!valid(packageId,revision)||!/^evt_[a-f0-9]{48}$/.test(eventId??'')||!/^[a-f0-9]{64}$/.test(token??''))throw Error('INVALID_ATTEMPT');
+   return transaction(async c=>{
+    const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)throw Error('QUOTA_MISSING');
+    const [p]=await c.execute('SELECT state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
+    if(p.length!==1||p[0].state!=='READY'||Number(p[0].revision)!==revision)return {status:'STALE_REVISION',retryPermitted:false};
+    const [a]=await c.execute('SELECT state,event_id,token_hash FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+    if(a.length!==1||a[0].event_id!==eventId||!equal(a[0].token_hash,digest(token)))return {status:'ATTEMPT_NOT_AUTHORIZED',retryPermitted:false};
+    if(a[0].state==='COMPLETED')return {status:'COMPLETED_REPLAY',packageId,revision,retryPermitted:false};
+    if(a[0].state!=='RUNNING')return {status:'ATTEMPT_NOT_RUNNING',retryPermitted:false};
+    const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+    if(f.length!==1||!['WRITING','HISTORICAL_WRITING'].includes(f[0].state))return {status:'RECONCILIATION_REQUIRED',retryPermitted:false};
+    const proof=await verifyCompletedWrites(c,{packageId,revision,eventId});
+    if(!proof||proof.packageId!==packageId||proof.revision!==revision||!['DRAFT','PUBLISH'].includes(proof.phase)||!/^[a-f0-9]{64}$/.test(proof.receiptHash??''))return {status:'WRITER_COMPLETION_UNCONFIRMED',retryPermitted:false};
+    const [frozen]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='RECONCILING',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state=?",[packageId,revision,f[0].state]);
+    if(frozen.affectedRows!==1)throw Error('FENCE_CONFLICT');
+    const [changed]=await c.execute("UPDATE opmx_tg_motor_attempts_v1 SET state='COMPLETED',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='RUNNING'",[packageId,revision]);
+    if(changed.affectedRows!==1)throw Error('ATTEMPT_STATE_CONFLICT');
+    return {status:'ATTEMPT_COMPLETED',packageId,revision,reopenPermitted:false,retryPermitted:false};
    });
   },
   async block(input={}){
