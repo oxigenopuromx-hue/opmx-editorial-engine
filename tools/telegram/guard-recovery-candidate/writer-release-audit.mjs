@@ -29,10 +29,20 @@ export function auditWriterReleaseGraph(id,graph){
    const gate=site==='OPURO'?'GUARD — Verificar destino':`GUARD ${site} — Verificar destino`,claim=site==='OPURO'?'GUARD — Iniciar destino':`GUARD ${site} — Iniciar destino`,n=byName.get(gate),c=byName.get(claim);
    if(!site||!fixedCmsOrigin(write.parameters.url,host)||!fixedCmsCredential(write,site)||n?.disabled||n?.type!=='n8n-nodes-base.code'||!n.parameters.jsCode.includes('write_started')||!n.parameters.jsCode.includes('throw')||n.onError==='continueRegularOutput'||c?.parameters?.url!=='https://publisher.oxigenopuro.com.mx/v1/targets/begin'||c.credentials?.httpHeaderAuth?.id!=='SpcCy6Qf3qP7xhf6'||!reachable(graph,write.name)||reachable(graph,write.name,gate)||reachable(graph,gate,claim)||errorReaches(gate,write.name))fail();
   }
+  // A reported target may still have metadata writes. Such a tail must not
+  // suspend durably and later resume writing while status pages change. If
+  // a destination is still before its post report, its writing/null-ID ledger
+  // row independently prevents reconciliation.
+  for(const site of ['OPURO','OPOL','LIBERAL']){
+   const report=graph.nodes.find(n=>n.parameters?.url==='https://publisher.oxigenopuro.com.mx/v1/targets/report'&&n.parameters.jsonBody?.includes(`destination:'${site}'`));
+   if(!report)fail();
+   for(const wait of graph.nodes.filter(n=>n.type==='n8n-nodes-base.wait'))if(reachable(graph,wait.name,null,[report.name])&&writes.some(w=>w.name.startsWith(site+' —')&&reachable(graph,w.name,null,[wait.name])))fail();
+  }
  }else if(['bnzVMNkZuGO1GQCZ','Mt7ts2EGPbyaTC2o'].includes(id)){
   if(writes.length!==3)fail();
   const prepare=byName.get('Preparar barrera publicación'),check=byName.get('Publicación — Reclamo confirmado'),claim=byName.get('Reclamar publicación Telegram');
   if(prepare?.disabled||check?.disabled||!prepare?.parameters?.jsCode.includes('writeNeeded')||!check?.parameters?.jsCode.includes('PUBLICATION_STARTED')||claim?.parameters?.url!=='https://publisher.oxigenopuro.com.mx/v1/telegram/publications/begin'||claim?.credentials?.httpHeaderAuth?.id!=='SpcCy6Qf3qP7xhf6'||claim.retryOnFail!==false||check.onError==='continueRegularOutput'||prepare.onError==='continueRegularOutput')fail();
+  for(const wait of graph.nodes.filter(n=>n.type==='n8n-nodes-base.wait'||n.type==='n8n-nodes-base.form'&&n.parameters?.operation!=='completion'))if(reachable(graph,wait.name,null,[claim.name])&&writes.some(w=>reachable(graph,w.name,null,[wait.name])))fail();
   for(const write of writes){const site=['OPURO','OPOL','LIBERAL'].find(s=>write.name===`Publicación — Publicar ${s}`),host={OPURO:'cms.oxigenopuro.com.mx',OPOL:'cms.oxigenopolitico.com.mx',LIBERAL:'cms.elliberal.mx'}[site];if(!site||!fixedCmsOrigin(write.parameters.url,host)||!fixedCmsCredential(write,site)||!reachable(graph,write.name)||reachable(graph,write.name,prepare.name)||errorReaches(prepare.name,write.name)||errorReaches(check.name,write.name)||errorReaches(claim.name,write.name))fail();}
  }else if(id==='C4hk6fQQomueYC8f'){
   if(writes.length||graph.nodes.some(n=>n.type==='n8n-nodes-base.executeWorkflow'))fail();
