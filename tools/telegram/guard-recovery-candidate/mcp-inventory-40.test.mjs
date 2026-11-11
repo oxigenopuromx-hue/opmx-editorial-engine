@@ -24,6 +24,9 @@ test('candidate reader passes only complete, attributable recovery decisions',as
  assert.equal(read().recovered_policy.destination,'OPURO,LIBERAL');
  result.confirmedCorrection={package_id:packageId,revision:9,action:'CREATE',content_mode:'LITERAL',destination:'OPURO',preview_hash:'c'.repeat(64)};
  assert.equal(read().confirmed_correction.destination,'OPURO');
+ result.confirmedCorrection={...result.confirmedCorrection,action:'UPDATE',posts:[{destination:'OPURO',post_id:123}]};assert.deepEqual(read().confirmed_correction.posts,[{destination:'OPURO',post_id:123}]);
+ result.confirmedCorrection.posts[0].post_id='123';assert.equal(read().status,'SOURCE_NOT_CONFIRMED');result.confirmedCorrection.posts[0].post_id=123;
+
  result.confirmedCorrection.revision=8;assert.equal(read().status,'SOURCE_NOT_CONFIRMED');result.confirmedCorrection.revision=9;
  delete result.recoveredPolicy;assert.equal(read().status,'SOURCE_NOT_CONFIRMED');
  result.recoveredPolicy={mode:'PUBLISH',authorized:true,explicit:true,authorization:'DIRECT_MODE_COMMAND',destination:'OPURO,LIBERAL',control_item_ids:[itemId]};
