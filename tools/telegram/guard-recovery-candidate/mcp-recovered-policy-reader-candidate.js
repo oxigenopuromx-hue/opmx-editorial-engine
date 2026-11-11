@@ -19,8 +19,8 @@ function formatTelegramReaderResult(request,result) {
    confirmed_correction={package_id:c.package_id,revision:c.revision,action:c.action,content_mode:c.content_mode,destination:c.destination,preview_hash:c.preview_hash};
    if(c.action==='UPDATE'){
     const expected=c.destination==='TODOS'?['OPURO','OPOL','LIBERAL']:c.destination==='AMBOS'?['OPURO','OPOL']:c.destination.split(',');
-    if(!Array.isArray(c.posts)||c.posts.length!==expected.length||c.posts.some((p,i)=>!p||p.destination!==expected[i]||!Number.isSafeInteger(p.postId)||p.postId<1))return respond({status:'SOURCE_NOT_CONFIRMED'},true);
-    confirmed_correction.posts=c.posts.map(p=>({destination:p.destination,post_id:p.postId}));
+    if(!Array.isArray(c.posts)||c.posts.length!==expected.length||c.posts.some((p,i)=>!p||p.destination!==expected[i]||!Number.isSafeInteger(p.post_id)||p.post_id<1))return respond({status:'SOURCE_NOT_CONFIRMED'},true);
+    confirmed_correction.posts=c.posts.map(p=>({destination:p.destination,post_id:p.post_id}));
    }
   }
   return respond({status:'PACKAGE_FOUND',package_id:result.packageId,state:result.state,revision:result.revision,items,...(recovered_policy?{recovered_policy}:{}),...(confirmed_correction?{confirmed_correction}:{})});
