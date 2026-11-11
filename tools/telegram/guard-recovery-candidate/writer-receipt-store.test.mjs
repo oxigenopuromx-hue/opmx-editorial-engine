@@ -13,6 +13,7 @@ function fixture({phase='DRAFT',post={id:10423,type:'post',slug,status:phase==='
   if(sql.startsWith('SELECT request_id,destination,target_key,status,post_id FROM'))return [target??[{request_id:requestId,destination:'OPURO',target_key:targetKey,status:'reported',post_id:'10423'}]];
   if(sql.startsWith('INSERT INTO opmx_tg_writer_receipts')){if(failInsert)throw Error('FAULT');rows.push({request_id:args[0],phase:args[1],package_id:args[2],revision:args[3],receipt_hash:args[4],receipt_json:args[5]});return [{affectedRows:1}]}
   if(sql.startsWith('SELECT event_id FROM opmx_tg_events'))return [[{event_id:eventId}]];
+  if(sql.startsWith('SELECT decision_json FROM opmx_tg_confirmed_decisions'))return [[]];
   if(sql.startsWith('SELECT request_id,phase,receipt_hash,receipt_json FROM'))return [rows.filter(r=>r.phase===args[2])];
   throw Error('Unexpected SQL '+sql);
  }};
