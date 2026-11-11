@@ -5,6 +5,7 @@ function renderCorrectionPreview(result){
  if(p.action==='UPDATE'&&(p.posts.length!==expected.length||p.posts.some((x,i)=>!x||x.destination!==expected[i]||!Number.isSafeInteger(x.postId)||x.postId<1)))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
  const controls=new Set(p.controlItemIds);
  const lines=[`Paquete: ${p.packageId}`,`Revisión: ${p.revision}`,`Acción: ${p.action==='UPDATE'?'actualizar notas existentes':'crear una nota nueva'}`,`Destinos: ${p.destination}`,`Modo: ${p.mode}`,p.action==='UPDATE'?`Identificadores de nota: ${p.posts.map(x=>`${x.destination} ${x.postId}`).join(', ')}`:'Identificadores de nota: aún no existen',`Cambios:`];
+ if(p.action==='CREATE')lines.push(p.publicationMode==='DRAFT'?'Resultado autorizado: BORRADOR, sin publicación.':p.publicationMode==='PUBLISH'?'Resultado autorizado: PUBLICAR en los destinos indicados, sólo después de confirmar y superar la validación editorial.':'Resultado de publicación: debe verificarse con la orden conservada antes de escribir.');
  let changes=0;
  for(const x of p.changes){
   if(!/^ti_[a-f0-9]{40}$/.test(x?.itemId??'')||!['TEXT','FILE'].includes(x.kind)||!['ADDED','REMOVED'].includes(x.change)||!/^[a-f0-9]{64}$/.test(x.sha256??'')||(x.kind==='FILE'&&(typeof x.fileName!=='string'||typeof x.caption!=='string')))return {status:'PREVIEW_NOT_CONFIRMED',messages:['No pude preparar una vista previa verificable. El paquete sigue abierto y no se envió al Motor.']};
