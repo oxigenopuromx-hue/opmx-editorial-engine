@@ -1,0 +1,2213 @@
+{
+  "workflowId": "OSi8AcnzLlI0csRu",
+  "versionId": "55b966f6-b695-41a6-a353-3448f3e496c9",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "id": "e9b541b7-8211-4fff-9577-5ae59aa64ad5",
+      "name": "Recibir Telegram piloto",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        80
+      ],
+      "webhookId": "ecc4a38b-a23e-4c37-8b38-4e2dbd8478b7",
+      "credentials": {
+        "telegramApi": {
+          "id": "YZpNATHVHcrF8gn3",
+          "name": "OPMX — Telegram editorial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{json:{update:$input.first().json,config:{\"allowedUserIds\":[\"255516723\",\"8851191534\"],\"allowedChatIds\":[\"255516723\",\"8851191534\"],\"maxBytes\":10485760}}}];"
+      },
+      "id": "90b9deb5-105b-4a35-875f-f7a0101f27c0",
+      "name": "Configurar usuarios del piloto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function destinationRegistry() {\n return {\n  OPURO:{cms:'https://cms.oxigenopuro.com.mx',publicOrigin:'https://oxigenopuro.com.mx',resultKey:'oxigenopuro',postIdKey:'post_id_opuro',heroMeta:'oxpuro_hero_media_id',editorialMeta:'oxpuro_editorial',hero:true},\n  OPOL:{cms:'https://cms.oxigenopolitico.com.mx',publicOrigin:'https://oxigenopolitico.com.mx',resultKey:'oxigenopolitico',postIdKey:'post_id_opol',hero:false},\n  LIBERAL:{cms:'https://cms.elliberal.mx',publicOrigin:'https://elliberal.mx',resultKey:'elliberal',postIdKey:'post_id_liberal',heroMeta:'liberalmx_hero_media_id',editorialMeta:'liberalmx_editorial',hero:true},\n };\n}\nfunction resolveDestinations(value) {\n if(Array.isArray(value)){if(!value.every(v=>typeof v==='string'))throw Error('Destino inválido');value=value.join(',');}\n if(typeof value!=='string'||!value.trim()||value.length>256)throw Error('Destino inválido');\n const registry=destinationRegistry(),selected=new Set();\n for(const item of value.split(',')){\n  const token=item.trim().toUpperCase();if(!token)throw Error('Destino vacío entre comas');\n  const expanded=token==='AMBOS'?['OPURO','OPOL']:token==='TODOS'?Object.keys(registry):[token];\n  for(const destination of expanded){if(!Object.hasOwn(registry,destination))throw Error('Destino desconocido: '+destination);selected.add(destination);}\n }\n return Object.keys(registry).filter(d=>selected.has(d));\n}\nfunction destinationLabel(destinations) {\n const all=Object.keys(destinationRegistry()),set=new Set(destinations),items=all.filter(d=>set.has(d));\n if(items.length!==set.size||!items.length)throw Error('Destino inválido');\n if(items.length===all.length)return 'TODOS';\n if(items.length===2&&items[0]==='OPURO'&&items[1]==='OPOL')return 'AMBOS';\n return items.join(',');\n}\nfunction parseDestinationCommand(text) {\n  if (typeof text !== 'string') throw Error('INVALID_COMMAND');\n  const match = /^\\/(publicar|borrador)(?:[ \\t]+([A-Za-z0-9_, ]+))?$/i.exec(text.trim());\n  if (!match) throw Error('INVALID_COMMAND');\n  const destinations = resolveDestinations(match[2] ?? 'TODOS');\n  return { mode: match[1].toLowerCase() === 'publicar' ? 'PUBLISH' : 'DRAFT',\n    destination: destinationLabel(destinations), destinations };\n}\nfunction isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }\nfunction isCorrectionOptions(s) { const m=/^\\/opciones[ \\t]+(?:(crear|actualizar)[ \\t]+)?(literal|editorial)[ \\t]+([A-Za-z, ]+)$/i.exec(s);if(!m)return false;try{resolveDestinations(m[3]);return true}catch{return false} }\nfunction isCorrectionConfirmation(s) { return /^\\/confirmar[ \\t]+(?:crear|actualizar)[ \\t]+[1-9][0-9]{0,9}[ \\t]+[a-f0-9]{64}$/i.test(s); }\nfunction validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }\nfunction normalizeTelegramUpdate(update,config={}) {\n const m=update?.message;\n if(!Number.isSafeInteger(update?.update_id)||!m||m.chat?.type!=='private'||m.from?.is_bot||!Number.isSafeInteger(m.from?.id)||!Number.isSafeInteger(m.chat?.id)||!Number.isSafeInteger(m.message_id))return null;\n const text=typeof m.text==='string'?m.text:typeof m.caption==='string'?m.caption:'';\n const identity={update_id:update.update_id,chat_id:String(m.chat.id),user_id:String(m.from.id),message_id:m.message_id,receipt_id:`telegram-${m.chat.id}-${m.message_id}-${update.update_id}`,media_group_id:typeof m.media_group_id==='string'?m.media_group_id:null};\n // Bootstrap command only echoes the sender's own IDs; never downloads content.\n if(text.trim()==='/id'&&!m.document&&!m.photo)return {...identity,kind:'IDENTITY',has_file:false,reply_text:`Tu ID de usuario: <code>${identity.user_id}</code>\\nID de este chat: <code>${identity.chat_id}</code>\\nEste piloto sólo confirma recepción; no genera ni publica notas.`};\n const users=(config.allowedUserIds??[]).map(String),chats=(config.allowedChatIds??[]).map(String);\n if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;\n // Slash commands must be exact and independent messages; never save an invalid command as article text.\n if(typeof m.text==='string'&&!m.document&&!m.photo){\n  const command=m.text.trim();\n  const looksCommand=/^\\/[a-z][a-z0-9_]*(?:@[a-z0-9_]+)?(?=\\s|$)/i.test(command);\n  const valid=/^\\/(?:id|start|ayuda|nuevo|listo|estado|bloqueados)$/.test(command)||/^\\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\\/abrir[ \\t]+tg_[a-f0-9]{40}$/.test(command)||isMode(command)||isCorrectionOptions(command)||isCorrectionConfirmation(command)||/^\\/imagen\\s+generar$/i.test(command);\n  if(looksCommand&&!valid)return {...identity,kind:'REJECTED',has_file:false,reply_text:'Comando inválido. Usa /publicar o /borrador con opuro, opol, liberal, ambos, todos o una lista separada por comas. Escribe el comando correcto como mensaje aparte.'};\n }\n // Only commands typed directly by the authenticated operator select mode.\n if(typeof m.text==='string' && (isMode(m.text.trim()) || isCorrectionOptions(m.text.trim()) || isCorrectionConfirmation(m.text.trim()) || /^\\/abrir[ \\t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\\/descartar ti_[a-f0-9]{40}$/.test(m.text.trim()) || /^\\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\\/imagen\\s+generar$|(?:genera|generar|crea|crear)\\s+(?:una\\s+)?(?:imagen|ilustraci[oó]n)[^\\n]{0,180}(?:\\n|$))/i.test(m.text.trim())) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};\n if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};\n const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&(isMode(m.text.trim()) || isCorrectionOptions(m.text.trim()) || isCorrectionConfirmation(m.text.trim()) || /^\\/abrir[ \\t]+tg_[a-f0-9]{40}$/.test(m.text.trim()) || /^\\/descartar ti_[a-f0-9]{40}$/.test(m.text.trim()) || /^\\/(?:nuevo|listo)$/i.test(m.text.trim()) || /^(?:\\/imagen\\s+generar$|(?:genera|generar|crea|crear)\\s+(?:una\\s+)?(?:imagen|ilustraci[oó]n)[^\\n]{0,180}(?:\\n|$))/i.test(m.text.trim()));\n const maxBytes=config.maxBytes??10*1024*1024;\n if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');\n let attachment=null;\n if(m.document){const d=m.document;const name=String(d.file_name??'').slice(0,240),mime=String(d.mime_type??'');\n  const extensions={'application/pdf':['pdf'],'application/msword':['doc'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['docx'],'text/plain':['txt'],'image/jpeg':['jpg','jpeg'],'image/png':['png'],'image/webp':['webp']};\n  const ext=name.split('.').at(-1).toLowerCase();\n  if(!extensions[mime]?.includes(ext))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Formato no admitido en este piloto. Envía PDF, DOC, DOCX, TXT, JPG, PNG o WEBP.'};\n  attachment={file_id:d.file_id,file_unique_id:d.file_unique_id??null,file_name:name,mime_type:mime,declared_bytes:d.file_size??null};\n }else if(Array.isArray(m.photo)&&m.photo.length){\n  const photos=m.photo.filter(p=>typeof p.file_id==='string'&&Number.isSafeInteger(p.width)&&Number.isSafeInteger(p.height));\n  const p=photos.sort((a,b)=>b.width*b.height-a.width*a.height)[0];if(!p)return null;\n  attachment={file_id:p.file_id,file_unique_id:p.file_unique_id??null,file_name:'telegram-photo.jpg',mime_type:'image/jpeg',declared_bytes:p.file_size??null};\n }\n if(attachment){if(typeof attachment.file_id!=='string'||!attachment.file_id||attachment.file_id.length>4096)return null;\n  if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 10 MiB o informa un tamaño inválido.'};\n  return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};\n }\n if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};\n return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};\n}\nconst x=$input.first().json;const r=normalizeTelegramUpdate(x.update,x.config);return r?[{json:r}]:[];\n"
+      },
+      "id": "4fb3b573-b03c-4784-a670-7b5f4fc86c78",
+      "name": "Normalizar entrada Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_file }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3f62af61-3bb7-4611-afa8-fc1ee9aaa85b",
+      "name": "¿Descargar archivo Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.attachment.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "94e22db0-8c77-4125-bbc8-ce1836333255",
+      "name": "Descargar archivo Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2464,
+        320
+      ],
+      "webhookId": "e7780e27-ba88-47af-a762-c988478518ce",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "telegramApi": {
+          "id": "YZpNATHVHcrF8gn3",
+          "name": "OPMX — Telegram editorial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function validateTelegramDownload(input,bytes) {\n if(input?.kind!=='FILE'||!input.attachment||!bytes?.length||bytes.length>input.max_bytes)throw Error('Tamaño descargado inválido');\n const mime=input.attachment.mime_type;\n const starts=signature=>bytes.length>=signature.length&&signature.every((v,i)=>bytes[i]===v);\n const valid=mime==='application/pdf'?bytes.subarray(0,5).toString('ascii')==='%PDF-':mime==='application/msword'?starts([208,207,17,224,161,177,26,225]):mime==='application/vnd.openxmlformats-officedocument.wordprocessingml.document'?starts([80,75,3,4]):mime==='image/jpeg'?starts([255,216,255]):mime==='image/png'?starts([137,80,78,71,13,10,26,10]):mime==='image/webp'?bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP':mime==='text/plain'?!bytes.includes(0):false;\n if(!valid)throw Error('La firma no corresponde al tipo declarado');\n // Signature recognition is not a full document parse or editorial validation.\n const safeName=input.attachment.file_name.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\n return {...input,bytes_received:bytes.length,reply_text:`Archivo recibido: ${safeName}\\nBytes comprobados: ${bytes.length}.\\nPiloto de recepción: aún no se conserva el original, genera una nota ni envía al Motor.`};\n}\nconst original=$('Confirmar operación de paquete Telegram').first(0,0).json;try{const keys=Object.keys($input.first().binary??{});if(keys.length!==1)throw Error('Binario ausente');const bytes=await this.helpers.getBinaryDataBuffer(0,keys[0]);const verified=validateTelegramDownload(original,bytes);return [{json:{...verified,contentBase64:bytes.toString('base64')}}];}catch{return [{json:{...original,kind:'DOWNLOAD_NOT_CONFIRMED',has_file:false,bytes_received:null,source_stored:false,original_stored:false,reply_text:'No se pudo confirmar la descarga. La reserva sigue pendiente; no se envió material al Motor.'}}];}",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "188a840f-933d-4a38-ba5b-d515600ac8e6",
+      "name": "Comprobar bytes Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2688,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.reply_text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML",
+          "reply_to_message_id": "={{ $json.message_id }}"
+        }
+      },
+      "id": "19a7121b-6f3c-4f88-ab6d-fec1d963b526",
+      "name": "Confirmar recepción Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3584,
+        320
+      ],
+      "webhookId": "a5f5295f-2fcb-4e78-8774-45af8d7b8a0d",
+      "retryOnFail": false,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "telegramApi": {
+          "id": "YZpNATHVHcrF8gn3",
+          "name": "OPMX — Telegram editorial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sent=$input.first().json;const m=sent.result??sent;let input;for(const name of ['Confirmar original Telegram','Comprobar bytes Telegram','Confirmar operación de paquete Telegram','Resolver paquete Telegram','Preparar paquete Telegram','Normalizar entrada Telegram']){try{input=$(name).first(0,0).json;break}catch{}}if(!input)throw Error('Contexto de recepción ausente');const ack=String(m.chat?.id)===input.chat_id&&Number.isSafeInteger(m.message_id)&&m.message_id>0;const out={status:ack?'RECEIPT_CONFIRMED':'RECEIPT_NOT_CONFIRMED',mode:input.mode??'RECEIPT_ONLY',kind:input.kind,receipt_id:input.receipt_id,bytes_received:input.bytes_received??null,mime_type:input.attachment?.mime_type??null,package_id:input.packageId??null,item_id:input.itemId??null,package_state:input.package_state??null,source_stored:input.source_stored===true,original_stored:input.original_stored===true,publisher_called:false,work_event_sent:null};return [{json:out}];",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "ca0b5c72-4246-46ef-aeb3-3dbe3553a1be",
+      "name": "Resultado piloto Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3808,
+        320
+      ]
+    },
+    {
+      "id": "09ba0d86-33a8-4452-8316-bde3e5b20c28",
+      "name": "¿Identificación Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.kind === 'IDENTITY' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2b69a30d-ba91-4405-9ea4-6cc41be782c5",
+      "name": "Registrar identidad candidata Telegram",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        -224
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1NHMjthWiPVcAMPB",
+          "cachedResultName": "OPMX Telegram — identidades candidatas"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "bot_username",
+              "condition": "eq",
+              "keyValue": "opmxpublisherbot"
+            },
+            {
+              "keyName": "user_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.user_id }}"
+            },
+            {
+              "keyName": "chat_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.chat_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "bot_username": "opmxpublisherbot",
+            "user_id": "={{ $json.user_id }}",
+            "chat_id": "={{ $json.chat_id }}",
+            "last_update_id": "={{ $json.update_id }}",
+            "last_message_id": "={{ $json.message_id }}",
+            "observed_at": "={{ $now.toISO() }}"
+          },
+          "schema": [
+            {
+              "id": "bot_username",
+              "displayName": "bot_username",
+              "type": "string"
+            },
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "type": "string"
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "type": "string"
+            },
+            {
+              "id": "last_update_id",
+              "displayName": "last_update_id",
+              "type": "number"
+            },
+            {
+              "id": "last_message_id",
+              "displayName": "last_message_id",
+              "type": "number"
+            },
+            {
+              "id": "observed_at",
+              "displayName": "observed_at",
+              "type": "date"
+            }
+          ]
+        },
+        "options": {
+          "dryRun": false
+        }
+      },
+      "retryOnFail": false
+    },
+    {
+      "id": "0134506c-20fe-451c-9ffc-472cfa39d230",
+      "name": "Conservar identificación Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        -224
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:$('Normalizar entrada Telegram').first(0,0).json}];"
+      }
+    },
+    {
+      "id": "502625d6-3493-4d2b-b230-ff1e815233d5",
+      "name": "Registrar resultado recepción Telegram",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4032,
+        320
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "T7kVEMKmX1w2viLz",
+          "cachedResultName": "OPMX Telegram — recepciones verificables"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "receipt_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.receipt_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "receipt_id": "={{ $json.receipt_id }}",
+            "status": "={{ $json.status }}",
+            "kind": "={{ $json.kind }}",
+            "mime_type": "={{ $json.mime_type }}",
+            "bytes_received": "={{ $json.bytes_received }}",
+            "mode": "={{ $json.mode }}",
+            "observed_at": "={{ $now.toISO() }}",
+            "package_id": "={{ $json.package_id }}",
+            "item_id": "={{ $json.item_id }}",
+            "source_stored": "={{ $json.source_stored }}",
+            "original_stored": "={{ $json.original_stored }}"
+          },
+          "schema": [
+            {
+              "id": "receipt_id",
+              "displayName": "receipt_id",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "type": "string"
+            },
+            {
+              "id": "kind",
+              "displayName": "kind",
+              "type": "string"
+            },
+            {
+              "id": "mime_type",
+              "displayName": "mime_type",
+              "type": "string"
+            },
+            {
+              "id": "bytes_received",
+              "displayName": "bytes_received",
+              "type": "number"
+            },
+            {
+              "id": "mode",
+              "displayName": "mode",
+              "type": "string"
+            },
+            {
+              "id": "observed_at",
+              "displayName": "observed_at",
+              "type": "date"
+            },
+            {
+              "id": "package_id",
+              "displayName": "package_id",
+              "type": "string"
+            },
+            {
+              "id": "item_id",
+              "displayName": "item_id",
+              "type": "string"
+            },
+            {
+              "id": "source_stored",
+              "displayName": "source_stored",
+              "type": "boolean"
+            },
+            {
+              "id": "original_stored",
+              "displayName": "original_stored",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {
+          "dryRun": false
+        }
+      }
+    },
+    {
+      "id": "8f49f3a4-3aad-4f91-8854-444faa8825b2",
+      "name": "Preparar paquete Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);\nconst validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);\nconst escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\nconst who=x=>({owner:x.user_id,chat:x.chat_id});\nconst response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});\nconst help=\"Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.\";\nfunction preparePackageIntent(input) {\n const x={...input,mode:'PACKAGE_STORAGE',source_stored:false,original_stored:false,has_file:false};\n if(!['TEXT','FILE'].includes(x.kind))return response(x,x.reply_text??help);\n const cmd=x.kind==='TEXT'?x.text.trim():'';\n const reopen=/^\\/abrir[ \\t]+(tg_[a-f0-9]{40})$/.exec(cmd);\n if(reopen)return {...x,kind:'COMMAND',package_operation:'REOPEN',requires_storage:true,storage_action:'reopen',storage_body:{...who(x),packageId:reopen[1],receiptId:x.receipt_id}};\n if(cmd==='/bloqueados')return {...x,kind:'COMMAND',package_operation:'BLOCKED_LIST',requires_storage:true,storage_action:'blocked',storage_body:who(x)};\n if(cmd==='/start'||cmd==='/ayuda')return response({...x,kind:'COMMAND'},help);\n if(cmd==='/nuevo')return {...x,kind:'COMMAND',package_operation:'OPEN',requires_storage:true,storage_action:'open',storage_body:{...who(x),receiptId:x.receipt_id}};\n const discard=/^\\/descartar (ti_[a-f0-9]{40})$/.exec(cmd);\n const options=/^\\/opciones[ \\t]+(?:(crear|actualizar)[ \\t]+)?(literal|editorial)[ \\t]+([A-Za-z, ]+)$/i.exec(cmd);\n const confirmation=/^\\/confirmar[ \\t]+(crear|actualizar)[ \\t]+([1-9][0-9]{0,9})[ \\t]+([a-f0-9]{64})$/i.exec(cmd);\n const op=cmd==='/listo'?'SEAL':cmd==='/estado'?'STATUS':discard?'DISCARD':options?'SELECT':confirmation?'CONFIRM':'CONTENT';\n return {...x,kind:op==='CONTENT'?x.kind:'COMMAND',discard_item_id:discard?.[1]??null,selection_action:options?(options[1]?.toLowerCase()==='actualizar'?'UPDATE':'CREATE'):null,selection_mode:options?.[2]?.toUpperCase()??null,selection_destination:options?.[3]??null,confirmation_action:confirmation?(confirmation[1].toLowerCase()==='actualizar'?'UPDATE':'CREATE'):null,confirmation_revision:confirmation?Number(confirmation[2]):null,confirmation_hash:confirmation?.[3]?.toLowerCase()??null,package_operation:op,requires_storage:true,storage_action:'current',storage_body:who(x)};\n}\nreturn [{json:preparePackageIntent($input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "7249e64f-8e16-4b73-9b04-f89014ae893c",
+      "name": "¿Consultar almacenamiento Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.requires_storage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f61741df-1169-44b6-a02b-a3048459cf51",
+      "name": "Consultar sesión Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1120,
+        320
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://publisher.oxigenopuro.com.mx/v1/telegram/packages/' + $json.storage_action }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.storage_body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "6afb663b-8890-4007-9bd5-e1d8f262e134",
+      "name": "Resolver paquete Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function destinationRegistry() {\n return {\n  OPURO:{cms:'https://cms.oxigenopuro.com.mx',publicOrigin:'https://oxigenopuro.com.mx',resultKey:'oxigenopuro',postIdKey:'post_id_opuro',heroMeta:'oxpuro_hero_media_id',editorialMeta:'oxpuro_editorial',hero:true},\n  OPOL:{cms:'https://cms.oxigenopolitico.com.mx',publicOrigin:'https://oxigenopolitico.com.mx',resultKey:'oxigenopolitico',postIdKey:'post_id_opol',hero:false},\n  LIBERAL:{cms:'https://cms.elliberal.mx',publicOrigin:'https://elliberal.mx',resultKey:'elliberal',postIdKey:'post_id_liberal',heroMeta:'liberalmx_hero_media_id',editorialMeta:'liberalmx_editorial',hero:true},\n };\n}\nfunction resolveDestinations(value) {\n if(Array.isArray(value)){if(!value.every(v=>typeof v==='string'))throw Error('Destino inválido');value=value.join(',');}\n if(typeof value!=='string'||!value.trim()||value.length>256)throw Error('Destino inválido');\n const registry=destinationRegistry(),selected=new Set();\n for(const item of value.split(',')){\n  const token=item.trim().toUpperCase();if(!token)throw Error('Destino vacío entre comas');\n  const expanded=token==='AMBOS'?['OPURO','OPOL']:token==='TODOS'?Object.keys(registry):[token];\n  for(const destination of expanded){if(!Object.hasOwn(registry,destination))throw Error('Destino desconocido: '+destination);selected.add(destination);}\n }\n return Object.keys(registry).filter(d=>selected.has(d));\n}\nfunction destinationLabel(destinations) {\n const all=Object.keys(destinationRegistry()),set=new Set(destinations),items=all.filter(d=>set.has(d));\n if(items.length!==set.size||!items.length)throw Error('Destino inválido');\n if(items.length===all.length)return 'TODOS';\n if(items.length===2&&items[0]==='OPURO'&&items[1]==='OPOL')return 'AMBOS';\n return items.join(',');\n}\nfunction parseDestinationCommand(text) {\n  if (typeof text !== 'string') throw Error('INVALID_COMMAND');\n  const match = /^\\/(publicar|borrador)(?:[ \\t]+([A-Za-z0-9_, ]+))?$/i.exec(text.trim());\n  if (!match) throw Error('INVALID_COMMAND');\n  const destinations = resolveDestinations(match[2] ?? 'TODOS');\n  return { mode: match[1].toLowerCase() === 'publicar' ? 'PUBLISH' : 'DRAFT',\n    destination: destinationLabel(destinations), destinations };\n}\nfunction isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }\nfunction validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }\nconst ORDER_PREFIX=\"OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\\n\";\nconst POLICY=\"publish-todos-v2\";\nfunction attestedControl(command, packageId, messageId, noticeMessageId) {\n  if (!/^tg_[a-f0-9]{40}$/.test(packageId) || !Number.isSafeInteger(messageId) || messageId < 1) throw Error('CONTROL_INVALID');\n  if (!validControl(command)) throw Error('CONTROL_INVALID');\n  const data = { policy: POLICY, package_id: packageId, message_id: messageId };\n  if (command === '/nuevo') {\n    if (!Number.isSafeInteger(noticeMessageId) || noticeMessageId <= messageId) throw Error('NOTICE_NOT_CONFIRMED');\n    data.notice_message_id = noticeMessageId;\n  }\n  return ORDER_PREFIX + command + '\\n' + JSON.stringify(data);\n}\nfunction openingNotice(result, messageId) {\n  const newPolicy = ['OPEN','OPEN_REPLAY'].includes(result.status) && result.state !== 'READY';\n  return {\n    newPolicy,\n    reply: result.state==='READY'\n      ? 'Este comando corresponde a un paquete cerrado; no se ha cambiado su modo. Envía /nuevo para otra nota.'\n      : newPolicy\n        ? `Paquete abierto: <code>${result.packageId}</code>. Por defecto se PUBLICARÁ EN TODOS: OXígeno Puro, OXígeno Político y El Liberal, al enviar /listo, si supera las validaciones. Para dejar borradores escribe /borrador antes de /listo. Envía ahora texto, fotos y documentos.`\n        : `Paquete ya abierto: <code>${result.packageId}</code>. Conserva su modo anterior. Para publicar usa /publicar ambos; para borradores /borrador. Termina con /listo.`,\n  };\n}\nconst validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);\nconst validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);\nconst escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\nconst who=x=>({owner:x.user_id,chat:x.chat_id});\nconst response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});\nconst help=\"Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.\";\nfunction resolvePackageSession(intent,result) {\n if(intent.package_operation==='BLOCKED_LIST'){\n  if(result?.status!=='BLOCKED_LIST'||!Array.isArray(result.packages)||result.packages.length>20||typeof result.more!=='boolean'||result.packages.some(p=>!validPackage(p?.packageId)||!Number.isSafeInteger(p.revision)||p.revision<1)||new Set(result.packages.map(p=>p.packageId)).size!==result.packages.length)return response(intent,'No pude consultar los paquetes bloqueados.');\n  if(!result.packages.length)return response(intent,'No hay bloqueos registrados en el seguimiento nuevo. Los paquetes anteriores pueden requerir conciliación.');\n  const lines=result.packages.map(p=>`Revisión ${p.revision}: /abrir ${p.packageId}`);\n  return response(intent,`Paquetes bloqueados registrados:\\n${lines.join('\\n')}\\nLa reapertura requiere conciliación; esta lista no confirma que sea segura.${result.more?'\\nHay más resultados.':''}`);\n }\n if(intent.package_operation==='REOPEN') {\n  if(['OPEN','OPEN_REPLAY'].includes(result?.status)&&result.packageId===intent.storage_body.packageId&&Number.isSafeInteger(result.revision))return response(intent,`Paquete reabierto: <code>${result.packageId}</code>. Agrega información o instrucciones y envía /listo para solicitar otra revisión.`,{packageId:result.packageId,package_state:'OPEN',package_revision:result.revision});\n  if(result?.status==='SESSION_BUSY')return response(intent,'Ya tienes otro paquete abierto. Termínalo antes de abrir este.');\n  if(result?.status==='PENDING_RESERVATION')return response(intent,'El paquete tiene archivos pendientes y requiere revisión antes de reabrirse.');\n  if(result?.status==='RECONCILIATION_REQUIRED')return response(intent,'Este paquete requiere conciliación antes de reabrirse. No se ha reintentado la publicación.');\n  return response(intent,'No pude abrir ese paquete. Verifica el identificador y sus permisos; no se reintentó la publicación.');\n }\n if(intent.package_operation==='OPEN') {\n  if(!['OPEN','ALREADY_OPEN','OPEN_REPLAY'].includes(result?.status)||!validPackage(result.packageId))return response(intent,'No pude confirmar la apertura del paquete. Conserva tus archivos; todavía no los envíes.');\n  const closed=result.state==='READY';\n  const notice=openingNotice(result,intent.message_id);\n  return response(intent,notice.reply,{packageId:result.packageId,package_state:closed?'READY':'OPEN',default_policy_candidate:notice.newPolicy});\n }\n if(result?.status==='NO_OPEN_PACKAGE')return response(intent,'No hay una nota abierta. Envía /nuevo y después sus textos, fotos y documentos.');\n if(result?.status!=='OPEN'||!validPackage(result.packageId))return response(intent,'No pude consultar tu paquete. No confirmé almacenamiento de este mensaje.');\n const x={...intent,packageId:result.packageId,package_revision:result.revision,requires_operation:true,recovery_session:result.recovery===true};\n let action,body={...who(x),packageId:x.packageId};\n if(x.package_operation==='SELECT'){\n  if(!x.recovery_session||!Number.isSafeInteger(result.revision)||x.mode_attested!==true)return response(intent,'Las opciones sólo pueden elegirse directamente en un paquete reabierto.');\n  action='corrections/select';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,action:x.selection_action,mode:x.selection_mode,destination:x.selection_destination});\n }\n else if(x.package_operation==='CONFIRM'){\n  if(!x.recovery_session||x.mode_attested!==true||!['CREATE','UPDATE'].includes(x.confirmation_action)||result.revision!==x.confirmation_revision)return response(intent,'La vista previa ya no corresponde a la revisión actual; vuelve a pedirla con /listo.');\n  action='corrections/confirm';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id,previewHash:x.confirmation_hash,action:x.confirmation_action});\n }\n else if(x.package_operation==='SEAL'){action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:'TEXT',text:attestedControl('/listo',x.packageId,x.message_id),attachment:null});}\n else if(x.package_operation==='STATUS')action='manifest';\n else if(x.package_operation==='DISCARD'){\n  if(x.mode_attested!==true)return response(intent,'Para descartar una reserva pendiente, escribe /descartar y su identificador directamente en este chat.');\n  action='discard';body.itemId=x.discard_item_id;\n }\n else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}\n const paths={reserve:'packages/reserve',manifest:'packages/manifest',discard:'packages/discard','corrections/select':'corrections/select','corrections/confirm':'corrections/confirm'};\n if(!Object.hasOwn(paths,action))return response(intent,'No pude confirmar la operación solicitada.');\n return {...x,next_action:action,next_url:'https://publisher.oxigenopuro.com.mx/v1/telegram/'+paths[action],next_body:body,seal_after_close:x.package_operation==='SEAL'};\n}\nreturn [{json:resolvePackageSession($('Preparar paquete Telegram').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "c9d82179-b60e-4403-9455-3f462a8c106f",
+      "name": "¿Operar paquete Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.requires_operation }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "315f413a-d093-45c6-a338-10f0e932e187",
+      "name": "Operar paquete Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1792,
+        320
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.next_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.next_body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "723f176c-6f56-4e15-b6d8-499f22c0be58",
+      "name": "Confirmar operación de paquete Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "function destinationRegistry() {\n return {\n  OPURO:{cms:'https://cms.oxigenopuro.com.mx',publicOrigin:'https://oxigenopuro.com.mx',resultKey:'oxigenopuro',postIdKey:'post_id_opuro',heroMeta:'oxpuro_hero_media_id',editorialMeta:'oxpuro_editorial',hero:true},\n  OPOL:{cms:'https://cms.oxigenopolitico.com.mx',publicOrigin:'https://oxigenopolitico.com.mx',resultKey:'oxigenopolitico',postIdKey:'post_id_opol',hero:false},\n  LIBERAL:{cms:'https://cms.elliberal.mx',publicOrigin:'https://elliberal.mx',resultKey:'elliberal',postIdKey:'post_id_liberal',heroMeta:'liberalmx_hero_media_id',editorialMeta:'liberalmx_editorial',hero:true},\n };\n}\nfunction resolveDestinations(value) {\n if(Array.isArray(value)){if(!value.every(v=>typeof v==='string'))throw Error('Destino inválido');value=value.join(',');}\n if(typeof value!=='string'||!value.trim()||value.length>256)throw Error('Destino inválido');\n const registry=destinationRegistry(),selected=new Set();\n for(const item of value.split(',')){\n  const token=item.trim().toUpperCase();if(!token)throw Error('Destino vacío entre comas');\n  const expanded=token==='AMBOS'?['OPURO','OPOL']:token==='TODOS'?Object.keys(registry):[token];\n  for(const destination of expanded){if(!Object.hasOwn(registry,destination))throw Error('Destino desconocido: '+destination);selected.add(destination);}\n }\n return Object.keys(registry).filter(d=>selected.has(d));\n}\nfunction destinationLabel(destinations) {\n const all=Object.keys(destinationRegistry()),set=new Set(destinations),items=all.filter(d=>set.has(d));\n if(items.length!==set.size||!items.length)throw Error('Destino inválido');\n if(items.length===all.length)return 'TODOS';\n if(items.length===2&&items[0]==='OPURO'&&items[1]==='OPOL')return 'AMBOS';\n return items.join(',');\n}\nfunction parseDestinationCommand(text) {\n  if (typeof text !== 'string') throw Error('INVALID_COMMAND');\n  const match = /^\\/(publicar|borrador)(?:[ \\t]+([A-Za-z0-9_, ]+))?$/i.exec(text.trim());\n  if (!match) throw Error('INVALID_COMMAND');\n  const destinations = resolveDestinations(match[2] ?? 'TODOS');\n  return { mode: match[1].toLowerCase() === 'publicar' ? 'PUBLISH' : 'DRAFT',\n    destination: destinationLabel(destinations), destinations };\n}\nfunction isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }\nfunction validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }\nfunction modeMatch(s){try{const x=parseDestinationCommand(s);return [null,x.mode==='PUBLISH'?'publicar':'borrador',x.destination];}catch{return null;}}\nconst validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);\nconst validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);\nconst escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\nconst who=x=>({owner:x.user_id,chat:x.chat_id});\nconst response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});\nconst help=\"Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.\";\nfunction confirmPackageOperation(context,result) {\n if(context.package_operation==='SELECT'){\n  let label;try{label=destinationLabel(resolveDestinations(context.selection_destination))}catch{return response(context,'No pude confirmar las opciones.')}\n  const validMode=['LITERAL','EDITORIAL'].includes(context.selection_mode);\n  if(validMode&&['SELECTED','SELECTION_REPLAY'].includes(result?.status)&&Number.isSafeInteger(context.package_revision)&&result.revision===context.package_revision+1&&\n     (result.status==='SELECTION_REPLAY'||(result.packageId===context.packageId&&result.action===(context.selection_action??'CREATE')&&result.mode===context.selection_mode&&result.destination===label)))\n   return response(context,'Opciones registradas: '+((context.selection_action??'CREATE')==='UPDATE'?'actualizar notas existentes':'crear nota')+', '+context.selection_mode+' para '+label+'. Agrega material o solicita la vista con /listo.');\n  return response(context,'No pude confirmar las opciones. Revisa /estado antes de volver a intentarlo.');\n }\n if(context.package_operation==='CONFIRM'){\n  if(['CONFIRMED','CONFIRMED_REPLAY'].includes(result?.status)&&/^evt_[a-f0-9]{48}$/.test(result.eventId??''))\n   return response(context,'Revisión confirmada y puesta en cola para procesamiento. Todavía no se ha confirmado ninguna publicación.');\n  if(result?.status==='ALREADY_CONFIRMED')return response(context,'Esa revisión ya fue confirmada; consulta su estado antes de intentar nuevamente.');\n  if(result?.status==='PREVIEW_DELIVERY_UNCONFIRMED')return response(context,'No está confirmada la entrega completa de la vista. No se envió la revisión al Motor.');\n  return response(context,'No pude confirmar esa revisión. No se confirmó el envío al Motor; consulta el estado antes de reintentar.');\n }\n if(context.package_operation==='DISCARD'&&context.recovery_session){\n  if(['DISCARDED','DISCARDED_REPLAY'].includes(result?.status)&&result.itemId===context.discard_item_id)\n   return response(context,'Material retirado de esta revisión. El original y el historial se conservan. Solicita una nueva vista con /listo.');\n  return response(context,'No pude confirmar el retiro del material. No se modificaron las opciones.');\n }\n\n if(context.package_operation==='SEAL') {\n  if(result?.status==='READY'&&result.packageId===context.packageId&&Number.isSafeInteger(result.revision))return response(context,`Paquete cerrado: <code>${context.packageId}</code>, versión ${result.revision}. Material guardado y listo para validación automática en el Motor. Recibirás en este chat los avances y el resultado. No se ha generado ni publicado una nota.`,{package_state:'READY',package_revision:result.revision});\n  if(result?.status==='NOT_READY')return response(context,`Aún no puedo cerrar: ${Number(result.pending)||0} archivo(s) pendiente(s). Usa /estado para identificarlos y vuelve a enviar /listo cuando estén resueltos.`);\n  return response(context,`No pude confirmar el cierre. Conserva el identificador <code>${escape(context.packageId)}</code> para revisar el resultado antes de reenviar este material.`);\n }\n if(context.package_operation==='STATUS') {\n  if(result?.status!=='FOUND'||result.packageId!==context.packageId||!Array.isArray(result.items))return response(context,'No pude confirmar el estado del paquete.');\n  const stored=result.items.filter(i=>i.state==='STORED').length,pending=result.items.filter(i=>i.state==='PENDING');\n  if(pending.some(i=>!validItem(i.item_id)))return response(context,'No pude confirmar el inventario pendiente del paquete.');\n  const pendingHelp=pending.length?'\\nReservas pendientes:\\n'+pending.map(i=>`<code>/descartar ${i.item_id}</code>`).join('\\n')+'\\nDescarta sólo el archivo que no se guardó.':'';\n  return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending.length} pendiente(s).${pendingHelp}\\nPara terminar: /listo.`);\n }\n if(context.package_operation==='DISCARD')return response(context,['DISCARDED','DISCARDED_REPLAY'].includes(result?.status)&&result.itemId===context.discard_item_id?'Reserva pendiente descartada. No se borraron originales guardados.':'No se descartó la reserva: sólo pueden descartarse archivos pendientes, sin original guardado.');\n if(result?.status==='RESERVED'&&context.kind==='FILE'&&result.packageId===context.packageId&&validItem(result.itemId))return {...context,itemId:result.itemId,has_file:true};\n if(result?.status==='RESERVATION_REPLAY'&&validItem(result.itemId)) {\n  if(result.state==='PENDING'&&context.kind==='FILE')return {...context,itemId:result.itemId,has_file:true};\n  if(result.state==='STORED')return response(context,'Este mensaje ya estaba guardado en el paquete.',{itemId:result.itemId,source_stored:true,original_stored:context.kind==='FILE'});\n }\n if(result?.status==='STORED'&&context.kind==='TEXT'&&result.packageId===context.packageId&&validItem(result.itemId)) {const mode=context.mode_attested===true?modeMatch(context.text.trim()):null;const image=/^(?:\\/imagen\\s+generar$|(?:genera|generar|crea|crear)\\s+(?:una\\s+)?(?:imagen|ilustraci[oó]n)[^\\n]{0,180}(?:\\n|$))/i.test(context.text.trim());const reply=image?'Instrucción registrada: generar una ilustración para la nota. Sigue enviando material o termina con /listo.':mode?'Instrucción '+mode[1].toUpperCase()+' registrada para '+(mode[2]??'ambos').toUpperCase()+'. Sigue enviando material o termina con /listo.':'Texto guardado en tu paquete. Sigue enviando material; termina con /listo.';return response(context,reply,{itemId:result.itemId,source_stored:true});}\n if(result?.status==='QUOTA_EXCEEDED')return response(context,'El paquete o el almacenamiento piloto alcanzó su límite. No se guardó este mensaje.');\n if(result?.status==='PACKAGE_CLOSED')return response(context,'El paquete ya se cerró. No añadí este mensaje; envía /nuevo para otra nota.');\n return response(context,'No pude confirmar la reserva de este mensaje. No lo descargué ni lo envié al Motor.');\n}\nreturn [{json:confirmPackageOperation($('Resolver paquete Telegram').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "34f321b6-5d54-4235-b573-913509019848",
+      "name": "¿Guardar bytes Telegram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2912,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_file }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "8f571b5a-fdf9-46e3-9885-2570428e033d",
+      "name": "Guardar original Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        3136,
+        320
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/complete",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({owner:$json.user_id,chat:$json.chat_id,packageId:$json.packageId,itemId:$json.itemId,contentBase64:$json.contentBase64}) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "3542017e-59f9-4f7e-b4b1-cc48300013be",
+      "name": "Confirmar original Telegram",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);\nconst validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);\nconst escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');\nconst who=x=>({owner:x.user_id,chat:x.chat_id});\nconst response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});\nconst help=\"Para una nota: envía /nuevo, después texto, fotos y documentos, y termina con /listo. /estado muestra el paquete. Esta etapa guarda material; todavía no genera ni publica notas.\";\nfunction confirmStoredOriginal(context,result) {\n const {contentBase64,...clean}=context;\n const stored=result?.itemId===context.itemId&&(['STORED','STORED_REPLAY'].includes(result.status));\n const precise=result?.status==='STORED_REPLAY'||(result?.packageId===context.packageId&&result?.bytes===context.bytes_received&&/^[a-f0-9]{64}$/.test(result?.sha256??''));\n if(stored&&precise)return response(clean,`Archivo guardado: ${escape(context.attachment.file_name)}. ${context.bytes_received} bytes comprobados. Sigue enviando material; termina con /listo.`,{source_stored:true,original_stored:true,stored_sha256:result.sha256??null});\n return response(clean,`No pude confirmar el guardado del archivo. Reserva: <code>${escape(context.itemId)}</code>. No se envió al Motor; conserva el original para revisar el resultado.`,{source_stored:false,original_stored:false});\n}\nreturn [{json:confirmStoredOriginal($('Comprobar bytes Telegram').first(0,0).json,$input.first().json)}];"
+      }
+    },
+    {
+      "id": "ed17fb57-f292-450b-8ef6-59e4ae651244",
+      "name": "Detectar cierre para supervisión",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4200,
+        700
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$input.first().json;if(x.package_operation!=='SEAL'||x.package_state!=='READY'||!/^tg_[a-f0-9]{40}$/.test(x.packageId??'')||!Number.isSafeInteger(x.package_revision)||typeof x.user_id!=='string'||x.user_id!==x.chat_id||!/^[1-9][0-9]{0,15}$/.test(x.chat_id))return [];return [{json:{package_id:x.packageId,revision:x.package_revision,stage:'QUEUED',occurred_at:new Date().toISOString(),chat_id:x.chat_id}}];"
+      }
+    },
+    {
+      "id": "50771dde-cd57-40ca-85d8-ac2d677b0009",
+      "name": "Registrar paquete para supervisión",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4420,
+        700
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hvKjKjEvTAF4pUms"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "package_id": "={{ $json.package_id }}",
+            "revision": "={{ $json.revision }}",
+            "stage": "={{ $json.stage }}",
+            "occurred_at": "={{ $json.occurred_at }}",
+            "chat_id": "={{ $json.chat_id }}"
+          },
+          "schema": [
+            {
+              "id": "package_id",
+              "displayName": "package_id",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "revision",
+              "displayName": "revision",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "occurred_at",
+              "displayName": "occurred_at",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "date",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "377fbd2f-9e20-4145-b911-36a644b9df18",
+      "name": "Preparar correlaciones Publisher",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4420,
+        900
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$input.first().json;if(!/^tg_[a-f0-9]{40}$/.test(x.package_id??'')||!Number.isSafeInteger(x.revision)||!/^([1-9][0-9]{0,15})$/.test(x.chat_id??''))return [];return [\"OPURO\",\"OPOL\",\"AMBOS\",\"LIBERAL\",\"OPURO,LIBERAL\",\"OPOL,LIBERAL\",\"TODOS\"].map(destino=>({json:{...x,destino}}));"
+      }
+    },
+    {
+      "id": "d7b0256a-0c62-41c3-b064-0a06328e6984",
+      "name": "Calcular correlaciones Publisher",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        4640,
+        900
+      ],
+      "parameters": {
+        "action": "hash",
+        "type": "SHA256",
+        "value": "={{ $json.package_id + ':' + $json.revision + ':' + $json.destino + ':draft-v1' }}",
+        "dataPropertyName": "digest",
+        "encoding": "hex"
+      }
+    },
+    {
+      "id": "71a67803-8b90-45fe-9d05-78aa68578e13",
+      "name": "Registrar correlaciones Publisher",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4860,
+        900
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hvKjKjEvTAF4pUms"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "package_id": "={{ $json.package_id }}",
+            "revision": "={{ $json.revision }}",
+            "stage": "={{ 'REQUEST_' + $json.destino }}",
+            "occurred_at": "={{ $json.occurred_at }}",
+            "chat_id": "={{ $json.chat_id }}",
+            "request_id": "={{ 'tg_' + $json.digest }}"
+          },
+          "schema": [
+            {
+              "id": "package_id",
+              "displayName": "package_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "revision",
+              "displayName": "revision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "occurred_at",
+              "displayName": "occurred_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "date",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "request_id",
+              "displayName": "request_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "68dad4b8-7c45-4589-9565-3607ce57c9ae",
+      "name": "Identificar remitente al abrir",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        900
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$input.first().json;if(x.package_operation!=='OPEN'||x.package_state!=='OPEN'||!/^tg_[a-f0-9]{40}$/.test(x.packageId??'')||typeof x.user_id!=='string'||x.user_id!==x.chat_id||!/^[1-9][0-9]{0,15}$/.test(x.chat_id))return [];return [{json:{package_id:x.packageId,revision:1,stage:'ROUTING',occurred_at:new Date().toISOString(),chat_id:x.chat_id}}];"
+      }
+    },
+    {
+      "id": "aade8974-8bd0-4ea6-8118-5ebc67d06802",
+      "name": "Guardar remitente al abrir",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        900
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "hvKjKjEvTAF4pUms"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "package_id": "={{ $json.package_id }}",
+            "revision": "={{ $json.revision }}",
+            "stage": "={{ $json.stage }}",
+            "occurred_at": "={{ $json.occurred_at }}",
+            "chat_id": "={{ $json.chat_id }}"
+          },
+          "schema": [
+            {
+              "id": "package_id",
+              "displayName": "package_id",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "revision",
+              "displayName": "revision",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "stage",
+              "displayName": "stage",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "occurred_at",
+              "displayName": "occurred_at",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "date",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": false,
+              "display": true,
+              "defaultMatch": false,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "default-policy-node-1",
+      "name": "Preparar sellado con cierre acreditado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        800
+      ],
+      "parameters": {
+        "jsCode": "function prepareSeal(context, reserved) {\n  if (!context.seal_after_close) return { seal_requested:false, passthrough:reserved };\n  const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);\n  const stored = reserved?.status==='STORED' && reserved.packageId===context.packageId && validItem(reserved.itemId);\n  const replay = reserved?.status==='RESERVATION_REPLAY' && reserved.state==='STORED' && validItem(reserved.itemId);\n  if (!stored && !replay) return { seal_requested:false,passthrough:reserved?.status==='NOT_READY'?reserved:{status:'CLOSE_NOT_CONFIRMED'} };\n  if(context.recovery_session){\n   if(!Number.isSafeInteger(reserved.revision)||reserved.revision<1)return {seal_requested:false,passthrough:{status:'CLOSE_NOT_CONFIRMED'}};\n   return {seal_requested:false,preview_requested:true,preview_body:{owner:context.user_id,chat:context.chat_id,packageId:context.packageId,revision:reserved.revision,receiptId:context.receipt_id}};\n  }\n  return { seal_requested:true, seal_body:{owner:context.user_id,chat:context.chat_id,packageId:context.packageId,receiptId:context.receipt_id} };\n}\nreturn [{json:prepareSeal($('Resolver paquete Telegram').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "default-policy-node-2",
+      "name": "¿Cierre acreditado guardado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        800
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.seal_requested }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "default-policy-node-3",
+      "name": "Sellar paquete con cierre acreditado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        800,
+        740
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/seal",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.seal_body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "default-policy-node-4",
+      "name": "Conservar operación sin sellado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        920
+      ],
+      "parameters": {
+        "jsCode": "return [{json:$input.first().json.passthrough}];"
+      }
+    },
+    {
+      "id": "default-policy-node-5",
+      "name": "Preparar política tras aviso confirmado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        1240
+      ],
+      "parameters": {
+        "jsCode": "const ORDER_PREFIX=\"OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\\n\";\nconst POLICY=\"publish-todos-v2\";\nfunction attestedControl(command, packageId, messageId, noticeMessageId) {\n  if (!/^tg_[a-f0-9]{40}$/.test(packageId) || !Number.isSafeInteger(messageId) || messageId < 1) throw Error('CONTROL_INVALID');\n  if (!/^\\/(?:nuevo|listo|publicar|borrador)(?:\\s+(?:ambos|opuro|opol))?$/i.test(command)) throw Error('CONTROL_INVALID');\n  const data = { policy: POLICY, package_id: packageId, message_id: messageId };\n  if (command === '/nuevo') {\n    if (!Number.isSafeInteger(noticeMessageId) || noticeMessageId <= messageId) throw Error('NOTICE_NOT_CONFIRMED');\n    data.notice_message_id = noticeMessageId;\n  }\n  return ORDER_PREFIX + command + '\\n' + JSON.stringify(data);\n}\nfunction prepareOpeningRecord(context, sent, encode) {\n  const message = sent?.result ?? sent;\n  if (!context?.default_policy_candidate || context.package_operation !== 'OPEN' || context.package_state !== 'OPEN') return null;\n  if (sent?.ok===false || String(message?.chat?.id)!==context.chat_id || !Number.isSafeInteger(message?.message_id) || message.message_id<=context.message_id) throw Error('OPENING_NOTICE_NOT_CONFIRMED');\n  return {\n    owner:context.user_id,chat:context.chat_id,packageId:context.packageId,\n    receiptId:context.receipt_id,kind:'TEXT',\n    text:encode('/nuevo',context.packageId,context.message_id,message.message_id),attachment:null,\n  };\n}\nlet ctx;try{ctx=$('Resolver paquete Telegram').first(0,0).json;}catch{return [];}\nconst body=prepareOpeningRecord(ctx,$input.first().json,attestedControl);\nreturn body?[{json:{body}}]:[];"
+      }
+    },
+    {
+      "id": "default-policy-node-6",
+      "name": "Guardar apertura con política anunciada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        820,
+        1240
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/packages/reserve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "default-policy-node-7",
+      "name": "Verificar política de apertura guardada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1240
+      ],
+      "parameters": {
+        "jsCode": "const r=$input.first().json; const ctx=$('Resolver paquete Telegram').first(0,0).json;\nconst stored=r?.status==='STORED'&&r.packageId===ctx.packageId;\nconst replay=r?.status==='RESERVATION_REPLAY'&&r.state==='STORED';\nif((!stored&&!replay)||!/^ti_[a-f0-9]{40}$/.test(r?.itemId??''))throw Error('DEFAULT_PUBLICATION_POLICY_NOT_STORED');\nreturn [{json:{status:'DEFAULT_POLICY_RECORDED',policy:'publish-todos-v2',package_id:ctx.packageId}}];"
+      }
+    },
+    {
+      "id": "5add2a3e-59ef-4871-93d3-50b2cb10e8fa",
+      "name": "¿Solicitar vista de recuperación?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        900,
+        1040
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.preview_requested === true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "016173b4-239b-49da-bd6d-b6ad1333c841",
+      "name": "Solicitar vista de recuperación",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        1000
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/corrections/preview",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.preview_body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "fbfa32e9-6cf8-4792-bca5-d48768383efe",
+      "name": "Preparar identidad de vista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        1000
+      ],
+      "parameters": {
+        "jsCode": "// The identity comes from the existing authenticated Telegram receiver, not\n// from the preview's source material. The guard recomputes the rendered text.\nfunction preparePreviewIdentity(context,request,result){\n if(result?.status==='PREVIEW_GENERATION_REQUESTED'&&context?.recovery_session===true&&request?.preview_requested===true&&request.preview_body?.owner===context.user_id&&request.preview_body?.chat===context.chat_id&&request.preview_body?.packageId===context.packageId)return {status:'GENERATION_REQUESTED'};\n const p=result?.preview;\n if(!['PREVIEW_READY','PREVIEW_EXISTS'].includes(result?.status)||!context||typeof context.user_id!=='string'||context.user_id!==context.chat_id||!/^[1-9][0-9]{0,15}$/.test(context.user_id)||context.recovery_session!==true||\n    request?.preview_requested!==true||request.preview_body?.owner!==context.user_id||request.preview_body?.chat!==context.chat_id||request.preview_body?.packageId!==context.packageId||\n    !/^tg_[a-f0-9]{40}$/.test(context.packageId??'')||p?.packageId!==context.packageId||!Number.isSafeInteger(p.revision)||p.revision<1||p.revision!==request.preview_body.revision||!/^[a-f0-9]{64}$/.test(p.previewHash??''))\n  return {status:'PREVIEW_NOT_CONFIRMED',reply_text:'No pude preparar una vista previa verificable. El paquete sigue abierto.'};\n return {status:'PREVIEW_IDENTITY_READY',owner:context.user_id,chat:context.chat_id,packageId:p.packageId,revision:p.revision,previewHash:p.previewHash};\n}\nreturn [{json:preparePreviewIdentity($('Resolver paquete Telegram').first(0,0).json,$('Preparar sellado con cierre acreditado').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "d10556d7-3a1d-497e-9d3c-ae1f8a709c39",
+      "name": "¿Identidad de vista acreditada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1560,
+        1000
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === 'PREVIEW_IDENTITY_READY' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "fdb50658-adb1-4162-ba87-79b9f6e23a59",
+      "name": "Inicializar entrega de vista",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        960
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/previews/delivery/initialize",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({owner:$json.owner,chat:$json.chat,packageId:$json.packageId,revision:$json.revision,previewHash:$json.previewHash}) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "09cdc103-e323-4771-9f02-72bf8372124c",
+      "name": "Preparar siguiente parte de vista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        960
+      ],
+      "parameters": {
+        "jsCode": "// Claim the next part only after the prior Telegram response was durably\n// recorded. An absent or ambiguous response never causes an automatic resend.\nfunction nextPreviewDelivery(identity,result){\n if(!identity||identity.status!=='PREVIEW_IDENTITY_READY'||typeof identity.owner!=='string'||identity.owner!==identity.chat||!/^[1-9][0-9]{0,15}$/.test(identity.owner)||!/^tg_[a-f0-9]{40}$/.test(identity.packageId??'')||!Number.isSafeInteger(identity.revision)||identity.revision<1||!/^[a-f0-9]{64}$/.test(identity.previewHash??''))return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};\n if(!['DELIVERY_READY','DELIVERY_EXISTS','PART_REPORTED','PART_REPORTED_REPLAY'].includes(result?.status))return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};\n return {status:'CLAIM_NEXT',body:{owner:identity.owner,chat:identity.chat,packageId:identity.packageId,revision:identity.revision,previewHash:identity.previewHash}};\n}\nreturn [{json:nextPreviewDelivery($('Preparar identidad de vista').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "010a3fd9-6cde-449d-8f70-12d178611a91",
+      "name": "¿Reclamar siguiente parte?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2220,
+        960
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === 'CLAIM_NEXT' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "008b6e05-dbca-48a4-89f2-1329ff234d0a",
+      "name": "Reclamar parte de vista",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2440,
+        920
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/previews/delivery/claim",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "98e19020-4e81-4863-b0dc-298b6325ffae",
+      "name": "Preparar envío de vista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2660,
+        920
+      ],
+      "parameters": {
+        "jsCode": "// The guard returns one claimed part at a time. Only these mapped fields may\n// go to Telegram; the capability token remains inside the trusted workflow.\nfunction preparePreviewSend(identity,claim){\n if(!identity||typeof identity.owner!=='string'||identity.owner!==identity.chat||!/^[1-9][0-9]{0,15}$/.test(identity.chat)||!/^tg_[a-f0-9]{40}$/.test(identity.packageId??'')||!Number.isSafeInteger(identity.revision)||identity.revision<1||!/^[a-f0-9]{64}$/.test(identity.previewHash??''))return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};\n if(claim?.status==='DELIVERY_COMPLETE')return {status:'DELIVERY_COMPLETE'};\n if(claim?.status!=='PART_CLAIMED'||!Number.isSafeInteger(claim.part)||claim.part<1||!Number.isSafeInteger(claim.parts)||claim.part>claim.parts||!/^[a-f0-9]{64}$/.test(claim.token??'')||typeof claim.text!=='string'||!claim.text.length||claim.text.length>3000||claim.parseMode!=='HTML')return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};\n return {status:'SEND_READY',identity,claim,telegram:{chatId:identity.chat,text:claim.text,parseMode:'HTML'}};\n}\nreturn [{json:preparePreviewSend($('Preparar identidad de vista').first(0,0).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "40278348-c25e-4cc0-81e6-9885bae2edc6",
+      "name": "¿Enviar parte de vista?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2880,
+        920
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === 'SEND_READY' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2f255310-e917-4cc5-a5ec-41529c143f78",
+      "name": "¿Vista completamente entregada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3100,
+        1040
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === 'DELIVERY_COMPLETE' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ae7b2b81-8ccf-4ca4-b0ad-d30f4e148302",
+      "name": "Enviar parte de vista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3100,
+        880
+      ],
+      "parameters": {
+        "chatId": "={{ $json.telegram.chatId }}",
+        "text": "={{ $json.telegram.text }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "webhookId": "a2f319a7-bc74-465f-adc8-93784be1c60c",
+      "credentials": {
+        "telegramApi": {
+          "id": "YZpNATHVHcrF8gn3",
+          "name": "OPMX — Telegram editorial"
+        }
+      }
+    },
+    {
+      "id": "3c989e50-994d-45d8-95eb-a1b3c23ed560",
+      "name": "Preparar acuse de vista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        880
+      ],
+      "parameters": {
+        "jsCode": "// Input is exclusively the Telegram node's response to the claimed message;\n// never construct this from a user message or source material. A missing or\n// mismatched response remains uncertain and must not be resent automatically.\nfunction preparePreviewReceipt(context,result){\n const c=context?.claim,x=context?.identity,m=result?.result??result;\n if(c?.status!=='PART_CLAIMED'||!Number.isSafeInteger(c.part)||c.part<1||!Number.isSafeInteger(c.parts)||c.part>c.parts||!/^[a-f0-9]{64}$/.test(c.token??'')||\n    typeof x?.owner!=='string'||x.owner!==x.chat||!/^[1-9][0-9]{0,15}$/.test(x.owner)||!/^tg_[a-f0-9]{40}$/.test(x.packageId??'')||!Number.isSafeInteger(x.revision)||x.revision<1||!/^[a-f0-9]{64}$/.test(x.previewHash??'')||\n    !m||String(m.chat?.id)!==x.chat||!Number.isSafeInteger(m.message_id)||m.message_id<1)\n  return {status:'DELIVERY_UNCERTAIN',retryPermitted:false};\n return {status:'RECEIPT_READY',body:{owner:x.owner,chat:x.chat,packageId:x.packageId,revision:x.revision,previewHash:x.previewHash,part:c.part,token:c.token,telegramChat:x.chat,telegramMessageId:m.message_id}};\n}\n// The sender executes once per part. Select the matching execution, never the\n// first iteration, or a later Telegram response could be bound to an old token.\nreturn [{json:preparePreviewReceipt($('Preparar envío de vista').first(0,$runIndex).json,$input.first().json)}];\n"
+      }
+    },
+    {
+      "id": "83da9bfd-b9bb-4f53-b23d-22a8e0202cd7",
+      "name": "¿Acuse de vista acreditado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3540,
+        880
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.status === 'RECEIPT_READY' }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "86740e31-fe7d-45e9-b75d-509668663a25",
+      "name": "Registrar acuse de vista",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3760,
+        840
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://publisher.oxigenopuro.com.mx/v1/telegram/previews/delivery/report",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 30000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "SpcCy6Qf3qP7xhf6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "df923f33-0535-4ac8-ae92-05fa68bab3e5",
+      "name": "Informar vista no confirmada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3320,
+        1180
+      ],
+      "parameters": {
+        "jsCode": "const c=$('Resolver paquete Telegram').first(0,0).json;let pending=false;try{pending=$('Preparar identidad de vista').first(0,0).json.status==='GENERATION_REQUESTED'}catch{}return [{json:{...c,has_file:false,reply_text:pending?'Estoy preparando la vista previa de la actualización. La recibirás aquí para revisarla y confirmarla antes de cualquier cambio.':'No pude confirmar la entrega completa de la vista. Consulta el estado antes de reintentar.'}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Recibir Telegram piloto": {
+      "main": [
+        [
+          {
+            "node": "Configurar usuarios del piloto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configurar usuarios del piloto": {
+      "main": [
+        [
+          {
+            "node": "Normalizar entrada Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Descargar archivo Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Descargar archivo Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar archivo Telegram": {
+      "main": [
+        [
+          {
+            "node": "Comprobar bytes Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar recepción Telegram": {
+      "main": [
+        [
+          {
+            "node": "Resultado piloto Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Preparar política tras aviso confirmado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar entrada Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Identificación Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Identificación Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Registrar identidad candidata Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar paquete Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar identidad candidata Telegram": {
+      "main": [
+        [
+          {
+            "node": "Conservar identificación Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar identificación Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Descargar archivo Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado piloto Telegram": {
+      "main": [
+        [
+          {
+            "node": "Registrar resultado recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar paquete Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Consultar almacenamiento Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Consultar almacenamiento Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Consultar sesión Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar sesión Telegram": {
+      "main": [
+        [
+          {
+            "node": "Resolver paquete Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver paquete Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Operar paquete Telegram?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Identificar remitente al abrir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Operar paquete Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Operar paquete Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar operación de paquete Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Descargar archivo Telegram?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Detectar cierre para supervisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comprobar bytes Telegram": {
+      "main": [
+        [
+          {
+            "node": "¿Guardar bytes Telegram?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Guardar bytes Telegram?": {
+      "main": [
+        [
+          {
+            "node": "Guardar original Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar original Telegram": {
+      "main": [
+        [
+          {
+            "node": "Confirmar original Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar original Telegram": {
+      "main": [
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar cierre para supervisión": {
+      "main": [
+        [
+          {
+            "node": "Registrar paquete para supervisión",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Preparar correlaciones Publisher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar correlaciones Publisher": {
+      "main": [
+        [
+          {
+            "node": "Calcular correlaciones Publisher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular correlaciones Publisher": {
+      "main": [
+        [
+          {
+            "node": "Registrar correlaciones Publisher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identificar remitente al abrir": {
+      "main": [
+        [
+          {
+            "node": "Guardar remitente al abrir",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Operar paquete Telegram": {
+      "main": [
+        [
+          {
+            "node": "Preparar sellado con cierre acreditado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar sellado con cierre acreditado": {
+      "main": [
+        [
+          {
+            "node": "¿Cierre acreditado guardado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Cierre acreditado guardado?": {
+      "main": [
+        [
+          {
+            "node": "Sellar paquete con cierre acreditado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Solicitar vista de recuperación?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sellar paquete con cierre acreditado": {
+      "main": [
+        [
+          {
+            "node": "Confirmar operación de paquete Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conservar operación sin sellado": {
+      "main": [
+        [
+          {
+            "node": "Confirmar operación de paquete Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar política tras aviso confirmado": {
+      "main": [
+        [
+          {
+            "node": "Guardar apertura con política anunciada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar apertura con política anunciada": {
+      "main": [
+        [
+          {
+            "node": "Verificar política de apertura guardada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Solicitar vista de recuperación?": {
+      "main": [
+        [
+          {
+            "node": "Solicitar vista de recuperación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Conservar operación sin sellado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Solicitar vista de recuperación": {
+      "main": [
+        [
+          {
+            "node": "Preparar identidad de vista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar identidad de vista": {
+      "main": [
+        [
+          {
+            "node": "¿Identidad de vista acreditada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Identidad de vista acreditada?": {
+      "main": [
+        [
+          {
+            "node": "Inicializar entrega de vista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Informar vista no confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inicializar entrega de vista": {
+      "main": [
+        [
+          {
+            "node": "Preparar siguiente parte de vista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar siguiente parte de vista": {
+      "main": [
+        [
+          {
+            "node": "¿Reclamar siguiente parte?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Reclamar siguiente parte?": {
+      "main": [
+        [
+          {
+            "node": "Reclamar parte de vista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Informar vista no confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reclamar parte de vista": {
+      "main": [
+        [
+          {
+            "node": "Preparar envío de vista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar envío de vista": {
+      "main": [
+        [
+          {
+            "node": "¿Enviar parte de vista?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Enviar parte de vista?": {
+      "main": [
+        [
+          {
+            "node": "Enviar parte de vista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Vista completamente entregada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Vista completamente entregada?": {
+      "main": [
+        null,
+        [
+          {
+            "node": "Informar vista no confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar parte de vista": {
+      "main": [
+        [
+          {
+            "node": "Preparar acuse de vista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar acuse de vista": {
+      "main": [
+        [
+          {
+            "node": "¿Acuse de vista acreditado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Acuse de vista acreditado?": {
+      "main": [
+        [
+          {
+            "node": "Registrar acuse de vista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Informar vista no confirmada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar acuse de vista": {
+      "main": [
+        [
+          {
+            "node": "Preparar siguiente parte de vista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Informar vista no confirmada": {
+      "main": [
+        [
+          {
+            "node": "Confirmar recepción Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": null
+}
