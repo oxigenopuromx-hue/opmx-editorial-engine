@@ -2,9 +2,10 @@ import {randomBytes} from 'node:crypto';
 
 export const runtimeObservationUrl='https://n8n.oxigenopuro.com.mx/webhook/opmx-runtime-observation-v1';
 export const expectedRuntimeVersions=Object.freeze({
- bnzVMNkZuGO1GQCZ:'1ac0f0e7-4cf1-4051-8965-0fb54e46c9e8',
- Mt7ts2EGPbyaTC2o:'ce05a2a3-804e-4a69-ac04-cb027b93ab01',
- '4o7K5TmKc7joScqB':'2239b2dd-d424-4953-b9d2-223ab7f12a30'
+ bnzVMNkZuGO1GQCZ:'3f0147c7-7ac0-449d-9342-f4737277562e',
+ Mt7ts2EGPbyaTC2o:'0a0af4ac-fe0d-4aff-a662-7e45bf87a320',
+ '4o7K5TmKc7joScqB':'cce524a4-660e-4d05-af66-39e003c6338b',
+ C4hk6fQQomueYC8f:'1eca0334-b3af-45d9-ac80-341e99a09faa'
 });
 const states=['running','waiting','new'];
 const scopeValid=s=>s&&Object.keys(s).sort().join(',')==='eventId,packageId,revision'&&/^tg_[a-f0-9]{40}$/.test(s.packageId)&&/^evt_[a-f0-9]{48}$/.test(s.eventId)&&Number.isSafeInteger(s.revision)&&s.revision>0&&s.revision<=4294967295;
