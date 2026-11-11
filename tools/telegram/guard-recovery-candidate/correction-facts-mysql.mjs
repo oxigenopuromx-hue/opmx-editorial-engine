@@ -62,6 +62,6 @@ export function createCorrectionFactsReader({readLockedSelection,readVerifiedUpd
    if(!result||Object.keys(scope).some(k=>result[k]!==scope[k])||!result.finalPayloads||typeof result.finalPayloads!=='object'||Array.isArray(result.finalPayloads))fail();
    finalPayloads=result.finalPayloads;
   }
-  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:selection.action,mode:selection.mode,destination,verifiedPosts,authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids,...(finalPayloads?{finalPayloads}:{})};
+  return {baseRevision,before:visible(snapshot.items),after:visible(items),action:selection.action,mode:selection.mode,destination,verifiedPosts,authorizedEditorKey:actorKey,controlItemIds:verifiedPolicy.control_item_ids,...(selection.action==='CREATE'?{publicationMode:verifiedPolicy.mode}:{}),...(finalPayloads?{finalPayloads}:{})};
  };
 }
