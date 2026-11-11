@@ -13,3 +13,6 @@ test('completion remains behind the existing Guard authentication',async()=>{
 test('reconciliation observations remain private and never report a write permission',async()=>{
  let calls=0;await run({telegramReconciliation:async()=>{calls++;return {status:'RECONCILIATION_REQUIRED',writeAuthorized:false,consistentSnapshot:false}}},async url=>{assert.equal((await post(url+'/v1/telegram/reconciliation/observe',false)).status,401);assert.equal(calls,0);const body=await (await post(url+'/v1/telegram/reconciliation/observe')).json();assert.equal(body.writeAuthorized,false);assert.equal(body.consistentSnapshot,false);assert.equal(calls,1)});
 });
+test('update jobs authenticate before their one-use payload can be resolved',async()=>{
+ let calls=0;await run({telegramUpdateDeliveries:{async consume(){calls++;return {status:'UPDATE_DELIVERY_UNCONFIRMED',retryPermitted:false}}}},async url=>{const path='/v1/telegram/update-deliveries/consume';assert.equal((await post(url+path,false)).status,401);assert.equal(calls,0);assert.equal((await post(url+path)).status,409);assert.equal(calls,1)});
+});
