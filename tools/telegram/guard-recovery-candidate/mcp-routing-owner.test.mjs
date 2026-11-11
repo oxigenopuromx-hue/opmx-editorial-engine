@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {originalRoutingIdentity} from './mcp-routing-owner.mjs';
+const p='tg_'+'a'.repeat(40),sub={owner:'222',chat:'222'},row=(id,chat_id,stage='ROUTING')=>({id,chat_id,stage,package_id:p});
+test('later administrator opens never replace the original opening owner',()=>{assert.deepEqual(originalRoutingIdentity([row(9,'222'),row(1,'111'),row(8,'222')],p,sub),{owner:'111',chat:'111'})});
+test('unrelated owner conflicts and missing ledger order remain rejected',()=>{assert.equal(originalRoutingIdentity([row(1,'111'),row(2,'333')],p,sub),null);assert.equal(originalRoutingIdentity([row(undefined,'111'),row(undefined,'222')],p,sub),null)});
+test('ordinary ownership and legacy queued-only histories are preserved',()=>{assert.deepEqual(originalRoutingIdentity([row(1,'111')],p,sub),{owner:'111',chat:'111'});assert.deepEqual(originalRoutingIdentity([row(1,'111','QUEUED'),row(2,'222','QUEUED')],p,sub),{owner:'111',chat:'111'});assert.deepEqual(originalRoutingIdentity([],p,sub),sub)});
