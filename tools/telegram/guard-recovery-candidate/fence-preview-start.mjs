@@ -9,6 +9,7 @@ import {createTelegramReviewStore} from '../review-store.mjs';
 import {prepareCutoverFence} from './fence-cutover-wiring.mjs';
 import {preparePreviewIntegration} from './preview-integration.mjs';
 import {preparePreviewServices} from './preview-services.mjs';
+import {createRuntimeObserver} from './runtime-observation-client.mjs';
 
 // Synchronous module evaluation is required by LiteSpeed's require() loader.
 // Initializers may fail independently; a failed fence never restores the old
@@ -38,7 +39,7 @@ const telegramEvents={
 };
 const store=createTelegramPackageStore(pool,{events:telegramEvents,initializePublicationFence:async(...args)=>(await requireFence()).initializePublicationFence(...args)});
 const telegramStore={capabilities:(...args)=>store.capabilities(...args),async run(action,input){if(action==='seal')await requireFence();return store.run(action,input)}};
-const server=createGuard({pool,secret:OPMX_GUARD_SECRET,telegramStore,telegramEvents,telegramReviews:createTelegramReviewStore(pool),
+const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:createTelegramReviewStore(pool),
  targetBegin:async(...args)=>(await requireFence()).targetBegin(...args),
  mediaBegin:async(...args)=>(await requireFence()).mediaBegin(...args),
  telegramPublicationBegin:async(...args)=>(await requireFence()).telegramPublicationBegin(...args),
