@@ -21,7 +21,7 @@ import {createPreviewDeliveryStore} from './preview-delivery-store.mjs';
 // this object must not enable production; the caller must install and migrate
 // schemas, wire the package store, event consumer and every relevant writer,
 // and provide evidence backed by authoritative records and an effective fence.
-export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false}) {
+export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedSafetyBarrier,captureTrustedRevision,beginLegacyTarget,verifyLiteralEnforcement=async()=>false,verifyUpdateEnforcement=async()=>false,verifyCompletedWrites=async()=>null}) {
   if(!pool?.getConnection||!Array.isArray(adminUserIds)||typeof lockTrustedSafetyBarrier!=='function'||
      typeof captureTrustedRevision!=='function'||typeof beginLegacyTarget!=='function')throw Error('RECOVERY_CONFIGURATION_INCOMPLETE');
   const db=createRecoveryMysqlAdapter(pool,{lockTrustedSafetyBarrier,captureTrustedRevision,
@@ -33,7 +33,7 @@ export function createCandidateRecoverySubsystem({pool,adminUserIds,lockTrustedS
     mediaBegin:createClassifiedMediaRouter(beginMediaUpload),
     telegramPublicationBegin:beginFencedPublication,
     initializePublicationFence:initializeRevisionBindings,
-    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement,verifyUpdateEnforcement}),
+    motorAttempts:createMotorAttemptStore({pool,verifyLiteralEnforcement,verifyUpdateEnforcement,verifyCompletedWrites}),
     initializeMotorAttempt,
     readRecoveredPolicy:readRecoveredPolicyInTransaction,
     readConfirmedCorrection:readConfirmedCorrectionInTransaction,
