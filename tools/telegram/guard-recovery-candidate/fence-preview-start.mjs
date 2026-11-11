@@ -25,7 +25,7 @@ if(OPMX_TELEGRAM_SHARED_OPERATORS){try{sharedOperators=JSON.parse(OPMX_TELEGRAM_
 const readyEvents=createMcpEventStore({pool,guardSecret:OPMX_GUARD_SECRET,logger:console.error,sharedOperators});
 const fenceReady=prepareCutoverFence({pool,legacyTargetBegin:beginTargetWrite,legacyMediaBegin:beginMediaUpload}).catch(()=>{console.error('guard.fence: initialization_failed');return null});
 const requireFence=async()=>{const fence=await fenceReady;if(!fence)throw Error('FENCE_UNAVAILABLE');return fence};
-const motorReady=prepareMotorRuntimeServices({pool,secret:OPMX_GUARD_SECRET}).catch(()=>{console.error('guard.motor_services: initialization_failed');return null});
+const motorReady=prepareMotorRuntimeServices({pool,secret:OPMX_GUARD_SECRET,adminUserIds:sharedOperators?.subscriber?[sharedOperators.subscriber]:[]}).catch(()=>{console.error('guard.motor_services: initialization_failed');return null});
 const requireMotor=async()=>{const services=await motorReady;if(!services)throw Error('MOTOR_SERVICES_UNAVAILABLE');return services};
 const servicesReady=preparePreviewServices({pool,adminUserIds:sharedOperators?.subscriber?[sharedOperators.subscriber]:[]}).catch(()=>{console.error('guard.preview_services: initialization_failed');return null});
 const requirePreviewServices=async()=>{const services=await servicesReady;if(!services)throw Error('PREVIEW_SERVICES_UNAVAILABLE');return services};
