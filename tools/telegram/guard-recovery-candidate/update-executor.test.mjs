@@ -28,3 +28,12 @@ test('a lost write or mismatched readback is uncertain and cannot be retried',as
 test('caller cannot supply a post ID, content, or alternate WordPress URL',async()=>{
  const f=fixture();for(const extra of [{postId:123},{payload:{}},{url:'https://example.org'}])await assert.rejects(()=>f.executor.execute({...input,...extra}),/INVALID_UPDATE_REQUEST/);assert.equal(f.state.writes,0);
 });
+test('scoped bridge and durable acknowledgement are required when that transport is installed',async()=>{
+ const f=fixture();let scoped,receipt;
+ f.wordpress.update=async()=>{throw Error('unscoped transport must not run')};
+ f.wordpress.updateConfirmed=async x=>{scoped=x;return {statusCode:200,post:{id:postId}}};
+ f.wordpress.recordConfirmation=async x=>{receipt=x;return {status:'UPDATE_RECEIPT_RECORDED',operationId:x.operationId}};
+ assert.equal((await f.executor.execute(input)).status,'CMS_UPDATE_CONFIRMED');assert.equal(scoped.packageId,packageId);assert.equal(scoped.previewHash,previewHash);assert.equal(scoped.operationId,receipt.operationId);
+ const g=fixture();g.wordpress.recordConfirmation=async()=>({status:'UPDATE_DELIVERY_UNCONFIRMED'});
+ assert.equal((await g.executor.execute(input)).status,'UPDATE_UNCERTAIN');assert.equal(g.state.writes,1);
+});
