@@ -51,7 +51,7 @@ function confirmPackageOperation(context,result) {
  }
  if(context.package_operation==='CONFIRM'){
   if(['CONFIRMED','CONFIRMED_REPLAY'].includes(result?.status)&&/^evt_[a-f0-9]{48}$/.test(result.eventId??''))
-   return response(context,'Revisión confirmada y puesta en cola para procesamiento. Todavía no se ha confirmado ninguna publicación.');
+   return response(context,'Revisión confirmada y puesta en cola para procesamiento. Todavía no se ha confirmado ninguna publicación.',{package_state:'READY',package_revision:context.package_revision+1});
   if(result?.status==='ALREADY_CONFIRMED')return response(context,'Esa revisión ya fue confirmada; consulta su estado antes de intentar nuevamente.');
   if(result?.status==='PREVIEW_DELIVERY_UNCONFIRMED')return response(context,'No está confirmada la entrega completa de la vista. No se envió la revisión al Motor.');
   return response(context,'No pude confirmar esa revisión. No se confirmó el envío al Motor; consulta el estado antes de reintentar.');
