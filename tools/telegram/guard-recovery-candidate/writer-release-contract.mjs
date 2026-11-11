@@ -22,9 +22,9 @@ export function writerGraphFingerprint(graph){
 // writer path tests. A runtime read cannot add a version to this allow-list.
 // This proves the deployed n8n release matches; the Guard still has to hold
 // its own revision fence, validate every request binding, and reconcile CMS.
-export function verifyWriterReleaseObservation(observation,manifest){
- if(!observation||observation.status!=='RUNTIME_OBSERVED'||observation.versionsMatch!==true||observation.noActiveN8nWriters!==true||observation.authorizesRecovery!==false||observation.motorTerminationVerified!==false||manifest?.schema!=='opmx.fenced-writer-release.v1'||!manifest.workflows||!Array.isArray(observation.workflows))return false;
+export function verifyWriterReleaseObservation(observation,manifest,{requireIdle=true}={}){
+ if(!observation||observation.status!=='RUNTIME_OBSERVED'||observation.versionsMatch!==true||(requireIdle?observation.noActiveN8nWriters!==true:typeof observation.noActiveN8nWriters!=='boolean')||observation.authorizesRecovery!==false||observation.motorTerminationVerified!==false||manifest?.schema!=='opmx.fenced-writer-release.v1'||!manifest.workflows||!Array.isArray(observation.workflows))return false;
  const ids=Object.keys(manifest.workflows);
- if(ids.length!==4||observation.workflows.length!==ids.length||new Set(observation.workflows.map(w=>w?.id)).size!==ids.length)return false;
+ if(![4,5].includes(ids.length)||observation.workflows.length!==ids.length||new Set(observation.workflows.map(w=>w?.id)).size!==ids.length)return false;
  try{return observation.workflows.every(w=>Object.hasOwn(manifest.workflows,w.id)&&w.activeVersionId===manifest.workflows[w.id].versionId&&/^[a-f0-9]{64}$/.test(manifest.workflows[w.id].graphHash)&&writerGraphFingerprint(w.graph)===manifest.workflows[w.id].graphHash)}catch{return false}
 }
