@@ -1,10 +1,10 @@
-// Audited #19: validate-only null boundary; ordinary writer authority remains server verified.
+// Audited publication status23: pending heading only; all writer enforcement preserved.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "6d60d83d-a99a-4f06-a201-70b5d292b9da",
-      "graphHash": "4e1a884c2546efcca8d99f52cf1b531ad1dfb50fe65a54a2cc43c9e3b0cdfec7"
+      "versionId": "c0de03ed-e7a7-4255-a9c8-9ca76404424e",
+      "graphHash": "4655c83baa44f05ef5907fd31af7b7810310e543e398b685900b5c02cc588873"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
