@@ -16,10 +16,10 @@ Este índice está en main para todas las conversaciones. Es un registro de desp
 
 | Componente | Workflow | Estado | Versión publicada |
 | --- | --- | --- | --- |
-| OPMX — Telegram recepción · publicación predeterminada v1 | `OSi8AcnzLlI0csRu` | Activo | `0bfda1b6-a4de-48fd-9f63-d4c9d8a76127` |
-| OPMX — Publisher archivos MCP | `bnzVMNkZuGO1GQCZ` | Activo | `76ef3bfe-db0a-4fb4-996c-ad703ab1639a` |
-| OPMX Publisher — formulario · destinos v3 | `Mt7ts2EGPbyaTC2o` | Activo | `bf4cc77c-6853-4303-a25b-2f58dc057d8e` |
-| OPMX — Entrada automática · borradores v3 | `4o7K5TmKc7joScqB` | Activo | `c7610e14-994b-45bd-8748-bdef90e0fc78` |
+| OPMX — Telegram recepción · publicación predeterminada v1 | `OSi8AcnzLlI0csRu` | Activo | `b9a2f944-8a03-4fd2-a730-3b93b6c33688` |
+| OPMX — Publisher archivos MCP | `bnzVMNkZuGO1GQCZ` | Activo | `32e28420-47ef-4732-b346-22c2708bff49` |
+| OPMX Publisher — formulario · destinos v3 | `Mt7ts2EGPbyaTC2o` | Activo | `d6bbb33a-ab6e-4f90-a88c-921623426444` |
+| OPMX — Entrada automática · borradores v3 | `4o7K5TmKc7joScqB` | Activo | `4263fea4-90a4-406d-a234-da7397d456bf` |
 | OPMX — transporte actualización confirmada #18 | `qBmLf0DmcMSfuWvm` | Activo | `d04fb5c2-ba36-48f9-9cd4-2958ab1f273e` |
 | OPMX — observación técnica runtime #18 | `2HBn1RnSYgyxuHgE` | Activo | `b88257e9-7f6d-41e3-bdfd-e2cd40c12c25` |
 | OPMX — conciliación CMS lectura #18 | `F4Ybwst2LZfzKyWS` | Activo | `0bb87412-b517-4d6e-8a1c-426acb6151ef` |
@@ -36,11 +36,11 @@ Esta lectura confirma las versiones, no inicia flujos ni prueba por sí sola Wor
 - MCP: resuelve al propietario original desde el ledger y conserva la decisión confirmada; no transfiere propiedad del paquete al administrador.
 - Guard: snapshots, barreras por revisión y destino, intento exclusivo, reconocimiento de decisión antes de escritura, recibos durables y comprobación de escritores.
 - Transporte UPDATE: consume una capacidad de trabajo acotada y actualiza los IDs confirmados, sin aceptar una URL o ID de reemplazo arbitrarios.
-- Motor: se amplió el prompt de la automatización existente para PREVIEW, UPDATE y CREATE EDITORIAL confirmados, manteniendo READY y el protocolo vigente. Pin de chooseMotorPolicy bc9138f1dc60f838559d385ec4fc20f511089210. No se creó otra automatización ni se cambió la suscripción a una distinta. El prompt aplicado está versionado en la referencia inferior; no se volvió a leer la configuración de la automatización durante este corte.
+- Motor en ese despliegue histórico: se amplió el prompt de la automatización existente para PREVIEW, UPDATE y CREATE EDITORIAL confirmados, manteniendo READY y el protocolo vigente. Pin de chooseMotorPolicy bc9138f1dc60f838559d385ec4fc20f511089210. No se creó otra automatización ni se cambió la suscripción a una distinta. El prompt aplicado está versionado en la referencia inferior; no se volvió a leer la configuración de la automatización durante este corte.
 - Recuperación de interrupción: sólo un administrador configurado puede invalidar la capacidad anterior del mismo intento RUNNING mientras la barrera sigue AWAITING_DECISION y la revisión/evento/huella coinciden. No habilita reintentar una escritura incierta.
 - QA anterior: borrador OPURO10428, actualización literal de extracto, readback y cierre durable comprobados. No se extrapola a publicaciones públicas en tres destinos.
 - Caso real de Milenio: llegó a READY19 con CREATE/EDITORIAL/TODOS confirmado; fuentes y archivos validados. Antes de escribir se encontraron las publicaciones ya existentes OPURO10438/OPOL3477/LIBERAL307. El intento quedó ATTEMPT_BLOCKED; no CANCELLED ni ATTEMPT_COMPLETED, y no se atribuyen esas notas existentes a esta revisión.
-- 470 casos locales en la última batería de recuperación. CREATE LITERAL sigue bloqueado. Faltan criterios de aceptación del issue18; no está cerrado.
+- 470 casos locales en esa batería histórica de recuperación. El bloqueo temporal de CREATE LITERAL se levantó posteriormente mediante el perfil, la prueba de texto Guard y los escritores del issue19 descritos abajo. Faltan otros criterios de aceptación del issue18; no está cerrado.
 
 Referencias inmutables:
 - [Ensayo QA y límites](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/blob/1f4b464007ee8dabbf64e8eafeec61afcca36b0e/docs/operations/issue18-release-20261111/VERIFICACION_FINAL.md)
@@ -89,12 +89,30 @@ Actualización del12nov2026. WEG/revisión8 quedó conciliada: recibo durable PU
 El monitor administrativo existente ahora consulta Guard antes de enviar alertas DRAFT_UNCERTAIN/PUBLISH_UNCERTAIN. Sólo una prueba final PUBLISH íntegra, de la misma solicitud/revisión, con todos los destinos verificados y escritores inactivos puede suprimirlas. Borrador, parcial, error, acuse ausente, prueba vieja o identidad ambigua conservan la alerta; los demás bloqueos se mantienen.
 
 - Monitor NFOBzPfHmvRjVFOA activo:2d3e18a9-ff68-4f5c-9fdc-ce6a694b1cd6,11nodos. Reversión:f9d2c08d-a31a-4d95-ac7f-9b2f37b981b9. Mismo remitente, administrador, horario y tabla.
-- Guard actual: opmx-guard-final-publication-observer.zip, SHA256 ecd2f908e6e19616097ebcf5aee891aa64e36b3305675ffab4c32146bb55fdc0. Su endpoint observe-final es sólo lectura. Conserva recuperación, autor3, pins de escritores y único Motor/suscripción anteriores. Es posterior al ZIP Waldo de la ficha histórica.
+- Guard de ese despliegue histórico: opmx-guard-final-publication-observer.zip, SHA256 ecd2f908e6e19616097ebcf5aee891aa64e36b3305675ffab4c32146bb55fdc0. Su endpoint observe-final es sólo lectura. Conserva recuperación, autor3, pins de escritores y único Motor/suscripción anteriores. Es posterior al ZIP Waldo de la ficha histórica.
 -130 pruebas pasan. Ensayo aislado n8n37011 con Guard real: qaSuppressed=true, PUBLISH/TODOS y los tres IDs originales; sin envío Telegram ni escrituras de tabla/CMS. Primera ejecución programada37017:SUCCESS, sin candidatos ni notificación.
 - Diagnóstico temporal restaurado a su GET original, inactivo y sin retención. Su límite de30s permanece sólo en ese probe inactivo; no cambia tiempos del Motor. No se ampliaron accesos ni credenciales.
 - Esta corrección resuelve la alerta obsoleta. No elimina por sí sola la causa de esperas largas de herramientas (#24), ni cierra los pendientes generales del #18. #28 continúa diferido.
 
 [Informe, acuses y reversión](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/blob/3a00789fed4b74433449b50d4b81dff60d445ce6/docs/operations/issue30-publication-alert-20261112/VERIFICACION.md). Código fuente y pruebas: fdbe48cf8679840d6fcc2f1d8930b96a1323137e y6a57020777fd3c5a8482e043a7e260ecf0e38c31.
+
+
+## Entrega literal — issue19, actualización12nov2026
+
+Implementación desplegada, fuente fijada e7fae39e62d8b233c379198d24c516fe4b580071. Maestros/perfil aprobados en main b1064e91ae795e5843c77485d2215425fdfdced5. Prompt4.10 selecciona perfil; contrato EDITORIAL1.4.2 y prompt4.9 histórico permanecen sin cambios.
+
+- Guard vigente: opmx-guard-literal19.zip, SHA256518721f59f5803885e852d99f6e884901031310974e6865775074ee91d92c163, Hostinger completado/Actual12nov16:06:48CDMX. Conserva Waldo, autor3 y observación/alertas30.
+- Receptor52nodos: b9a2f944-8a03-4fd2-a730-3b93b6c33688. Sólo cambian tres Code; mismos remitentes, webhook, credenciales y conexiones.
+- MCP137nodos:32e28420-47ef-4732-b346-22c2708bff49; Shared146nodos:4263fea4-90a4-406d-a234-da7397d456bf; Form58nodos:d6bbb33a-ab6e-4f90-a88c-921623426444. Pins/grafos verificados. Los drafts ajenos originales se restauraron sin cambiar estas versiones activas; no publicar un draft antiguo suponiendo que coincide con producción.
+- Único Motor6ae9095256948191b33f1e023fbfbf8b: actualizado sólo prompt, SHA256f74b77103dea0434c7f8fe1e85d66b7ac7ebec5f055a5658eb162150f612f0dd. Misma suscripción READY/preview, título, conversación y entorno; no hubo otro Motor ni reenvío histórico.
+- /literal o una frase exacta directa y separada como «La publicación va tal cual, sin agregarle nada» acredita tratamiento literal; no concede permiso de publicar ni elige destinos. /editorial vuelve al tratamiento ordinario. En recuperación se conserva /opciones crear|actualizar literal DESTINO y la confirmación de vista vigente.
+- LITERAL conserva título/subtítulos/párrafos y fecha original, sin En breve, nuevas fuentes, encabezados, investigación ni cierre. Guard exige corpus completo y límites originales; rechaza mover fragmentos del título, dividir/fusionar párrafos o añadir enlaces/tooltips. No se trunca por objetivos SEO60/160. Límites técnicos previos: título2048bytesUTF8/subtítulo500caracteres.
+- 450 pruebas pasan; ejecución37529 prueba código real de n8n con28assertions y título130/subtítulos362. Ejecución37532 usa observe-final real y confirma pins/idle, recibo PUBLISH y CMS OPURO10513/OPOL3524/LIBERAL397 de WEG sin escribir. Ejecución37537 rechaza entrada vacía del nuevo endpoint literal sin permiso ni escritura.
+- Probe7IDUF9PeHQ5v331Z restaurado al GET n8nApi original, inactivo3nodos, sin retención. Todas las versiones activas se releen tras restaurar los drafts.
+- La nota tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b permanece READY10 con seis elementos. Esta implementación no reclamó/reintentó su intento, no cambió sus fuentes ni publicó. Una instrucción histórica no acreditada no se convierte retroactivamente en control. El usuario publica por su cuenta; recuperar ese intento sigue requiriendo el procedimiento autenticado y su orden vigente.
+- No se hizo publicación literal positiva en producción: la aceptación positiva de contenido usa fuentes sintéticas y proveedores reales con BD simulada; las verificaciones de producción son de sólo lectura o rechazo de entrada inválida.
+
+[Informe y reversión](issue19-literal-20261112/VERIFICACION.md) · [Acuses técnicos](issue19-literal-20261112/EVIDENCIA.json). No confundir estas pruebas con publicación de la nota pendiente ni con cierre general de18. Cancelación28 sigue diferida.
 
 ## Seguimiento de issues importantes
 
@@ -106,7 +124,7 @@ La prioridad es propuesta en este corte, no una etiqueta ya existente del reposi
 | Conciliación resuelta; publicación pendiente | [26](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/26) | La conciliación del intento Waldo8 quedó confirmada; esto no ejecutó la publicación ni habilita reintentar. | Ejecución34438: UNWRITTEN_ATTEMPT_FROZEN, intentoREVOKED, barreraRECONCILING, tres destinosBLOCKED. PaqueteREADY8 y cinco SHA conservados. |
 | Diferida — después de Waldo | [28](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/28) | Revisar la cancelación de paquetes duplicados cuando el usuario retome esta parte; releer revisiones y órdenes vigentes. | La orden antigua de cancelar Milenio rev8 fue sustituida por recuperación; READY19 quedó ATTEMPT_BLOCKED, no CANCELLED. No se ejecutó ninguna cancelación al dividir los issues. |
 | Alta | [18](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/18) | Aceptación completa de recuperación, creación nueva multidestino, parciales/respuesta perdida, cuotas/retención y demás criterios del issue. | Reapertura/vista/confirmación, ensayo UPDATE OPURO y recuperación pre-ACK documentados; no equivalen a cerrar todo el issue. |
-| Alta | [19](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/19) | Modo literal autorizado automático, títulos largos, múltiples subtítulos y normalización de blancos sin alterar textos. | Frank Aguirre y Ealy recuperados manualmente. CREATE LITERAL aún no se habilita. |
+| Corregido | [19](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/19) | La nota pendiente rev10 no se reintentó ni publicó por orden del usuario; no se libera automáticamente su intento histórico. | Perfil literal autenticado, selector, compilador, Guard, preflight, escritores y conservación entre reaperturas activos; 450 pruebas, QA n8n28 y lecturas reales. |
 | Alta | [21](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/21) | Clasificación general de rechazos deterministas previos a escritura: no presentarlos indebidamente como UNCERTAIN. | Comprobación previa de etiquetas/extracto desplegada; casos editoriales documentados recuperados. |
 | Alta | [15](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/15) | Diagnóstico PDF/descarga/binario/tamaño/firma y conciliación de la reserva original. | Publicación manual entregada; no demuestra corrección del receptor ni habilita reenviar. |
 | Media alta | [24](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/24) | Determinar por qué ciertas ejecuciones se interrumpieron antes de Publisher. | Los cuatro paquetes y pendientes adicionales descritos fueron recuperados; la causa raíz no está acreditada. |
@@ -118,5 +136,6 @@ También siguen abiertos13 (exclusiones de portada por categoría) y11 (score Ra
 
 ## Próximo trabajo recomendado
 
-La conciliación prioritaria del26 ya tiene resultado durable: el intento previo está revocado y sin permiso de escritura. La publicación de Waldo no se ejecutó y requiere el siguiente flujo autorizado de recuperación; no repetir iniciar_intento para la revisión8. La cancelación separada en28 permanece para más adelante. Continuar19 (literal), coordinado con18, y21/15 para reducir falsos bloqueos y mejorar diagnóstico;24/25 para interrupciones y enlaces. Antes de tocar un paquete histórico, releer su estado y orden vigente. El cierre de26 como conciliación no acredita publicación ni cancelación.
+La conciliación prioritaria del26 ya tiene resultado durable: el intento previo está revocado y sin permiso de escritura. La publicación de Waldo no se ejecutó y requiere el siguiente flujo autorizado de recuperación; no repetir iniciar_intento para la revisión8. La cancelación separada en28 permanece para más adelante. La implementación19 (literal) quedó desplegada. Continuar18 y21/15 para reducir falsos bloqueos y mejorar diagnóstico;24/25 para interrupciones y enlaces. Antes de tocar un paquete histórico, releer su estado y orden vigente. El cierre de26 como conciliación no acredita publicación ni cancelación.
+
 

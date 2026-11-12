@@ -1,0 +1,176 @@
+{
+  "sourceCommit": "e7fae39e62d8b233c379198d24c516fe4b580071",
+  "mastersCommit": "b1064e91ae795e5843c77485d2215425fdfdced5",
+  "zipSha256": "518721f59f5803885e852d99f6e884901031310974e6865775074ee91d92c163",
+  "tests": {
+    "node": 450,
+    "n8nSynthetic": {
+      "executionId": "37529",
+      "assertions": 28
+    },
+    "productionRead": {
+      "executionId": "37532",
+      "result": {
+        "schema": "opmx.telegram.final-publication-observation.v1",
+        "status": "FINAL_PUBLICATION_CONFIRMED",
+        "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+        "revision": 8,
+        "requestId": "tg_e7d344fcea129cb6fa71c4af57443300c759e4b3266abb227c38a11ed269961e",
+        "phase": "PUBLISH",
+        "destination": "TODOS",
+        "slug": "weg-inversion-250-millones-planta-hidalgo",
+        "receiptHash": "9d9f13dbca0c4d3dd4dcf3052d372ede8bc6fe700855df4e8519053f3079d3fe",
+        "receiptState": "RECORDED",
+        "targets": [
+          {
+            "destination": "OPURO",
+            "postId": 10513,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          },
+          {
+            "destination": "OPOL",
+            "postId": 3524,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          },
+          {
+            "destination": "LIBERAL",
+            "postId": 397,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          }
+        ],
+        "writeAuthorized": false,
+        "retryPermitted": false,
+        "consistentSnapshot": true,
+        "writersIdleVerified": true,
+        "observedAt": "2026-11-12T22:09:07.544Z",
+        "httpStatus": 200,
+        "qaReadOnly": true,
+        "pendingNoteTouched": false
+      }
+    },
+    "productionNegative": {
+      "executionId": "37537",
+      "result": {
+        "status": "LITERAL_TEXT_UNCONFIRMED",
+        "writesStarted": false,
+        "retryPermitted": false,
+        "httpStatus": 200,
+        "invalidInputRejected": true,
+        "realCmsWrites": false,
+        "pendingNoteTouched": false
+      }
+    }
+  },
+  "workflows": [
+    {
+      "key": "mcp",
+      "id": "bnzVMNkZuGO1GQCZ",
+      "active": true,
+      "activeVersion": "32e28420-47ef-4732-b346-22c2708bff49",
+      "draftVersion": "ab60c994-4bd9-43b3-9eb9-a3288a322e5d",
+      "activeNodes": 137,
+      "draftNodes": 112,
+      "activeGraphEqualsPrepared": true
+    },
+    {
+      "key": "shared",
+      "id": "4o7K5TmKc7joScqB",
+      "active": true,
+      "activeVersion": "4263fea4-90a4-406d-a234-da7397d456bf",
+      "draftVersion": "3cb247db-d295-42ef-9e92-6cfded04fa1d",
+      "activeNodes": 146,
+      "draftNodes": 138,
+      "activeGraphEqualsPrepared": true
+    },
+    {
+      "key": "form",
+      "id": "Mt7ts2EGPbyaTC2o",
+      "active": true,
+      "activeVersion": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+      "draftVersion": "5f24314b-4fa3-4972-8ba0-b51cfe54f36c",
+      "activeNodes": 58,
+      "draftNodes": 54,
+      "activeGraphEqualsPrepared": true
+    },
+    {
+      "key": "receiver",
+      "id": "OSi8AcnzLlI0csRu",
+      "active": true,
+      "activeVersion": "b9a2f944-8a03-4fd2-a730-3b93b6c33688",
+      "draftVersion": "b9a2f944-8a03-4fd2-a730-3b93b6c33688",
+      "activeNodes": 52,
+      "draftNodes": 52
+    },
+    {
+      "key": "probe",
+      "id": "7IDUF9PeHQ5v331Z",
+      "active": false,
+      "activeVersion": null,
+      "draftVersion": "4c1166c3-3c39-4d0e-a03d-be22ad24d37e",
+      "activeNodes": 3,
+      "draftNodes": 3,
+      "settings": {
+        "executionOrder": "v1",
+        "availableInMCP": true,
+        "saveManualExecutions": false,
+        "saveDataErrorExecution": "none",
+        "saveDataSuccessExecution": "none",
+        "saveExecutionProgress": false,
+        "executionTimeout": 30
+      },
+      "httpParameters": {
+        "url": "https://n8n.oxigenopuro.com.mx/api/v1/workflows/bnzVMNkZuGO1GQCZ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "n8nApi",
+        "options": {
+          "redirect": {
+            "redirect": {
+              "followRedirects": false
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "credentialKinds": [
+        "n8nApi"
+      ]
+    }
+  ],
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "enabled": true,
+    "promptMatch": true,
+    "titleSame": true,
+    "scheduleSame": true,
+    "conversationSame": true,
+    "environmentSame": true,
+    "promptSha256": "f74b77103dea0434c7f8fe1e85d66b7ac7ebec5f055a5658eb162150f612f0dd",
+    "sourcePin": "e7fae39e62d8b233c379198d24c516fe4b580071",
+    "updatedFields": [
+      "prompt"
+    ],
+    "triggersUpdateOmitted": true
+  },
+  "pendingPackage": {
+    "packageId": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+    "revision": 10,
+    "state": "READY",
+    "items": 6,
+    "publicationAttemptedByThisChange": false
+  }
+}
