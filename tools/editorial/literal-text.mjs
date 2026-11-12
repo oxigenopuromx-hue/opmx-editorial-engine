@@ -60,12 +60,12 @@ function blockAttributes(name,value){
   else if(typeof v!=='boolean')fail();
  }
 }
-function attributes(raw,tag){
+function attributes(raw,tag,{plain=false}={}){
  let remaining=raw;const seen=new Set();
  while(remaining.trim()){
   const match=/^\s+([A-Za-z][A-Za-z0-9-]*)\s*=\s*(?:"([^"<>]*)"|'([^'<>]*)')/.exec(remaining);
   if(!match)fail();const name=match[1].toLowerCase(),value=decode(match[2]??match[3]);remaining=remaining.slice(match[0].length);
-  if(seen.has(name)||!['class','id','title','lang','dir','href','rel','target'].includes(name))fail();seen.add(name);
+  if(seen.has(name)||!['class','id','title','lang','dir','href','rel','target'].includes(name)||plain&&name==='title')fail();seen.add(name);
   if(name==='class')classes(value);
   else if(name==='id'){if(!/^[A-Za-z][A-Za-z0-9_-]{0,159}$/.test(value))fail()}
   else if(name==='lang'){if(!/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(value))fail()}
@@ -84,7 +84,7 @@ function attributes(raw,tag){
 // used by the literal renderer. It does not run a browser, fetch a link, decode
 // an HTML entity into markup, execute a source instruction or discard unknown
 // HTML. Anything outside this vocabulary requires explicit reconciliation.
-export function extractLiteralVisibleText(markup){
+function readLiteralMarkup(markup,{plain=false}={}){
  text(markup);const stack=[],blockStack=[];let offset=0,visible='',tokens=0;
  while(offset<markup.length){
   if(++tokens>100000)fail();const index=markup.indexOf('<',offset);
@@ -109,7 +109,7 @@ export function extractLiteralVisibleText(markup){
   }
   if(end>=markup.length||quote)fail();
   const token=markup.slice(index,end+1),m=/^<(\/?)([A-Za-z][A-Za-z0-9]*)([\s\S]*?)>$/.exec(token);
-  if(!m)fail();const closing=m[1]==='/',name=m[2].toLowerCase();if(!htmlTags.has(name))fail();
+  if(!m)fail();const closing=m[1]==='/',name=m[2].toLowerCase();if(!htmlTags.has(name)||plain&&name==='a')fail();
   let rest=m[3],selfClosing=false;
   if(/\/\s*$/.test(rest)){selfClosing=true;rest=rest.replace(/\/\s*$/,'')}
   if(closing){if(rest.trim()||selfClosing||name==='br'||stack.pop()!==name)fail()}
@@ -117,22 +117,53 @@ export function extractLiteralVisibleText(markup){
    if(selfClosing&&name!=='br'||name==='a'&&stack.includes('a'))fail();
    if(blockTags.has(name)&&name!=='br'&&stack.some(x=>['p','strong','b','em','i','u','s','a','span','h1','h2','h3','h4','h5','h6'].includes(x)))fail();
    if(name==='li'&&!['ul','ol'].includes(stack.at(-1))||['ul','ol'].includes(stack.at(-1))&&name!=='li')fail();
-   attributes(rest,name);if(name!=='br'){stack.push(name);if(stack.length>128)fail()}
+   attributes(rest,name,{plain});if(name!=='br'){stack.push(name);if(stack.length>128)fail()}
   }
-  if(blockTags.has(name))visible+='\n';
+  // A private separator retains rendered block boundaries without confusing
+  // source line wrapping with a new paragraph. Input NULs are rejected above.
+  if(blockTags.has(name))visible+='\u0000';
   offset=end+1;
  }
- if(stack.length||blockStack.length)fail();return normalizeLiteralText(visible);
+ if(stack.length||blockStack.length)fail();
+ const segments=visible.split('\u0000').map(normalizeLiteralText).filter(Boolean);
+ return {visibleText:normalizeLiteralText(visible.replaceAll('\u0000','\n')),segments};
 }
+
+export function extractLiteralVisibleText(markup){return readLiteralMarkup(markup).visibleText;}
+
+// Plain Telegram source has no authenticated rich-text link or tooltip data.
+// Reject those additions even when their visible words happen to be unchanged.
+export function extractLiteralPlainText(markup){return readLiteralMarkup(markup,{plain:true}).visibleText;}
 
 export function assertLiteralCanonicalText({sourceText,title,subtitle,html,gutenberg,enriched}={}){
  text(title,2048);text(subtitle,8192);
  if(!normalizeLiteralText(title)||/<\/?[a-z!]/i.test(title)||/<\/?[a-z!]/i.test(subtitle))fail();
  for(const value of [html,gutenberg,enriched])if(!text(value).trim())fail();
- const normalizedBody=extractLiteralVisibleText(gutenberg);
- if(!normalizedBody||extractLiteralVisibleText(html)!==normalizedBody||extractLiteralVisibleText(enriched)!==normalizedBody)fail();
+ const bodies=[html,gutenberg,enriched].map(value=>readLiteralMarkup(value,{plain:true}));
+ const normalizedBody=bodies[1].visibleText;
+ if(!normalizedBody||bodies.some(body=>body.visibleText!==normalizedBody))fail();
  const block=/<!--\s*wp:(?:core\/)?(?:paragraph|heading|list|quote)(?:\s|--)/;
  if(!block.test(gutenberg)||!block.test(enriched))fail();
- if(normalizeLiteralText([title,subtitle,normalizedBody].join('\n'))!==normalizeLiteralText(sourceText))fail();
+ const source=text(sourceText).normalize('NFC').replace(/\r\n?/g,'\n');
+ const lines=source.split('\n'),first=lines.findIndex(line=>normalizeLiteralText(line));
+ if(first<0||normalizeLiteralText(title)!==normalizeLiteralText(lines[first]))fail();
+ const remainder=lines.slice(first+1).join('\n').trim();
+ // Blank lines delimit original paragraphs. Legacy plain messages without
+ // blank lines use complete lines; a subtitle may consume whole leading units
+ // only, never part of the title or part of an original body paragraph.
+ const units=remainder.split(/\n[^\S\n]*\n/u.test(source)?/\n[^\S\n]*\n+/u:/\n/u).map(normalizeLiteralText).filter(Boolean);
+ const normalizedSubtitle=normalizeLiteralText(subtitle);
+ let consumed=0;
+ if(normalizedSubtitle){
+  let prefix='';
+  for(let index=0;index<units.length;index++){
+   prefix+=(index?' ':'')+units[index];
+   if(prefix===normalizedSubtitle){consumed=index+1;break}
+   if(prefix.length>=normalizedSubtitle.length)break;
+  }
+  if(!consumed)fail();
+ }
+ const originalBody=units.slice(consumed);
+ if(!originalBody.length||bodies.some(body=>body.segments.length!==originalBody.length||body.segments.some((part,index)=>part!==originalBody[index])))fail();
  return {title,subtitle,html,gutenberg,enriched,normalizedBody};
 }

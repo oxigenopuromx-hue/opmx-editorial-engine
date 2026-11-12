@@ -2,7 +2,7 @@ import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reade
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 import {resolveDestinations} from './original-destinations.mjs';
 import {readLiteralScopeInTransaction,readLiteralProofInTransaction} from './literal-payload-store.mjs';
-import {normalizeLiteralText,extractLiteralVisibleText} from '../../editorial/literal-text.mjs';
+import {normalizeLiteralText,extractLiteralPlainText} from '../../editorial/literal-text.mjs';
 
 // All existing creation/media/publication writers share this preflight. An
 // UPDATE acknowledgement must never open the ordinary CREATE writer, and a
@@ -47,7 +47,7 @@ export function createRecoveredCreationGate({pool,readDecision=readConfirmedCorr
        const metaKeys={OPURO:'oxpuro_editorial',OPOL:'opmx_editorial',LIBERAL:'liberalmx_editorial'};
        for(const t of targets){
         const r=await readWordPress({destination:t.destination,postId:t.postId}),p=r?.post;
-        if(r?.statusCode!==200||p?.id!==t.postId||p.type!=='post'||!['draft','publish'].includes(p.status)||p.slug!==input.slug||typeof p.title?.raw!=='string'||normalizeLiteralText(p.title.raw)!==normalizeLiteralText(proof.payload.title)||normalizeLiteralText(p.meta?.[metaKeys[t.destination]]?.subtitle??'')!==normalizeLiteralText(proof.payload.subtitle)||typeof p.content?.raw!=='string'||extractLiteralVisibleText(p.content.raw)!==extractLiteralVisibleText(t.destination==='OPOL'?proof.payload.gutenberg:proof.payload.enriched))return false;
+        if(r?.statusCode!==200||p?.id!==t.postId||p.type!=='post'||!['draft','publish'].includes(p.status)||p.slug!==input.slug||typeof p.title?.raw!=='string'||normalizeLiteralText(p.title.raw)!==normalizeLiteralText(proof.payload.title)||normalizeLiteralText(p.meta?.[metaKeys[t.destination]]?.subtitle??'')!==normalizeLiteralText(proof.payload.subtitle)||typeof p.content?.raw!=='string'||extractLiteralPlainText(p.content.raw)!==extractLiteralPlainText(t.destination==='OPOL'?proof.payload.gutenberg:proof.payload.enriched))return false;
        }
       }
      }

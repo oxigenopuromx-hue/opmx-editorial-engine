@@ -3,16 +3,16 @@ export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "9bd7d8f6-3fe1-46c8-8026-4d661c026ab3",
-      "graphHash": "62dfc4c3f3a6956ce1d329d866cd044767a0905383e07db671310cddd7b3b7d4"
+      "versionId": "32e28420-47ef-4732-b346-22c2708bff49",
+      "graphHash": "e539f30e019051bca16c437732f3df34601dd0702853b1a8efe1b0be80641b72"
     },
     "Mt7ts2EGPbyaTC2o": {
-      "versionId": "9dcb0d72-2a30-42fa-9bee-f48f87fde0e8",
-      "graphHash": "a4f0b86b9805e6788e973e585582e38fd1b0dbf3f066adb0c5c48ce897d8dc9e"
+      "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+      "graphHash": "be3dd5546e9445c1a4216dba52537ee020205d0e2ea33124f89bfbb8cb41ffe8"
     },
     "4o7K5TmKc7joScqB": {
-      "versionId": "c042c0d4-3bc5-4a13-9ad6-f5c022768e59",
-      "graphHash": "d7e30118a9c49857107fd50ce4024e052711126d7a072a66212b4b20f8e6b951"
+      "versionId": "4263fea4-90a4-406d-a234-da7397d456bf",
+      "graphHash": "825040c5b4e7773177c0bd2030c4a40515d189caec2514374c509c6ee15eb538"
     },
     "qBmLf0DmcMSfuWvm": {
       "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",

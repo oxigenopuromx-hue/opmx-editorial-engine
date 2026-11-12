@@ -10,9 +10,9 @@ const stripImports=s=>s.replace(/^import[\s\S]*?;\s*/gm,'');
 function sources(){
  const text=readFileSync(new URL('../../../editorial/literal-text.mjs',import.meta.url),'utf8');
  const delivery=readFileSync(new URL('../../../editorial/literal-delivery.mjs',import.meta.url),'utf8');
- if(/^import\s/m.test(text)||!text.includes('normalizeLiteralText')||!text.includes('extractLiteralVisibleText')||!delivery.includes('validateLiteralMaster'))throw Error('LITERAL_HELPER_SOURCE_CHANGED');
- const textCapsule=`const literalText=(()=>{\n${stripExports(text)}\nreturn {normalizeLiteralText,extractLiteralVisibleText,assertLiteralCanonicalText};\n})();`;
- const profileCapsule=`${textCapsule}\nconst literalProfile=(()=>{const {normalizeLiteralText,extractLiteralVisibleText,assertLiteralCanonicalText}=literalText;\n${stripExports(stripImports(delivery))}\nreturn {validateLiteralMaster};\n})();`;
+ if(/^import\s/m.test(text)||!text.includes('normalizeLiteralText')||!text.includes('extractLiteralVisibleText')||!text.includes('extractLiteralPlainText')||!delivery.includes('validateLiteralMaster'))throw Error('LITERAL_HELPER_SOURCE_CHANGED');
+ const textCapsule=`const literalText=(()=>{\n${stripExports(text)}\nreturn {normalizeLiteralText,extractLiteralVisibleText,extractLiteralPlainText,assertLiteralCanonicalText};\n})();`;
+ const profileCapsule=`${textCapsule}\nconst literalProfile=(()=>{const {normalizeLiteralText,extractLiteralVisibleText,extractLiteralPlainText,assertLiteralCanonicalText}=literalText;\n${stripExports(stripImports(delivery))}\nreturn {validateLiteralMaster};\n})();`;
  return {textCapsule,profileCapsule};
 }
 function one(graph,name){const ns=graph?.nodes?.filter(n=>n.name===name);if(ns?.length!==1)throw Error('LITERAL_WRITER_NODE_MISSING:'+name);return ns[0]}
@@ -35,7 +35,7 @@ function patchReadback(code,destination){
   changed=anchored(changed,`String(p?.meta?.${meta}?.subtitle??'')!==String(c.subtitle??'')`,`literalText.normalizeLiteralText(String(p?.meta?.${meta}?.subtitle??''))!==literalText.normalizeLiteralText(String(c.subtitle??''))`);
   changed=anchored(changed,"p.content.raw!==c.gutenberg_enriquecido_final","!literalBodyMatches(p.content.raw,c.gutenberg_enriquecido_final,c.content_mode)");
  }
- return `${textCapsule}\nfunction literalBodyMatches(actual,expected,mode){if(typeof actual!=='string'||typeof expected!=='string')return false;if(mode!=='LITERAL')return actual===expected;try{return literalText.normalizeLiteralText(literalText.extractLiteralVisibleText(actual))===literalText.normalizeLiteralText(literalText.extractLiteralVisibleText(expected))}catch{return false}}\n${changed}`;
+ return `${textCapsule}\nfunction literalBodyMatches(actual,expected,mode){if(typeof actual!=='string'||typeof expected!=='string')return false;if(mode!=='LITERAL')return actual===expected;try{return literalText.normalizeLiteralText(literalText.extractLiteralPlainText(actual))===literalText.normalizeLiteralText(literalText.extractLiteralPlainText(expected))}catch{return false}}\n${changed}`;
 }
 function node(name,type,typeVersion,parameters,id,position,extra={}){return {id,name,type,typeVersion,position,parameters,...extra}}
 function routeNodes(names,{credential,position=[448,0],prepare,finish,ids}){

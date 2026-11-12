@@ -137,6 +137,10 @@ test('changed formatting with equal visible text still cannot mutate an immutabl
  const f=fixture();await f.store.validate(candidate);const saved=structuredClone(f.state.proofs);assertFailure(await f.store.validate({...candidate,html:'<div>'+html+'</div>'}));assert.deepEqual(f.state.proofs,saved);
 });
 for(const [label,alter] of [
+ ['title remainder moved into body',x=>{const cut=x.title.lastIndexOf(' '),rest=x.title.slice(cut+1);x.title=x.title.slice(0,cut);x.html='<p>'+rest+'</p>'+x.html;x.gutenberg='<!-- wp:paragraph --><p>'+rest+'</p><!-- /wp:paragraph -->'+x.gutenberg;x.enriched=x.gutenberg}],
+ ['subtitle fragment moved into body',x=>{const cut=x.subtitle.indexOf(' '),rest=x.subtitle.slice(cut+1);x.subtitle=x.subtitle.slice(0,cut);x.html='<p>'+escape(rest)+'</p>'+x.html;x.gutenberg='<!-- wp:paragraph --><p>'+escape(rest)+'</p><!-- /wp:paragraph -->'+x.gutenberg;x.enriched=x.gutenberg}],
+ ['unseen link on original words',x=>{for(const field of ['html','gutenberg','enriched'])x[field]=x[field].replace(escape(body[0]),'<a href="https://new.example">'+escape(body[0])+'</a>')}],
+ ['unseen tooltip on original words',x=>{for(const field of ['html','gutenberg','enriched'])x[field]=x[field].replace('<p>','<p title="Un dato añadido">')}],
  ['truncated title',x=>x.title=x.title.slice(0,60)],['changed case',x=>x.title=x.title.toUpperCase()],['added subtitle',x=>x.subtitle+=' Una frase nueva.'],['missing paragraph',x=>{x.html='<p>'+escape(body[0])+'</p>';x.gutenberg='<!-- wp:paragraph --><p>'+escape(body[0])+'</p><!-- /wp:paragraph -->';x.enriched=x.gutenberg}],['extra summary',x=>x.enriched+='<!-- wp:paragraph --><p>En breve: resumen añadido.</p><!-- /wp:paragraph -->'],['unsafe body',x=>x.enriched='<script>alert(1)</script>'+x.enriched],['body variants diverge',x=>x.html+='<p>Otro texto.</p>']
 ])test(label+' fails before proof or CMS writes',async()=>{const f=fixture(),input=structuredClone(candidate);alter(input);assertFailure(await f.store.validate(input));assert.equal(f.state.proofs.length,0);assert.equal(f.commits,0)});
 for(const [label,change] of [

@@ -47,6 +47,7 @@ test('literal publication has no permissive CMS-read default',async()=>{
  const f=fixture({literal:true,destination:'TODOS'});assert.equal(await f.gate(publish),false);assert.equal(f.commits(),0);assert.equal(f.rollbacks(),1);
 });
 for(const [label,change] of [
+ ['unseen link with identical words',p=>p.content.raw=p.content.raw.replace('Cuerpo original.','<a href="https://new.example">Cuerpo original.</a>')],['unseen tooltip with identical words',p=>p.content.raw=p.content.raw.replace('<p>','<p title="Un dato añadido">')],
  ['changed body',p=>p.content.raw='<!-- wp:paragraph --><p>Contenido alterado.</p><!-- /wp:paragraph -->'],['added summary',p=>p.content.raw+='<!-- wp:paragraph --><p>En breve añadido.</p><!-- /wp:paragraph -->'],['unsafe invisible text',p=>p.content.raw+='<span hidden>Extra</span>'],['truncated title',p=>p.title.raw=p.title.raw.slice(0,10)],['changed title punctuation',p=>p.title.raw+='!'],['missing subtitle',p=>p.meta={}],['changed subtitle',p=>{p.meta[metaKeys.OPOL].subtitle='Subtítulo distinto.'}],['wrong post ID',p=>p.id++],['wrong slug',p=>p.slug='otra-nota'],['trash status',p=>p.status='trash'],['wrong object type',p=>p.type='page'],['no raw body',p=>p.content={rendered:p.content.raw}]
 ])test('literal publication rejects '+label+' in any selected destination',async()=>{
  const f=fixture({literal:true,destination:'TODOS',cms:target=>{const r=cms(target);if(target.destination==='OPOL')change(r.post);return r}});assert.equal(await f.gate(publish),false);assert.equal(f.commits(),0);

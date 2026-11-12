@@ -70,6 +70,22 @@ test('renderer permits Unicode canonical equivalence and whitespace without chan
  const f=fixture();f.sourceText=f.sourceText.normalize('NFD').replaceAll(' ','\u00a0');assert.equal(buildLiteralDelivery(f).master.SEO.TITULO_SEO,f.title);
 });
 
+test('renderer rejects moving the original title remainder into the subtitle or body',()=>{
+ for(const target of ['subtitle','body']){
+  const f=fixture(),original=f.title;f.title=original.slice(0,60);
+  if(target==='subtitle')f.subtitles.unshift(original.slice(60));
+  else{f.paragraphs.unshift(original.slice(60),...f.subtitles);f.subtitles=[];}
+  assert.throws(()=>buildLiteralDelivery(f),/LITERAL_TEXT_UNCONFIRMED/);
+ }
+});
+
+test('local literal profile rejects added links even when their visible words are unchanged',()=>{
+ const m=compile().master;
+ for(const key of ['HTML_FINAL','GUTENBERG_FINAL','GUTENBERG_ENRIQUECIDO_FINAL'])m[key]=m[key].replace('La Paz','<a href="https://example.com/nuevo">La Paz</a>');
+ const p=validateLiteralMaster(m);assert.equal(p.ok,false);
+ for(const key of ['HTML_FINAL','GUTENBERG_FINAL','GUTENBERG_ENRIQUECIDO_FINAL'])assert.ok(p.errors.includes(key+'_UNSAFE_OR_INVALID'));
+});
+
 test('compiler refuses an invented excerpt and never marks a blocked technical base as LISTO',()=>{
  const f=fixture();f.excerpt='Un resumen nuevo.';assert.throws(()=>buildLiteralDelivery(f),/LITERAL_DELIVERY_EXCERPT_NOT_ORIGINAL/);
  const x=fixture();x.baseMaster.CONTROL_EDITORIAL.ESTADO='BLOQUEADO';assert.throws(()=>buildLiteralDelivery(x),/CONTROL_EDITORIAL.ESTADO/);

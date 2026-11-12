@@ -46,9 +46,9 @@
     "category_validation_failure_blocks_listo": true,
     "liberal_uses_opuro_media": "LIBERAL usa Hero y destacada derivados de los archivos MEDIA del paquete, subidos de forma independiente a su CMS; nunca reutilizar IDs de otros sitios.",
     "liberal_enriched_gutenberg": "LIBERAL utiliza GUTENBERG_ENRIQUECIDO_FINAL; Publisher rechaza core/image interior hasta contar con adjuntos nativos propios de LIBERAL.",
-    "literal_body": "Sólo texto original en el orden original, serializado como párrafos Gutenberg. Título y subtítulo(s) se conservan en metadata, sin duplicarlos dentro del cuerpo. El hero/destacada siguen fuera del post_content.",
+    "literal_body": "Sólo texto original en el orden original, serializado como párrafos Gutenberg. Título y subtítulo(s) se conservan en metadata, sin duplicarlos dentro del cuerpo. No añadir enlaces: el perfil de texto plano rechaza etiquetas a aunque sus palabras visibles coincidan. El hero/destacada siguen fuera del post_content.",
     "external_research_required": false,
-    "source_equality": "El Guard comprueba la concatenación título + subtítulo(s) + texto visible del cuerpo contra todos los textos editoriales activos de la revisión, excluyendo sólo controles autenticados. Sólo se permite NFC y normalización de blancos; nunca cambios de palabras, puntuación, cifras, orden o fechas.",
+    "source_equality": "El Guard exige que el título sea la primera línea original no vacía completa y comprueba la concatenación título + subtítulo(s) + texto visible del cuerpo contra todos los textos editoriales activos de la revisión, excluyendo sólo controles autenticados. No trasladar fragmentos del título a otros campos. Sólo se permite NFC y normalización de blancos; nunca cambios de palabras, puntuación, cifras, orden o fechas.",
     "html_final_is_body_fragment": true
   },
   "top_level_fields": [

@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {normalizeLiteralText,extractLiteralVisibleText,assertLiteralCanonicalText} from './literal-text.mjs';
+import {normalizeLiteralText,extractLiteralPlainText,assertLiteralCanonicalText} from './literal-text.mjs';
 
 const literalDestinations=['OPURO','OPOL','AMBOS','LIBERAL','OPURO,LIBERAL','OPOL,LIBERAL','TODOS'];
 const nonemptyLiteralString=value=>typeof value==='string'&&value.trim().length>0;
@@ -74,7 +74,7 @@ export function validateLiteralMaster(master,{requestId}={}){
   const markup=master?.[key];
   if(typeof markup!=='string'||!markup.trim()){fail(key);continue}
   if(key!=='HTML_FINAL'&&!/<!--\s*wp:paragraph(?:\s|-->)/.test(markup)){fail(key+'_GUTENBERG_REQUIRED');continue}
-  try{if(Array.isArray(paragraphs)&&normalizeLiteralText(extractLiteralVisibleText(markup))!==normalizeLiteralText(paragraphs.join('\n\n')))fail(key+'_TEXT_MISMATCH')}catch{fail(key+'_UNSAFE_OR_INVALID')}
+  try{if(Array.isArray(paragraphs)&&normalizeLiteralText(extractLiteralPlainText(markup))!==normalizeLiteralText(paragraphs.join('\n\n')))fail(key+'_TEXT_MISMATCH')}catch{fail(key+'_UNSAFE_OR_INVALID')}
  }
  if(errors.length)return {ok:false,mode:'LITERAL',errors};
  return {ok:true,mode:'LITERAL',errors,candidate:{requestId:scope.REQUEST_ID,declaredMode:'LITERAL',title:seo.TITULO_SEO.trim(),subtitle:seo.SUBTITULO.trim(),html:master.HTML_FINAL.trim(),gutenberg:master.GUTENBERG_FINAL.trim(),enriched:master.GUTENBERG_ENRIQUECIDO_FINAL.trim()}};
