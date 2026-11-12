@@ -1,9 +1,10 @@
+// CONTENT_MODE_CONTROL_V1
 const validPackage=id=>typeof id==='string'&&/^tg_[a-f0-9]{40}$/.test(id);
 const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const who=x=>({owner:x.user_id,chat:x.chat_id});
 const response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});
-const help="Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.";
+const help="Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. Antes de /listo, /literal conserva título, subtítulos y cuerpo sin añadir texto; /editorial solicita redacción editorial. También puedes escribir tal cual como mensaje nuevo y separado. /imagen generar solicita una ilustración y no autoriza publicar.";
 function preparePackageIntent(input) {
  const x={...input,mode:'PACKAGE_STORAGE',source_stored:false,original_stored:false,has_file:false};
  if(!['TEXT','FILE'].includes(x.kind))return response(x,x.reply_text??help);

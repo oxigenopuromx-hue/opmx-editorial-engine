@@ -10,3 +10,7 @@ test('an explicit choice overrides defaults, and corrupt stored choices never fa
  const corrupt={async execute(sql,args){if(sql.startsWith('SELECT s.owner_key'))return [[{owner_key:ownerKey,action:'CREATE',mode:'EDITORIAL',destination:'OPURO'}]];if(sql.startsWith('SELECT s.action'))return [[{action:'CREATE'}]];return base.execute(sql,args)}};
  await assert.rejects(()=>readRecoverySelectionInTransaction(corrupt,scope),/SELECTION_UNCONFIRMED/);
 });
+test('captured content mode is inherited for create and update without changing destinations',async()=>{
+ for(const kind of ['absent','existing'])for(const mode of ['LITERAL','EDITORIAL']){const x=await readRecoverySelectionInTransaction(fixture(kind,s=>s.prior.contentMode=mode),scope);assert.equal(x.mode,mode);assert.equal(x.action,kind==='absent'?'CREATE':'UPDATE');assert.equal(x.destination,'TODOS')}
+ assert.equal(await readRecoverySelectionInTransaction(fixture('absent',s=>s.prior.contentMode='AUTO'),scope),null);
+});

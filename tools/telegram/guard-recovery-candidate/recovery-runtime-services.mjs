@@ -15,6 +15,8 @@ import {canonicalUpdateValue,validUpdatePayload} from './update-executor.mjs';
 import {readCompletedWriterReceipt} from './writer-receipt-store.mjs';
 import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
 import {createRecoveredCreationGate} from './recovered-creation-gate.mjs';
+import {literalPayloadSchema,createLiteralPayloadStore,readLiteralProofInTransaction} from './literal-payload-store.mjs';
+import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
 
 const sha=x=>createHash('sha256').update(x).digest('hex');
 // No environment switch grants a recovery or a CMS write. The two legacy
@@ -25,7 +27,7 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
  const readEditorial=createCmsObserver({secret,editorial:true});
  const read=async({destination,postId})=>{const site=destinationRegistry()[destination]?.cms;return site?readEditorial({site,postId}):{statusCode:0,post:null}};
  const transport=createUpdateDeliveryStore({pool,secret,readWordPress:read});
- const c=await pool.getConnection();try{for(const sql of [confirmedDecisionSchema,updateClaimSchema,updatePayloadSchema,updateDeliverySchema])await c.execute(sql)}finally{c.release()}
+ const c=await pool.getConnection();try{for(const sql of [confirmedDecisionSchema,updateClaimSchema,updatePayloadSchema,updateDeliverySchema,literalPayloadSchema])await c.execute(sql)}finally{c.release()}
  async function verifyRelease(c,{packageId,baseRevision}){
   if(manifest.workflows.qBmLf0DmcMSfuWvm?.versionId!=='d04fb5c2-ba36-48f9-9cd4-2958ab1f273e')return false;
   const [rows]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,baseRevision]);
@@ -43,6 +45,11 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
   }
   return true;
  }
+ async function verifyLiteralRelease(c,{packageId,revision,eventId}){
+  const [rows]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+  return rows.length===1&&rows[0].event_id===eventId&&verifyWriterReleaseObservation(await observeRuntime({packageId,revision,eventId}),manifest,{requireIdle:false});
+ }
+ const literalPayloads=createLiteralPayloadStore({pool,verifyRelease:verifyLiteralRelease});
  async function verifyUpdateEnforcement(c,scope){
   let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId:scope.packageId,revision:scope.revision})}catch{return false}
   if(!d||d.previewHash!==scope.previewHash||d.destination!==scope.destination||!d.finalPayloads||!await verifyRelease(c,d))return false;
@@ -55,13 +62,21 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
   verifyTerminalRun:notTermination,verifyWriterCoverage:notTermination,
   reconciliationEvidence:createRevisionReconciliation({observeRuntime,readWordPress}),
   verifyDecisionConsumer:async(c,{preview})=>{
-   // CREATE literal has no exact-output writer yet and stays explicitly shut.
-   if(preview?.action==='CREATE'&&preview.mode==='LITERAL')return false;
+   // The pinned CREATE writers enforce a source-bound literal payload before
+   // any media/post claim. Preview delivery alone is never a write permit;
+   // acknowledgement below additionally requires that durable payload proof.
    return verifyRelease(c,{packageId:preview.packageId,baseRevision:preview.baseRevision});
   },
-  verifyLiteralEnforcement:async(c,scope)=>{let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,scope)}catch{return false}return d?.action==='UPDATE'&&d.contentMode==='LITERAL'&&verifyUpdateEnforcement(c,{...scope,destination:d.destination})},
+  verifyLiteralEnforcement:async(c,scope)=>{
+   let update;try{update=await readVerifiedUpdateDecisionInTransaction(c,scope)}catch{}
+   if(update?.action==='UPDATE')return update.contentMode==='LITERAL'&&verifyUpdateEnforcement(c,{...scope,destination:update.destination});
+   let d;try{d=await readConfirmedCorrectionInTransaction(c,scope.packageId,scope.revision)}catch{return false}
+   if(!d||d.action!=='CREATE'||d.content_mode!=='LITERAL'||d.preview_hash!==scope.previewHash||d.destination!==scope.destination)return false;
+   const proof=await readLiteralProofInTransaction(c,{packageId:scope.packageId,revision:scope.revision,destination:d.destination,previewHash:d.preview_hash});
+   return !!proof&&verifyLiteralRelease(c,scope);
+  },
   verifyCompletedWrites:readCompletedWriterReceipt,
   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
  });
- return Object.freeze({...wiring,creationWriteAllowed:createRecoveredCreationGate({pool}),telegramUpdateDeliveries:{consume:transport.consume}});
+ return Object.freeze({...wiring,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
 }

@@ -31,10 +31,20 @@ function parseDestinationCommand(text) {
   return { mode: match[1].toLowerCase() === 'publicar' ? 'PUBLISH' : 'DRAFT',
     destination: destinationLabel(destinations), destinations };
 }
+// CONTENT_MODE_CONTROL_V1
+function parseContentModeCommand(text) {
+  if (typeof text !== 'string') throw Error('INVALID_CONTENT_MODE_COMMAND');
+  const value=text.trim().replace(/[ \t]+/g,' ').toLowerCase();
+  if (/[\r\n]/.test(value)) throw Error('INVALID_CONTENT_MODE_COMMAND');
+  if (value==='/editorial') return {command:'/editorial',contentMode:'EDITORIAL'};
+  if (['/literal','tal cual','publica tal cual','publicar tal cual','sin agregar nada','tal cual sin agregar nada','publica tal cual sin agregar nada','publicar tal cual sin agregar nada','la publicación va tal cual, sin agregarle nada.','la publicación va tal cual, sin agregarle nada','la publicacion va tal cual, sin agregarle nada.','la publicacion va tal cual, sin agregarle nada'].includes(value)) return {command:'/literal',contentMode:'LITERAL'};
+  throw Error('INVALID_CONTENT_MODE_COMMAND');
+}
+function contentModeCommand(s){try{return parseContentModeCommand(s)}catch{return null}}
 function isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }
 function isCorrectionOptions(s) { const m=/^\/opciones[ \t]+(?:(crear|actualizar)[ \t]+)?(literal|editorial)[ \t]+([A-Za-z, ]+)$/i.exec(s);if(!m)return false;try{resolveDestinations(m[3]);return true}catch{return false} }
 function isCorrectionConfirmation(s) { return /^\/confirmar[ \t]+(?:crear|actualizar)[ \t]+[1-9][0-9]{0,9}[ \t]+[a-f0-9]{64}$/i.test(s); }
-function validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }
+function validControl(s) { return ['/nuevo','/listo','/literal','/editorial'].includes(s)||isMode(s); }
 function normalizeTelegramUpdate(update,config={}) {
  const m=update?.message;
  if(!Number.isSafeInteger(update?.update_id)||!m||m.chat?.type!=='private'||m.from?.is_bot||!Number.isSafeInteger(m.from?.id)||!Number.isSafeInteger(m.chat?.id)||!Number.isSafeInteger(m.message_id))return null;
@@ -44,11 +54,13 @@ function normalizeTelegramUpdate(update,config={}) {
  if(text.trim()==='/id'&&!m.document&&!m.photo)return {...identity,kind:'IDENTITY',has_file:false,reply_text:`Tu ID de usuario: <code>${identity.user_id}</code>\nID de este chat: <code>${identity.chat_id}</code>\nEste piloto sólo confirma recepción; no genera ni publica notas.`};
  const users=(config.allowedUserIds??[]).map(String),chats=(config.allowedChatIds??[]).map(String);
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
+ const contentControl=typeof m.text==='string'&&!m.document&&!m.photo?contentModeCommand(m.text):null;
+ if(contentControl&&(['forward_origin','forward_date','forward_from','forward_from_chat','forward_sender_name','reply_to_message','external_reply','quote','edit_date'].some(key=>Object.hasOwn(m,key))||Object.hasOwn(update,'edited_message')))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe /literal o /editorial directamente como mensaje nuevo, sin reenviar, responder ni editar una fuente.'};
  // Slash commands must be exact and independent messages; never save an invalid command as article text.
  if(typeof m.text==='string'&&!m.document&&!m.photo){
   const command=m.text.trim();
   const looksCommand=/^\/[a-z][a-z0-9_]*(?:@[a-z0-9_]+)?(?=\s|$)/i.test(command);
-  const valid=/^\/(?:id|start|ayuda|nuevo|listo|estado|bloqueados)$/.test(command)||/^\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(command)||isMode(command)||isCorrectionOptions(command)||isCorrectionConfirmation(command)||/^\/imagen\s+generar$/i.test(command);
+  const valid=/^\/(?:id|start|ayuda|nuevo|listo|estado|bloqueados)$/.test(command)||/^\/descartar ti_[a-f0-9]{40}$/.test(command)||/^\/abrir[ \t]+tg_[a-f0-9]{40}$/.test(command)||isMode(command)||contentModeCommand(command)!==null||isCorrectionOptions(command)||isCorrectionConfirmation(command)||/^\/imagen\s+generar$/i.test(command);
   if(looksCommand&&!valid)return {...identity,kind:'REJECTED',has_file:false,reply_text:'Comando inválido. Usa /publicar o /borrador con opuro, opol, liberal, ambos, todos o una lista separada por comas. Escribe el comando correcto como mensaje aparte.'};
  }
  // Only commands typed directly by the authenticated operator select mode.
@@ -73,6 +85,6 @@ function normalizeTelegramUpdate(update,config={}) {
   return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};
  }
  if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};
- return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
+ return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested||contentControl!==null,content_mode_command:contentControl?.command??null,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
 }
 const x=$input.first().json;const r=normalizeTelegramUpdate(x.update,x.config);return r?[{json:r}]:[];

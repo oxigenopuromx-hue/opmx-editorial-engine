@@ -19,5 +19,6 @@ export async function readRecoverySelectionInTransaction(c,scope){
  const absent=p.results.every(x=>x.status==='BLOCKED'&&x.publicationVerdict==='NO_PUBLICATION_SIDE_EFFECTS_CONFIRMED');
  const existing=p.results.every(x=>x.publicationVerdict==='CMS_RECORD_CONFIRMED'&&x.cmsVerified===true&&Number.isSafeInteger(x.postId)&&x.postId>0&&['PUBLISHED','DRAFT'].includes(x.status));
  if(absent&&b.noPublicationSideEffects!==true||existing&&(b.noPublicationSideEffects!==false||b.allPublicationOutcomesVerified!==true)||!absent&&!existing)return null;
- return {packageId,revision,ownerKey,action:absent?'CREATE':'UPDATE',mode:'EDITORIAL',destination};
+ const mode=p.contentMode??'EDITORIAL';if(!['LITERAL','EDITORIAL'].includes(mode))return null;
+ return {packageId,revision,ownerKey,action:absent?'CREATE':'UPDATE',mode,destination};
 }

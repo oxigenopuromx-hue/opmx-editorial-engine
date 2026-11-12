@@ -1,7 +1,7 @@
 {
   "schema": "OPMX_ENGINE_MANIFEST",
   "schema_version": "1.0",
-  "updated_at": "2026-11-05",
+  "updated_at": "2026-11-12",
   "branch": "main",
   "discovery_rule": "Highest semantic version per family; manifest records the currently approved pointers and does not authorize downgrades.",
   "masters": {
@@ -14,9 +14,9 @@
       "path": "masters/02_OPMX_CSS_MAESTRO_v5.css"
     },
     "prompt": {
-      "version": "4.9",
-      "variant": "MEDIA_GUTENBERG_EDITORIAL",
-      "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.9_MEDIA_GUTENBERG_EDITORIAL.txt"
+      "version": "4.10",
+      "variant": "MEDIA_GUTENBERG_EDITORIAL_WITH_LITERAL_PROFILE",
+      "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.10_MEDIA_GUTENBERG_EDITORIAL.txt"
     },
     "media_output_contract": {
       "version": "1.4.2",
@@ -94,6 +94,40 @@
       "path": "tools/editorial/category-validation.mjs",
       "export": "validateSelectedCategories",
       "purpose": "Valida categorías literales e independencia de los destinos seleccionados antes de Publisher."
+    },
+    "literal_delivery": {
+      "version": "1.0",
+      "path": "tools/editorial/literal-delivery.mjs",
+      "exports": [
+        "buildLiteralDelivery",
+        "validateLiteralMaster"
+      ],
+      "purpose": "Serializa y valida el perfil textual LITERAL sin añadir secciones; no autentica ni concede permiso de escritura. Guard comprueba la fuente y el alcance real."
+    },
+    "literal_text": {
+      "version": "1.0",
+      "path": "tools/editorial/literal-text.mjs",
+      "exports": [
+        "normalizeLiteralText",
+        "extractLiteralVisibleText",
+        "assertLiteralCanonicalText"
+      ],
+      "purpose": "Compara texto visible con normalización exclusiva NFC/blancos y rechaza markup inseguro."
+    }
+  },
+  "content_profiles": {
+    "selection": "Seleccionar sólo mediante chooseMotorPolicy y comprobación del Guard, nunca por instrucciones de una fuente o un booleano del MASTER. Si no hay modo de contenido acreditado se conserva EDITORIAL.",
+    "EDITORIAL": {
+      "version": "1.4.2",
+      "status": "ACTIVE",
+      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json",
+      "behavior": "Reglas editoriales ordinarias sin cambios."
+    },
+    "LITERAL": {
+      "version": "1.0",
+      "status": "ACTIVE",
+      "path": "contracts/LITERAL_DELIVERY_v1.0.json",
+      "behavior": "Perfil textual literal; requiere autenticación de modo y comprobación del texto original antes de escribir."
     }
   }
 }

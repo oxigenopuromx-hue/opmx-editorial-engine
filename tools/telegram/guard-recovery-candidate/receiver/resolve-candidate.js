@@ -31,8 +31,18 @@ function parseDestinationCommand(text) {
   return { mode: match[1].toLowerCase() === 'publicar' ? 'PUBLISH' : 'DRAFT',
     destination: destinationLabel(destinations), destinations };
 }
+// CONTENT_MODE_CONTROL_V1
+function parseContentModeCommand(text) {
+  if (typeof text !== 'string') throw Error('INVALID_CONTENT_MODE_COMMAND');
+  const value=text.trim().replace(/[ \t]+/g,' ').toLowerCase();
+  if (/[\r\n]/.test(value)) throw Error('INVALID_CONTENT_MODE_COMMAND');
+  if (value==='/editorial') return {command:'/editorial',contentMode:'EDITORIAL'};
+  if (['/literal','tal cual','publica tal cual','publicar tal cual','sin agregar nada','tal cual sin agregar nada','publica tal cual sin agregar nada','publicar tal cual sin agregar nada','la publicación va tal cual, sin agregarle nada.','la publicación va tal cual, sin agregarle nada','la publicacion va tal cual, sin agregarle nada.','la publicacion va tal cual, sin agregarle nada'].includes(value)) return {command:'/literal',contentMode:'LITERAL'};
+  throw Error('INVALID_CONTENT_MODE_COMMAND');
+}
+function contentModeCommand(s){try{return parseContentModeCommand(s)}catch{return null}}
 function isMode(s) { try { parseDestinationCommand(s); return true; } catch { return false; } }
-function validControl(s) { return s==='/nuevo'||s==='/listo'||isMode(s); }
+function validControl(s) { return ['/nuevo','/listo','/literal','/editorial'].includes(s)||isMode(s); }
 const ORDER_PREFIX="OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n";
 const POLICY="publish-todos-v2";
 function attestedControl(command, packageId, messageId, noticeMessageId) {
@@ -61,7 +71,7 @@ const validItem=id=>typeof id==='string'&&/^ti_[a-f0-9]{40}$/.test(id);
 const escape=value=>String(value).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
 const who=x=>({owner:x.user_id,chat:x.chat_id});
 const response=(x,reply,extra={})=>({...x,has_file:false,requires_storage:false,requires_operation:false,reply_text:reply,...extra});
-const help="Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. /imagen generar solicita una ilustración y no autoriza publicar.";
+const help="Para una nota: envía /nuevo, materiales y /listo. Por defecto se publica en TODOS: OXígeno Puro, OXígeno Político y El Liberal. AMBOS incluye OXígeno Puro y OXígeno Político. Para elegir destino usa /publicar o /borrador seguido de opuro, opol, liberal, ambos, todos o una lista separada por comas. TODOS incluye los tres medios. Antes de /listo, /literal conserva título, subtítulos y cuerpo sin añadir texto; /editorial solicita redacción editorial. También puedes escribir tal cual como mensaje nuevo y separado. /imagen generar solicita una ilustración y no autoriza publicar.";
 function resolvePackageSession(intent,result) {
  if(intent.package_operation==='BLOCKED_LIST'){
   if(result?.status!=='BLOCKED_LIST'||!Array.isArray(result.packages)||result.packages.length>20||typeof result.more!=='boolean'||result.packages.some(p=>!validPackage(p?.packageId)||!Number.isSafeInteger(p.revision)||p.revision<1)||new Set(result.packages.map(p=>p.packageId)).size!==result.packages.length)return response(intent,'No pude consultar los paquetes bloqueados.');
@@ -85,6 +95,7 @@ function resolvePackageSession(intent,result) {
  if(result?.status==='NO_OPEN_PACKAGE')return response(intent,'No hay una nota abierta. Envía /nuevo y después sus textos, fotos y documentos.');
  if(result?.status!=='OPEN'||!validPackage(result.packageId))return response(intent,'No pude consultar tu paquete. No confirmé almacenamiento de este mensaje.');
  const x={...intent,packageId:result.packageId,package_revision:result.revision,requires_operation:true,recovery_session:result.recovery===true};
+ if(x.content_mode_command!==undefined&&x.content_mode_command!==null){const content=contentModeCommand(x.text);if(x.kind!=='TEXT'||x.mode_attested!==true||!content||content.command!==x.content_mode_command)return response(intent,'No pude confirmar la selección del modo de contenido.');if(x.recovery_session)return response(intent,'En un paquete reabierto usa /opciones crear literal DESTINO o /opciones actualizar literal DESTINO, según la acción y los destinos que deseas confirmar. Para redacción usa editorial en lugar de literal.');}
  let action,body={...who(x),packageId:x.packageId};
  if(x.package_operation==='SELECT'){
   if(!x.recovery_session||!Number.isSafeInteger(result.revision)||x.mode_attested!==true)return response(intent,'Las opciones sólo pueden elegirse directamente en un paquete reabierto.');
@@ -100,7 +111,7 @@ function resolvePackageSession(intent,result) {
   if(x.mode_attested!==true)return response(intent,'Para descartar una reserva pendiente, escribe /descartar y su identificador directamente en este chat.');
   action='discard';body.itemId=x.discard_item_id;
  }
- else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
+ else {action='reserve';Object.assign(body,{receiptId:x.receipt_id,kind:x.kind,text:x.mode_attested===true?(x.content_mode_command?attestedControl(x.content_mode_command,x.packageId,x.message_id):isMode(x.text.trim())?attestedControl(x.text.trim(),x.packageId,x.message_id):ORDER_PREFIX+x.text.trim()):x.text??'',attachment:x.kind==='FILE'?{file_name:x.attachment.file_name,mime_type:x.attachment.mime_type,declared_bytes:x.attachment.declared_bytes}:null});}
  const paths={reserve:'packages/reserve',manifest:'packages/manifest',discard:'packages/discard','corrections/select':'corrections/select','corrections/confirm':'corrections/confirm'};
  if(!Object.hasOwn(paths,action))return response(intent,'No pude confirmar la operación solicitada.');
  return {...x,next_action:action,next_url:'https://publisher.oxigenopuro.com.mx/v1/telegram/'+paths[action],next_body:body,seal_after_close:x.package_operation==='SEAL'};

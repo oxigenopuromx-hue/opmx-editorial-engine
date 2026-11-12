@@ -83,3 +83,29 @@ test('MySQL reader rejects stale revisions before reading policy',async()=>{
  const connection={async execute(){count++;return [[{owner_key:owner,state:'READY',revision:13}]]}};
  await assert.rejects(()=>readRecoveredPolicyInTransaction(connection,pkg,12),/RECOVERY_POLICY_UNCONFIRMED/);assert.equal(count,1);
 });
+
+function literalFixture(command='/literal'){
+ const x=fixture(),literal=item(6,prefix+command+'\n'+JSON.stringify({policy:'publish-todos-v2',package_id:pkg,message_id:101}));
+ x.snapshot.items.splice(2,0,literal);x.items.splice(2,0,structuredClone(literal));x.snapshot.prior.controls.splice(1,0,literal.itemId);x.snapshot.prior.contentMode=command==='/literal'?'LITERAL':'EDITORIAL';x.snapshot.prior.contentControlItemIds=[literal.itemId];return x;
+}
+test('literal content mode survives authenticated recovery without changing action authorization or destinations',()=>{
+ const x=literalFixture(),p=resolveRecoveredPolicy(x);assert.equal(p.content_mode,'LITERAL');assert.equal(p.mode,'PUBLISH');assert.equal(p.destination,'OPURO,LIBERAL');assert.deepEqual(p.content_control_item_ids,[id(6)]);assert.ok(p.control_item_ids.includes(id(6)));
+});
+test('recovered Motor receives the preserved literal mode and verified controls',async()=>{
+ const {chooseMotorPolicy}=await import('./motor-policy.mjs'),x=literalFixture(),policy=resolveRecoveredPolicy(x);
+ const sources=x.items.map(i=>({item_id:i.itemId,stream:'text',bytes:Buffer.from(i.text)}));
+ const inventory={status:'PACKAGE_FOUND',package_id:pkg,state:'READY',revision:x.revision,recovered_policy:policy,items:x.items.map(i=>({item_id:i.itemId,kind:i.kind,state:i.state,text_bytes:i.contentBytes,sha256:i.sha256}))};
+ const chosen=chooseMotorPolicy(inventory,sources,{packageId:pkg,revision:x.revision});assert.equal(chosen.content_mode,'LITERAL');assert.equal(chosen.mode,'PUBLISH');assert.equal(chosen.destination,'OPURO,LIBERAL');
+ inventory.confirmed_correction={package_id:pkg,revision:x.revision,action:'CREATE',content_mode:'EDITORIAL',destination:'OPURO',preview_hash:'e'.repeat(64)};const overridden=chooseMotorPolicy(inventory,sources,{packageId:pkg,revision:x.revision});assert.equal(overridden.content_mode,'EDITORIAL');assert.equal(overridden.destination,'OPURO');
+});
+test('lost, ambiguous, malformed or mismatched content provenance cannot become an inherited literal exception',()=>{
+ for(const mutate of [x=>delete x.snapshot.prior.contentMode,x=>x.snapshot.prior.contentMode='AUTO',x=>x.snapshot.prior.contentMode='EDITORIAL',x=>x.snapshot.prior.contentControlItemIds=[],x=>x.snapshot.prior.contentControlItemIds=[id(2)],x=>x.snapshot.prior.contentControlItemIds.push(id(6))]){const x=literalFixture();mutate(x);assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/)}
+ const unproven=fixture();unproven.snapshot.prior.contentMode='LITERAL';assert.throws(()=>resolveRecoveredPolicy(unproven),/RECOVERY_POLICY_UNCONFIRMED/);
+});
+test('a previously confirmed correction may preserve literal mode without an original literal command',()=>{
+ const x=fixture();x.snapshot.prior.contentMode='LITERAL';x.snapshot.prior.contentControlItemIds=[];x.snapshot.prior.confirmedPreviewHash='d'.repeat(64);const p=resolveRecoveredPolicy(x);assert.equal(p.content_mode,'LITERAL');assert.deepEqual(p.content_control_item_ids,[]);
+ x.snapshot.prior.confirmedPreviewHash='bad';assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/);
+});
+test('new mode commands added during recovery cannot silently replace the confirmed snapshot',()=>{
+ for(const command of ['/literal','/editorial']){const x=fixture();x.items[3]=item(4,prefix+command+'\n'+JSON.stringify({policy:'publish-todos-v2',package_id:pkg,message_id:99}),admin);assert.throws(()=>resolveRecoveredPolicy(x),/RECOVERY_POLICY_UNCONFIRMED/)}
+});

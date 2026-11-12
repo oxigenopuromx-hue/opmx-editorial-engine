@@ -24,7 +24,8 @@ export function deriveOriginalDecision({packageId,revision,ownerKey,items}) {
  if(!decision.authorized||!['PUBLISH','DRAFT'].includes(decision.mode)||!Array.isArray(decision.control_item_ids)||!decision.control_item_ids.length)throw Error('ORIGINAL_POLICY_UNCONFIRMED');
  const destinations=resolveDestinations(decision.destination);
  return {packageId,revision,ownerKey,requestId:expectedDraftRequestId({packageId,revision,destination:decision.destination}),destinations,
-  authorization:{mode:decision.mode,authorized:decision.authorized,explicit:decision.explicit,authorization:decision.authorization},controls:decision.control_item_ids};
+  authorization:{mode:decision.mode,authorized:decision.authorized,explicit:decision.explicit,authorization:decision.authorization},controls:decision.control_item_ids,
+  contentMode:decision.content_mode??'EDITORIAL',contentControlItemIds:[...(decision.content_control_item_ids??[])]};
 }
 
 // The result provider is server-owned and must obtain its answer under the

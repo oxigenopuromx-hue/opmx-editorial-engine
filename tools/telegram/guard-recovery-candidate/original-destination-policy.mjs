@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
-import { parseDestinationCommand } from './original-destination-command.mjs';
+import { parseDestinationCommand,parseContentModeCommand } from './original-destination-command.mjs';
 
 // Candidate only: not connected to the production receiver or Motor.
 function validControl(command) {
-  if (command === '/nuevo' || command === '/listo') return true;
+  if (['/nuevo','/listo','/literal','/editorial'].includes(command)) return true;
   try { parseDestinationCommand(command); return true; } catch { return false; }
 }
 
@@ -15,6 +15,7 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 // Only the authenticated receiver writes these records. They are not synthetic
 // /publicar commands: they preserve the actual /nuevo and /listo messages.
 export function attestedControl(command, packageId, messageId, noticeMessageId) {
+  try { command=parseContentModeCommand(command).command; } catch {}
   if (!/^tg_[a-f0-9]{40}$/.test(packageId) || !Number.isSafeInteger(messageId) || messageId < 1) throw Error('CONTROL_INVALID');
   if (!validControl(command)) throw Error('CONTROL_INVALID');
   const data = { policy: POLICY, package_id: packageId, message_id: messageId };
@@ -31,11 +32,12 @@ export function decodeControl(text, packageId) {
   const legacy = /^\/(publicar|borrador)(?:\s+(ambos|opuro|opol))?$/i.exec(marked);
   if (legacy) return { command: marked, legacy: true };
   const split = marked.indexOf('\n');
-  if (split === -1) return null; // image instructions and legacy non-mode records
+  if (split === -1) {if (/^\/(?:literal|editorial)(?:\s|$)/i.test(marked))throw Error('CONTROL_INVALID');return null;} // image instructions and legacy non-mode records
   const command = marked.slice(0, split);
   if (!validControl(command)) {
+    let contentAlias=false;try{parseContentModeCommand(command);contentAlias=true}catch{}
     // A malformed or unsupported marked mode must never fall back to the default.
-    if (/^\/(?:publicar|borrador)(?:\s|$)/i.test(command)) throw Error('CONTROL_INVALID');
+    if (contentAlias||/^\/(?:publicar|borrador|literal|editorial)(?:\s|$)/i.test(command)) throw Error('CONTROL_INVALID');
     return null;
   }
   let data;
@@ -69,9 +71,11 @@ export function chooseTelegramMode(inventory, sources) {
   const opening = records.filter(r => r.command === '/nuevo' && !r.legacy);
   const closing = records.filter(r => r.command === '/listo' && !r.legacy);
   const choices = records.filter(r => /^\/(?:publicar|borrador)/i.test(r.command));
+  const contentChoices=records.filter(r=>['/literal','/editorial'].includes(r.command));
   const modern = records.filter(r => !r.legacy);
   if (new Set(modern.map(r=>r.message_id)).size !== modern.length) throw Error('CONTROL_MESSAGE_DUPLICATE');
   if (opening.length > 1) throw Error('OPENING_AMBIGUOUS');
+  if(contentChoices.length&&!opening.length)throw Error('CONTENT_MODE_BOUNDARY_UNCONFIRMED');
   if (opening.length) {
     const open = opening[0];
     const close = closing.toSorted((a,b)=>a.message_id-b.message_id).at(-1);
@@ -81,6 +85,7 @@ export function chooseTelegramMode(inventory, sources) {
     const lastStored = inventory.items.map((i,index)=>({i,index})).filter(({i})=>!i.state||i.state==='STORED').at(-1);
     if (!lastStored || lastStored.index !== close.index || substantive === 0) throw Error('PACKAGE_BOUNDARY_INVALID');
     if (choices.some(c=>c.legacy || c.message_id <= open.message_id || c.message_id >= close.message_id)) throw Error('MODE_ORDER_AMBIGUOUS');
+    if(contentChoices.some(c=>c.legacy||c.policy!==POLICY||c.message_id<=open.message_id||c.message_id>=close.message_id||c.index<=open.index||c.index>=close.index))throw Error('CONTENT_MODE_ORDER_AMBIGUOUS');
     choices.sort((a,b)=>a.message_id-b.message_id);
   } else if (modern.length) {
     // A close record alone never upgrades an existing/legacy package.
@@ -88,10 +93,13 @@ export function chooseTelegramMode(inventory, sources) {
     choices.sort((a,b)=>(a.message_id??a.index)-(b.message_id??b.index));
   }
   const last = choices.at(-1);
+  contentChoices.sort((a,b)=>a.message_id-b.message_id);
+  const content=contentChoices.at(-1);
+  const withContent=result=>content?{...result,content_mode:content.command==='/literal'?'LITERAL':'EDITORIAL',content_control_item_ids:contentChoices.map(c=>c.item_id)}:result;
   if (last) {
     const selection = parseDestinationCommand((last.legacy || last.policy===LEGACY_POLICY) && /^\/(?:publicar|borrador)$/i.test(last.command) ? last.command+' ambos' : last.command);
-    return { mode: selection.mode, destination: selection.destination, explicit:true, authorized:true, authorization:'DIRECT_MODE_COMMAND', control_item_ids:controlIds };
+    return withContent({ mode: selection.mode, destination: selection.destination, explicit:true, authorized:true, authorization:'DIRECT_MODE_COMMAND', control_item_ids:controlIds });
   }
-  if (opening.length) return { mode:'PUBLISH', destination:opening[0].policy===LEGACY_POLICY?'AMBOS':'TODOS', explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds };
+  if (opening.length) return withContent({ mode:'PUBLISH', destination:opening[0].policy===LEGACY_POLICY?'AMBOS':'TODOS', explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds });
   return { mode:'DRAFT', destination:'AMBOS', explicit:false, authorized:false, authorization:'LEGACY_PRESERVED', control_item_ids:controlIds };
 }

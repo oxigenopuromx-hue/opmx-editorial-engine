@@ -1,18 +1,18 @@
-// Audited writer release: LIBERAL editorial author3; credentials and fences preserved.
+// Audited release #19: authenticated literal text; existing editorial/author3/fences preserved.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "76ef3bfe-db0a-4fb4-996c-ad703ab1639a",
-      "graphHash": "aae5cfd44fa8472234233961569e8075729ab8d60f8618ad5ab77a9833977284"
+      "versionId": "9bd7d8f6-3fe1-46c8-8026-4d661c026ab3",
+      "graphHash": "62dfc4c3f3a6956ce1d329d866cd044767a0905383e07db671310cddd7b3b7d4"
     },
     "Mt7ts2EGPbyaTC2o": {
-      "versionId": "bf4cc77c-6853-4303-a25b-2f58dc057d8e",
-      "graphHash": "b3e09e66d95ef214accc079df6fd552509f21a3afc1a3d200f5d84250ce70e82"
+      "versionId": "9dcb0d72-2a30-42fa-9bee-f48f87fde0e8",
+      "graphHash": "a4f0b86b9805e6788e973e585582e38fd1b0dbf3f066adb0c5c48ce897d8dc9e"
     },
     "4o7K5TmKc7joScqB": {
-      "versionId": "c7610e14-994b-45bd-8748-bdef90e0fc78",
-      "graphHash": "623efab2bcf508878ec71e5f370b3ea24c3b6571dd1b777ae913f2e54009ded7"
+      "versionId": "c042c0d4-3bc5-4a13-9ad6-f5c022768e59",
+      "graphHash": "d7e30118a9c49857107fd50ce4024e052711126d7a072a66212b4b20f8e6b951"
     },
     "qBmLf0DmcMSfuWvm": {
       "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",

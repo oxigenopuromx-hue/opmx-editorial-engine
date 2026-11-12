@@ -61,6 +61,7 @@ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRu
  telegramUpdatePayloads:{stage:async(...args)=>(await requireRecovery()).telegramUpdatePayloads.stage(...args)},
  telegramReconciliation:async(...args)=>(await requireMotor()).telegramReconciliation(...args),
  telegramFinalPublication:async(...args)=>(await requireMotor()).telegramFinalPublication(...args),
+ telegramLiteralValidation:async(...args)=>(await requireRecovery()).telegramLiteralValidation(...args),
  telegramReconciliationFreeze:async(...args)=>(await requireMotor()).telegramReconciliationFreeze(...args),
  targetBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).targetBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
  mediaBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).mediaBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},

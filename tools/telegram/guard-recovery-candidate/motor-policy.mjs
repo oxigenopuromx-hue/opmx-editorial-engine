@@ -29,7 +29,12 @@ export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
   if(control)controls.set(item.item_id,control);else if(text&&!text.startsWith(ORDER_PREFIX))substantive++;
  }
  if(!substantive||!last||last.kind!=='TEXT'||!p.control_item_ids.includes(last.item_id)||controls.get(last.item_id)?.command!=='/listo'||p.control_item_ids.some(id=>!controls.has(id))||[...controls.keys()].some(id=>!p.control_item_ids.includes(id)))fail();
+ if(Object.hasOwn(p,'content_mode')&&!['LITERAL','EDITORIAL'].includes(p.content_mode))fail();
+ const contentIds=p.content_control_item_ids??[];
+ if(!Array.isArray(contentIds)||new Set(contentIds).size!==contentIds.length||contentIds.some(id=>!p.control_item_ids.includes(id)||!['/literal','/editorial'].includes(controls.get(id)?.command))||[...controls.entries()].some(([id,c])=>['/literal','/editorial'].includes(c.command)&&!contentIds.includes(id)))fail();
+ if(contentIds.length&&!Object.hasOwn(p,'content_mode'))fail();
  const result={mode:p.mode,authorized:true,explicit:p.explicit,authorization:p.authorization,destination:p.destination,control_item_ids:[...p.control_item_ids]};
+ if(Object.hasOwn(p,'content_mode')){result.content_mode=p.content_mode;result.content_control_item_ids=[...contentIds];}
  if(Object.hasOwn(inventory,'confirmed_correction')){
   const c=inventory.confirmed_correction;
   if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||!['CREATE','UPDATE'].includes(c.action)||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();

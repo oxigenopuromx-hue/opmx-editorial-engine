@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {decodeControl} from './original-destination-policy.mjs';
 
 const prefix='OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n';
 const hash=x=>createHash('sha256').update(x).digest('hex');
@@ -43,6 +44,20 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
   else if(old.state!==now.state||old.reservedBytes!==now.reservedBytes)fail();
  }
  if(new Set(prior.controls).size!==prior.controls.length||prior.controls.some(id=>!before.has(id)))fail();
+ // Preserve a source mode only when it was captured from authenticated
+ // controls or a previously confirmed correction. Old snapshots with no
+ // content mode keep their legacy editorial behavior.
+ const hasContentMode=Object.hasOwn(prior,'contentMode');
+ if(hasContentMode&&!['LITERAL','EDITORIAL'].includes(prior.contentMode))fail();
+ if(Object.hasOwn(prior,'confirmedPreviewHash')&&!hashPattern.test(prior.confirmedPreviewHash??''))fail();
+ const contentIds=prior.contentControlItemIds??[];
+ if(!Array.isArray(contentIds)||new Set(contentIds).size!==contentIds.length||contentIds.some(id=>!prior.controls.includes(id)))fail();
+ const embedded=[];
+ for(const id of prior.controls){const item=before.get(id);if(item?.kind!=='TEXT'||typeof item.text!=='string')continue;let control;try{control=decodeControl(item.text.trim(),packageId)}catch{fail()}if(control&&['/literal','/editorial'].includes(control.command))embedded.push({id,...control});}
+ if(embedded.length!==contentIds.length||embedded.some(c=>!contentIds.includes(c.id))||contentIds.some(id=>!embedded.some(c=>c.id===id))||contentIds.length&&!hasContentMode)fail();
+ const lastContent=contentIds.length?embedded.find(c=>c.id===contentIds.at(-1)):null;
+ const confirmedOverride=hashPattern.test(prior.confirmedPreviewHash??'');
+ if(hasContentMode&&!confirmedOverride&&((prior.contentMode==='LITERAL'&&!lastContent)||lastContent&&(lastContent.command==='/literal'?'LITERAL':'EDITORIAL')!==prior.contentMode))fail();
  const extra=items.filter(i=>!before.has(i.itemId));
  if(!extra.length||extra.at(-1).itemId!==closure.closeItemId||items.at(-1)?.itemId!==closure.closeItemId)fail();
  const additionalCloses=[];
@@ -64,5 +79,9 @@ export function resolveRecoveredPolicy({packageId,revision,snapshot,closure,item
  if(close.kind!=='TEXT'||close.receiptKey!==closure.closeReceiptKey||!validClose(close.text,packageId))fail();
  const selected=['OPURO','OPOL','LIBERAL'].filter(d=>prior.destinations.includes(d));
  const destination=selected.length===3?'TODOS':selected.join(',')==='OPURO,OPOL'?'AMBOS':selected.join(',');
- return {mode:auth.mode,authorized:true,explicit:auth.explicit,authorization:auth.authorization,destination,control_item_ids:[...prior.controls,...additionalCloses,closure.closeItemId]};
+ // This is provenance from an immutable server-owned snapshot, not a new
+ // correction or permission to acknowledge the old preview on this revision.
+ // Keep it separate from confirmed_correction so a later capture can retain
+ // a literal choice originally authorized by an earlier confirmed preview.
+ return {mode:auth.mode,authorized:true,explicit:auth.explicit,authorization:auth.authorization,destination,control_item_ids:[...prior.controls,...additionalCloses,closure.closeItemId],...(hasContentMode?{content_mode:prior.contentMode,content_control_item_ids:[...contentIds],...(confirmedOverride?{content_mode_provenance_hash:prior.confirmedPreviewHash}:{})}:{})};
 }
