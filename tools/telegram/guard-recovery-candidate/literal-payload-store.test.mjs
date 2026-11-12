@@ -5,6 +5,9 @@ import {attestedControl,ORDER_PREFIX} from './original-destination-policy.mjs';
 import {expectedDraftRequestId} from './correlation-candidate.mjs';
 import {canonicalUpdateValue} from './canonical-json.mjs';
 import {createLiteralPayloadStore,readLiteralScopeInTransaction,readLiteralProofInTransaction,literalPayloadSchema} from './literal-payload-store.mjs';
+import {readRecoveredPolicyInTransaction} from './recovered-policy-mysql.mjs';
+import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
+import {chooseMotorPolicy} from './motor-policy.mjs';
 
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const packageId='tg_'+'a'.repeat(40),revision=8,owner='b'.repeat(64),eventId='evt_'+'c'.repeat(48);
@@ -79,6 +82,26 @@ function recoveredFixture({inheritedLiteral=false,confirmedLiteral=true}={}){
  }
  f.state.fence.state='AWAITING_DECISION';return f;
 }
+function withHistoricalInstruction(f,{discarded=true}={}){
+ const raw=item('La publicación va tal cual, sin agregarle nada.',9);
+ assert.equal(raw.content_bytes,48);
+ Object.assign(raw,{receipt_key:hash('historical-instruction-receipt'),fingerprint:hash('historical-instruction-fingerprint'),reserved_bytes:raw.content_bytes,attachment_json:null});
+ f.state.snapshot.items.push({itemId:raw.item_id,ownerKey:owner,kind:raw.kind,state:'STORED',text:raw.text_content,contentBytes:raw.content_bytes,sha256:raw.sha256,receiptKey:raw.receipt_key,fingerprint:raw.fingerprint,reservedBytes:raw.reserved_bytes,attachment:null,actorKey:null});
+ raw.state=discarded?'DISCARDED':'STORED';f.state.items.splice(-1,0,raw);
+ return raw;
+}
+async function recoveredMotorPolicy(f,{omitTextId}={}){
+ const c=f.connection;await c.beginTransaction();
+ try{
+  const recovered=await readRecoveredPolicyInTransaction(c,packageId,revision);
+  const confirmed=await readConfirmedCorrectionInTransaction(c,packageId,revision);
+  const inventory={status:'PACKAGE_FOUND',package_id:packageId,revision,state:'READY',recovered_policy:recovered,confirmed_correction:{package_id:packageId,revision,action:confirmed.action,content_mode:confirmed.content_mode,destination:confirmed.destination,preview_hash:confirmed.preview_hash},items:f.state.items.map(r=>({item_id:r.item_id,kind:r.kind,state:r.state,text_bytes:r.content_bytes,sha256:r.sha256}))};
+  // Chunk reads are available only for active STORED text. No buffer is
+  // supplied for the retained historical instruction after /descartar.
+  const sources=f.state.items.filter(r=>r.state==='STORED'&&r.kind==='TEXT'&&r.item_id!==omitTextId).map(r=>({item_id:r.item_id,stream:'text',bytes:Buffer.from(r.text_content)}));
+  return chooseMotorPolicy(inventory,sources,{packageId,revision});
+ }finally{await c.rollback()}
+}
 function assertNoAuthority(result){assert.equal(result.retryPermitted,false);assert.equal(Object.hasOwn(result,'token'),false);assert.equal(Object.hasOwn(result,'writeAuthorized'),false)}
 function assertFailure(result){assert.equal(result.status,'LITERAL_TEXT_UNCONFIRMED');assert.equal(result.writesStarted,false);assertNoAuthority(result)}
 
@@ -122,6 +145,24 @@ test('a confirmed CREATE literal decision overrides an editorial snapshot and bi
  const f=recoveredFixture(),scope=await f.readScope();assert.equal(scope.contentMode,'LITERAL');assert.equal(scope.previewHash,f.state.decisions[0].preview_hash);
  const r=await f.store.validate(candidate);assert.equal(r.status,'LITERAL_TEXT_VERIFIED');assert.equal(r.previewHash,scope.previewHash);
  assert.equal((await f.readProof({previewHash:scope.previewHash})).payloadHash,r.payloadHash);assert.equal(await f.readProof({previewHash:'f'.repeat(64)}),null);
+});
+test('a discarded historical 48-byte instruction remains auditable without being downloaded or becoming literal source',async()=>{
+ const f=recoveredFixture(),raw=withHistoricalInstruction(f),retained=structuredClone(raw);
+ const policy=await recoveredMotorPolicy(f);assert.equal(policy.content_mode,'LITERAL');assert.equal(policy.destination,'TODOS');
+ const scope=await f.readScope();assert.equal(scope.sourceText,[title,subtitle,...body].join('\n\n'));assert.equal(scope.sourceItems.some(s=>s.itemId===raw.item_id),false);assert.equal(scope.controlItemIds.includes(raw.item_id),false);
+ const result=await f.store.validate(candidate);assert.equal(result.status,'LITERAL_TEXT_VERIFIED');assert.equal((await f.readProof()).payloadHash,result.payloadHash);
+ assert.deepEqual(f.state.items.find(r=>r.item_id===raw.item_id),retained);assert.equal(f.state.snapshot.items.find(r=>r.itemId===raw.item_id).state,'STORED');assert.equal(raw.reserved_bytes,48);
+ assert.equal(f.queries.filter(q=>/^(UPDATE|DELETE|INSERT)/.test(q.sql)).every(q=>q.sql.startsWith('INSERT INTO opmx_tg_literal_payloads_v1')),true);
+});
+test('an active historical instruction cannot disappear by omitting its source buffer',async()=>{
+ const f=recoveredFixture(),raw=withHistoricalInstruction(f,{discarded:false});
+ await assert.rejects(()=>recoveredMotorPolicy(f,{omitTextId:raw.item_id}),/RECOVERED_POLICY_UNCONFIRMED/);
+ assert.match((await f.readScope()).sourceText,/La publicación va tal cual, sin agregarle nada/);
+ assertFailure(await f.store.validate(candidate));assert.equal(f.state.proofs.length,0);
+});
+test('discarding is not a permit to alter retained original instruction bytes',async()=>{
+ const f=recoveredFixture(),raw=withHistoricalInstruction(f);raw.text_content+='.';raw.content_bytes=Buffer.byteLength(raw.text_content);raw.sha256=hash(raw.text_content);
+ await assert.rejects(()=>f.readScope(),/RECOVERY_POLICY_UNCONFIRMED/);assertFailure(await f.store.validate(candidate));
 });
 for(const [label,mutate] of [
  ['modified retained source',f=>f.state.items[1].text_content+='!'],['missing snapshot',f=>delete f.state.snapshot],['forged actor receipt',f=>f.state.preview.confirmation_receipt='telegram-99999-51-101'],['unconfirmed preview',f=>f.state.preview.state='DRAFT'],['modified confirmed decision',f=>f.state.decisions[0].decision_json=f.state.decisions[0].decision_json.replace('LITERAL','EDITORIAL')],['missing closure',f=>f.state.closures=[]]
