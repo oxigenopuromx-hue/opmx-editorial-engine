@@ -1,3 +1,5 @@
+Seguimiento posterior vigente: [Tecámac23 y persistencia](RECURRENCIA_TECAMAC23.md). Las versiones y evidencia inferiores conservan el corte inicial de WEG.
+
 # Issue30 — alerta incierta después de publicación confirmada
 
 ## Resultado

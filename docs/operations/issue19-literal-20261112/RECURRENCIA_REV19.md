@@ -1,3 +1,5 @@
+Aceptación posterior: la revisión23 se publicó en los tres destinos con recibo PUBLISH y prueba literal; véase [Tecámac23](../issue30-publication-alert-20261112/RECURRENCIA_TECAMAC23.md). La ficha inferior conserva el corte de revisión19.
+
 # Revisión19 — parámetro nulo en validación de archivos
 
 12nov2026. Seguimiento del issue19 abierto. No se autoriza publicar desde DEV.
