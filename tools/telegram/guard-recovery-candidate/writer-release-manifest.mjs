@@ -1,10 +1,10 @@
-// Audited release #19: authenticated literal text; existing editorial/author3/fences preserved.
+// Audited #19: validate-only null boundary; ordinary writer authority remains server verified.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "32e28420-47ef-4732-b346-22c2708bff49",
-      "graphHash": "e539f30e019051bca16c437732f3df34601dd0702853b1a8efe1b0be80641b72"
+      "versionId": "6d60d83d-a99a-4f06-a201-70b5d292b9da",
+      "graphHash": "4e1a884c2546efcca8d99f52cf1b531ad1dfb50fe65a54a2cc43c9e3b0cdfec7"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",

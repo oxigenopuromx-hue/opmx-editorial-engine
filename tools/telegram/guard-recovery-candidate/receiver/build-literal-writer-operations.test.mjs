@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {buildLiteralDelivery} from '../../../editorial/literal-delivery.mjs';
 import {buildLiteralWriterOperations,buildLiteralMcpPreflightOperations,literalWriterNames} from './build-literal-writer-operations.mjs';
+import {classifyFileMcp,capturedMcpMasterParserCode} from './fixtures/mcp-files-active-protocol.mjs';
 
 const credential={id:'qa-credential',name:'QA existing header'},id='tg_'+'a'.repeat(40),revision=8;
 const policy={authorized:true,content_mode:'LITERAL',mode:'DRAFT',destination:'TODOS'};
@@ -10,13 +11,13 @@ const title='Título de prueba íntegro '.repeat(6).trim(),subtitles=['Primer su
 const paragraphs=['La Paz, Baja California Sur, 30 de octubre de 2026. Este párrafo es original.','El texto conserva comas, cifras 130 y crédito «Cortesía».'];
 const sourceText=[title,...subtitles,...paragraphs].join('\n');
 function literal(){return buildLiteralDelivery({baseMaster:{CONTROL_EDITORIAL:{ESTADO:'LISTO'},SEO:{SLUG:'qa-literal',ETIQUETAS:['Prueba']},PUBLICACION:{}},policy,packageId:id,revision,sourceText,title,subtitles,paragraphs}).master}
-function run(code,{json={},items,lookup={},binary,globals={}}={}){
+function run(code,{json={},items,lookup={},binary,globals={},helpers={}}={}){
  items??=[{json,...(binary?{binary}:{})}];
  const calls=[];
  const input={first:()=>items[0],all:()=>items,item:{json,binary}};
  const $=name=>{calls.push(name);const x=lookup[name];if(!x)throw Error('missing lookup '+name);return {first:()=>x,item:x}};
  const fn=vm.runInNewContext('(async function(){'+code+'})',{Buffer,TextEncoder,TextDecoder,URL,console,$,$json:json,$input:input,$execution:{id:'999'},...globals});
- return fn.call({helpers:{}});
+ return fn.call({helpers});
 }
 function codeNode(name,jsCode,extra={}){return {name,type:'n8n-nodes-base.code',typeVersion:2,position:[0,0],parameters:{mode:'runOnceForAllItems',jsCode},...extra}}
 const normalizer=`let envelope=$json;const d=envelope.master,binary=$input.item.binary;const str=x=>String(x??'').trim();const CONTROL = d.CONTROL_EDITORIAL ?? d.control_editorial ?? {};
@@ -72,10 +73,34 @@ test('normal editorial manual bypass does not perform or accept a forged Telegra
  await assert.rejects(()=>run(code,{lookup:{[literalWriterNames.writer.prepare]:{json:{...base,literalBody:{...base.literalBody,requestId:'tg_'+'a'.repeat(64)}}}}}),/UNCONFIRMED/);
 });
 test('MCP preflight returns its exact literal candidate and records only through Guard',async()=>{
- const ops=buildLiteralMcpPreflightOperations(mcpGraph(),{credential}),master=literal();const r=await run(opCode(ops,'Comprobar MASTER'),{json:{master,request:{operation:'validar_archivos_opmx'}}});assert.equal(r[0].json.literalCandidate.requestId,master.CONTROL_EDITORIAL.LITERAL.REQUEST_ID);assert.equal(Object.keys(r[0].json.literalCandidate).length,7);
+ const ops=buildLiteralMcpPreflightOperations(mcpGraph(),{credential}),master=literal();const r=await run(opCode(ops,'Comprobar MASTER'),{json:{master,request:{operation:'validar_archivos_opmx',request_id:null}}});assert.equal(r[0].json.literalCandidate.requestId,master.CONTROL_EDITORIAL.LITERAL.REQUEST_ID);assert.equal(Object.keys(r[0].json.literalCandidate).length,7);
  const prepared=(await run(opCode(ops,literalWriterNames.files.prepare),{json:r[0].json,lookup:{'Protocolo MCP archivos':{json:{request:{destino:'TODOS'}}}}}))[0];
  const finished=await run(opCode(ops,literalWriterNames.files.finish),{json:{statusCode:200,body:proof(master)},lookup:{[literalWriterNames.files.prepare]:prepared}});assert.equal(finished.json.literal_profile.status,'LITERAL_TEXT_VERIFIED');assert.deepEqual(JSON.parse(JSON.stringify(finished.json.master)),master);
  const validated=await run(opCode(ops,'Resultado validación archivos'),{json:{stats:{master:10}},lookup:{'Protocolo MCP archivos':{json:{request:{}}},[literalWriterNames.files.finish]:finished}});assert.equal(validated[0].json.literal_profile.status,'LITERAL_TEXT_VERIFIED');
+});
+const nativeFile={file_id:'synthetic-native-file',download_url:'https://files.oaiusercontent.com/synthetic-native-file'};
+function routedFileRequest(name,extra={}){return classifyFileMcp({jsonrpc:'2.0',id:19,method:'tools/call',params:{name,arguments:{master_file:nativeFile,hero:nativeFile,destacada:nativeFile,destino:'TODOS',...extra}}});}
+function capturedMcpGraph(){const graph=mcpGraph();graph.nodes.find(n=>n.name==='Comprobar MASTER').parameters.jsCode=capturedMcpMasterParserCode;return graph;}
+function runCapturedParser(ops,master,routed){return run(opCode(ops,'Comprobar MASTER'),{lookup:{'Protocolo MCP archivos':{json:routed}},helpers:{getBinaryDataBuffer:async(index,key)=>{assert.equal(index,0);assert.equal(key,'asset');return Buffer.from(JSON.stringify(master));}},globals:{URL:undefined}});}
+test('captured active MCP protocol passes its null validation ID through the real parser to the exact Guard body',async()=>{
+ const listed=classifyFileMcp({jsonrpc:'2.0',id:1,method:'tools/list'}),schema=listed.response.result.tools.find(t=>t.name==='validar_archivos_opmx').inputSchema;
+ assert.equal(schema.additionalProperties,false);assert.equal(schema.properties.request_id,undefined);assert.ok(!schema.required.includes('request_id'));
+ const routed=routedFileRequest('validar_archivos_opmx');assert.equal(routed.route,'files');assert.equal(routed.request.request_id,null);
+ const ops=buildLiteralMcpPreflightOperations(capturedMcpGraph(),{credential}),master=literal(),binary={asset:{id:'same-native-binary'}};
+ const parsed=(await runCapturedParser(ops,master,routed))[0];assert.equal(parsed.json.literalCandidate.requestId,master.CONTROL_EDITORIAL.LITERAL.REQUEST_ID);
+ const prepared=(await run(opCode(ops,literalWriterNames.files.prepare),{json:parsed.json,binary,lookup:{'Protocolo MCP archivos':{json:routed}}}))[0];
+ assert.equal(prepared.json.preflightRequired,true);assert.equal(prepared.json.destination,'TODOS');
+ assert.deepEqual(JSON.parse(JSON.stringify(prepared.json.literalBody)),{requestId:master.CONTROL_EDITORIAL.LITERAL.REQUEST_ID,declaredMode:'LITERAL',title:master.SEO.TITULO_SEO.trim(),subtitle:master.SEO.SUBTITULO.trim(),html:master.HTML_FINAL.trim(),gutenberg:master.GUTENBERG_FINAL.trim(),enriched:master.GUTENBERG_ENRIQUECIDO_FINAL.trim()});
+ assert.deepEqual(Object.keys(prepared.json.literalBody).sort(),['declaredMode','enriched','gutenberg','html','requestId','subtitle','title']);
+ const finished=await run(opCode(ops,literalWriterNames.files.finish),{json:{statusCode:200,body:proof(master)},lookup:{[literalWriterNames.files.prepare]:prepared}});assert.equal(finished.json.literal_profile.status,'LITERAL_TEXT_VERIFIED');assert.deepEqual(finished.binary,binary);
+ await assert.rejects(()=>run(opCode(ops,literalWriterNames.files.finish),{json:{statusCode:200,body:{status:'LITERAL_TEXT_UNCONFIRMED',writesStarted:false,retryPermitted:false}},lookup:{[literalWriterNames.files.prepare]:prepared}}),/LITERAL_GUARD_RESULT_UNCONFIRMED/);
+});
+for(const operation of ['preparar_borrador_opmx','publicar_nota_opmx'])test('captured active '+operation+' still requires its exact external request ID',async()=>{
+ const master=literal(),ops=buildLiteralMcpPreflightOperations(capturedMcpGraph(),{credential}),publication=operation==='publicar_nota_opmx'?{confirmar_publicacion:'PUBLICAR'}:{};
+ for(const extra of [{},{request_id:null}]){const rejected=routedFileRequest(operation,{...publication,...extra});assert.equal(rejected.response.error.code,-32602);}
+ const changed=routedFileRequest(operation,{...publication,request_id:'tg_'+'d'.repeat(64)});assert.equal(changed.route,'files');await assert.rejects(()=>runCapturedParser(ops,master,changed),/CONTROL_EDITORIAL.LITERAL.REQUEST_ID/);
+ const matched=routedFileRequest(operation,{...publication,request_id:master.CONTROL_EDITORIAL.LITERAL.REQUEST_ID});assert.equal((await runCapturedParser(ops,master,matched))[0].json.literalCandidate.requestId,matched.request.request_id);
+ for(const request_id of [null,undefined])await assert.rejects(()=>runCapturedParser(ops,master,{request:{operation,request_id}}),/CONTROL_EDITORIAL.LITERAL.REQUEST_ID/);
 });
 test('MCP rejects changed binding and added En breve, without relaxing editorial profile',async()=>{
  const code=opCode(buildLiteralMcpPreflightOperations(mcpGraph(),{credential}),'Comprobar MASTER');const master=literal();await assert.rejects(()=>run(code,{json:{master,request:{request_id:'tg_'+'d'.repeat(64)}}}),/MASTER_LITERAL_PROFILE_INVALID/);master.TEXTO_EDITORIAL.EN_BREVE=['Added'];await assert.rejects(()=>run(code,{json:{master}}),/MASTER_LITERAL_PROFILE_INVALID/);
