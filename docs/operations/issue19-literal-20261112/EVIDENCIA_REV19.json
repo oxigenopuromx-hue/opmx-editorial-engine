@@ -1,0 +1,191 @@
+{
+  "source": "7177c927c24ad9f03f1d93e5add6db4b277c4bb9",
+  "tests": 470,
+  "qa": {
+    "executionId": "37734",
+    "result": {
+      "status": "LITERAL_WRITER_QA_PASSED",
+      "assertions": 43,
+      "titleCharacters": 130,
+      "subtitleCharacters": 362,
+      "destinations": [
+        "OPURO",
+        "OPOL",
+        "LIBERAL"
+      ],
+      "guardProof": "SYNTHETIC_OFFLINE_ONLY",
+      "realCmsWrites": false,
+      "realGuardRequests": false,
+      "notePendingTouched": false
+    }
+  },
+  "runtime": {
+    "executionId": "37740",
+    "result": {
+      "status": "RUNTIME_OBSERVED",
+      "scope": {
+        "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+        "revision": 8,
+        "eventId": "evt_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "observedAt": "2026-11-12T22:54:57.376Z",
+      "versionsMatch": true,
+      "noActiveN8nWriters": true,
+      "executionPages": [
+        {
+          "status": "running",
+          "complete": true,
+          "executions": []
+        },
+        {
+          "status": "waiting",
+          "complete": true,
+          "executions": []
+        },
+        {
+          "status": "new",
+          "complete": true,
+          "executions": []
+        }
+      ],
+      "authorizesRecovery": false,
+      "motorTerminationVerified": false,
+      "workflows": [
+        {
+          "id": "bnzVMNkZuGO1GQCZ",
+          "activeVersionId": "6d60d83d-a99a-4f06-a201-70b5d292b9da",
+          "nodeCount": 137
+        },
+        {
+          "id": "Mt7ts2EGPbyaTC2o",
+          "activeVersionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+          "nodeCount": 58
+        },
+        {
+          "id": "4o7K5TmKc7joScqB",
+          "activeVersionId": "4263fea4-90a4-406d-a234-da7397d456bf",
+          "nodeCount": 146
+        },
+        {
+          "id": "C4hk6fQQomueYC8f",
+          "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+          "nodeCount": 10
+        },
+        {
+          "id": "qBmLf0DmcMSfuWvm",
+          "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+          "nodeCount": 9
+        }
+      ],
+      "httpStatus": 200,
+      "qaReadOnly": true,
+      "scopeLabelSynthetic": true,
+      "notePendingTouched": false
+    }
+  },
+  "productionReads": [
+    {
+      "executionId": "37735",
+      "result": {
+        "schema": "opmx.telegram.final-publication-observation.v1",
+        "status": "FINAL_PUBLICATION_UNCONFIRMED",
+        "writeAuthorized": false,
+        "retryPermitted": false,
+        "httpStatus": 200,
+        "qaReadOnly": true,
+        "pendingNoteTouched": false
+      }
+    },
+    {
+      "executionId": "37743",
+      "result": {
+        "schema": "opmx.telegram.final-publication-observation.v1",
+        "status": "FINAL_PUBLICATION_CONFIRMED",
+        "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+        "revision": 8,
+        "requestId": "tg_e7d344fcea129cb6fa71c4af57443300c759e4b3266abb227c38a11ed269961e",
+        "phase": "PUBLISH",
+        "destination": "TODOS",
+        "slug": "weg-inversion-250-millones-planta-hidalgo",
+        "receiptHash": "9d9f13dbca0c4d3dd4dcf3052d372ede8bc6fe700855df4e8519053f3079d3fe",
+        "receiptState": "RECORDED",
+        "targets": [
+          {
+            "destination": "OPURO",
+            "postId": 10513,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          },
+          {
+            "destination": "OPOL",
+            "postId": 3524,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          },
+          {
+            "destination": "LIBERAL",
+            "postId": 397,
+            "slug": "weg-inversion-250-millones-planta-hidalgo",
+            "status": "publish",
+            "cmsVerified": true,
+            "ledgerVerified": true
+          }
+        ],
+        "writeAuthorized": false,
+        "retryPermitted": false,
+        "consistentSnapshot": true,
+        "writersIdleVerified": true,
+        "observedAt": "2026-11-12T22:56:09.908Z",
+        "httpStatus": 200,
+        "qaReadOnly": true,
+        "notePendingTouched": false
+      }
+    }
+  ],
+  "mcp": {
+    "id": "bnzVMNkZuGO1GQCZ",
+    "activeVersion": "6d60d83d-a99a-4f06-a201-70b5d292b9da",
+    "draftVersion": "31466116-ce37-49c7-8ca1-380e0e45e49d",
+    "activeNodes": 137,
+    "draftNodes": 112,
+    "activeEqualsPrepared": true
+  },
+  "probe": {
+    "id": "7IDUF9PeHQ5v331Z",
+    "version": "c41fad90-96c8-43f4-828a-e0e4121f0286",
+    "active": false,
+    "nodes": 3,
+    "graphSame": true,
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true,
+      "saveManualExecutions": false,
+      "saveDataErrorExecution": "none",
+      "saveDataSuccessExecution": "none",
+      "saveExecutionProgress": false,
+      "executionTimeout": 30
+    }
+  },
+  "pending": {
+    "id": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+    "revision": 19,
+    "state": "READY",
+    "items": 8,
+    "instructionState": "DISCARDED",
+    "confirmed": {
+      "package_id": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+      "revision": 19,
+      "action": "CREATE",
+      "content_mode": "LITERAL",
+      "destination": "TODOS",
+      "preview_hash": "aa240d5190e5e6cb791ed390278fc1ca70f9cec7076eda75fe69812c735fd407"
+    }
+  },
+  "pendingTouchedByDev": false,
+  "realCmsWrites": false,
+  "motorOrSubscriptionChanged": false
+}
