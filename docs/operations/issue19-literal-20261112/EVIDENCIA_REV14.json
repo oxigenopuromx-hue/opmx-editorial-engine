@@ -1,0 +1,29 @@
+{
+  "source_commit": "68134a5b29c43f0ec0dbf83f4c0e7c507c25966b",
+  "helper_sha256": "73e114d401d889c23e0113d809ad3c081b74f94bad3719f537417576f97d7163",
+  "tests_passed": 466,
+  "motor": {
+    "bytes": 45848,
+    "sha256": "91c3e9878c348ee13bbc24604c82ee0b33ffcf1b21d9fc326bd7d2cf46d60df6",
+    "image_helper_pin": "68134a5b29c43f0ec0dbf83f4c0e7c507c25966b",
+    "literal_selector_compiler_pin": "e7fae39e62d8b233c379198d24c516fe4b580071"
+  },
+  "motor_readback": {
+    "exact": true,
+    "enabled_title_schedule_conversation_environment_unchanged": true,
+    "fields_updated": [
+      "prompt"
+    ],
+    "triggers_omitted_preserved": true
+  },
+  "package_observed": {
+    "id": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+    "revision": 14,
+    "state": "READY",
+    "count": 7,
+    "confirmed": "CREATE/LITERAL/TODOS",
+    "writes_performed_by_dev": false
+  },
+  "guard_or_n8n_changed": false,
+  "acceptance": "pending operator recovery confirmation"
+}
