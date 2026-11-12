@@ -1,6 +1,7 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
 Corte inicial: 11 de noviembre de 2026, 14:30, America/Mexico_City. Actualización Waldo:14:48.
+Actualización posterior:12 de noviembre de2026, conciliación de alertas WEG. Las fichas previas conservan el corte de su fecha.
 Este índice está en main para todas las conversaciones. Es un registro de despliegues y evidencia; no implica que los exports históricos de main coincidan con producción. La consulta de issues abiertos no equivale a volver a conciliar todos sus paquetes.
 
 ## Leer antes de modificar producción
@@ -22,6 +23,7 @@ Este índice está en main para todas las conversaciones. Es un registro de desp
 | OPMX — transporte actualización confirmada #18 | `qBmLf0DmcMSfuWvm` | Activo | `d04fb5c2-ba36-48f9-9cd4-2958ab1f273e` |
 | OPMX — observación técnica runtime #18 | `2HBn1RnSYgyxuHgE` | Activo | `b88257e9-7f6d-41e3-bdfd-e2cd40c12c25` |
 | OPMX — conciliación CMS lectura #18 | `F4Ybwst2LZfzKyWS` | Activo | `0bb87412-b517-4d6e-8a1c-426acb6151ef` |
+| OPMX — Alertas de administrador | `NFOBzPfHmvRjVFOA` | Activo | `2d3e18a9-ff68-4f5c-9fdc-ce6a694b1cd6` |
 | OPMX — comprobación API lectura #18 | `7IDUF9PeHQ5v331Z` | Inactivo | Sin versión publicada |
 
 Esta lectura confirma las versiones, no inicia flujos ni prueba por sí sola WordPress. La observación de ejecución34236, realizada durante el despliegue de autor3, confirmó los cinco grafos de escritura con RUNTIME_OBSERVED/versionsMatch=true/noActiveN8nWriters=true.
@@ -80,12 +82,27 @@ Actualización posterior al corte inicial del11nov2026. Se separó el trabajo de
 
 Este ZIP es posterior al del cambio de autor3. La ficha de autoría anterior conserva la evidencia de su propio despliegue histórico; no debe interpretarse como el último ZIP activo ni usarse para revertir esta conciliación.
 
+## Alertas inciertas después de publicación — issue30
+
+Actualización del12nov2026. WEG/revisión8 quedó conciliada: recibo durable PUBLISH confirmado y lecturas de OPURO10513, OPOL3524 y LIBERAL397 en publish. El seguimiento conserva la alerta histórica y añade PUBLICATION_RECONCILED1670. No se publicó ni modificó ninguna nota durante esta revisión, ni se falsificó PROCESS_COMPLETE o ATTEMPT_COMPLETED.
+
+El monitor administrativo existente ahora consulta Guard antes de enviar alertas DRAFT_UNCERTAIN/PUBLISH_UNCERTAIN. Sólo una prueba final PUBLISH íntegra, de la misma solicitud/revisión, con todos los destinos verificados y escritores inactivos puede suprimirlas. Borrador, parcial, error, acuse ausente, prueba vieja o identidad ambigua conservan la alerta; los demás bloqueos se mantienen.
+
+- Monitor NFOBzPfHmvRjVFOA activo:2d3e18a9-ff68-4f5c-9fdc-ce6a694b1cd6,11nodos. Reversión:f9d2c08d-a31a-4d95-ac7f-9b2f37b981b9. Mismo remitente, administrador, horario y tabla.
+- Guard actual: opmx-guard-final-publication-observer.zip, SHA256 ecd2f908e6e19616097ebcf5aee891aa64e36b3305675ffab4c32146bb55fdc0. Su endpoint observe-final es sólo lectura. Conserva recuperación, autor3, pins de escritores y único Motor/suscripción anteriores. Es posterior al ZIP Waldo de la ficha histórica.
+-130 pruebas pasan. Ensayo aislado n8n37011 con Guard real: qaSuppressed=true, PUBLISH/TODOS y los tres IDs originales; sin envío Telegram ni escrituras de tabla/CMS. Primera ejecución programada37017:SUCCESS, sin candidatos ni notificación.
+- Diagnóstico temporal restaurado a su GET original, inactivo y sin retención. Su límite de30s permanece sólo en ese probe inactivo; no cambia tiempos del Motor. No se ampliaron accesos ni credenciales.
+- Esta corrección resuelve la alerta obsoleta. No elimina por sí sola la causa de esperas largas de herramientas (#24), ni cierra los pendientes generales del #18. #28 continúa diferido.
+
+[Informe, acuses y reversión](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/blob/3a00789fed4b74433449b50d4b81dff60d445ce6/docs/operations/issue30-publication-alert-20261112/VERIFICACION.md). Código fuente y pruebas: fdbe48cf8679840d6fcc2f1d8930b96a1323137e y6a57020777fd3c5a8482e043a7e260ecf0e38c31.
+
 ## Seguimiento de issues importantes
 
 La prioridad es propuesta en este corte, no una etiqueta ya existente del repositorio.
 
 | Prioridad propuesta | Issue | Pendiente real | Qué ya se resolvió |
 | --- | --- | --- | --- |
+| Corregido | [30](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/30) | La causa general de esperas de herramientas sigue en24. | Alerta WEG conciliada y monitor con comprobación final de Guard/CMS desplegado;130 pruebas y ensayo real37011. |
 | Conciliación resuelta; publicación pendiente | [26](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/26) | La conciliación del intento Waldo8 quedó confirmada; esto no ejecutó la publicación ni habilita reintentar. | Ejecución34438: UNWRITTEN_ATTEMPT_FROZEN, intentoREVOKED, barreraRECONCILING, tres destinosBLOCKED. PaqueteREADY8 y cinco SHA conservados. |
 | Diferida — después de Waldo | [28](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/28) | Revisar la cancelación de paquetes duplicados cuando el usuario retome esta parte; releer revisiones y órdenes vigentes. | La orden antigua de cancelar Milenio rev8 fue sustituida por recuperación; READY19 quedó ATTEMPT_BLOCKED, no CANCELLED. No se ejecutó ninguna cancelación al dividir los issues. |
 | Alta | [18](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/18) | Aceptación completa de recuperación, creación nueva multidestino, parciales/respuesta perdida, cuotas/retención y demás criterios del issue. | Reapertura/vista/confirmación, ensayo UPDATE OPURO y recuperación pre-ACK documentados; no equivalen a cerrar todo el issue. |

@@ -1,0 +1,71 @@
+{
+  "schema": "opmx.final-publication-observer-release.v1",
+  "date": "2026-11-12",
+  "issue": 30,
+  "guardArchive": "opmx-guard-final-publication-observer.zip",
+  "guardSha256": "ecd2f908e6e19616097ebcf5aee891aa64e36b3305675ffab4c32146bb55fdc0",
+  "guardCoreSourceCommit": "fdbe48cf8679840d6fcc2f1d8930b96a1323137e",
+  "monitorSourceCommit": "6a57020777fd3c5a8482e043a7e260ecf0e38c31",
+  "baselineArchive": "opmx-guard-waldo-reconciliation.zip",
+  "baselineSha256": "f995fe7aa1f0de60d2f3f44abeec0c089e90023e63720f9e3fea99a48fcccbe3",
+  "guardChange": "three wiring modules plus one read-only observer; all other baseline files unchanged",
+  "monitor": {
+    "workflowId": "NFOBzPfHmvRjVFOA",
+    "previousVersionId": "f9d2c08d-a31a-4d95-ac7f-9b2f37b981b9",
+    "activeVersionId": "2d3e18a9-ff68-4f5c-9fdc-ce6a694b1cd6",
+    "nodeCount": 11,
+    "addedNodes": 5,
+    "subscriptionChanged": false,
+    "senderChanged": false,
+    "scheduleChanged": false,
+    "credentialValuesChanged": false
+  },
+  "checks": {
+    "testsPassed": 130,
+    "observerCases": 73,
+    "resolverCases": 40,
+    "builderCases": 16,
+    "httpCases": 1,
+    "assembledStartupPassed": true,
+    "databaseFailureClosedPassed": true,
+    "liveReadOnlyQaExecution": "37011"
+  },
+  "sourceFiles": [
+    {
+      "path": "tools/telegram/guard-recovery-candidate/deployed-guard/guard-server.mjs",
+      "sha256": "94a7d9fa36a4ef1b74b16eb2155f9d1f39401ab0af6a94005aa388d9ebde4525"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+      "sha256": "5ac2120592055abc79d204d1b615ca2a166844d521d45a2ef41a7fedac879539"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+      "sha256": "b4ff73df2b48e77a3e8f505cb58d1f3d4cbc518e864e47c32729287401ca9975"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/final-publication-observer.mjs",
+      "sha256": "0e14dd84b16eaa078e816b0b3eeb7dc67701e5fdd56c54ea425dedfbf0752a07"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/final-publication-observer.test.mjs",
+      "sha256": "cab4dd17e7ac18b3d35154b0db797282d4d3253fc43f7fb6488f81272462143c"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/publication-alert-resolution.mjs",
+      "sha256": "64e450b23a2a18ae505811b992b5f6e9aebfc90e14a2c4068dfd550181666677"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/publication-alert-resolution.test.mjs",
+      "sha256": "1a2799af872b913fa9002e8279441b037e5dba9d35260f607bb94bf6a173f64d"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/receiver/build-publication-alert-observer-operations.mjs",
+      "sha256": "5e95dac83eb1ec1466f00b2f4869439700b4353d6d75778c319982c950d157ee"
+    },
+    {
+      "path": "tools/telegram/guard-recovery-candidate/receiver/build-publication-alert-observer-operations.test.mjs",
+      "sha256": "100d057a9ed6fca49c7c4ef3db24f668cbc399d0fde20e75ee47dd06aff213d0"
+    }
+  ]
+}
