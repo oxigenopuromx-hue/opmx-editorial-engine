@@ -1,5 +1,7 @@
 # Issue 19 — entrega literal autenticada
 
+Seguimiento más reciente: [revisión19, adaptador MCP y Guard vigentes](RECURRENCIA_REV19.md).
+
 Seguimiento posterior: [revisión14 y descartados](RECURRENCIA_REV14.md). El hash de prompt de este informe corresponde al despliegue inicial; consultar ese seguimiento para el prompt actual y pin de imagen.
 
 Fecha: 12 de noviembre de 2026. Alcance autorizado: corregir la infraestructura; NO publicar, crear borrador ni reintentar la nota pendiente.

@@ -1,5 +1,7 @@
 # Revisión14 — instrucción histórica activa
 
+Seguimiento posterior: [revisión19](RECURRENCIA_REV19.md) actualiza MCP y el pin Guard. Esta ficha conserva el corte anterior.
+
 12nov2026. Issue19 reabierto para aceptación de la recuperación real. El usuario conserva el control de publicación.
 
 ## Diagnóstico

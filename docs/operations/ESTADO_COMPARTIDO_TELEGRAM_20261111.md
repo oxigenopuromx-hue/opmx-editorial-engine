@@ -17,7 +17,7 @@ Este índice está en main para todas las conversaciones. Es un registro de desp
 | Componente | Workflow | Estado | Versión publicada |
 | --- | --- | --- | --- |
 | OPMX — Telegram recepción · publicación predeterminada v1 | `OSi8AcnzLlI0csRu` | Activo | `b9a2f944-8a03-4fd2-a730-3b93b6c33688` |
-| OPMX — Publisher archivos MCP | `bnzVMNkZuGO1GQCZ` | Activo | `32e28420-47ef-4732-b346-22c2708bff49` |
+| OPMX — Publisher archivos MCP | `bnzVMNkZuGO1GQCZ` | Activo | `6d60d83d-a99a-4f06-a201-70b5d292b9da` |
 | OPMX Publisher — formulario · destinos v3 | `Mt7ts2EGPbyaTC2o` | Activo | `d6bbb33a-ab6e-4f90-a88c-921623426444` |
 | OPMX — Entrada automática · borradores v3 | `4o7K5TmKc7joScqB` | Activo | `4263fea4-90a4-406d-a234-da7397d456bf` |
 | OPMX — transporte actualización confirmada #18 | `qBmLf0DmcMSfuWvm` | Activo | `d04fb5c2-ba36-48f9-9cd4-2958ab1f273e` |
@@ -101,7 +101,7 @@ El monitor administrativo existente ahora consulta Guard antes de enviar alertas
 
 Implementación desplegada, fuente fijada e7fae39e62d8b233c379198d24c516fe4b580071. Maestros/perfil aprobados en main b1064e91ae795e5843c77485d2215425fdfdced5. Prompt4.10 selecciona perfil; contrato EDITORIAL1.4.2 y prompt4.9 histórico permanecen sin cambios.
 
-- Guard vigente: opmx-guard-literal19.zip, SHA256518721f59f5803885e852d99f6e884901031310974e6865775074ee91d92c163, Hostinger completado/Actual12nov16:06:48CDMX. Conserva Waldo, autor3 y observación/alertas30.
+- Guard del despliegue inicial: opmx-guard-literal19.zip, SHA256518721f59f5803885e852d99f6e884901031310974e6865775074ee91d92c163, Hostinger completado/Actual12nov16:06:48CDMX. Conserva Waldo, autor3 y observación/alertas30.
 - Receptor52nodos: b9a2f944-8a03-4fd2-a730-3b93b6c33688. Sólo cambian tres Code; mismos remitentes, webhook, credenciales y conexiones.
 - MCP137nodos:32e28420-47ef-4732-b346-22c2708bff49; Shared146nodos:4263fea4-90a4-406d-a234-da7397d456bf; Form58nodos:d6bbb33a-ab6e-4f90-a88c-921623426444. Pins/grafos verificados. Los drafts ajenos originales se restauraron sin cambiar estas versiones activas; no publicar un draft antiguo suponiendo que coincide con producción.
 - Único Motor6ae9095256948191b33f1e023fbfbf8b: actualizado sólo prompt, SHA256f74b77103dea0434c7f8fe1e85d66b7ac7ebec5f055a5658eb162150f612f0dd. Misma suscripción READY/preview, título, conversación y entorno; no hubo otro Motor ni reenvío histórico.
@@ -120,6 +120,21 @@ El modo CREATE LITERAL/TODOS sí se reconoció. Motor5062acc3… bloqueó una in
 
 Se corrigió además una dependencia del helper de imagen que exigía chunks para DISCARDED. Pin activo de chooseGeneratedImage:68134a5b29c43f0ec0dbf83f4c0e7c507c25966b; usa inventario auténtico íntegro, omite DISCARDED y mantiene SHA para STORED. Sólo se actualizó prompt del mismo Motor (SHA25691c3e9878c348ee13bbc24604c82ee0b33ffcf1b21d9fc326bd7d2cf46d60df6), con relectura exacta y suscripción/entorno conservados. Guard, n8n y selector/compilador literal e7fae39e… sin cambios.466 pruebas pasan. Issue19 reabierto hasta aceptación real del operador; DEV no modificó ni publicó rev14. [Informe y pasos](issue19-literal-20261112/RECURRENCIA_REV14.md).
 
+
+### Seguimiento rev19 — validación de archivos
+
+La instrucción histórica ya está DISCARDED. El Motor a536edd4… validó localmente pero recibió VALIDATION_FAILED del adaptador: el protocolo real de validar_archivos_opmx produce request_id:null (su esquema no permite ese parámetro). Comprobar MASTER lo interpretaba como un ID externo discordante. La reproducción con protocolo real lo confirma; no era otro pedido de cambiar el contenido.
+
+Corrección sólo para operation=validar_archivos_opmx y null exacto: omitir esa comparación local inexistente, conservando REQUEST_ID del MASTER y prueba real de Guard. Crear/publicar sin clave, con null o clave distinta siguen rechazados.
+
+MCP activo6d60d83d-a99a-4f06-a201-70b5d292b9da,137nodos, único cambio jsCode Comprobar MASTER. Grafo4e1a884c2546efcca8d99f52cf1b531ad1dfb50fe65a54a2cc43c9e3b0cdfec7. Draft ajeno restaurado como31466116-ce37-49c7-8ca1-380e0e45e49d,112nodos; activo releído idéntico al preparado.
+
+Guard vigente opmx-guard-literal19-validation-scope.zip, SHA256cef58abf6b311393c0f22690117947cba3d3edba71834eada4b65c1cd93eb128, completado/Actual12nov16:52:48CDMX. Única diferencia del runtime: nuevo pin MCP en writer-release-manifest.mjs. Fuente7177c927c24ad9f03f1d93e5add6db4b277c4bb9. Motor, suscripción, receptor y demás escritores no cambian.
+
+470 pruebas pasan; n8n37734 con43assertions prueba protocolo real→parser→body Guard7campos→proof simulado y negativos de escritura. Runtime37740 observado/versionsMatch/idle con etiqueta sintética sólo de diagnóstico; no autoriza recuperación ni acredita una nota. La primera lectura final WEG37735 no confirmó CMS. Tras aislar runtime,37743 confirmó los pins/huellas/idle, recibo y CMS de tres destinos; las dos lecturas se conservan en [evidencia](issue19-literal-20261112/EVIDENCIA_REV19.json), sin inferir ausencia ni reintentar publicaciones.
+
+DEV no reabrió/reintentó ni publicó rev19. Issue19 sigue abierto hasta aceptación real del operador. No repetir el descarte: ya está aplicado. [Informe y reversión](issue19-literal-20261112/RECURRENCIA_REV19.md).
+
 ## Seguimiento de issues importantes
 
 La prioridad es propuesta en este corte, no una etiqueta ya existente del repositorio.
@@ -130,7 +145,7 @@ La prioridad es propuesta en este corte, no una etiqueta ya existente del reposi
 | Conciliación resuelta; publicación pendiente | [26](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/26) | La conciliación del intento Waldo8 quedó confirmada; esto no ejecutó la publicación ni habilita reintentar. | Ejecución34438: UNWRITTEN_ATTEMPT_FROZEN, intentoREVOKED, barreraRECONCILING, tres destinosBLOCKED. PaqueteREADY8 y cinco SHA conservados. |
 | Diferida — después de Waldo | [28](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/28) | Revisar la cancelación de paquetes duplicados cuando el usuario retome esta parte; releer revisiones y órdenes vigentes. | La orden antigua de cancelar Milenio rev8 fue sustituida por recuperación; READY19 quedó ATTEMPT_BLOCKED, no CANCELLED. No se ejecutó ninguna cancelación al dividir los issues. |
 | Alta | [18](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/18) | Aceptación completa de recuperación, creación nueva multidestino, parciales/respuesta perdida, cuotas/retención y demás criterios del issue. | Reapertura/vista/confirmación, ensayo UPDATE OPURO y recuperación pre-ACK documentados; no equivalen a cerrar todo el issue. |
-| En validación real | [19](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/19) | Rev14 sí confirma LITERAL/TODOS; requiere retirar la instrucción histórica de48bytes mediante /descartar y nueva vista. No hubo publicación DEV. | Perfil literal activo y helper de imagen corregido para ignorar DISCARDED;466 pruebas. |
+| En validación real | [19](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/19) | Rev19 ya excluye la instrucción histórica; falló el adaptador por request_id:null en validar_archivos. | Adaptador corregido, MCP6d60d83d… y nuevo pin Guard desplegados;470 pruebas y QA n8n43. Aceptación del paquete pendiente. |
 | Alta | [21](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/21) | Clasificación general de rechazos deterministas previos a escritura: no presentarlos indebidamente como UNCERTAIN. | Comprobación previa de etiquetas/extracto desplegada; casos editoriales documentados recuperados. |
 | Alta | [15](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/15) | Diagnóstico PDF/descarga/binario/tamaño/firma y conciliación de la reserva original. | Publicación manual entregada; no demuestra corrección del receptor ni habilita reenviar. |
 | Media alta | [24](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/24) | Determinar por qué ciertas ejecuciones se interrumpieron antes de Publisher. | Los cuatro paquetes y pendientes adicionales descritos fueron recuperados; la causa raíz no está acreditada. |
@@ -143,5 +158,6 @@ También siguen abiertos13 (exclusiones de portada por categoría) y11 (score Ra
 ## Próximo trabajo recomendado
 
 La conciliación prioritaria del26 ya tiene resultado durable: el intento previo está revocado y sin permiso de escritura. La publicación de Waldo no se ejecutó y requiere el siguiente flujo autorizado de recuperación; no repetir iniciar_intento para la revisión8. La cancelación separada en28 permanece para más adelante. La implementación19 (literal) quedó desplegada. Continuar18 y21/15 para reducir falsos bloqueos y mejorar diagnóstico;24/25 para interrupciones y enlaces. Antes de tocar un paquete histórico, releer su estado y orden vigente. El cierre de26 como conciliación no acredita publicación ni cancelación.
+
 
 
