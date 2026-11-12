@@ -1,0 +1,136 @@
+{
+  "packageId": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+  "revision": 23,
+  "requestId": "tg_ada79f9b78fbf8ad073b6ced861a2d8c0dbdca7cd517b7185b99cd7eb9de3917",
+  "slug": "samuel-hernandez-observaciones-asf-tecamac",
+  "finalPublicationProof": {
+    "sourceExecution": "37870",
+    "proof": {
+      "schema": "opmx.telegram.final-publication-observation.v1",
+      "status": "FINAL_PUBLICATION_CONFIRMED",
+      "packageId": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+      "revision": 23,
+      "requestId": "tg_ada79f9b78fbf8ad073b6ced861a2d8c0dbdca7cd517b7185b99cd7eb9de3917",
+      "phase": "PUBLISH",
+      "destination": "TODOS",
+      "slug": "samuel-hernandez-observaciones-asf-tecamac",
+      "receiptHash": "9f66b3931e4e0d20e9267326f1f324902a280a4b3426606bf6a5189da4eb2812",
+      "receiptState": "RECORDED",
+      "targets": [
+        {
+          "destination": "OPURO",
+          "postId": 10528,
+          "slug": "samuel-hernandez-observaciones-asf-tecamac",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "OPOL",
+          "postId": 3537,
+          "slug": "samuel-hernandez-observaciones-asf-tecamac",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "LIBERAL",
+          "postId": 408,
+          "slug": "samuel-hernandez-observaciones-asf-tecamac",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        }
+      ],
+      "writeAuthorized": false,
+      "retryPermitted": false,
+      "consistentSnapshot": true,
+      "writersIdleVerified": true,
+      "observedAt": "2026-11-12T23:06:55.860Z"
+    }
+  },
+  "laterFailedObservation": {
+    "sourceExecution": "37876",
+    "status": "FINAL_PUBLICATION_UNCONFIRMED",
+    "resultedInRow": 1751
+  },
+  "historicalReconciliation": {
+    "package_id": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+    "revision": 23,
+    "stage": "PUBLICATION_RECONCILED",
+    "occurred_at": "2026-11-12T23:06:55.860Z",
+    "chat_id": null,
+    "request_id": "tg_ada79f9b78fbf8ad073b6ced861a2d8c0dbdca7cd517b7185b99cd7eb9de3917",
+    "id": 1752,
+    "createdAt": "2026-11-12T23:20:19.721Z",
+    "updatedAt": "2026-11-12T23:20:19.721Z"
+  },
+  "historicalBackfill": true,
+  "noNewPublicationOrCmsWrites": true,
+  "qa": {
+    "sourceTests": 542,
+    "offlineChecks": {
+      "status": "OFFLINE_PERSISTENCE_QA_PASSED",
+      "checksPassed": 17,
+      "checks": [
+        "fresh_final_proof_creates_one_technical_record",
+        "no_record_before_insert_ack",
+        "complete_insert_ack_verified",
+        "invalid_insert_ack_rejected",
+        "next_guard_unconfirmed_cannot_revive_resolved_alert",
+        "unconfirmed_read_does_not_create_another_record",
+        "late_uncertain_same_scope_stays_resolved",
+        "late_progress_same_scope_stays_resolved",
+        "other_blockers_remain_visible",
+        "other_revision_remains_visible",
+        "other_request_remains_visible",
+        "already_alerted_can_still_reconcile",
+        "draft_does_not_create_final_record",
+        "seven_canonical_bindings_persist_selected_guard_request",
+        "seven_canonical_bindings_remember_success_after_next_failure",
+        "seven_bindings_explicit_other_request_not_suppressed",
+        "two_distinct_terminal_requests_remain_ambiguous"
+      ],
+      "syntheticFixturesOnly": true,
+      "networkWrites": 0,
+      "telegramSends": 0,
+      "cmsWrites": 0,
+      "dataTableWrites": 0
+    },
+    "offlineExecution": "37893",
+    "actualRows": {
+      "status": "REAL_RECONCILED_CASE_QA_PASSED",
+      "sourcePackage": "tg_dd8ff15fbc93b83b3e579c4266d5aea4bcf2be7b",
+      "revision": 23,
+      "inputRows": 15,
+      "requestBindings": 7,
+      "reconciliationRow": 1752,
+      "outputItems": 0,
+      "realWrites": 0,
+      "telegramSends": 0,
+      "cmsWrites": 0
+    },
+    "actualRowsExecution": "37894"
+  },
+  "activeChecks": [
+    {
+      "id": "bnzVMNkZuGO1GQCZ",
+      "activeVersion": "c0de03ed-e7a7-4255-a9c8-9ca76404424e",
+      "draftVersion": "a51f2379-c534-467d-8d8a-cca996f489e7",
+      "active": true,
+      "nodes": 137,
+      "activeEqualsPrepared": true
+    },
+    {
+      "id": "NFOBzPfHmvRjVFOA",
+      "activeVersion": "efa564a8-3f87-4936-ba1a-2b1a33a0879f",
+      "draftVersion": "efa564a8-3f87-4936-ba1a-2b1a33a0879f",
+      "active": true,
+      "nodes": 16,
+      "activeEqualsPrepared": true
+    }
+  ],
+  "headingSource": "bf85fd32fb2c08af513343397038c298671dec68",
+  "persistenceSource": "a38d80782045fdfc0c24006c125b15f2b6d340f5",
+  "motorAndSubscriptionUnchanged": true
+}
