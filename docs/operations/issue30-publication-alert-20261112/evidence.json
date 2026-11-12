@@ -1,0 +1,195 @@
+{
+  "naturalMonitorRun": {"execution":{"id":"37017","workflowId":"NFOBzPfHmvRjVFOA","mode":"trigger","status":"success","startedAt":"2026-11-12T17:06:48.189Z","stoppedAt":"2026-11-12T17:06:48.343Z","retryOf":null,"retrySuccessId":null,"waitTill":null},"lastNode":"Preparar comprobación de alertas","prepareProduced":0,"sentTelegram":false},
+  "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+  "revision": 8,
+  "originalRequestId": "tg_e7d344fcea129cb6fa71c4af57443300c759e4b3266abb227c38a11ed269961e",
+  "draftExecution": {
+    "executionId": "36968",
+    "status": "success",
+    "startedAt": "2026-11-12T16:30:46.975Z",
+    "stoppedAt": "2026-11-12T16:31:59.808Z",
+    "writerReceipt": "RECORDED"
+  },
+  "chronology": [
+    {
+      "package_id": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "stage": "REQUEST_TODOS",
+      "occurred_at": "2026-11-12T16:27:06.945Z",
+      "request_id": "tg_e7d344fcea129cb6fa71c4af57443300c759e4b3266abb227c38a11ed269961e",
+      "id": 1663,
+      "createdAt": "2026-11-12T16:27:07.014Z",
+      "updatedAt": "2026-11-12T16:27:07.014Z"
+    },
+    {
+      "package_id": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "stage": "PROGRESS_SUBMIT",
+      "occurred_at": "2026-11-12T16:30:37.527Z",
+      "request_id": null,
+      "id": 1667,
+      "createdAt": "2026-11-12T16:30:37.544Z",
+      "updatedAt": "2026-11-12T16:30:37.544Z"
+    },
+    {
+      "package_id": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "stage": "DRAFT_UNCERTAIN",
+      "occurred_at": "2026-11-12T16:31:51.698Z",
+      "request_id": null,
+      "id": 1668,
+      "createdAt": "2026-11-12T16:31:51.717Z",
+      "updatedAt": "2026-11-12T16:31:51.717Z"
+    },
+    {
+      "package_id": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "stage": "ALERT_ADMIN_1668",
+      "occurred_at": "2026-11-12T16:36:48.444Z",
+      "request_id": null,
+      "id": 1669,
+      "createdAt": "2026-11-12T16:36:48.914Z",
+      "updatedAt": "2026-11-12T16:36:48.914Z"
+    }
+  ],
+  "readOnlyReconciliation": {
+    "executionId": "36995",
+    "statusCode": 200,
+    "body": {
+      "status": "RECONCILIATION_VERIFIED",
+      "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "results": [
+        {
+          "destination": "OPURO",
+          "status": "PUBLISHED",
+          "postId": 10513
+        },
+        {
+          "destination": "OPOL",
+          "status": "PUBLISHED",
+          "postId": 3524
+        },
+        {
+          "destination": "LIBERAL",
+          "status": "PUBLISHED",
+          "postId": 397
+        }
+      ],
+      "writesRolledBack": true,
+      "writeAuthorized": false,
+      "processTerminationClaimed": false
+    }
+  },
+  "finalObservation": {
+    "executionId": "37003",
+    "statusCode": 200,
+    "body": {
+      "schema": "opmx.telegram.final-publication-observation.v1",
+      "status": "FINAL_PUBLICATION_CONFIRMED",
+      "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "requestId": "tg_e7d344fcea129cb6fa71c4af57443300c759e4b3266abb227c38a11ed269961e",
+      "phase": "PUBLISH",
+      "destination": "TODOS",
+      "slug": "weg-inversion-250-millones-planta-hidalgo",
+      "receiptHash": "9d9f13dbca0c4d3dd4dcf3052d372ede8bc6fe700855df4e8519053f3079d3fe",
+      "receiptState": "RECORDED",
+      "targets": [
+        {
+          "destination": "OPURO",
+          "postId": 10513,
+          "slug": "weg-inversion-250-millones-planta-hidalgo",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "OPOL",
+          "postId": 3524,
+          "slug": "weg-inversion-250-millones-planta-hidalgo",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "LIBERAL",
+          "postId": 397,
+          "slug": "weg-inversion-250-millones-planta-hidalgo",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        }
+      ],
+      "writeAuthorized": false,
+      "retryPermitted": false,
+      "consistentSnapshot": true,
+      "writersIdleVerified": true,
+      "observedAt": "2026-11-12T17:01:01.621Z"
+    }
+  },
+  "liveQa": {
+    "executionId": "37011",
+    "result": {
+      "qaSuppressed": true,
+      "finalStatus": "FINAL_PUBLICATION_CONFIRMED",
+      "phase": "PUBLISH",
+      "packageId": "tg_d50b246064f104560c345b74c6056cf58e0195a9",
+      "revision": 8,
+      "destination": "TODOS",
+      "targets": [
+        {
+          "destination": "OPURO",
+          "postId": 10513,
+          "status": "publish"
+        },
+        {
+          "destination": "OPOL",
+          "postId": 3524,
+          "status": "publish"
+        },
+        {
+          "destination": "LIBERAL",
+          "postId": 397,
+          "status": "publish"
+        }
+      ],
+      "responseHttpVerified": true,
+      "noTelegram": true,
+      "writeAuthorized": false
+    }
+  },
+  "trackingResolution": {
+    "rowId": 1670,
+    "stage": "PUBLICATION_RECONCILED",
+    "occurredAt": "2026-11-12T17:01:23.696Z",
+    "attemptCompletionClaimed": false
+  },
+  "probeCleanup": {
+    "workflowId": "7IDUF9PeHQ5v331Z",
+    "versionId": "b12cfe6f-ea62-48a8-8d70-f4b0579c1dde",
+    "active": false,
+    "nodeCount": 3,
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true,
+      "saveManualExecutions": false,
+      "saveDataErrorExecution": "none",
+      "saveDataSuccessExecution": "none",
+      "saveExecutionProgress": false,
+      "executionTimeout": 30
+    },
+    "credentialTypes": [
+      "n8nApi"
+    ]
+  },
+  "mysqlProbeCleanup": {
+    "workflowId": "C6XrTNtNahiV6ppn",
+    "versionId": "32bf2477-f269-4c97-823d-aa61fb7dd5cd",
+    "active": false,
+    "nodeCount": 2,
+    "originalSettingsRestored": true,
+    "readAttemptDenied": true,
+    "connectivityChanges": false
+  }
+}
