@@ -28,7 +28,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
     if(++requestCount>120){req.resume();res.setHeader('Retry-After','60');return end(429,{error:'rate_limited'});}
     const given=Buffer.from(req.headers.authorization??'');
     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
-    const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capabilities|current|open|reserve|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
+    const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capacity|capabilities|current|open|reserve|close|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
     const recoverAction=telegramRecovery&&req.url==='/v1/telegram/packages/reopen';
     const blockedListAction=telegramBlockedList&&req.url==='/v1/telegram/packages/blocked';
     const attemptMatch=telegramAttempts&&/^\/v1\/telegram\/attempts\/(begin|block|start|complete|decision)$/.exec(req.url)?.[1];
@@ -89,6 +89,11 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
         if(updatePayload){const r=await telegramUpdatePayloads.stage(input);return end(['PAYLOAD_STAGED','PAYLOAD_REPLAY'].includes(r.status)?200:409,r)}
         if(eventAction)return end(200,await telegramEvents.run(eventAction,input));
         if(reviewAction)return end(200,await telegramReviews.run(reviewAction,input));
+        if(telegramAction==='capacity') {
+          if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)return end(400,{error:'invalid_request'});
+          if(typeof telegramStore.capacity!=='function')return end(503,{error:'not_confirmed'});
+          const result=await telegramStore.capacity();return end(result?.status==='CAPACITY_OBSERVED'?200:503,result);
+        }
         if(telegramAction==='capabilities') {
           if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).length)return end(400,{error:'invalid_request'});
           return end(200,await telegramStore.capabilities());

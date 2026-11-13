@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {buildCorrectionPreview,validateCorrectionConfirmation} from './correction-preview.mjs';
+import {resolveDestinations,destinationLabel} from './original-destinations.mjs';
 
 // Explicit migration only; never create tables implicitly on a live request.
 export const correctionConfirmationSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_correction_previews_v1 (
@@ -39,10 +40,12 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
   if(rows.length!==1)return null;
   return rows[0];
  }
- return {
-  async preview(x){
+ // The package close operation can own the transaction and reserve its
+ // authenticated /listo control together with this durable preview request.
+ // This helper never commits, releases a connection or sends a message.
+ async function previewInTransaction(c,x){
+   if(!c||typeof c.execute!=='function')throw Error('INVALID_CORRECTION_TRANSACTION');
    exact(x,['owner','chat','packageId','revision','receiptId']);const {actorKey}=identity(x);
-   return tx(async c=>{
     const pack=await lockPackage(c,x,actorKey);
     if(!pack||pack.state!=='OPEN'||Number(pack.revision)!==x.revision)return {status:'NOT_AVAILABLE'};
     const facts=await loadLockedFacts(c,{packageId:x.packageId,revision:x.revision,ownerKey:pack.owner_key,actorKey});
@@ -57,8 +60,50 @@ export function createCorrectionConfirmationStore({pool,loadLockedFacts,commitCo
     const [result]=await c.execute("INSERT IGNORE INTO opmx_tg_correction_previews_v1 (package_id,revision,preview_hash,owner_key,preview_receipt,preview_json,state,created_at) VALUES (?,?,?,?,?,?,'PREVIEWED',UTC_TIMESTAMP(6))",[x.packageId,x.revision,preview.previewHash,actorKey,x.receiptId,JSON.stringify(preview)]);
     if(result.affectedRows!==1)return {status:'PREVIEW_EXISTS',preview};
     return {status:'PREVIEW_READY',preview};
-   });
-  },
+ }
+ // Read only. The caller must additionally bind this original receipt to the
+ // last stored control, current lease and contribution before reusing it.
+ // A newer Telegram /listo may query the same result, but cannot replace the
+ // original receipt, make another preview revision or restart an uncertain job.
+ async function readClosePreviewInTransaction(c,x){
+  if(!c||typeof c.execute!=='function')throw Error('INVALID_CORRECTION_TRANSACTION');
+  exact(x,['owner','chat','packageId','revision','receiptId']);const {actorKey}=identity(x);
+  const pack=await lockPackage(c,x,actorKey);
+  if(!pack||pack.state!=='OPEN'||Number(pack.revision)!==x.revision)return null;
+  const fail=()=>{throw Error('CLOSE_PREVIEW_CONFLICT')};
+  const originalReceipt=value=>{
+   try{if(identity({...x,receiptId:value}).actorKey!==actorKey)fail()}catch{fail()}
+   return value;
+  };
+  const [previews]=await c.execute('SELECT preview_hash,owner_key,preview_receipt,preview_json,state FROM opmx_tg_correction_previews_v1 WHERE package_id=? AND revision=? FOR UPDATE',[x.packageId,x.revision]);
+  const [jobs]=await c.execute('SELECT job_id,package_id,revision,base_revision,owner_key,actor_key,destination,receipt_hash,receipt_id,state FROM opmx_tg_preview_generation_v1 WHERE package_id=? AND revision=? FOR UPDATE',[x.packageId,x.revision]);
+  if(previews.length>1||jobs.length>1)fail();
+  if(!previews.length&&!jobs.length)return null;
+  let preview=null,previewReceipt=null,job=null,jobReceipt=null;
+  if(previews.length){
+   const row=previews[0];
+   if(row.owner_key!==actorKey||row.state!=='PREVIEWED')fail();
+   previewReceipt=originalReceipt(row.preview_receipt);
+   try{preview=JSON.parse(row.preview_json)}catch{fail()}
+   if(!preview||preview.packageId!==x.packageId||!validRevision(preview.baseRevision)||preview.baseRevision>=x.revision||!validateCorrectionConfirmation({preview,previewHash:row.preview_hash,actorKey,ownerKey:pack.owner_key,currentRevision:x.revision,explicitAction:preview.action}))fail();
+   try{if(destinationLabel(resolveDestinations(preview.destination))!==preview.destination)fail()}catch{fail()}
+  }
+  if(jobs.length){
+   job=jobs[0];jobReceipt=originalReceipt(job.receipt_id);
+   const baseRevision=Number(job.base_revision);
+   if(job.package_id!==x.packageId||Number(job.revision)!==x.revision||job.owner_key!==pack.owner_key||job.actor_key!==actorKey||!validRevision(baseRevision)||baseRevision>=x.revision||digest(jobReceipt)!==job.receipt_hash||!['PENDING','DISPATCHING','DISPATCHED','UNCERTAIN'].includes(job.state))fail();
+   try{if(destinationLabel(resolveDestinations(job.destination))!==job.destination)fail()}catch{fail()}
+   if(job.job_id!==digest(JSON.stringify(['opmx-preview-v1',x.packageId,x.revision,baseRevision,pack.owner_key,actorKey,job.destination])))fail();
+   if(preview&&(preview.action!=='UPDATE'||preview.baseRevision!==baseRevision||preview.destination!==job.destination||previewReceipt!==jobReceipt))fail();
+  }
+  // A materialized preview is stronger than the dispatch acknowledgement.
+  // Its normal delivery ledger still decides whether a part may be sent.
+  if(preview)return {receiptId:previewReceipt,result:{status:'PREVIEW_EXISTS',preview}};
+  return {receiptId:jobReceipt,result:job.state==='UNCERTAIN'?{status:'PREVIEW_DELIVERY_UNCERTAIN',retryPermitted:false}:{status:'PREVIEW_GENERATION_REQUESTED'}};
+ }
+ return {
+  previewInTransaction,readClosePreviewInTransaction,
+  async preview(x){exact(x,['owner','chat','packageId','revision','receiptId']);identity(x);return tx(c=>previewInTransaction(c,x))},
   async confirm(x){
    exact(x,['owner','chat','packageId','revision','receiptId','previewHash','action']);const {actorKey,messageId}=identity(x);
    if(!/^[a-f0-9]{64}$/.test(x.previewHash??'')||!['CREATE','UPDATE'].includes(x.action))throw Error('INVALID_CORRECTION_REQUEST');

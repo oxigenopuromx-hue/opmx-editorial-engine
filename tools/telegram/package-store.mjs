@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {validateTelegramDownload} from './intake.mjs';
+import {diagnosePackageQuotaFailure,readPackageCapacityAudit} from './guard-recovery-candidate/package-quota-diagnostic.mjs';
 
 export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:1000});
 // An explicitly reopened package can accept additional information while
@@ -108,7 +109,8 @@ export async function sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,
           return ({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});
 }
 
-export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null}={}) {
+export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null,closeRecoveryPreview=null,readCloseRecoveryResult=null}={}) {
+  if((closeRecoveryPreview!==null&&typeof closeRecoveryPreview!=='function')||(readCloseRecoveryResult!==null&&typeof readCloseRecoveryResult!=='function'))throw Error('Configuración inválida');
   if((readPublisherResult!==null&&typeof readPublisherResult!=='function')||typeof recoveryEnabled!=='boolean'||(readRecoveredPolicy!==null&&typeof readRecoveredPolicy!=='function')||(readConfirmedCorrection!==null&&(typeof readConfirmedCorrection!=='function'||!readRecoveredPolicy||!recoveryEnabled))||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
   let ready;
@@ -116,6 +118,9 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
     const c=await pool.getConnection();try {for(const sql of schema)await c.execute(sql);}finally{c.release();}
   })().catch(error=>{ready=undefined;throw error;});
   return {
+    async capacity() {
+      await initialize();const c=await pool.getConnection();try{return await readPackageCapacityAudit(c)}finally{c.release()}
+    },
     async capabilities() {
       await initialize();const c=await pool.getConnection();try {
         const [r]=await c.execute('SELECT @@max_allowed_packet AS max_packet');
@@ -123,9 +128,11 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
       }finally{c.release();}
     },
     async run(action,input) {
-      const validated=validatePackageRequest(action,input),actorKey=validated.ownerKey,bytes=validated.bytes;
+      const atomicClose=action==='close';
+      const validated=validatePackageRequest(atomicClose?'reserve':action,input),actorKey=validated.ownerKey,bytes=validated.bytes;
+      if(atomicClose&&(!isAttestedClose(input)||Buffer.byteLength(input.text)>CLOSE_CONTROL_ALLOWANCE))bad();
       let ownerKey=actorKey;
-      await initialize();if(action==='seal'&&events)await events.initialize();
+      await initialize();if((action==='seal'||atomicClose)&&events)await events.initialize();
       const c=await pool.getConnection();let committed=false;
       try {
         await c.beginTransaction();
@@ -147,7 +154,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           if(prior.length)return await finish({status:'OPEN_REPLAY',packageId:id,state:prior[0].state});
           const [session]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=?',[ownerKey]);
           if(session.length)return await finish({status:'ALREADY_OPEN',packageId:session[0].package_id});
-          if(Number(quota[0].package_count)>=PACKAGE_LIMITS.packages)return await finish({status:'QUOTA_EXCEEDED'});
+          if(Number(quota[0].package_count)>=PACKAGE_LIMITS.packages)return await finish({status:'QUOTA_EXCEEDED',quotaDiagnostic:diagnosePackageQuotaFailure({operation:'OPEN',quota:quota[0],packageLimit:PACKAGE_LIMITS.packages})});
           await c.execute("INSERT INTO opmx_tg_packages_v1 VALUES (?,?,'OPEN',1,0,0,UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))",[id,ownerKey]);
           await c.execute('INSERT INTO opmx_tg_sessions_v1 VALUES (?,?)',[ownerKey,id]);
           await c.execute('UPDATE opmx_tg_quota_v1 SET package_count=package_count+1 WHERE id=1');
@@ -162,8 +169,8 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         const [packs]=await c.execute('SELECT * FROM opmx_tg_packages_v1 WHERE package_id=? AND owner_key=?',[input.packageId,ownerKey]);
         if(!packs.length)return await finish({status:'NOT_FOUND'});
         const pack=packs[0];
-        if(lease && lease.actor_key!==actorKey && ['reserve','complete','seal','discard'].includes(action))return await finish({status:'PACKAGE_IN_USE'});
-        if(lease && lease.actor_key===actorKey && ['reserve','complete','seal','discard'].includes(action)){
+        if(lease && lease.actor_key!==actorKey && ['reserve','complete','seal','discard','close'].includes(action))return await finish({status:'PACKAGE_IN_USE'});
+        if(lease && lease.actor_key===actorKey && ['reserve','complete','seal','discard','close'].includes(action)){
           const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=?',[actorKey]);
           if(!sessions.length||sessions[0].package_id!==input.packageId)return await finish({status:'NO_EDIT_SESSION'});
         }
@@ -211,16 +218,45 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           const result=await sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,ownerKey,events,initializePublicationFence,initializeMotorAttempt});
           const {eventId,...response}=result;return await finish(response);
         }
+        const closeResult=async(current,receiptId=input.receiptId,replayed=false)=>{
+          const result=lease?await closeRecoveryPreview(c,{owner:input.owner,chat:input.chat,packageId:input.packageId,revision:Number(current.revision),receiptId}):await sealOpenPackageInTransaction(c,{input,pack:current,lease,actorKey,ownerKey,events,initializePublicationFence,initializeMotorAttempt});
+          const statuses=lease?['PREVIEW_GENERATION_REQUESTED','PREVIEW_READY','PREVIEW_EXISTS']:['READY'];
+          if(!result||!statuses.includes(result.status))throw Error('ATOMIC_CLOSE_UNCONFIRMED');
+          const {eventId,...safeResult}=result;
+          return {status:'CLOSE_COMPLETED',packageId:pack.package_id,revision:lease?Number(current.revision):Number(result.revision),recovery:!!lease,receiptId,replayed,result:safeResult};
+        };
+        if(atomicClose&&pack.state==='READY'&&!lease)return await finish(await closeResult(pack,input.receiptId,true));
         if(pack.state!=='OPEN' && action!=='complete')return await finish({status:'PACKAGE_CLOSED'});
-        if(action==='reserve') {
+        if(action==='reserve'||atomicClose) {
           if(lease){
             const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
             const received=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId);
             if(!opened||!received||opened[1]!==input.chat||received[1]!==input.chat||BigInt(received[2])<=BigInt(opened[2]))return await finish({status:'STALE_SESSION_MESSAGE'});
           }
+          if(atomicClose&&lease){
+            if(!closeRecoveryPreview||!readCloseRecoveryResult)throw Error('ATOMIC_CLOSE_CONFIGURATION_UNCONFIRMED');
+            const existing=await readCloseRecoveryResult(c,{owner:input.owner,chat:input.chat,packageId:input.packageId,revision:Number(pack.revision),receiptId:input.receiptId});
+            if(existing){
+              const [last]=await c.execute('SELECT i.item_id,i.kind,i.text_content,i.state,i.receipt_key,i.sha256,i.content_bytes,rc.actor_key FROM opmx_tg_items_v1 i LEFT JOIN opmx_tg_recovery_contributions_v1 rc ON rc.item_id=i.item_id AND rc.package_id=i.package_id WHERE i.package_id=? AND i.state=\'STORED\' ORDER BY i.created_at DESC,i.item_id DESC LIMIT 1',[input.packageId]);
+              const receipt=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(existing.receiptId??'');
+              const received=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(input.receiptId);
+              const opened=/^telegram-([1-9][0-9]{0,15})-([0-9]{1,16})-([0-9]{1,16})$/.exec(lease.receipt_id??'');
+              if(last.length!==1||last[0].actor_key!==actorKey||last[0].state!=='STORED'||last[0].receipt_key!==digest(existing.receiptId??'')||last[0].sha256!==digest(last[0].text_content??'')||Number(last[0].content_bytes)!==Buffer.byteLength(last[0].text_content??'')||!isAttestedClose({kind:last[0].kind,text:last[0].text_content,receiptId:existing.receiptId,chat:input.chat,packageId:input.packageId})||!receipt||receipt[1]!==input.chat||!opened||BigInt(receipt[2])<=BigInt(opened[2]))throw Error('ATOMIC_CLOSE_REPLAY_UNCONFIRMED');
+              if(BigInt(received[2])<BigInt(receipt[2]))return await finish({status:'STALE_SESSION_MESSAGE'});
+              if(!['PREVIEW_GENERATION_REQUESTED','PREVIEW_EXISTS','PREVIEW_DELIVERY_UNCERTAIN'].includes(existing.result?.status))throw Error('ATOMIC_CLOSE_REPLAY_UNCONFIRMED');
+              return await finish({status:'CLOSE_COMPLETED',packageId:pack.package_id,revision:Number(pack.revision),recovery:true,receiptId:existing.receiptId,replayed:true,result:existing.result});
+            }
+          }
           const a=input.attachment,receiptKey=digest(input.receiptId),fingerprint=digest(JSON.stringify([input.packageId,input.kind,input.text,a?[a.file_name,a.mime_type,a.declared_bytes]:null]));
           const [prior]=await c.execute('SELECT item_id,package_id,fingerprint,state FROM opmx_tg_items_v1 WHERE receipt_key=?',[receiptKey]);
-          if(prior.length)return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state,...(recoveryEnabled&&lease?{revision:Number(pack.revision)}:{})});
+          if(prior.length){
+            if(atomicClose&&prior[0].package_id===input.packageId&&prior[0].fingerprint===fingerprint&&prior[0].state==='STORED'){
+              const [last]=await c.execute("SELECT item_id FROM opmx_tg_items_v1 WHERE package_id=? AND state='STORED' ORDER BY created_at DESC,item_id DESC LIMIT 1",[input.packageId]);
+              if(last.length!==1||last[0].item_id!==prior[0].item_id)return await finish({status:'STALE_SESSION_MESSAGE'});
+              return await finish(await closeResult(pack,input.receiptId,true));
+            }
+            return await finish({status:prior[0].fingerprint===fingerprint?'RESERVATION_REPLAY':'CONFLICT',itemId:prior[0].fingerprint===fingerprint?prior[0].item_id:undefined,state:prior[0].state,...(recoveryEnabled&&lease?{revision:Number(pack.revision)}:{})});
+          }
           const reserved=input.kind==='TEXT'?Buffer.byteLength(input.text):input.attachment.declared_bytes??PACKAGE_LIMITS.fileBytes;
           const close=isAttestedClose(input)&&reserved<=CLOSE_CONTROL_ALLOWANCE;
           // Do not accumulate a new /listo control on every attempt while a
@@ -235,13 +271,14 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
           // bounded overage, at most 1 KiB per package in the global quota.
           const packageLimit=PACKAGE_LIMITS.packageBytes+(close?CLOSE_CONTROL_ALLOWANCE:0);
           const totalLimit=PACKAGE_LIMITS.totalBytes+(close?CLOSE_CONTROL_ALLOWANCE*PACKAGE_LIMITS.packages:0);
-          if(Number(pack.item_count)>=itemLimit||Number(pack.used_bytes)+reserved>packageLimit||Number(quota[0].used_bytes)+reserved>totalLimit)return await finish({status:'QUOTA_EXCEEDED'});
+          if(Number(pack.item_count)>=itemLimit||Number(pack.used_bytes)+reserved>packageLimit||Number(quota[0].used_bytes)+reserved>totalLimit)return await finish({status:'QUOTA_EXCEEDED',quotaDiagnostic:diagnosePackageQuotaFailure({operation:'RESERVE',pack,quota:quota[0],requestedBytes:reserved,itemLimit,packageBytesLimit:packageLimit,totalBytesLimit:totalLimit,recovery:!!lease})});
           const id='ti_'+digest(`${ownerKey}:${input.receiptId}`).slice(0,40);
           const textOnly=input.kind==='TEXT';
           await c.execute('INSERT INTO opmx_tg_items_v1 (item_id,package_id,owner_key,receipt_key,fingerprint,kind,state,text_content,attachment_json,reserved_bytes,content_bytes,sha256,content_blob,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,NULL,UTC_TIMESTAMP(6))',[id,input.packageId,ownerKey,receiptKey,fingerprint,input.kind,textOnly?'STORED':'PENDING',input.text,input.attachment?JSON.stringify(input.attachment):null,reserved,textOnly?reserved:0,textOnly?digest(input.text):null]);
           if(lease)await c.execute('INSERT INTO opmx_tg_recovery_contributions_v1 (item_id,package_id,actor_key,created_at) VALUES (?,?,?,UTC_TIMESTAMP(6))',[id,input.packageId,actorKey]);
           await c.execute('UPDATE opmx_tg_packages_v1 SET item_count=item_count+1,used_bytes=used_bytes+?,revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?',[reserved,input.packageId]);
           await c.execute('UPDATE opmx_tg_quota_v1 SET used_bytes=used_bytes+? WHERE id=1',[reserved]);
+          if(atomicClose)return await finish(await closeResult({...pack,item_count:Number(pack.item_count)+1,used_bytes:Number(pack.used_bytes)+reserved,revision:Number(pack.revision)+1}));
           return await finish({status:textOnly?'STORED':'RESERVED',packageId:input.packageId,itemId:id,...(recoveryEnabled&&lease?{revision:Number(pack.revision)+1}:{})});
         }
         const [items]=await c.execute('SELECT * FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=?',[input.itemId,input.packageId,ownerKey]);

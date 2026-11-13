@@ -47,7 +47,7 @@ const recoveryReady=Promise.all([fenceReady,motorReady,servicesReady]).then(asyn
  return prepareRecoveryRuntimeServices({pool,secret:OPMX_GUARD_SECRET,events:telegramEvents,reviews,adminUserIds:sharedOperators?.subscriber?[sharedOperators.subscriber]:[],readWordPress:m.readWordPress});
 }).catch(()=>{console.error('guard.recovery_services: initialization_failed');return null});
 const requireRecovery=async()=>{const s=await recoveryReady;if(!s)throw Error('RECOVERY_SERVICES_UNAVAILABLE');return s};
-const telegramStore={capabilities:async(...args)=>(await requireRecovery()).telegramStore.capabilities(...args),async run(action,input){if(action==='seal')await Promise.all([requireFence(),requireMotor()]);return (await requireRecovery()).telegramStore.run(action,input)}};
+const telegramStore={capacity:async(...args)=>(await requireRecovery()).telegramStore.capacity(...args),capabilities:async(...args)=>(await requireRecovery()).telegramStore.capabilities(...args),async run(action,input){if(action==='seal'||action==='close')await Promise.all([requireFence(),requireMotor()]);return (await requireRecovery()).telegramStore.run(action,input)}};
 const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:reviews,
  telegramRecovery:async(...args)=>(await requireRecovery()).telegramRecovery(...args),
  telegramBlockedList:async(...args)=>(await requireRecovery()).telegramBlockedList(...args),
