@@ -1,0 +1,23 @@
+{
+  "executionId": "39151",
+  "results": [
+    {
+      "status": "TASK29_ADMIN_REAL_CODE_QA_PASSED",
+      "cases": 13,
+      "checks": 42,
+      "sourceHashes": {
+        "prepare": "d81f0c10d2aaa3f953d9c90e4bf57340023ab870bff46906af810b6b30a034c9",
+        "records": "3594367c969f1da8c823e481e15efa474a8eb776b48fd8467c4fb63fa0e858fb",
+        "select": "be6eb0373788922843c71e75cad62c647492d245389c2387728bfacde9daadb3",
+        "verify": "57f057e9bc9d0f8be7c2d99b0a9bc80bda061e8f8fc8f737ef680559aefb7401",
+        "attach": "33e73d46f1ac5cc459475bc1f5255e98a4f288047c1bd5701c5555717dd12915"
+      },
+      "networkCalls": 0,
+      "tableWrites": 0,
+      "telegramMessages": 0,
+      "prototypeAdaptations": 0,
+      "changedCodeBodies": 4,
+      "newCodeBodies": 1
+    }
+  ]
+}

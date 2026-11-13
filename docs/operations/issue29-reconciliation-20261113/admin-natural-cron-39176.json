@@ -1,0 +1,158 @@
+{
+  "readOnlyVerification": true,
+  "checkedAt": "2026-11-13T15:42:54.801Z",
+  "workflow": {
+    "id": "NFOBzPfHmvRjVFOA",
+    "active": true,
+    "versionId": "602e9c32-8a18-40bc-b131-04058c280b90",
+    "activeVersionId": "602e9c32-8a18-40bc-b131-04058c280b90",
+    "draftMatchesActive": true,
+    "nodeCount": 18,
+    "nodeGroupCount": 0,
+    "canonicalGraphSha256": "8430febf3e70e701e02f8926c254ef880ec8500bbe108183e964078dafd53e50",
+    "fourUpdatedCodeBodiesMatchPrepared": true,
+    "connectionsMatchPrepared": true,
+    "remainingNodeDifferences": [
+      "Comprobar cancelación de entrega Guard:onError",
+      "Comprobar cancelación de entrega Guard:retryOnFail",
+      "Comprobar cancelación de entrega Guard:alwaysOutputData"
+    ],
+    "settingsGap": {
+      "node": "Comprobar cancelación de entrega Guard",
+      "observedBefore": {
+        "onError": null,
+        "retryOnFail": null,
+        "alwaysOutputData": null
+      },
+      "expected": {
+        "retryOnFail": false,
+        "onError": "continueRegularOutput",
+        "alwaysOutputData": true
+      },
+      "cause": "n8n addNode input schema did not apply top-level execution settings; source builder now emits an explicit setNodeSettings operation",
+      "sourceBuilderCorrected": true,
+      "nativeTestsPassed": 15,
+      "appliedToProductionByThisAgent": false,
+      "productionCorrectionPendingRoot": true
+    }
+  },
+  "naturalCron": {
+    "id": "39176",
+    "workflowId": "NFOBzPfHmvRjVFOA",
+    "mode": "trigger",
+    "status": "success",
+    "startedAt": "2026-11-13T15:41:48.213Z",
+    "stoppedAt": "2026-11-13T15:41:54.529Z",
+    "retryOf": null,
+    "retrySuccessId": null,
+    "waitTill": null,
+    "notManuallyExecutedHere": true,
+    "telegramSenderNodeExecuted": false,
+    "selectedAdministratorAlerts": 0
+  },
+  "cancellationObservation": {
+    "schema": "opmx.destination-cancellation.v1",
+    "status": "DELIVERY_CANCELLATION_CONFIRMED",
+    "packageId": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+    "revision": 10,
+    "requestId": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf",
+    "operationId": "requested-20261113-issue29-simey-liberal",
+    "destination": "LIBERAL",
+    "postId": 393,
+    "tombstoneHash": "0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+    "results": [
+      {
+        "destination": "OPURO",
+        "status": "PUBLISHED",
+        "postId": 10493,
+        "wordpressStatus": "publish",
+        "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+        "originalSlug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades"
+      },
+      {
+        "destination": "OPOL",
+        "status": "PUBLISHED",
+        "postId": 3515,
+        "wordpressStatus": "publish",
+        "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+        "originalSlug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades"
+      },
+      {
+        "destination": "LIBERAL",
+        "status": "CANCELLED",
+        "postId": 393,
+        "wordpressStatus": "trash",
+        "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades__trashed",
+        "originalSlug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades"
+      }
+    ],
+    "currentCmsVerified": true,
+    "mixedOutcome": true,
+    "publicationComplete": false,
+    "telegramAck": "NOT_CHECKED",
+    "publicVisibility": "NOT_CHECKED",
+    "consistentSnapshot": false,
+    "writeAuthorized": false,
+    "reopenAuthorized": false,
+    "resumeAuthorized": false,
+    "retryPermitted": false,
+    "processTerminationClaimed": false,
+    "observedAt": "2026-11-13T15:41:54.364Z",
+    "cancellationObservedAt": "2026-11-13T15:41:14.124Z",
+    "writesFenced": true,
+    "noActiveN8nWriters": true,
+    "attemptState": "REVOKED",
+    "fenceState": "RECONCILING"
+  },
+  "ledger": {
+    "matchingRowsReturned": 16,
+    "durableRecord": {
+      "id": 1839,
+      "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+      "revision": 10,
+      "stage": "DELIVERY_CANCELLED_RECONCILED|0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+      "occurred_at": "2026-11-13T15:41:54.436Z",
+      "request_id": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf"
+    },
+    "uncertaintyHistory": {
+      "id": 1637,
+      "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+      "revision": 10,
+      "stage": "DRAFT_UNCERTAIN",
+      "occurred_at": "2026-11-12T01:00:41.397Z",
+      "request_id": null
+    },
+    "adminAlertHistory": {
+      "id": 1638,
+      "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+      "revision": 10,
+      "stage": "ALERT_ADMIN_1637",
+      "occurred_at": "2026-11-12T01:01:48.243Z",
+      "request_id": null
+    },
+    "insertConfirmed": true,
+    "insertExpected": {
+      "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+      "revision": 10,
+      "stage": "DELIVERY_CANCELLED_RECONCILED|0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+      "occurred_at": "2026-11-13T15:41:54.436Z",
+      "request_id": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf"
+    },
+    "insertAck": [
+      {
+        "id": 1839,
+        "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+        "revision": 10,
+        "stage": "DELIVERY_CANCELLED_RECONCILED|0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+        "occurred_at": "2026-11-13T15:41:54.436Z",
+        "request_id": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf"
+      }
+    ],
+    "falsePublicationReconciliationAdded": false,
+    "falseProcessCompleteAdded": false
+  },
+  "externalMutationsByThisVerification": 0,
+  "forcedWorkflowExecutions": 0,
+  "cmsWrites": 0,
+  "telegramMessagesSentByThisVerification": 0
+}

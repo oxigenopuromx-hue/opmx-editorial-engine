@@ -1,0 +1,19 @@
+{
+  "archive": "opmx-guard-issue29-reconciliation.zip",
+  "bytes": 221553,
+  "sha256": "a86b41d24792266f8270cdce750f27d818a42532bb51eecba7f1254dcca3af31",
+  "files": 89,
+  "unchangedFiles": 82,
+  "changed": [
+    "tools/mcp-publisher/guard-server.mjs",
+    "tools/telegram/guard-recovery-candidate/cms-observation-client.mjs",
+    "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+    "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+    "tools/telegram/guard-recovery-candidate/unwritten-attempt-freeze.mjs"
+  ],
+  "added": [
+    "tools/telegram/guard-recovery-candidate/destination-cancellation-enforcement.mjs",
+    "tools/telegram/guard-recovery-candidate/destination-cancellation.mjs"
+  ],
+  "writerManifestUnchanged": true
+}

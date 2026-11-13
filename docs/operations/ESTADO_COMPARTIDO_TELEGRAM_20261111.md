@@ -1,5 +1,19 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
+## Corte vigente — #29 conciliado; continuación editorial por el bot — 13nov2026 09:41 CDMX
+
+**Este corte sustituye los pendientes técnicos29 anteriores.** No se publicaron, recrearon, restauraron ni editaron notas. #28 cancelación general sigue diferida.
+
+- **Simey/LIBERAL cancelado de forma durable:**39167 registró sólo la entrega pendiente393, que ya estaba en TRASH. OPURO10493 y OPOL3515 siguen publish. Mismo paqueteREADY10 y requestTODOS original; intentoREVOKED, fenceRECONCILING, tombstone `0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f`. No se restaura393 ni se hereda de nuevo LIBERAL/TODOS en una revisión futura.
+- **Aviso obsoleto conciliado:** cron natural39176 añadió fila1839 DELIVERY_CANCELLED_RECONCILED|hash con acuse exacto; conserva incertidumbre1637 y alerta1638. Cero avisos seleccionados y ningún Notificaradministrador ejecutado. No es un recibo PUBLISH de tres destinos.
+- **Servidores IA9:**39163 congeló el intento anteriorREVOKED. **Comisión Morena8:**39165 concilió el históricoABSENT sin inventar intento.39172 comprobó RECOVERY_READY_REQUIRES_BOT_OPEN para ambos, con6y4elementosSTORED/0PENDING y sesiones/leases libres. No se crearon revisiones nuevas ni se volvió a invocar iniciar_intento.
+- Continuación auténtica: desde la cuenta administradora, `/abrir tg_efdabf64148316df03e230122001e7311843a4ab`, revisar y `/listo`, confirmar la vista del bot; terminar antes de `/abrir tg_c11966b7bf1994c072c1e54999dfbd3579f619fb` y repetir esa revisión. No reenviar materiales ni fabricar recibos Telegram desde Work. Esta elegibilidad no acredita publicaciones nuevas.
+- Guard Actual/completado `opmx-guard-issue29-reconciliation.zip`, inicio13nov09:36:57CDMX/completado09:38;221553bytes/89archivos/SHA256 `a86b41d24792266f8270cdce750f27d818a42532bb51eecba7f1254dcca3af31`.82archivos idénticos31,5modificados2nuevos, manifiesto de escritores idéntico.39161 verifica cinco pins/grafos actuales;39172 rechaza409 el writer tardío LIBERAL.
+- Monitor18nodos activo final `b3a4b97f-315e-481b-9108-dd6ac629fae1`:4Code modificados y2nodos nuevos, más tres ajustes HTTP explícitos para continuar sin suprimir alertas ante error de red. Grafo final JSON-SHA256 `071eae20f260119ab9e1203defb8852f22ac124b055b01302d0748c115cabf9a`. El estado602e9c32 anterior queda histórico.
+- Motor único habilitado60558caracteres/SHA3215… idéntico31; READY/vista previa/suscripciones sin cambios. Cinco writers y receptor conservan sus versiones. Probe inactivo3nodos, grafo y ajustes originales none/30 restaurados, versión20b997bc.
+- QA252pruebas dirigidas PASS; Code real39151 con13casos/42checks; arranque CJS23rutas401/503 sin red ni BD real. Fuentes [feb31a5](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/feb31a5355a44f87c6635e19f842d4d671073127) y [d1b9eda](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/d1b9edab88b29170c66be65c85422ee88d7a493d). [Entrega, evidencias y rollback29](issue29-reconciliation-20261113/CIERRE_Y_DESPLIEGUE.md).
+- **Reversión:** conservar tabla, tombstone, auditoría, revocación y fence. No volver a Guard31uotro que ignore la cancelación y reactive TODOS. No borrar historial ni simular éxito editorial.
+
 ## Corte vigente — #31 desplegado y verificado — 13nov2026 UTC / 12nov22:20 CDMX
 
 **Este corte reemplaza las versiones activas MCP/Guard/Motor del corte anterior.** Los cambios de #13/#18/#21/#24/#30 se conservan. No se publicó, editó ni reintentó ninguna nota real en esta entrega.

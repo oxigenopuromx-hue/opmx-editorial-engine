@@ -1,3 +1,5 @@
+> Actualización13nov2026: los pendientes técnicos de este corte están conciliados. Simey/LIBERAL393 cancelado; IA9 y Morena8 habilitados para reapertura auténtica, sin publicación por DEV. Véase [entrega y acuses posteriores](../issue29-reconciliation-20261113/CIERRE_Y_DESPLIEGUE.md). El texto inferior se conserva como historial.
+
 # Revisión de conciliaciones — issue 29
 
 12 de noviembre de 2026. Sólo lectura de paquetes, resultados n8n, Guard y CMS autenticados. No se publicó, editó, reabrió ni reenvió ninguna nota.

@@ -1,0 +1,37 @@
+{
+  "executionId": "39144",
+  "results": [
+    {
+      "scope": "SIMEY_EXACT_READ_ONLY",
+      "results": [
+        {
+          "destination": "OPURO",
+          "httpStatus": 200,
+          "post": {
+            "id": 10493,
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+            "status": "publish"
+          }
+        },
+        {
+          "destination": "OPOL",
+          "httpStatus": 200,
+          "post": {
+            "id": 3515,
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+            "status": "publish"
+          }
+        },
+        {
+          "destination": "LIBERAL",
+          "httpStatus": 200,
+          "post": {
+            "id": 393,
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades__trashed",
+            "status": "trash"
+          }
+        }
+      ]
+    }
+  ]
+}

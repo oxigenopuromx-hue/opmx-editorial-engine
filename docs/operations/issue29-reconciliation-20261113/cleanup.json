@@ -1,0 +1,24 @@
+{
+  "probe": {
+    "versionId": "20b997bc-4d8e-4588-9e1f-cb8325aa44a2",
+    "active": false,
+    "nodes": 3,
+    "graphAndSettingsRestored": true,
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true,
+      "saveManualExecutions": false,
+      "saveDataErrorExecution": "none",
+      "saveDataSuccessExecution": "none",
+      "saveExecutionProgress": false,
+      "executionTimeout": 30
+    }
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "enabled": true,
+    "chars": 60558,
+    "matchesCommittedIssue31Prompt": true,
+    "sha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83"
+  }
+}

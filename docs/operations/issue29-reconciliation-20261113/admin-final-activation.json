@@ -1,0 +1,25 @@
+{
+  "status": "ADMIN_FINAL_ACTIVATION_VERIFIED",
+  "id": "NFOBzPfHmvRjVFOA",
+  "activeVersionId": "b3a4b97f-315e-481b-9108-dd6ac629fae1",
+  "draftVersionId": "b3a4b97f-315e-481b-9108-dd6ac629fae1",
+  "nodeCount": 18,
+  "canonicalGraphSha256": "071eae20f260119ab9e1203defb8852f22ac124b055b01302d0748c115cabf9a",
+  "codeBodiesUnchangedFromQa39151": true,
+  "settingsOnlyDeltaFrom602": {
+    "onError": "continueRegularOutput",
+    "retryOnFail": false,
+    "alwaysOutputData": true
+  },
+  "settingsGapCorrected": true,
+  "sourceCorrectionCommit": "d1b9edab88b29170c66be65c85422ee88d7a493d",
+  "naturalCronBeforeSettingsFix": "39176",
+  "durableRow": {
+    "id": 1839,
+    "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+    "revision": 10,
+    "stage": "DELIVERY_CANCELLED_RECONCILED|0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+    "occurred_at": "2026-11-13T15:41:54.436Z",
+    "request_id": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf"
+  }
+}

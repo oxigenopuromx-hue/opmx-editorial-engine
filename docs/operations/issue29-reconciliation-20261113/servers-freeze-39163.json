@@ -1,0 +1,26 @@
+{
+  "executionId": "39163",
+  "results": [
+    {
+      "key": "servers-freeze",
+      "httpStatus": 200,
+      "body": {
+        "status": "UNWRITTEN_ATTEMPT_FROZEN",
+        "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+        "revision": 9,
+        "attemptState": "REVOKED",
+        "fenceState": "RECONCILING",
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          }
+        ],
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      }
+    }
+  ]
+}

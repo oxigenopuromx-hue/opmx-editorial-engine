@@ -1,0 +1,24 @@
+{
+  "status": "ADMIN_PREPARED_EXACT_QA_BODIES",
+  "versionId": "602e9c32-8a18-40bc-b131-04058c280b90",
+  "nodeCount": 18,
+  "unchangedActiveVersion": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+  "nodeCodeHashesMatch": {
+    "prepare": true,
+    "records": true,
+    "select": true,
+    "verify": true,
+    "attach": true
+  },
+  "hashes": {
+    "prepare": "d81f0c10d2aaa3f953d9c90e4bf57340023ab870bff46906af810b6b30a034c9",
+    "records": "3594367c969f1da8c823e481e15efa474a8eb776b48fd8467c4fb63fa0e858fb",
+    "select": "be6eb0373788922843c71e75cad62c647492d245389c2387728bfacde9daadb3",
+    "verify": "57f057e9bc9d0f8be7c2d99b0a9bc80bda061e8f8fc8f737ef680559aefb7401",
+    "attach": "33e73d46f1ac5cc459475bc1f5255e98a4f288047c1bd5701c5555717dd12915"
+  },
+  "graphHash": "8430febf3e70e701e02f8926c254ef880ec8500bbe108183e964078dafd53e50",
+  "settingsAndGroupsUnchanged": true,
+  "newNodes": 2,
+  "modifiedExistingCodeNodes": 4
+}

@@ -1,0 +1,102 @@
+{
+  "executionId": "39161",
+  "results": [
+    {
+      "key": "runtime",
+      "httpStatus": 200,
+      "body": {
+        "status": "RUNTIME_OBSERVED",
+        "scope": {
+          "packageId": "tg_0000000000000000000000000000000000000000",
+          "revision": 1,
+          "eventId": "evt_000000000000000000000000000000000000000000000000"
+        },
+        "observedAt": "2026-11-13T15:40:01.980Z",
+        "versionsMatch": true,
+        "noActiveN8nWriters": true,
+        "executionPages": [
+          {
+            "status": "running",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "waiting",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "new",
+            "complete": true,
+            "executions": []
+          }
+        ],
+        "authorizesRecovery": false,
+        "motorTerminationVerified": false,
+        "workflows": [
+          {
+            "id": "bnzVMNkZuGO1GQCZ",
+            "activeVersionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+            "nodeCount": 155
+          },
+          {
+            "id": "Mt7ts2EGPbyaTC2o",
+            "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+            "nodeCount": 58
+          },
+          {
+            "id": "4o7K5TmKc7joScqB",
+            "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+            "nodeCount": 152
+          },
+          {
+            "id": "C4hk6fQQomueYC8f",
+            "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+            "nodeCount": 10
+          },
+          {
+            "id": "qBmLf0DmcMSfuWvm",
+            "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+            "nodeCount": 9
+          }
+        ]
+      }
+    },
+    {
+      "key": "servers-pre-freeze",
+      "httpStatus": 200,
+      "body": {
+        "status": "RECONCILIATION_REQUIRED",
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "key": "morena-pre-freeze",
+      "httpStatus": 200,
+      "body": {
+        "status": "RECONCILIATION_REQUIRED",
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "key": "simey-pre-cancellation",
+      "httpStatus": 200,
+      "body": {
+        "schema": "opmx.destination-cancellation.v1",
+        "status": "DELIVERY_CANCELLATION_UNCONFIRMED",
+        "nextAction": "OBSERVE_ONLY",
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "resumeAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "executionId": "39134",
+  "results": [
+    {
+      "key": "servers",
+      "httpStatus": 200,
+      "body": {
+        "status": "RECONCILIATION_VERIFIED",
+        "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+        "revision": 9,
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          }
+        ],
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "key": "morena",
+      "httpStatus": 200,
+      "body": {
+        "status": "RECONCILIATION_VERIFIED",
+        "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "revision": 8,
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "OPOL",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "LIBERAL",
+            "status": "BLOCKED"
+          }
+        ],
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "key": "simey",
+      "httpStatus": 200,
+      "body": {
+        "status": "RECONCILIATION_REQUIRED",
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    }
+  ]
+}
