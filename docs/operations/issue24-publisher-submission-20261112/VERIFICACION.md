@@ -33,3 +33,5 @@ La hija37855 tardó71.186s mientras el Motor recibió error antes de que termina
 ## Reversión
 
 Restaurar conjuntamente MCP c0de03ed-e7a7-4255-a9c8-9ca76404424e y Guard opmx-guard-publication-status23.zip SHA256028b71d5c5c35060e8fd92f80b0736d0a7d4b5c4b8ba8ca02acf1853de1d518c. Eliminar únicamente el bloque añadido ISSUE24 del prompt del mismo Motor si se revierte la política; comprobar su hash anterior. Conservar tabla de aceptaciones, recibos y estados históricos; no reintentar publicaciones ni activar un draft ajeno como reversión. El receptor22 tiene reversión independiente documentada en su informe.
+
+![Despliegue completado en Hostinger](despliegue-hostinger.jpg)
