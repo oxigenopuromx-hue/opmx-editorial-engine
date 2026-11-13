@@ -1,5 +1,17 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
+## Corte vigente — #18 desplegado, #29 revisado y #13 en preparación — 13nov2026 UTC / 12nov CDMX
+
+- **#18 operativo:** Guard `opmx-guard-atomic-close18.zip` Actual/completado12nov20:27:00CDMX; SHA256 `e76550d99baa33d0b4839487d13040422f4f6805d7018238a3d5949a5b6d79aa`. Receptor único `OSi8AcnzLlI0csRu` activo `159d7833-1848-47f2-bfce-db9792751a78`,52nodos,grupo original51miembros. Cierre autenticado y atómico, replay sin consumir nuevos espacios y diagnóstico específico. [Entrega, QA y rollback](issue18-close-quota-20261113/CIERRE_Y_DESPLIEGUE.md).
+- Capacidad38113:145/1000paquetes,52,900,939/134,217,728bytes,0PENDING y ambos riesgos de cierre legado0. Dos espacios de diferencia contra la regla nueva se conservan como observación histórica; no se borraron ni reajustaron registros. 92pruebas dirigidasPASS; n8n38102:8casos/30aserciones; runtime38116 cinco pins correctos.
+- **#29 permanece abierto:** Servidores IA `tg_efdabf…` READY9(6STORED), Comisión Morena `tg_c11966…` READY8(4STORED); conciliación381? consultar evidencia exacta38084 y [revisión](issue29-conciliacion-20261112/REVISION_ACTUAL.md). Ambos siguen bloqueados para reintento; no se publicó ni recreó nada. El usuario confirma que **Simey no salió en LIBERAL**; el post393 permanece draft, OPURO10493/OPOL3515publish. No interpretar confirmaciones parciales como publicación completa.
+- **#13 NO ACTIVO:** candidata de metadata por categoría preparada sobre escritores reales. QA REST38092:7checks con borrador10533terminado enTRASH; lectura pública38192:7GETPASS. Antes de activar se incorpora procedencia acreditada de la orden del operador conforme D045; un MASTER generado por el Motor no basta. Los cambios Shared/Form guardados aún son borradores candidatos; activeVersion productivas siguen4263fea4/d6bbb33a/1b78dc88 y Guard conserva sus pins.
+- No se modificó el único Motor ni las suscripciones READY/vista previa. No se publicaron ni editaron notas reales en esta revisión. Cancelación general#28 sigue aplazada por instrucción del usuario.
+
+## Cortes anteriores (históricos)
+
+# Estado compartido — Telegram, Publisher y Motor Editorial
+
 ## Corte vigente — issue21 desplegado, 13nov2026 UTC / 12nov2026 19:07 CDMX
 
 **El #21 ya está activo y comprobado.** Este corte reemplaza el estado “NO DESPLEGADO” del corte anterior.
