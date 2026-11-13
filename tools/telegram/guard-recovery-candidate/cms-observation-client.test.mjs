@@ -10,6 +10,14 @@ test('missing, deleted and unavailable records never authorize replacement',asyn
  for(const statusCode of [401,403,404,500]){const d=data();d.statusCode=statusCode;d.post=null;assert.deepEqual(await observer(d)(input),{statusCode,post:null,writeAuthorized:false})}
  const d=data();d.post.status='trash';assert.equal((await observer(d)(input)).post.status,'trash');
 });
+test('trash slug is accepted only by the explicit cancellation observer and only in trash',async()=>{
+ const d=data();d.post.status='trash';d.post.slug='nota-verificada__trashed';
+ assert.equal((await observer(d)(input)).statusCode,0);
+ const read=createCmsObserver({secret,allowTrashedSlug:true,now:()=>clock,nonceFactory:()=>nonce,fetchImpl:async()=>({status:200,json:async()=>d})});
+ assert.equal((await read(input)).post.status,'trash');assert.equal((await read(input)).writeAuthorized,false);
+ for(const status of ['draft','publish']){d.post.status=status;assert.equal((await read(input)).statusCode,0)}
+ d.post.status='trash';for(const slug of ['nota__trashed/evil','../nota__trashed','nota__trashed__trashed','nota__trashed-2']){d.post.slug=slug;assert.equal((await read(input)).statusCode,0)}
+});
 test('rejects cross-site, stale, replayed, forged and invalid identity observations',async t=>{
  const cases={site:d=>{d.destination='LIBERAL'},id:d=>{d.postId++},returnedId:d=>{d.post.id++},nonce:d=>{d.nonce='cms_'+'c'.repeat(48)},stale:d=>{d.startedAt=new Date(clock-60000).toISOString()},future:d=>{d.observedAt=new Date(clock+60000).toISOString()},slug:d=>{d.post.slug='../note'},type:d=>{d.post.type='page'},permission:d=>{d.writeAuthorized=true},status:d=>{d.post.status='unknown'}};
  for(const [name,mutate]of Object.entries(cases))await t.test(name,async()=>{const d=data();mutate(d);assert.equal((await observer(d)(input)).statusCode,0)});

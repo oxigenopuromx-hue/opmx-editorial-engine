@@ -65,6 +65,8 @@ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRu
  telegramFinalPublication:async(...args)=>(await requireMotor()).telegramFinalPublication(...args),
  telegramLiteralValidation:async(...args)=>(await requireRecovery()).telegramLiteralValidation(...args),
  telegramReconciliationFreeze:async(...args)=>(await requireMotor()).telegramReconciliationFreeze(...args),
+ telegramRecoveryReadiness:async(...args)=>(await requireMotor()).telegramRecoveryReadiness(...args),
+ telegramDestinationCancellation:Object.fromEntries(['cancel','observe','allowed'].map(method=>[method,async(...args)=>(await requireMotor()).telegramDestinationCancellation[method](...args)])),
  targetBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).targetBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
  mediaBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).mediaBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},
  telegramPublicationBegin:async(...args)=>await (await requireRecovery()).creationWriteAllowed(args[1])?(await requireFence()).telegramPublicationBegin(...args):{status:'WRITE_NOT_PERMITTED',action:'manual_reconciliation'},

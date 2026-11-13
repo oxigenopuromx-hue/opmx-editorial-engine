@@ -8,12 +8,14 @@ import {beginMediaUpload,recordMediaUpload,inspectMediaUpload} from './media-pro
 const MAX_BODY=4096;
 // Integration candidate derived from the verified last-source blob 7881ae8.
 // Recovery and writer hooks are opt-in; production is not changed by this file.
-export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
+export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramRecoveryReadiness=null,telegramDestinationCancellation=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
   if(telegramUpdateDeliveries!==null&&typeof telegramUpdateDeliveries.consume!=='function')throw new Error('Configuración incompleta');
   if(telegramLiteralValidation!==null&&typeof telegramLiteralValidation!=='function')throw Error('Configuración incompleta');
   if(telegramFinalPublication!==null&&typeof telegramFinalPublication!=='function')throw Error('Configuración incompleta');
   if(telegramReconciliationFreeze!==null&&typeof telegramReconciliationFreeze!=='function')throw Error('Configuración incompleta');
+  if(telegramRecoveryReadiness!==null&&typeof telegramRecoveryReadiness!=='function')throw Error('Configuración incompleta');
+  if(telegramDestinationCancellation!==null&&['cancel','observe','allowed'].some(k=>typeof telegramDestinationCancellation[k]!=='function'))throw Error('Configuración incompleta');
   if(telegramReconciliation!==null&&typeof telegramReconciliation!=='function')throw new Error('Configuración incompleta');
   if(telegramSubmissions!==null&&(!telegramSubmissions||typeof telegramSubmissions.begin!=='function'||typeof telegramSubmissions.report!=='function'))throw new Error('Configuración incompleta');
   if(telegramWriterReceipts!==null&&typeof telegramWriterReceipts?.report!=='function')throw new Error('Configuración incompleta');
@@ -56,19 +58,24 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
     const literalValidationAction=telegramLiteralValidation&&req.url==='/v1/telegram/literal/validate';
     const finalPublicationAction=telegramFinalPublication&&req.url==='/v1/telegram/publications/observe-final';
     const freezeUnwrittenAction=telegramReconciliationFreeze&&req.url==='/v1/telegram/reconciliation/freeze-unwritten';
+    const recoveryReadinessAction=telegramRecoveryReadiness&&req.url==='/v1/telegram/reconciliation/recovery-readiness';
+    const destinationCancellationAction=telegramDestinationCancellation&&/^\/v1\/telegram\/destination-cancellations\/(cancel|observe)$/.exec(req.url)?.[1];
     const writerReceiptAction=telegramWriterReceipts&&req.url==='/v1/telegram/writers/report';
     const submissionAction=telegramSubmissions&&/^\/v1\/telegram\/submissions\/(begin|report)$/.exec(req.url)?.[1];
     const previewDiagnostic=req.url==='/v1/telegram/previews/diagnostic';
     const runtimeAction=runtimeObserver&&req.url==='/v1/telegram/runtime/observe';
     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
-    if(req.method!=='POST'||(!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+    if(req.method!=='POST'||(!destinationCancellationAction&&!recoveryReadinessAction&&!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
     let data='',size=0;
     try {
-      if(submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+      if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:literalValidationAction?8*1024*1024:65536;
         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if(telegramDestinationCancellation&&await telegramDestinationCancellation.allowed(req.url,input)!==true)return end(409,{status:'DESTINATION_PERMISSION_NOT_CONFIRMED',writeAuthorized:false,retryPermitted:false});
+        if(destinationCancellationAction)return end(200,await telegramDestinationCancellation[destinationCancellationAction](input));
+        if(recoveryReadinessAction)return end(200,await telegramRecoveryReadiness(input));
         if(previewDiagnostic){
          if(!input||Object.keys(input).join(',')!=='packageId'||!/^tg_[a-f0-9]{40}$/.test(input.packageId??''))return end(400,{error:'invalid_diagnostic'});
          const c=await pool.getConnection();try{
@@ -115,6 +122,7 @@ export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeO
       }
       for await(const chunk of req){size+=chunk.length;if(size>MAX_BODY){req.resume();return end(413,{error:'too_large'});}data+=chunk.toString('utf8');}
       const input=JSON.parse(data);
+      if(telegramDestinationCancellation&&await telegramDestinationCancellation.allowed(req.url,input)!==true)return end(409,{status:'DESTINATION_PERMISSION_NOT_CONFIRMED',writeAuthorized:false,retryPermitted:false});
       if(req.url==='/v1/recovery/status') {
         if(!input || typeof input!=='object' || Array.isArray(input) || Object.keys(input).sort().join(',')!=='destination,fingerprint,requestId,slug' ||
           typeof input.requestId!=='string' || !/^[A-Za-z0-9_-]{16,128}$/.test(input.requestId) ||
