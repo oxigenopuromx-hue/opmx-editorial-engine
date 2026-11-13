@@ -1,0 +1,139 @@
+{
+  "reviewExecution": "38084",
+  "packages": [
+    {
+      "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+      "revision": 9,
+      "state": "READY",
+      "itemsStored": 6,
+      "guard": {
+        "httpStatus": 200,
+        "result": {
+          "status": "RECONCILIATION_VERIFIED",
+          "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+          "revision": 9,
+          "results": [
+            {
+              "destination": "OPURO",
+              "status": "BLOCKED"
+            }
+          ],
+          "writesRolledBack": true,
+          "writeAuthorized": false,
+          "processTerminationClaimed": false
+        }
+      },
+      "cmsSearches": [
+        {
+          "destination": "OPURO",
+          "httpStatus": 200,
+          "query": "servidores",
+          "returned": 30,
+          "paginationExhausted": false,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        },
+        {
+          "destination": "OPOL",
+          "httpStatus": 200,
+          "query": "servidores",
+          "returned": 13,
+          "paginationExhausted": true,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        },
+        {
+          "destination": "LIBERAL",
+          "httpStatus": 200,
+          "query": "servidores",
+          "returned": 0,
+          "paginationExhausted": true,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        }
+      ],
+      "cmsWrites": 0,
+      "telegramSends": 0,
+      "committedPackageMutations": 0
+    },
+    {
+      "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+      "revision": 8,
+      "state": "READY",
+      "itemsStored": 4,
+      "guard": {
+        "httpStatus": 200,
+        "result": {
+          "status": "RECONCILIATION_VERIFIED",
+          "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+          "revision": 8,
+          "results": [
+            {
+              "destination": "OPURO",
+              "status": "BLOCKED"
+            },
+            {
+              "destination": "OPOL",
+              "status": "BLOCKED"
+            },
+            {
+              "destination": "LIBERAL",
+              "status": "BLOCKED"
+            }
+          ],
+          "writesRolledBack": true,
+          "writeAuthorized": false,
+          "processTerminationClaimed": false
+        }
+      },
+      "cmsSearches": [
+        {
+          "destination": "OPURO",
+          "httpStatus": 200,
+          "query": "democracia",
+          "returned": 30,
+          "paginationExhausted": false,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        },
+        {
+          "destination": "OPOL",
+          "httpStatus": 200,
+          "query": "democracia",
+          "returned": 17,
+          "paginationExhausted": true,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        },
+        {
+          "destination": "LIBERAL",
+          "httpStatus": 200,
+          "query": "democracia",
+          "returned": 4,
+          "paginationExhausted": true,
+          "matchingNoteIdentified": false,
+          "errorCode": null
+        }
+      ],
+      "cmsWrites": 0,
+      "telegramSends": 0,
+      "committedPackageMutations": 0
+    }
+  ],
+  "simey": {
+    "userConfirmedNotPublishedInLiberal": true,
+    "preservePostId": 393
+  },
+  "probe": {
+    "id": "7IDUF9PeHQ5v331Z",
+    "version": "19423226-c395-4217-aff0-2b65ebeeab07",
+    "inactive": true,
+    "originalGraphSettingsRestored": true,
+    "retention": false
+  },
+  "limitations": [
+    "Búsqueda temática no prueba ausencia global bajo otro título.",
+    "BLOCKED acredita ausencia de efectos para las solicitudes conciliadas; no autoriza publicar ni prueba término del proceso."
+  ],
+  "issueRemainsOpen": true
+}
