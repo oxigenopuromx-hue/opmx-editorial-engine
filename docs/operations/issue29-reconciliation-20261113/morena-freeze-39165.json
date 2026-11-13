@@ -1,0 +1,34 @@
+{
+  "executionId": "39165",
+  "results": [
+    {
+      "key": "morena-freeze",
+      "httpStatus": 200,
+      "body": {
+        "status": "UNWRITTEN_ATTEMPT_FROZEN",
+        "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "revision": 8,
+        "attemptState": "ABSENT",
+        "fenceState": "RECONCILING",
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "OPOL",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "LIBERAL",
+            "status": "BLOCKED"
+          }
+        ],
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      }
+    }
+  ]
+}

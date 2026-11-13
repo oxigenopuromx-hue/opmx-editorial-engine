@@ -1,0 +1,298 @@
+{
+  "status": "GUARD29_ISOLATED_STARTUP_QA_PASSED",
+  "commonJsRequire": true,
+  "synchronousListen": true,
+  "listenCalls": 1,
+  "poolCreates": 1,
+  "localhostOnly": true,
+  "unauthenticated401Checks": 23,
+  "failClosed503Routes": 23,
+  "oldRouteCases": 20,
+  "authorityRouteCases": 3,
+  "mysqlMock": "Copied original QA18 mock; getConnection throws",
+  "mockConnectionAttempts": 5,
+  "realDatabaseConnections": 0,
+  "externalNetworkAttempts": 0,
+  "cmsWrites": 0,
+  "telegramMessages": 0,
+  "releaseInputModified": false,
+  "qaMockPackagedInRelease": false,
+  "checks": [
+    {
+      "route": "/v1/telegram/reconciliation/freeze-unwritten",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/reconciliation/freeze-unwritten",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/reconciliation/recovery-readiness",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/reconciliation/recovery-readiness",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/destination-cancellations/cancel",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/destination-cancellations/cancel",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/destination-cancellations/observe",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/destination-cancellations/observe",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/targets/begin",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/targets/begin",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/media/begin",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/media/begin",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/publications/begin",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/publications/begin",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/seal",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/seal",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/close",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/close",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/capacity",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/capacity",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/submissions/begin",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/submissions/begin",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/submissions/report",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/submissions/report",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/literal/validate",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/literal/validate",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/begin",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/begin",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/execute",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/execute",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/payload",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/updates/payload",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/update-deliveries/consume",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/update-deliveries/consume",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/writers/report",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/writers/report",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/attempts/decision",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/attempts/decision",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/reopen",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/packages/reopen",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/select",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/select",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/prove",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/prove",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/prove",
+      "authenticated": false,
+      "httpStatus": 401,
+      "passed": true
+    },
+    {
+      "route": "/v1/telegram/placement/prove",
+      "authenticated": true,
+      "httpStatus": 503,
+      "passed": true
+    }
+  ]
+}

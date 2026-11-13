@@ -1,0 +1,299 @@
+{
+  "schema": "opmx.issue29-reconciliation-release.v1",
+  "issue": 29,
+  "status": "DEPLOYED_AND_OPERATIONALLY_VERIFIED",
+  "sourceCommit": "feb31a5355a44f87c6635e19f842d4d671073127",
+  "localSourceCommit": "cfd9d6c7d92e2722da891123d4008fabaeee4fe1",
+  "sourceTree": "a09a80fc9bc5337ca01d9aedee904a60e4f78cf2",
+  "branch": "feat/telegram-reopen-recovery",
+  "sourceUrl": "https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/feb31a5355a44f87c6635e19f842d4d671073127",
+  "deployedAtUtc": "2026-11-13T15:38:00Z",
+  "deployedAtMexicoCity": "2026-11-13T09:38:00-06:00",
+  "activationVerified": true,
+  "guard": {
+    "archive": "opmx-guard-issue29-reconciliation.zip",
+    "bytes": 221553,
+    "sha256": "a86b41d24792266f8270cdce750f27d818a42532bb51eecba7f1254dcca3af31",
+    "files": 89,
+    "unchangedFiles": 82,
+    "changed": [
+      "tools/mcp-publisher/guard-server.mjs",
+      "tools/telegram/guard-recovery-candidate/cms-observation-client.mjs",
+      "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+      "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+      "tools/telegram/guard-recovery-candidate/unwritten-attempt-freeze.mjs"
+    ],
+    "added": [
+      "tools/telegram/guard-recovery-candidate/destination-cancellation-enforcement.mjs",
+      "tools/telegram/guard-recovery-candidate/destination-cancellation.mjs"
+    ],
+    "writerManifestUnchanged": true,
+    "writerManifestSha256": "10810f706bc31d015c240a3b80a8069809801a219de761f9e5a8e0731562ff0d",
+    "baseArchive": "opmx-guard-blocker-diagnostics31.zip",
+    "baseSha256": "bbbd1e46cf4d5d930eca2d769866704f2bd98d6f640bcde86abdbc1efd85e323",
+    "hostingerLastObservedState": "ACTUAL_COMPLETED",
+    "hostingerBuildTimeMexicoCity": "2026-11-13T09:36:57-06:00",
+    "deploymentCompleted": true,
+    "readback": "runtime-post-deploy-39161.json",
+    "screenshot": "hostinger-completed.jpg"
+  },
+  "administrator": {
+    "workflowId": "NFOBzPfHmvRjVFOA",
+    "baseVersionId": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+    "candidateVersionId": "602e9c32-8a18-40bc-b131-04058c280b90",
+    "activeVersionIdVerified": "b3a4b97f-315e-481b-9108-dd6ac629fae1",
+    "nodes": 18,
+    "existingCodeBodiesChanged": 4,
+    "newNodes": 2,
+    "changedCodeNodes": [
+      "Seleccionar alertas de administrador",
+      "Preparar comprobación de alertas",
+      "Preparar conciliaciones confirmadas",
+      "Verificar conciliación registrada"
+    ],
+    "addedNodes": [
+      "Comprobar cancelación de entrega Guard",
+      "Conservar comprobación de cancelación"
+    ],
+    "writerGraphFingerprint": "a969e564cd0a2213520425d25d1390a25b426c32eba7e74f04580ae1193692c4",
+    "activationVerified": true,
+    "readback": "admin-final-activation.json",
+    "cancellationStage": "DELIVERY_CANCELLED_RECONCILED|<tombstoneHash>",
+    "cancellationIsPublishReceipt": false,
+    "exactInsertAcknowledgementRequired": true,
+    "finalCanonicalGraphSha256": "071eae20f260119ab9e1203defb8852f22ac124b055b01302d0748c115cabf9a",
+    "originalCandidateFingerprintIsHistorical": true,
+    "sourceSettingsCorrectionCommit": "d1b9edab88b29170c66be65c85422ee88d7a493d",
+    "httpFailureBehavior": {
+      "onError": "continueRegularOutput",
+      "retryOnFail": false,
+      "alwaysOutputData": true
+    },
+    "naturalCronExecutionId": "39176",
+    "durableReconciliationRowId": 1839
+  },
+  "scope": {
+    "generalPackageCancellationIssue28": false,
+    "simey": {
+      "packageId": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+      "revision": 10,
+      "requestId": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf",
+      "operationId": "requested-20261113-issue29-simey-liberal",
+      "destination": "LIBERAL",
+      "postId": 393,
+      "preservedPublishedPosts": {
+        "OPURO": 10493,
+        "OPOL": 3515
+      },
+      "originalSlug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+      "preOperationCmsRead": {
+        "executionId": "39144",
+        "OPURO10493": "publish",
+        "OPOL3515": "publish",
+        "LIBERAL393": "trash",
+        "liberalSlugSuffix": "__trashed",
+        "cmsChangedByThisRead": false
+      },
+      "cancellationExecuted": true,
+      "cancellationExecutionId": "39167",
+      "cancellationStatus": "DELIVERY_CANCELLATION_CONFIRMED",
+      "tombstoneHash": "0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+      "postCancellationObservation": "operational-readback-39172.json",
+      "mixedLedgerInsertAcknowledgement": {
+        "id": 1839,
+        "package_id": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+        "revision": 10,
+        "stage": "DELIVERY_CANCELLED_RECONCILED|0e21b0ae331669f22c8be9807ce5611e85b2413a6e7f048184fed519446b2d1f",
+        "occurred_at": "2026-11-13T15:41:54.436Z",
+        "request_id": "tg_e6400942bcd85878aaa03f722f03b7644261071d6339593c2dede692f582edbf"
+      },
+      "finalCmsReadback": "operational-readback-39172.json"
+    },
+    "servidoresIA": {
+      "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+      "revision": 9,
+      "requestId": "tg_d4e7c89e61a84bfedbddb912bbf7f7d477b934463503810bdf9788b6faae9560",
+      "historicalStartResult": "ATTEMPT_ALREADY_CLAIMED",
+      "freezeExecutionId": "39163",
+      "freezeResult": {
+        "status": "UNWRITTEN_ATTEMPT_FROZEN",
+        "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+        "revision": 9,
+        "attemptState": "REVOKED",
+        "fenceState": "RECONCILING",
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          }
+        ],
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      },
+      "readinessExecutionId": "39172",
+      "readinessResult": {
+        "status": "RECOVERY_READY_REQUIRES_BOT_OPEN",
+        "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+        "revision": 9,
+        "nextOpeningRevision": 10,
+        "attemptState": "REVOKED",
+        "fenceState": "RECONCILING",
+        "auditState": "RECORDED",
+        "command": "/abrir tg_efdabf64148316df03e230122001e7311843a4ab",
+        "inventory": {
+          "total": 6,
+          "stored": 6,
+          "pending": 0
+        },
+        "consistentSnapshot": true,
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      },
+      "inventoryPreserved": true,
+      "actualNewRevisionCreated": false,
+      "publishedByThisIntervention": false
+    },
+    "comisionMorena": {
+      "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+      "revision": 8,
+      "requestId": "tg_91608877b6314f8e579ccd003076521a1984a11144defc8f17c0866ac98621f4",
+      "historicalStartResult": "ATTEMPT_NOT_REGISTERED",
+      "freezeExecutionId": "39165",
+      "freezeResult": {
+        "status": "UNWRITTEN_ATTEMPT_FROZEN",
+        "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "revision": 8,
+        "attemptState": "ABSENT",
+        "fenceState": "RECONCILING",
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "OPOL",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "LIBERAL",
+            "status": "BLOCKED"
+          }
+        ],
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      },
+      "readinessExecutionId": "39172",
+      "readinessResult": {
+        "status": "RECOVERY_READY_REQUIRES_BOT_OPEN",
+        "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "revision": 8,
+        "nextOpeningRevision": 9,
+        "attemptState": "ABSENT",
+        "fenceState": "RECONCILING",
+        "auditState": "RECORDED",
+        "command": "/abrir tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "inventory": {
+          "total": 4,
+          "stored": 4,
+          "pending": 0
+        },
+        "consistentSnapshot": true,
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "reopenAuthorized": false,
+        "retryPermitted": false,
+        "processTerminationClaimed": false
+      },
+      "inventoryPreserved": true,
+      "actualNewRevisionCreated": false,
+      "publishedByThisIntervention": false
+    }
+  },
+  "qa": {
+    "directedNativeSuite": {
+      "status": "PASS",
+      "tests": 252,
+      "overlap": "Do not add component suites again"
+    },
+    "realN8nCode": {
+      "executionId": "39151",
+      "status": "PASS",
+      "cases": 13,
+      "checks": 42,
+      "networkCalls": 0,
+      "tableWrites": 0,
+      "telegramMessages": 0
+    },
+    "isolatedCjsStartup": {
+      "status": "PASS",
+      "commonJsRequire": true,
+      "synchronousListen": true,
+      "unauthenticated401Checks": 23,
+      "failClosed503Routes": 23,
+      "realDatabaseConnections": 0,
+      "externalNetworkAttempts": 0,
+      "cmsWrites": 0,
+      "telegramMessages": 0,
+      "qaMockPackagedInRelease": false
+    },
+    "realOperationalResults": "PASS; cancellation durable, late writer denied409, both frozen packages eligible for genuine bot reopen; no actual reopen or publication"
+  },
+  "preservation": [
+    "same Motor and existing READY/preview subscriptions",
+    "same MCP and five pinned writer versions",
+    "issue18 atomic close",
+    "issue13 category/home authority",
+    "issue21 semantic preflight",
+    "issue24 Publisher submission handling",
+    "issue30 publication reconciliation",
+    "issue31 blocker diagnostics and message budget",
+    "LITERAL enforcement and El Liberal author3"
+  ],
+  "authority": {
+    "cancellationTable": "opmx_tg_destination_cancellations_v1",
+    "futureLiberalSelectionDeniedForSamePackage": true,
+    "cmsWritesRequired": false,
+    "writeAuthorized": false,
+    "resumeAuthorized": false,
+    "reopenAuthorized": false,
+    "retryPermitted": false,
+    "processTerminationClaimed": false,
+    "realTelegramOpenReceiptRequired": true,
+    "fakeTelegramReceiptCreated": false,
+    "readinessCreatesRevision": false,
+    "uncertainCommitNextAction": "OBSERVE_ONLY"
+  },
+  "publicationSideEffects": {
+    "realEditorialNotesCreated": 0,
+    "realEditorialNotesEdited": 0,
+    "automaticPublicationRetries": 0,
+    "operationalZeroCmsWritesReadback": "CMS results preserved before/after; all invoked maintenance operations have no CMS write provider"
+  },
+  "cleanup": {
+    "temporaryProbesRestored": true,
+    "temporaryProbesInactive": true,
+    "retentionDisabled": true,
+    "readback": "cleanup.json"
+  },
+  "rollback": "ROLLBACK.md",
+  "rollbackConstraint": "Preserve cancellation tombstone, audit, revoked capability and fence; never deploy an old Guard that ignores cancellation and re-enables TODOS",
+  "containsCredentials": false,
+  "containsPrivateOwnerChatIds": false,
+  "containsRawWorkflowNodes": false,
+  "containsMotorPrompt": false,
+  "deploymentTimestampPrecision": "minute; Hostinger build start is exact09:36:57CDMX",
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "enabled": true,
+    "chars": 60558,
+    "matchesCommittedIssue31Prompt": true,
+    "sha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83"
+  }
+}
