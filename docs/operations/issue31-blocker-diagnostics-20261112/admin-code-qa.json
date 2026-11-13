@@ -1,0 +1,42 @@
+{
+  "sourceEvidenceSha256": "65bbc619a4bd06ed665c434fc42338d6fcc3af2f53410fb53899fefe4b16fe30",
+  "executionId": "38793",
+  "status": "success",
+  "result": {
+    "status": "BLOCKER_ADMIN_REAL_CODE_QA_PASSED",
+    "cases": 17,
+    "checks": 52,
+    "labels": [
+      "legacy image cause remains unknown",
+      "image origin is a separate explicit cause",
+      "credit details match operator without raw identifiers",
+      "explicit destination MASTER_CATEGORY_INVALID_OPURO",
+      "explicit destination MASTER_CATEGORY_INVALID_OPOL",
+      "explicit destination MASTER_CATEGORY_INVALID_LIBERAL",
+      "explicit destination PUBLISHER_PERMISSION_DENIED_OPURO",
+      "explicit destination PUBLISHER_PERMISSION_DENIED_OPOL",
+      "explicit destination PUBLISHER_PERMISSION_DENIED_LIBERAL",
+      "malformed carrier bounded fallback",
+      "malformed carrier bounded fallback",
+      "malformed carrier bounded fallback",
+      "final #30 proof only suppresses publication uncertainty",
+      "partial draft wrong request busy and missing receipt stay unresolved",
+      "already alerted uncertainty remains observable without resending",
+      "twenty alerts complete prefix ACK and next poll remainder",
+      "Unicode long alerts and prefix-only uncertainty footer"
+    ],
+    "sourceSha256": {
+      "Preparar comprobación de alertas": "635fd3b25d9116f5121519c445823ed6adac46b2f09161d400ebb91f02673049",
+      "Seleccionar alertas de administrador": "0b107abf511fd91f30519ab3678d66c09edd6ba26d49da0ef6cb1de33d72fafb",
+      "Preparar conciliaciones confirmadas": "8ae85664df39e9c4339f89d0bc9ecf41dc713cbea637a553f7afddc23e08dc3d"
+    },
+    "changedCodeBodies": 2,
+    "unchangedReconciliationBody": 1,
+    "syntheticFixturesOnly": true,
+    "networkCalls": 0,
+    "guardMutations": 0,
+    "cmsWrites": 0,
+    "telegramMessages": 0,
+    "prototypeAdaptations": 0
+  }
+}

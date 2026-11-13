@@ -1,0 +1,24 @@
+{
+  "sourceEvidenceSha256": "88d0d3df9bd13660cd51b98b271c0137ba3088a4af45f9f556caf3b4286a1606",
+  "executionId": "38791",
+  "status": "success",
+  "result": {
+    "status": "BLOCKER_REAL_CODE_QA_PASSED",
+    "checks": 91,
+    "sourceSha256": {
+      "Protocolo MCP archivos": "bbcbf0d5ba22898634b001d750b22002d3772be57eba23bf14c1631f3f774952",
+      "Preparar aviso de bloqueo": "0898537f63040f308adb6e6bcd3f5b7565af3a1f8721428a797c33e7983a176b",
+      "Resultado de bloqueo Telegram": "f4accff530686ae00c8acf4344474603e8bcfce9cb164c06d4c98710aa221da4",
+      "Bloqueo no confirmado": "f766340dd32fb6510a4b551d270f7754aae5c5eaf9f56837fe217d20bbb7fafe",
+      "Preparar registro de avance": "7fd993b3cd2798e833f24b700cee498274927bfc54dbcff2f9e88069a0b40145"
+    },
+    "legacySlotsChecked": 32,
+    "scope": "READY_ONLY",
+    "syntheticFixturesOnly": true,
+    "networkCalls": 0,
+    "guardMutations": 0,
+    "cmsWrites": 0,
+    "telegramMessages": 0,
+    "prototypeAdaptations": 0
+  }
+}

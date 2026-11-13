@@ -1,0 +1,173 @@
+{
+  "schema": "opmx.blocker-diagnostics-release.v1",
+  "issue": 31,
+  "status": "DEPLOYED_VERIFIED",
+  "sourceCommit": "adc426fbc3b8903991efde0f18833453673ae50e",
+  "localSourceCommit": "219edc4",
+  "sourceUrl": "https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/adc426fbc3b8903991efde0f18833453673ae50e",
+  "deployedAtUtc": "2026-11-13T04:20:03Z",
+  "deployedAtMexicoCity": "2026-11-12T22:20:03-06:00",
+  "activationVerified": true,
+  "guard": {
+    "archive": "opmx-guard-blocker-diagnostics31.zip",
+    "sha256": "bbbd1e46cf4d5d930eca2d769866704f2bd98d6f640bcde86abdbc1efd85e323",
+    "bytes": 212023,
+    "files": 87,
+    "delta": [
+      "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs"
+    ],
+    "unchangedFiles": 86,
+    "base": "opmx-guard-category-home13.zip",
+    "baseSha256": "456eaaa3fb3dfc5a6a7079f20f39de81df564a322549b27b9136a10890b06f35"
+  },
+  "writerManifestSha256": "10810f706bc31d015c240a3b80a8069809801a219de761f9e5a8e0731562ff0d",
+  "workflows": {
+    "mcp": {
+      "workflowId": "bnzVMNkZuGO1GQCZ",
+      "versionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+      "baseVersionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+      "nodes": 155,
+      "groups": 6,
+      "exactChangedCodeNodes": [
+        "Protocolo MCP archivos",
+        "Preparar aviso de bloqueo",
+        "Resultado de bloqueo Telegram",
+        "Bloqueo no confirmado",
+        "Preparar registro de avance"
+      ],
+      "graphHash": "e6cef96b20500667db3c02a9d2fe02450bbeec58ef38166277a3a232959831b6",
+      "activationVerified": true
+    },
+    "administrator": {
+      "workflowId": "NFOBzPfHmvRjVFOA",
+      "versionId": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+      "baseVersionId": "efa564a8-3f87-4936-ba1a-2b1a33a0879f",
+      "nodes": 16,
+      "groups": 0,
+      "exactChangedCodeNodes": [
+        "Preparar comprobación de alertas",
+        "Seleccionar alertas de administrador"
+      ],
+      "graphHash": "897a2a069b6e76351b619aad3bdca21666eab3c56bb40344b6638f9c2d21bb60",
+      "activationVerified": true
+    },
+    "otherFencedWriters": {
+      "Mt7ts2EGPbyaTC2o": {
+        "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+        "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee"
+      },
+      "4o7K5TmKc7joScqB": {
+        "versionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+        "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6"
+      },
+      "qBmLf0DmcMSfuWvm": {
+        "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+        "graphHash": "a1692677f677681094531269d6beb60956060275dd7fb54405647c62e9787998"
+      },
+      "C4hk6fQQomueYC8f": {
+        "versionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+        "graphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318"
+      }
+    }
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "beforeChars": 54666,
+    "beforeSha256": "a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7",
+    "afterChars": 60558,
+    "afterSha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83",
+    "oldPromptExactSuffix": true,
+    "activationVerified": true,
+    "sameMotorRequired": true,
+    "triggersOmittedOnUpdate": true
+  },
+  "behavior": {
+    "catalogCodes": 46,
+    "scope": "READY_ONLY",
+    "previewCodes": "RESERVED_DO_NOT_ENABLE_OPEN_REPORTS",
+    "publicToolSignatureUnchanged": true,
+    "legacySlotsPreserved": 32,
+    "trackingCarrier": "DIAG|BASE_REASON|CODE|ordinal",
+    "freeTextRecipientsOrUrls": false,
+    "ledgerDelivery": "BEST_EFFORT_AFTER_SEND_ATTEMPT",
+    "uncertainAck": "CAUSE_MAY_BE_RECORDED_WITHOUT_CLAIMING_DELIVERY; NEVER_RETRY",
+    "staleOrUnpreparedScope": "FAILURE_NOT_SENT_NO_PERSISTIBLE_DIAGNOSTIC"
+  },
+  "qa": {
+    "mcp": {
+      "executionId": "38791",
+      "status": "PASS",
+      "checks": 91,
+      "changedRealCodeBodies": 5
+    },
+    "admin": {
+      "executionId": "38793",
+      "status": "PASS",
+      "cases": 17,
+      "checks": 52,
+      "changedRealCodeBodies": 2,
+      "unchangedReconciliationBody": 1
+    },
+    "native": {
+      "reportedDirectedSuitePass": 46,
+      "reportedAdministratorRegressionSuitePass": 100,
+      "overlap": "NOT_SUMMED; suites overlap and an additional QA unit test was added"
+    },
+    "startup": {
+      "status": "PASS",
+      "unauthenticated401Cases": 19,
+      "authenticatedDbUnavailable503Cases": 19,
+      "uniqueRoutes": 18,
+      "realDatabaseConnections": 0,
+      "externalNetworkAttempts": 0
+    },
+    "realTelegramNewDiagnostic": "NOT_CLAIMED_BY_SYNTHETIC_CODE_QA",
+    "runtimeObservation": {
+      "executionId": "38814",
+      "httpStatus": 200,
+      "versionsMatch": true,
+      "authorizesRecovery": false
+    },
+    "stalePublicToolSmoke": {
+      "status": "FAILURE_NOT_SENT",
+      "diagnostic": "REVISION_MISMATCH",
+      "retryPermitted": false,
+      "revision": 1,
+      "publishedOrSent": false
+    }
+  },
+  "preservation": [
+    "single Motor and existing subscriptions",
+    "issue18 atomic close",
+    "issue13 placement authority",
+    "issue21 semantic preflight",
+    "issue24 pending Publisher heading",
+    "issue30 exact reconciliation and deduplication"
+  ],
+  "incident": {
+    "packageId": "tg_3f682b3ea4561f11a423a483b636ca85ac96fb77",
+    "reportedRevision": 8,
+    "laterRevision": 12,
+    "historicalCause": "NOT_BACKFILLED_FROM_GENERIC_MEDIA_FAILED",
+    "reprocessed": false
+  },
+  "publicationSideEffects": {
+    "realEditorialNotesCreated": 0,
+    "realEditorialNotesEdited": 0,
+    "automaticPublicationRetries": 0
+  },
+  "limitations": [
+    "An unrecorded historical cause cannot be reconstructed from a legacy stage alone.",
+    "Tracking persistence remains best effort; this change adds no durable send outbox.",
+    "A missing or uncertain Telegram ACK is never reported as delivered.",
+    "Only READY blocker transport is extended; OPEN preview delivery keeps its existing route."
+  ],
+  "rollback": "ROLLBACK.md",
+  "finalReadback": [
+    "final-readback.json",
+    "independent-final-readback.json"
+  ],
+  "containsRawWorkflowNodes": false,
+  "containsCredentials": false,
+  "containsPrompts": false
+}

@@ -1,0 +1,24 @@
+{
+  "sourceEvidenceSha256": "5ed700744daa99e04de181345d3ec5fc5b7f073b0615689d59043521ff0bee81",
+  "originalHarnessStatus": "GUARD13_ISOLATED_STARTUP_QA_PASSED",
+  "summary": {
+    "commonJsRequire": true,
+    "synchronousListen": true,
+    "listenCalls": 1,
+    "poolCreates": 1,
+    "localhostOnly": true,
+    "unauthenticated401Checks": 19,
+    "failClosed503Routes": 19,
+    "oldRouteCases": 16,
+    "authorityRouteCases": 3,
+    "mysqlMock": "Copied original QA18 mock; getConnection throws",
+    "mockConnectionAttempts": 5,
+    "realDatabaseConnections": 0,
+    "externalNetworkAttempts": 0,
+    "cmsWrites": 0,
+    "telegramMessages": 0,
+    "releaseInputModified": false,
+    "qaMockPackagedInRelease": false
+  },
+  "semantics": "19 request cases across 18 unique routes; prove has two cases. Mock isolated from release; no real DB or external I/O."
+}
