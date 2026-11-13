@@ -73,7 +73,7 @@ export function createMotorAttemptStore({pool,adminUserIds=[],tokenFactory=()=>r
    // read is routing only and cannot grant a capability after a race.
    if(recoverBlockedUnwritten){
     const c=await pool.getConnection();let states;try{[states]=await c.execute('SELECT state FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=?',[packageId,revision])}finally{c.release()}
-    if(states.length===1&&states[0].state==='BLOCKED')return recoverBlockedUnwritten(input);
+    if(states.length===1&&['BLOCKED','QUEUED'].includes(states[0].state))return recoverBlockedUnwritten(input);
    }
    return transaction(async c=>{
     const [p]=await c.execute('SELECT state,revision,owner_key FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
