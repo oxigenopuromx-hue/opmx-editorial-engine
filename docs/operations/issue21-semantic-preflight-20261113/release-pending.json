@@ -1,13 +1,10 @@
 {
-  "deployed": false,
-  "reason": "environment_unavailable_before_upload",
-  "sourceCommit": "4b9116419a2d5a6b7ff12152f7a26b762a58219a",
-  "candidateManifestCommit": "edb20e76ad20b033cc68b80af98100dde33eb9a6",
-  "candidateMcpVersion": "1b78dc88-cb9b-456f-b711-c3328031e61d",
-  "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b",
+  "deployed": true,
+  "supersededBy": "release.json",
+  "previousBlocker": "environment_unavailable_before_upload",
+  "resolvedAt": "2026-11-13T01:07:12Z",
+  "sourceCommit": "edb20e76ad20b033cc68b80af98100dde33eb9a6",
   "archive": "opmx-guard-semantic-preflight21.zip",
-  "archiveSha256": "c023a111a8448df8b0cf96c4fcfc5eb8fe26a2cd9d2d5468ecb8ab25dd45a3ec",
-  "bytes": 195143,
-  "productionMcpVersion": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
-  "restoredDraftVersion": "a342823c-1a68-4dfc-81ab-622daf2061cd"
+  "archiveSha256": "f31660357f16ff087284e8929549a427cc5f85fb8ff2eba79a612d24c18d2220",
+  "mcpVersion": "1b78dc88-cb9b-456f-b711-c3328031e61d"
 }

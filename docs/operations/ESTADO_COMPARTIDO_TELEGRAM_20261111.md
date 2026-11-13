@@ -1,6 +1,19 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
-## Corte vigente — 13nov2026 UTC / 12nov2026 CDMX, issues25→15→21
+## Corte vigente — issue21 desplegado, 13nov2026 UTC / 12nov2026 19:07 CDMX
+
+**El #21 ya está activo y comprobado.** Este corte reemplaza el estado “NO DESPLEGADO” del corte anterior.
+
+- Guard: `opmx-guard-semantic-preflight21.zip`, Actual/completado **12nov19:07:12 CDMX**, SHA-256 `f31660357f16ff087284e8929549a427cc5f85fb8ff2eba79a612d24c18d2220`, 195143 bytes. Comparación de 83 archivos con la fuente productiva24: único cambio del manifiesto.
+- MCP activo: `1b78dc88-cb9b-456f-b711-c3328031e61d`, **152 nodos, 5 grupos**; huella `1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b`. Draft ajeno `a342823c-1a68-4dfc-81ab-622daf2061cd`,112 nodos, preservado idéntico y sin activar.
+- Fuente21: `4b9116419a2d5a6b7ff12152f7a26b762a58219a`; manifiesto inmutable `edb20e76ad20b033cc68b80af98100dde33eb9a6`. La punta de la rama debe conservar este pin productivo152.
+- QA:48 casos específicos/741 regresiones PASS; n8n38026 con27 casos/157 aserciones PASS; arranque del ZIP y14 rutas de denegación PASS. Guard productivo38041: **RUNTIME_OBSERVED, versionsMatch=true, sin escritores activos**, cinco versiones correctas. Huella del grafo activo cotejada por separado.
+- Probe restaurado `5202de12-b06e-4d19-8137-00794fe9b799`: inactivo,3 nodos, grafo/settings originales y sin retención. No se publicaron o editaron notas, no se reintentaron paquetes y no se modificó el único Motor ni READY/preview.
+- **25 y15 siguen corregidos/cerrados;21 queda corregido/cerrado.**29 y24 conservan los pendientes propios documentados;28 sigue diferido.
+
+[Verificación, artefacto completo y reversión](issue21-semantic-preflight-20261113/VERIFICACION.md) · [Evidencia](issue21-semantic-preflight-20261113/EVIDENCIA_FINAL.json).
+
+## Corte anterior — issues25→15→21 antes del despliegue21
 
 Este corte prevalece sobre los estados históricos inferiores. Orden corregido por el usuario:25primero,15después,21al final. No se publicó ni editó ninguna nota ni se reintentaron paquetes en esta intervención.
 

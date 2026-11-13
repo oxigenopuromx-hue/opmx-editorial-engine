@@ -1,0 +1,104 @@
+{
+  "release": {
+    "deployed": true,
+    "sourceCommit": "edb20e76ad20b033cc68b80af98100dde33eb9a6",
+    "archive": "opmx-guard-semantic-preflight21.zip",
+    "sha256": "f31660357f16ff087284e8929549a427cc5f85fb8ff2eba79a612d24c18d2220",
+    "bytes": 195143,
+    "fileCount": 83,
+    "hostingerCompletedLocal": "2026-11-12T19:07:12-06:00",
+    "hostingerCompletedUtc": "2026-11-13T01:07:12Z",
+    "mcp": {
+      "workflowId": "bnzVMNkZuGO1GQCZ",
+      "versionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
+      "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b",
+      "nodeCount": 152,
+      "groups": 5,
+      "draftVersion": "a342823c-1a68-4dfc-81ab-622daf2061cd",
+      "draftNodes": 112,
+      "draftExactlyPreserved": true
+    },
+    "runtimeDelta": [
+      "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs"
+    ],
+    "previousArchive": "opmx-guard-publisher-submission24.zip",
+    "previousSha256": "ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96",
+    "previousMcpVersion": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb"
+  },
+  "sourceTests": {
+    "specific": 48,
+    "combined": 741,
+    "result": "PASS"
+  },
+  "syntheticN8n": {
+    "executionId": "38026",
+    "cases": 27,
+    "assertions": 157,
+    "externalIoCalls": 0,
+    "result": "PASS"
+  },
+  "rebuiltArtifact": {
+    "baselineFiles": 83,
+    "resultFiles": 83,
+    "onlyDelta": "writer-release-manifest.mjs",
+    "bootstrapAndDependencyManifestPreserved": true,
+    "secretsIncluded": false,
+    "isolatedStartup": "PASS",
+    "unauthenticatedHttpStatus": 401,
+    "unavailableDatabaseDeniedRoutes": 14,
+    "realDatabaseConnections": 0
+  },
+  "liveGuard": {
+    "executionId": "38041",
+    "check": "issue21_guard_runtime",
+    "passed": true,
+    "httpStatus": 200,
+    "status": "RUNTIME_OBSERVED",
+    "versionsMatch": true,
+    "noActiveN8nWriters": true,
+    "authorizesRecovery": false,
+    "motorTerminationVerified": false,
+    "workflows": [
+      {
+        "id": "bnzVMNkZuGO1GQCZ",
+        "activeVersionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
+        "nodeCount": 152
+      },
+      {
+        "id": "Mt7ts2EGPbyaTC2o",
+        "activeVersionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+        "nodeCount": 58
+      },
+      {
+        "id": "4o7K5TmKc7joScqB",
+        "activeVersionId": "4263fea4-90a4-406d-a234-da7397d456bf",
+        "nodeCount": 146
+      },
+      {
+        "id": "C4hk6fQQomueYC8f",
+        "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+        "nodeCount": 10
+      },
+      {
+        "id": "qBmLf0DmcMSfuWvm",
+        "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+        "nodeCount": 9
+      }
+    ],
+    "cmsWrites": 0,
+    "telegramSends": 0,
+    "packageMutations": 0
+  },
+  "probe": {
+    "id": "7IDUF9PeHQ5v331Z",
+    "version": "5202de12-b06e-4d19-8137-00794fe9b799",
+    "active": false,
+    "nodeCount": 3,
+    "originalGraphAndSettingsRestored": true,
+    "retention": false,
+    "timeoutSeconds": 30
+  },
+  "editorialWrites": 0,
+  "telegramSends": 0,
+  "packageRevisionChanges": 0
+}

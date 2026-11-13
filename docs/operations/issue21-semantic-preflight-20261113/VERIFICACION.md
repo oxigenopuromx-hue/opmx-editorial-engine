@@ -1,3 +1,48 @@
+# Issue #21 — preflight semántico desplegado y comprobado
+
+Corte final: 13 de noviembre de 2026 UTC / 12 de noviembre, CDMX. **La corrección está activa.** Este corte sustituye el estado de despliegue pendiente conservado más abajo.
+
+El preflight ejecuta la preparación y normalización estáticas de los destinos seleccionados antes de aceptar el envío a Publisher. Los campos inválidos conocidos devuelven `VALIDATION_FAILED`, diagnóstico acotado y `writesStarted:false`. El documento original y el perfil LITERAL se conservan. Los resultados inciertos después de aceptar mantienen su conciliación; no autorizan reenvío.
+
+## Despliegue y fuentes
+
+| Componente | Evidencia |
+| --- | --- |
+| Fuente de implementación | `4b9116419a2d5a6b7ff12152f7a26b762a58219a` |
+| Manifiesto candidato que ahora corresponde a producción | `edb20e76ad20b033cc68b80af98100dde33eb9a6` |
+| Hostinger | `opmx-guard-semantic-preflight21.zip`, completado y Actual a las **19:07:12 CDMX del 12nov** |
+| Archivo desplegado | **195143 bytes**, SHA-256 `f31660357f16ff087284e8929549a427cc5f85fb8ff2eba79a612d24c18d2220` |
+| MCP activo | `1b78dc88-cb9b-456f-b711-c3328031e61d`, **152 nodos y 5 grupos** |
+| Huella del grafo activo | `1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b` |
+| Borrador ajeno preservado | `a342823c-1a68-4dfc-81ab-622daf2061cd`, **112 nodos**, contenido idéntico |
+| Probe restaurado | `5202de12-b06e-4d19-8137-00794fe9b799`, inactivo, 3 nodos, sin retención, timeout 30s |
+
+La desconexión anterior borró scratch. Se recuperó por el administrador de archivos la carpeta fuente `hbuilds/last-source` que correspondía al release24 activo. Contenía 83 archivos y ningún .env ni node_modules. Se conservaron íntegros bootstrap, package.json, dependencia mysql2 fijada y todos los módulos. Comparación byte a byte de los 83 archivos: cambia exclusivamente `writer-release-manifest.mjs`. El ZIP reconstruido tiene una huella distinta del ZIP temporal anterior por sus metadatos; la huella válida del archivo realmente desplegado es la de la tabla. El [ZIP completo](opmx-guard-semantic-preflight21.zip) queda versionado para no depender de scratch.
+
+Se publicó por su ID la candidata histórica comprobada, sin activar ni sobrescribir el borrador112. La lectura posterior confirmó ambos grafos y la huella real del activo mediante `writerGraphFingerprint`. El manifiesto en la punta de la rama vuelve a reflejar este pin activo. Shared, Form, Update, Reader, monitor y el único Motor/suscripción READY/preview no fueron modificados.
+
+## Comprobaciones
+
+- **48 pruebas específicas y 741 conjuntas: PASS** en la fuente ya fijada; no cambió esa lógica durante el reintento.
+- **n8n38026: 27 casos y 157 aserciones PASS**, ejecutando las fuentes Code reales sobre datos sintéticos, sin I/O externo.
+- El ZIP reconstruido volvió a pasar arranque síncrono CommonJS y escucha del servidor, HTTP401 sin credencial y **14 rutas que deniegan con HTTP503** cuando MySQL simulado falla. Cero conexiones reales, CMS o Telegram.
+- **n8n38041: HTTP200 / RUNTIME_OBSERVED**, `versionsMatch:true` y `noActiveN8nWriters:true`. Guard reconoció las cinco versiones esperadas, incluido MCP152; los cuatro escritores restantes conservaron sus versiones. `authorizesRecovery:false` y `motorTerminationVerified:false`.
+- Probe restaurado a sus nodos, conexiones, credenciales y settings originales y releído. No queda webhook o programación nueva.
+
+La comprobación cubre lógica del preflight, ensamblaje y compatibilidad productiva de Guard/n8n. No creó, publicó ni editó notas, no reclamó intentos, no reabrió paquetes y no envió mensajes. La validación estática declara que las comprobaciones dinámicas de permisos/disponibilidad CMS no se ejecutan en esa etapa.
+
+[Datos de comprobación](EVIDENCIA_FINAL.json) · [Release](release.json).
+
+![Despliegue completado en Hostinger](despliegue-hostinger.jpg)
+
+## Reversión conjunta
+
+Restaurar el MCP activo anterior `1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb` y el Guard24 compatible `opmx-guard-publisher-submission24.zip`, SHA-256 `ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96`. Conservar el draft112 y todos los recibos/estados históricos. El draft112 no es una versión de reversión productiva. Esta reversión no exige tocar Motor, suscripción, notas o credenciales.
+
+## Historial anterior de preparación y desconexión
+
+El contenido siguiente describe el estado anterior al despliegue confirmado de arriba.
+
 # Issue 21: evidencia de validación estática
 
 Fecha: 13 de noviembre de 2026. Alcance: detectar rechazos semánticos conocidos antes de aceptar Publisher, sin publicar ni repetir paquetes pendientes.
