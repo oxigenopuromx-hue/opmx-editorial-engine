@@ -40,10 +40,10 @@ export function createBlockedUnwrittenAttemptRecovery({pool,adminUserIds=[],obse
     if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==revision||!hex(packages[0].owner_key))return denied('STALE_REVISION');
     const ownerKey=packages[0].owner_key;
     const [attempts]=await c.execute('SELECT state,event_id,token_hash FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
-    if(attempts.length!==1||attempts[0].state!=='BLOCKED'||attempts[0].event_id!==eventId||!hex(attempts[0].token_hash))return denied('RECOVERY_NOT_PERMITTED');
+    if(attempts.length!==1||attempts[0].event_id!==eventId||!((attempts[0].state==='BLOCKED'&&hex(attempts[0].token_hash))||(attempts[0].state==='QUEUED'&&attempts[0].token_hash===null)))return denied('RECOVERY_NOT_PERMITTED');
     const previousTokenHash=attempts[0].token_hash;
     const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
-    if(fences.length!==1||fences[0].state!=='RECONCILING')return denied();
+    if(fences.length!==1||!(attempts[0].state==='BLOCKED'&&fences[0].state==='RECONCILING'||attempts[0].state==='QUEUED'&&fences[0].state==='AWAITING_DECISION'))return denied();
     const [audits]=await c.execute("SELECT actor_key,owner_key FROM opmx_tg_recovery_audit_v1 WHERE package_id=? AND action='RESUME_UNWRITTEN' AND previous_revision=? AND revision=? FOR UPDATE",[packageId,revision,revision]);
     if(audits.length)return denied('RECOVERY_NOT_PERMITTED');
     const [sessions]=await c.execute('SELECT owner_key FROM opmx_tg_sessions_v1 WHERE package_id=? FOR UPDATE',[packageId]);
@@ -96,7 +96,7 @@ export function createBlockedUnwrittenAttemptRecovery({pool,adminUserIds=[],obse
     const [resumed]=await c.execute("UPDATE opmx_tg_motor_attempts_v1 SET state='RUNNING',token_hash=?,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND event_id=? AND state='REVOKED' AND token_hash IS NULL",[sha(token),packageId,revision,eventId]);if(resumed.affectedRows!==1)throw Error('BLOCKED_RECOVERY_ATTEMPT_CONFLICT');
     const [audit]=await c.execute('INSERT INTO opmx_tg_recovery_audit_v1 (package_id,action,previous_revision,revision,actor_key,owner_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[packageId,action,revision,revision,actorKey(input.owner),ownerKey]);if(audit.affectedRows!==1)throw Error('BLOCKED_RECOVERY_AUDIT_UNCONFIRMED');
     commitAttempted=true;await c.commit();committed=true;
-    return {status:'BLOCKED_UNWRITTEN_ATTEMPT_RECOVERED',packageId,revision,eventId,token,requestId,destination:decision.destination,decisionAcknowledgementRequired:true,...noAuthority};
+    return {status:attempts[0].state==='QUEUED'?'QUEUED_UNWRITTEN_ATTEMPT_RECOVERED':'BLOCKED_UNWRITTEN_ATTEMPT_RECOVERED',packageId,revision,eventId,token,requestId,destination:decision.destination,decisionAcknowledgementRequired:true,...noAuthority};
    })();
   }catch{result=commitAttempted?uncertain():denied()}
   finally{
