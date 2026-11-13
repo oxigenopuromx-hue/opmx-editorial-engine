@@ -1,0 +1,24 @@
+{
+  "baselineChars": 60558,
+  "baselineBytes": 61319,
+  "baselineSha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83",
+  "promptChars": 64168,
+  "promptBytes": 64992,
+  "promptSha256": "91e7dbdf0545efbcf5bf804453484d8e90a592ca0eb0993501c87a54b213d35c",
+  "changes": [
+    "Igual política en ejecución automática y continuación manual",
+    "Ausencia genérica de crédito/procedencia no bloquea una foto ordinaria",
+    "Transporte específico obligatorio para todos los bloqueos nuevos",
+    "Continuación administrativa explícita con acuses y gate, sin otro inicio",
+    "Revisión fallida usa DIAG; éxito conserva REVIEW_REPORTED",
+    "Fallo del módulo JPEG comunica herramienta no disponible",
+    "Fallo JPEG identifica formato/dimensiones/recorte/lectura reales",
+    "Fallo generativo usa causa comprobada",
+    "Fallo de fotografía usa causa técnica y ordinal, no crédito",
+    "Sustituye la orden final de emitir códigos legados5a11; progreso sólo0a4",
+    "Descripción de la herramienta coherente con sus tres transportes",
+    "SUBMITTED no usa bloqueo genérico",
+    "Aviso Telegram incierto no equivale a Publisher incierto"
+  ],
+  "installed": false
+}

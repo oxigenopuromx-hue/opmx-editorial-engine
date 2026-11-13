@@ -1,0 +1,208 @@
+{
+  "schema": "opmx.media12-false-credit-recovery-release.v1",
+  "status": "DEPLOYED_RUNTIME_CHECK_PENDING",
+  "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+  "revision": 12,
+  "decision": {
+    "action": "CREATE",
+    "contentMode": "EDITORIAL",
+    "destination": "OPURO",
+    "previewHash": "c9e8d104ad0a913dad217a07f1f6c38ae9ee11fa1a82e62e25df8d5007c5ff3b"
+  },
+  "requestId": "tg_f88d93dd0e24308affc30991c0f8e34d97a1ce9697ef802d2084bc0798879ddb",
+  "eventId": "evt_370af274f74d9d59687a056bb94d4807e6106ff868ca151d",
+  "incident": {
+    "stage": "MEDIA_FAILED",
+    "stageRow": 1863,
+    "occurredAtUtc": "2026-11-13T17:32:52.851Z",
+    "adminAlertRow": 1864,
+    "adminAlertAtUtc": "2026-11-13T17:36:48.272Z",
+    "specificDiagnosticRecorded": false,
+    "genericCreditBlockContradictedExistingPolicy": true,
+    "aiOriginAssumed": false,
+    "previousRunningAttemptRecoveryAtUtc": "2026-11-13T17:30:21.521372Z"
+  },
+  "originalImage": {
+    "itemId": "ti_46b87c8a8a461b3fb072371f9c71ec766db0f617",
+    "itemOrdinal": 4,
+    "mimeType": "image/jpeg",
+    "bytes": 341532,
+    "sha256": "86cc9ec693d748833063498af43b45e410ca9f91c7bfcee1f736e9df065d1ddd",
+    "width": 1732,
+    "height": 908,
+    "colourSpace": "RGB",
+    "readable": true,
+    "originVerified": false,
+    "creditInvented": false
+  },
+  "motor": {
+    "newMotorCreated": false,
+    "subscriptionsChanged": false,
+    "promptProposedChars": 64168,
+    "promptProposedBytes": 64992,
+    "promptProposedSha256": "91e7dbdf0545efbcf5bf804453484d8e90a592ca0eb0993501c87a54b213d35c",
+    "promptInstallationVerified": true,
+    "genericLegacyBlockEmissionRemoved": true,
+    "legacyProgressCodes": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "specificDiagnosticCatalogEntriesPreserved": 46,
+    "motorId": "6ae9095256948191b33f1e023fbfbf8b",
+    "enabledPreserved": true,
+    "schedulePreserved": true
+  },
+  "mcp": {
+    "workflowId": "bnzVMNkZuGO1GQCZ",
+    "previousActiveVersionId": "cf4f65ab-35b6-4120-a36d-ddce2e94b91c",
+    "preparedVersionId": "d5643470-197c-484e-8742-ca69462cb608",
+    "preparedGraphHash": "f417fd8994556806e7193c23513ea8a5e122c1e13227e2b074f398ad14a29846",
+    "nodes": 155,
+    "parameterChanges": 3,
+    "activationVerified": true,
+    "originalDraftNodes": 112,
+    "originalDraftRestored": true,
+    "activeVersionId": "d5643470-197c-484e-8742-ca69462cb608",
+    "activeGraphExact": true,
+    "originalDraftRestoredExactly": true,
+    "restoredDraftVersionId": "3648414f-92df-490b-93c3-6da005393a7f",
+    "executionRetention": "none"
+  },
+  "runtimeCollector": {
+    "workflowId": "2HBn1RnSYgyxuHgE",
+    "publishedVersionId": "ee6b5d38-f736-4a01-9461-030b596e3a58",
+    "graphHash": "fafd8fb10bf4721e3b51b4ad7f64a7c9b424a2ac8e5acef6cf6324151f622bc9",
+    "nodes": 13,
+    "activationVerified": true,
+    "canonicalGraphAndSettingsEquivalent": true,
+    "defaultNodeSettingsOmittedByApi": [
+      "retryOnFail:false",
+      "onError:stopWorkflow"
+    ],
+    "originalDraftNodes": 9,
+    "originalDraftRestored": true,
+    "proofField": "administrativeExecutionProof",
+    "proofContainsOnlyExecutionMetadata": true,
+    "upstreamActionObservedByApiClaimed": false,
+    "allExecutionPagesPreserved": true,
+    "scopeKeys": [
+      "packageId",
+      "revision",
+      "eventId",
+      "nonce"
+    ],
+    "noOriginProof": null,
+    "restoredDraftVersionId": "89d76e04-2d7f-4064-a30c-db7ff6b6dc73",
+    "originalDraftRestoredExactly": true,
+    "executionRetention": "none"
+  },
+  "guard": {
+    "archive": "opmx-guard-media12-verified-recovery.zip",
+    "bytes": 227406,
+    "files": 90,
+    "sha256": "efaa335614046c2f7d197e931f8a267d49c98baafbf85c8083424401910103f0",
+    "deploymentVerified": true,
+    "addedFiles": [
+      "tools/telegram/guard-recovery-candidate/blocked-unwritten-attempt-recovery.mjs"
+    ],
+    "modifiedFiles": [
+      "tools/telegram/guard-recovery-candidate/motor-attempt-store.mjs",
+      "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+      "tools/telegram/guard-recovery-candidate/revision-reconciliation.mjs",
+      "tools/telegram/guard-recovery-candidate/runtime-observation-client.mjs",
+      "tools/telegram/guard-recovery-candidate/writer-release-contract.mjs",
+      "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs"
+    ],
+    "otherWriterPinsUnchanged": 4,
+    "newCmsWriterCreated": false,
+    "deployedAtUtc": "2026-11-13T18:01:15Z",
+    "deployedAtMexicoCity": "2026-11-13T12:01:15-06:00"
+  },
+  "validation": {
+    "uniqueDirectedTestsPassed": 189,
+    "duplicateRegressionsAddedToCount": false,
+    "isolatedStartupResponses": {
+      "401": 1,
+      "503": 12
+    },
+    "isolatedStartupUsedRealDatabase": false
+  },
+  "blockedRecovery": {
+    "expectedSuccessStatus": "BLOCKED_UNWRITTEN_ATTEMPT_RECOVERED",
+    "auditAction": "RESUME_UNWRITTEN",
+    "preservesPackageRevisionEventRequest": true,
+    "completeZeroEffectsGateRequired": true,
+    "freshExecutionMetadataRequiredForNativeOrigin": true,
+    "decisionAcknowledgementRequired": true,
+    "postRecoveryAttemptState": "RUNNING",
+    "postRecoveryFenceState": "AWAITING_DECISION",
+    "writeAuthorizedByRecovery": false,
+    "retryPermitted": false,
+    "operationExecuted": false,
+    "successAcknowledgementObserved": false
+  },
+  "editorialOutcome": {
+    "newPublisherCallExecuted": false,
+    "publicationConfirmed": false,
+    "telegramPublicationNoticeConfirmed": false
+  },
+  "runtimeCheck": {
+    "status": "PENDING_DIAGNOSIS",
+    "liveGuardObservation": {
+      "executionId": "39761",
+      "httpStatus": 503,
+      "status": "RUNTIME_OBSERVATION_UNAVAILABLE",
+      "originSupplied": false,
+      "reasonUnknown": true,
+      "readOnly": true
+    },
+    "nativeCollectorQa": {
+      "executionId": "39767",
+      "mode": "manual",
+      "copiedCollectorNodes": 13,
+      "probeNodesDuringQa": 14,
+      "readOnly": true,
+      "passed": true,
+      "durationSeconds": 1.1,
+      "actualIfAndFiveWorkflowGetsChecked": true,
+      "schemaAndVersionAndCompletePagesChecked": true,
+      "administrativeExecutionProof": null,
+      "localClientAcceptedQaResponse": true,
+      "provesLiveGuardTransport": false
+    },
+    "probeRestored": {
+      "nodes": 3,
+      "inactive": true,
+      "nodesConnectionsSettingsExact": true,
+      "executionRetention": "none",
+      "timeoutSeconds": 30,
+      "versionId": "ebaa160a-5d30-4add-85d6-9b9c8725716f"
+    }
+  },
+  "latestGuardArchive": {
+    "archive": "opmx-guard-media12-runtime-diagnostics.zip",
+    "bytes": 227866,
+    "files": 90,
+    "sha256": "cc21457b71ea1c8d69d852fcc07b93d6572e43c0492f39ba5730a19be097fdf2",
+    "actualCompletedObserved": true,
+    "hostingerTimeMexicoCity": "2026-11-13 12:12:32",
+    "deltaFromPrevious": [
+      "runtime-observation-client.mjs"
+    ],
+    "boundedDiagnostics": true
+  },
+  "recoveryInvocation": {
+    "called": false,
+    "publisherCalled": false,
+    "reason": "Awaiting verified live runtime observation; package remains READY12/BLOCKED before write."
+  },
+  "latestReadOnlyProbe": {
+    "executionId": "39787",
+    "status": "RUNNING_OR_UNCONFIRMED",
+    "publicTrigger": false,
+    "restoreRequired": true
+  }
+}

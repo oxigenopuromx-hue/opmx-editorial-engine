@@ -1,4 +1,13 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
+
+## Corte vigente — falso bloqueo de imagen en Servidores IA12 — 13nov2026
+
+**En corrección y sin nuevo envío a Publisher. No reiniciar ni recuperar este paquete desde otro chat.** `tg_efdabf64148316df03e230122001e7311843a4ab`, READY12/CREATE/EDITORIAL/OPURO, solicitud `tg_f88d93dd0e24308affc30991c0f8e34d97a1ce9697ef802d2084bc0798879ddb`. El Motor sí se recuperó, pero luego bloqueó por crédito vacío pese a que la política lo permite para una fotografía ordinaria. El JPEG íntegro es legible; no declarar IA ni inventar procedencia. La fila1863 guardó sólo MEDIA_FAILED, sin causa específica.
+
+Se corrigieron instrucciones contradictorias y se desplegó una recuperación administrativa con gate completo de ausencia de escrituras y una capacidad que todavía exige reconocer la decisión. Se conserva el mismo Motor/suscripciones, revisión/evento/request/destino, borradores ajenos112/9 y las protecciones de LITERAL/UPDATE. MCP activo `d5643470-197c-484e-8742-ca69462cb608`; colector de lectura activo `ee6b5d38-f736-4a01-9461-030b596e3a58`. Guard actual tiene diagnósticos acotados. La verificación de transporte del observador sigue pendiente: el nuevo reanudador NO se ha invocado y NO hay publicación confirmada de IA12.
+
+[Incidente y corrección](media12-false-credit-20261113/INCIDENTE_Y_CORRECCION.md). No extrapolar el crédito IA del paquete de Jensen ni modificar Simey/LIBERAL cancelado o Morena11 publicado.
+
 ## Corte vigente — recuperación dirigida Servidores IA12 — 13nov2026 11:31 CDMX
 
 **Operación editorial en curso; no volver a iniciar ni recuperar este intento desde otro chat.** Paquete `tg_efdabf64148316df03e230122001e7311843a4ab`, READY12, CREATE/EDITORIAL/OPURO; solicitud estable `tg_f88d93dd0e24308affc30991c0f8e34d97a1ce9697ef802d2084bc0798879ddb`. El intento original sí se reclamó16:45:14UTC y quedó RUNNING/AWAITING_DECISION; entregaSENT/HTTP200. No atribuirlo a ausencia de inicio ni afirmar coalescencia probada.

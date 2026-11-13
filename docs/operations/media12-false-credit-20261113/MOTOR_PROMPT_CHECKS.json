@@ -1,0 +1,9 @@
+{
+  "baselineUnchanged": true,
+  "catalog46EntriesExact": true,
+  "selectorAndMediaPinOccurrenceCountsUnchanged": true,
+  "newPromptUnder65000Utf8Bytes": true,
+  "removedGenericLegacyBlockEmission": true,
+  "newRecoveryDoesNotApplyBlockedStatusToLiteralOrUpdate": true,
+  "installed": false
+}
