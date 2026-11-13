@@ -1,0 +1,13 @@
+{
+  "deployed": false,
+  "reason": "environment_unavailable_before_upload",
+  "sourceCommit": "4b9116419a2d5a6b7ff12152f7a26b762a58219a",
+  "candidateManifestCommit": "edb20e76ad20b033cc68b80af98100dde33eb9a6",
+  "candidateMcpVersion": "1b78dc88-cb9b-456f-b711-c3328031e61d",
+  "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b",
+  "archive": "opmx-guard-semantic-preflight21.zip",
+  "archiveSha256": "c023a111a8448df8b0cf96c4fcfc5eb8fe26a2cd9d2d5468ecb8ab25dd45a3ec",
+  "bytes": 195143,
+  "productionMcpVersion": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
+  "restoredDraftVersion": "a342823c-1a68-4dfc-81ab-622daf2061cd"
+}

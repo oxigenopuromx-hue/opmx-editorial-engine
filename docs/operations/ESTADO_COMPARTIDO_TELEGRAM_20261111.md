@@ -1,6 +1,24 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
-## Corte vigente — 12nov2026, posterior al despliegue24/22
+## Corte vigente — 13nov2026 UTC / 12nov2026 CDMX, issues25→15→21
+
+Este corte prevalece sobre los estados históricos inferiores. Orden corregido por el usuario:25primero,15después,21al final. No se publicó ni editó ninguna nota ni se reintentaron paquetes en esta intervención.
+
+| Issue | Estado comprobado |
+| --- | --- |
+|25|Corregido y activo en el único Motor. Resolución alternativa del enlace Google original hasta J.D.Power; lectura editorial sigue siendo obligatoria.37testsPASS. Fuente9dd6b86ec36d988bbe1af2cf9dfd00a13a41ed04. [Evidencia y reversión](issue25-source-link-20261113/VERIFICACION.md).|
+|15|Corregido y activo en receptor db33c542-8fa0-48a9-848d-49aea32ae75e/52nodos.18tests+QA n8n38024/45asercionesPASS; cinco parámetros exactos y grafo preservado. PDF históricoDISCARDED,0PENDING; no reanudado. [Evidencia y reversión](issue15-pdf-20261113/VERIFICACION.md).|
+|21|Implementado y probado, **NO DESPLEGADO, abierto**.48tests específicos/741regresiones+QA n8n38026/27casos157asercionesPASS. Entorno de despliegue pasó a unavailable antes de cualquier subida a Hostinger. [Punto exacto y continuación](issue21-semantic-preflight-20261113/VERIFICACION.md).|
+
+- Motor6ae9095256948191b33f1e023fbfbf8b enabled; sólo se actualizó prompt a51831caracteres/SHA2567b09b7b0b0e29de0e03c248a3900f6cd1ac7739864e08c02ef3e9328eceef3b1, fijando helper25a9dd6b86. Configuración restante y suscripción READY/preview conservadas; no hay otro Motor.
+- Guard sigue **opmx-guard-publisher-submission24.zip**, SHA256ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96; última observación Hostinger Actual/completado12nov18:03:54CDMX. No se subió el candidato21.
+- MCP **activo1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb/151nodos**. Candidata21guardada en historia1b78dc88-cb9b-456f-b711-c3328031e61d/152nodos, NO activa. Draft112ajeno restaurado y cotejado, ahoraa342823c-1a68-4dfc-81ab-622daf2061cd. NO publicar el draft112como si fuera producción.
+- Manifiesto en punta de feat/telegram-reopen-recovery vuelve al pin productivo24. Commitedb20e76ad20b033cc68b80af98100dde33eb9a6 preserva el futuro manifiesto21, **no acredita despliegue**. Los demás escritores, Shared, autor3 y monitor30 no cambiaron.
+- Probe7IDUF9PeHQ5v331Z restaurado a sus tres nodos originales, inactivo, sin retención y timeout30. No quedó webhookQA ni proceso nuevo.
+
+Pendiente operativo exacto: recuperar el entorno de despliegue, desplegar Guard/manifiesto21compatible, publicar MCP152coordinado y comprobar el runtime real. No hace falta otra autorización del usuario.29y24conservan los pendientes documentados en el corte anterior;28cancelación sigue diferido.
+
+## Corte anterior — 12nov2026, despliegue24/22
 
 Este corte prevalece sobre las fichas históricas que siguen. Fuente runtime inmutable57885f5fbe91b99b202d343bc2f2cd562a014745 en feat/telegram-reopen-recovery.
 
