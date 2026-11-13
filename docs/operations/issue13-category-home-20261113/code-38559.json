@@ -1,0 +1,53 @@
+{
+  "executionId": "38559",
+  "status": "success",
+  "result": {
+    "status": "EDITORIAL_PLACEMENT_REAL_GATE_INVENTORY_QA_PASSED",
+    "cases": 25,
+    "assertions": 147,
+    "sourceSha256": {
+      "sharedPrepare": "f0339b6e05aa602a4b27eacb9853b3e677e3b2d290a8acb300b6d09cbf52efb0",
+      "sharedVerify": "fafe8a42939593201c4dad06a2719f5357df996171f9234d7f003fcf62a4cf86",
+      "mcpPrepare": "9d0e641bc5112fb8c6ac697b26b4e67aa8f1360936a7c3ec77874f37ee77f0dc",
+      "mcpVerify": "fa5792f94226c2176b938284a6a879aa14f661618f3492b5352b1a0b9522dfb3",
+      "inventoryFormatter": "03ac02040cce2c6f57fc7a3708a82c8e81288f12deac695f8a490137621b00b2",
+      "parserQa": "ae10e43d0d6b5d5a109917bc2526a1d2716fe9cba4cbd082a8e70a1be8b3f9b5"
+    },
+    "labels": [
+      "shared valid null",
+      "shared valid []",
+      "shared valid [\"30\"]",
+      "shared wrong target/list/confirmed/http",
+      "shared active control plus omitted declaration denied",
+      "shared source envelope is not Guard authority",
+      "mcp valid null",
+      "mcp valid []",
+      "mcp valid [\"30\"]",
+      "mcp wrong target/list/confirmed/http",
+      "mcp active control plus omitted declaration denied",
+      "mcp source envelope is not Guard authority",
+      "MCP wrong protocol request and destination",
+      "inventory legacy absence",
+      "inventory OPEN null",
+      "inventory OPEN []",
+      "inventory OPEN [\"30\"]",
+      "inventory READY null",
+      "inventory READY []",
+      "inventory READY [\"30\"]",
+      "inventory forged projection and mismatch rejected",
+      "inventory preserve cannot carry null or empty replacement",
+      "inventory source bytes do not become placement",
+      "inventory valid structured projection remains separate from source",
+      "parser direct control null/empty/IDs and untrusted contexts"
+    ],
+    "fixtures": "SYNTHETIC_OBJECTS_CREATED_INSIDE_CODE",
+    "guardResponseSimulation": "HTTP_STATUS_AND_BODY_ONLY",
+    "realGuardStore": "NOT_CALLED_HERE_NODE_STORE_QA_SEPARATE",
+    "nativePrototypesUnmodified": true,
+    "networkCalls": 0,
+    "realDatabaseConnections": 0,
+    "guardMutations": 0,
+    "cmsWrites": 0,
+    "telegramMessages": 0
+  }
+}

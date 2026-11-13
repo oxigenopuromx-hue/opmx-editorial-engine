@@ -1,0 +1,169 @@
+{
+  "status": "GUARD13_LIVE_READONLY_QA_PASSED",
+  "checks": [
+    {
+      "name": "capacity",
+      "statusCode": 200,
+      "body": {
+        "schema": "opmx.package-capacity-audit.v1",
+        "status": "CAPACITY_OBSERVED",
+        "readOnly": true,
+        "readConsistency": "ONE_STATEMENT_SNAPSHOT",
+        "capacity": {
+          "packages": {
+            "used": 149,
+            "limit": 1000,
+            "remaining": 851
+          },
+          "bytes": {
+            "used": 53589593,
+            "limit": 134217728,
+            "remaining": 80628135
+          }
+        },
+        "inventory": {
+          "packages": 149,
+          "open": 0,
+          "ready": 148,
+          "cancelled": 1,
+          "itemRows": 788,
+          "packageItemSlots": 788,
+          "pendingItems": 0,
+          "pendingReservedBytes": 0,
+          "retainedCommittedBytes": 53589593,
+          "releasedPendingRows": 2
+        },
+        "legacyCloseRisk": {
+          "normalOpenAtControlLimit": 0,
+          "recoveryOpenAtControlLimitWithoutDurableResult": 0,
+          "requiresReconciliation": false,
+          "interpretation": "RISK_COUNTS_ONLY_NOT_CONFIRMED_INCIDENT"
+        },
+        "accounting": {
+          "differences": {
+            "packageCount": 0,
+            "quotaVsPackageBytes": 0,
+            "packageVsAccountedBytes": 0,
+            "packageVsCurrentRuleSlots": 2
+          },
+          "matchesCurrentRules": false,
+          "interpretation": "CURRENT_RULES_LEGACY_DIFFERENCES_REQUIRE_REVIEW"
+        },
+        "authorizesDeletion": false,
+        "authorizesLimitChange": false
+      }
+    },
+    {
+      "name": "runtime",
+      "statusCode": 200,
+      "body": {
+        "status": "RUNTIME_OBSERVED",
+        "observedAt": "2026-11-13T03:09:49.718Z",
+        "versionsMatch": true,
+        "noActiveN8nWriters": true,
+        "executionPages": [
+          {
+            "status": "running",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "waiting",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "new",
+            "complete": true,
+            "executions": []
+          }
+        ],
+        "authorizesRecovery": false,
+        "motorTerminationVerified": false,
+        "workflows": [
+          {
+            "id": "bnzVMNkZuGO1GQCZ",
+            "activeVersionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+            "nodeCount": 155
+          },
+          {
+            "id": "Mt7ts2EGPbyaTC2o",
+            "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+            "nodeCount": 58
+          },
+          {
+            "id": "4o7K5TmKc7joScqB",
+            "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+            "nodeCount": 152
+          },
+          {
+            "id": "C4hk6fQQomueYC8f",
+            "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+            "nodeCount": 10
+          },
+          {
+            "id": "qBmLf0DmcMSfuWvm",
+            "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+            "nodeCount": 9
+          }
+        ]
+      }
+    },
+    {
+      "name": "nontelegram_omit",
+      "statusCode": 200,
+      "body": {
+        "status": "PLACEMENT_UNCHANGED",
+        "writesStarted": false,
+        "writeAuthorized": false,
+        "retryPermitted": false
+      }
+    },
+    {
+      "name": "nontelegram_explicit",
+      "statusCode": 200,
+      "body": {
+        "status": "PLACEMENT_UNCONFIRMED",
+        "writesStarted": false,
+        "writeAuthorized": false,
+        "retryPermitted": false
+      }
+    },
+    {
+      "name": "legacy_omit",
+      "statusCode": 200,
+      "body": {
+        "status": "PLACEMENT_UNCHANGED",
+        "writesStarted": false,
+        "writeAuthorized": false,
+        "retryPermitted": false
+      }
+    },
+    {
+      "name": "legacy_explicit_without_order",
+      "statusCode": 200,
+      "body": {
+        "status": "PLACEMENT_UNCONFIRMED",
+        "writesStarted": false,
+        "writeAuthorized": false,
+        "retryPermitted": false
+      }
+    }
+  ],
+  "editorialWrites": 0,
+  "packageMutations": 0,
+  "telegramMessages": 0,
+  "_evidence": {
+    "sourceSha256": "6dfb399e7e14f4f8f3ac4eb942eb60b0196cbd98d8c8225cb9a9c0d9747d9a26",
+    "sourceArtifact": "task13-live-qa-result.json",
+    "sanitizedPublicCopy": true,
+    "removedFields": [
+      "checks[1].body.scope",
+      "checks[2].body.requestId",
+      "checks[4].body.requestId"
+    ],
+    "rawWorkflowNodesIncluded": false,
+    "credentialsIncluded": false,
+    "promptIncluded": false
+  }
+}

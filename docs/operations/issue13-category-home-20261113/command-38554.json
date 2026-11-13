@@ -1,0 +1,15 @@
+{
+  "executionId": "38554",
+  "status": "success",
+  "result": {
+    "status": "PLACEMENT_COMMAND_QA_PASSED",
+    "checks": 20,
+    "syntheticFixturesOnly": true,
+    "authority": "NONE",
+    "receiverIdentityChecks": "NOT_EXERCISED_BY_PURE_HELPERS",
+    "networkCalls": 0,
+    "guardMutations": 0,
+    "cmsWrites": 0,
+    "telegramMessages": 0
+  }
+}
