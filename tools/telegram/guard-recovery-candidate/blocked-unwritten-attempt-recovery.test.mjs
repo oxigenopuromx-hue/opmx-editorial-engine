@@ -171,3 +171,13 @@ test('uncertain commit, BEGIN, rollback or release never returns a capability',a
   if(name==='commitThrowsAfter'||name==='releaseThrows'){assert.equal(r.status,'BLOCKED_RECOVERY_UNCONFIRMED');assert.equal(f.state.attempt.state,'RUNNING');assert.equal(f.state.fence.state,'AWAITING_DECISION');assert.equal(f.state.audits.length,1)}else assert.deepEqual(f.state,before);
  });
 });
+
+test('queued confirmed create recovery requires full independent barrier and returns one fresh capability',async()=>{
+ const f=fixture();f.state.attempt.state='QUEUED';f.state.attempt.token_hash=null;f.state.fence.state='AWAITING_DECISION';
+ const r=await f.store.recoverUnacknowledged(f.input);assert.equal(r.status,'QUEUED_UNWRITTEN_ATTEMPT_RECOVERED');assert.equal(r.token,newToken);assert.equal(r.writeAuthorized,false);assert.equal(f.state.fence.state,'AWAITING_DECISION');assert.equal(f.state.audits.length,1);
+ const ack={packageId,revision,eventId,token:newToken,previewHash:f.input.previewHash,destination:'OPURO',contentMode:'EDITORIAL',action:'CREATE'};
+ assert.equal((await f.store.acknowledgeDecision(ack)).status,'DECISION_ACKNOWLEDGED');
+});
+test('queued recovery rejects evidence of writes and active writers without mutations',async t=>{
+ for(const name of ['directRequests','directTargets','targets','media','claims','submissions','receipts','updates','jobs','busy'])await t.test(name,async()=>{const f=fixture();f.state.attempt.state='QUEUED';f.state.attempt.token_hash=null;f.state.fence.state='AWAITING_DECISION';if(name==='busy')f.runtime.noActiveN8nWriters=false;else f.state[name].push({request_id:ids[0],package_id:packageId,revision,destination:'OPURO',operation_id:'update'});const before=structuredClone(f.state),r=await f.store.recoverUnacknowledged(f.input);noCapability(r);unchanged(f,before)});
+});
