@@ -1,4 +1,13 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
+## Corte vigente — recuperación dirigida Servidores IA12 — 13nov2026 11:31 CDMX
+
+**Operación editorial en curso; no volver a iniciar ni recuperar este intento desde otro chat.** Paquete `tg_efdabf64148316df03e230122001e7311843a4ab`, READY12, CREATE/EDITORIAL/OPURO; solicitud estable `tg_f88d93dd0e24308affc30991c0f8e34d97a1ce9697ef802d2084bc0798879ddb`. El intento original sí se reclamó16:45:14UTC y quedó RUNNING/AWAITING_DECISION; entregaSENT/HTTP200. No atribuirlo a ausencia de inicio ni afirmar coalescencia probada.
+
+- Se conectó al mismo Motor la recuperación administrativa ya existente en Guard, sin nuevos nodos, consumidores o suscripciones. Cuatro parámetros MCP, 19 pruebas dirigidas y comprobación del wrapper real pasan. La capacidad sólo se devuelve al worker autenticado y permanece privada; el Guard exige administrador, evento/huella exactos y barrera aún cerrada.
+- MCP activo155 `cf4f65ab-35b6-4120-a36d-ddce2e94b91c`, grafo `0d35aa9e3a9571e63aa168c58ca111c76979f331056e7bdeeb7d59a96b79b65c`. Borrador112 ajeno restaurado idéntico. GuardActual/completado11:25:53CDMX: `opmx-guard-unacknowledged-mcp-recovery.zip`, sólo cambió el pinMCP; otros cuatro intactos. Runtime39491 confirmó cinco versiones y cero escritores activos17:28:57UTC.
+- Catálogo Archivos actualizado y herramienta `recuperar_intento_sin_decision_telegram_opmx` visible en UI. El Guard confirmó la recuperación del mismo intento y el Motor está leyendo los originales. SELECT17:31:19UTC corroboró RUNNING con updated_at17:30:21.521372 y fence aúnAWAITING_DECISION. El resultado editorial y el aviso final todavía están pendientes; no equivale a publicación.
+- [Registro del arranque y recuperación](ARRANQUE_DIRIGIDO_SERVIDORES_IA_20261113.md). Se conservan Simey/LIBERAL cancelado y Morena11 publicado; no intervenirlos.
+
 
 ## Corte vigente — #29 conciliado; continuación editorial por el bot — 13nov2026 09:41 CDMX
 

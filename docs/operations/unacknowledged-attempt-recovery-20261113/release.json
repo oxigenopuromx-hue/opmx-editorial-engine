@@ -1,0 +1,107 @@
+{
+  "schema": "opmx.unacknowledged-attempt-recovery-release.v1",
+  "status": "RECOVERED_READING_SOURCES",
+  "incident": "SERVIDORES_IA_20261113",
+  "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+  "revision": 12,
+  "requestId": "tg_f88d93dd0e24308affc30991c0f8e34d97a1ce9697ef802d2084bc0798879ddb",
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "newMotorCreated": false,
+    "subscriptionsChanged": false,
+    "promptRestoredChars": 60558,
+    "promptRestoredSha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83"
+  },
+  "mcp": {
+    "workflowId": "bnzVMNkZuGO1GQCZ",
+    "baseActiveVersionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+    "candidateVersionId": "cf4f65ab-35b6-4120-a36d-ddce2e94b91c",
+    "activeVersionId": "cf4f65ab-35b6-4120-a36d-ddce2e94b91c",
+    "candidateGraphHash": "0d35aa9e3a9571e63aa168c58ca111c76979f331056e7bdeeb7d59a96b79b65c",
+    "nodes": 155,
+    "parameterChanges": [
+      "Resolver identidad de solicitud",
+      "Protocolo MCP archivos",
+      "Gestionar intento Motor guard",
+      "Resultado intento Motor MCP"
+    ],
+    "addedNodes": 0,
+    "changedConnections": 0,
+    "originalDraftNodes": 112,
+    "originalDraftRestored": true,
+    "activationVerified": true,
+    "catalogRefreshed": true,
+    "catalogUiExposureVerified": true,
+    "catalogUiWrites": 13,
+    "catalogUiReads": 4,
+    "readyPreviewEventsVerified": true
+  },
+  "guard": {
+    "archive": "opmx-guard-unacknowledged-mcp-recovery.zip",
+    "bytes": 221370,
+    "files": 89,
+    "sha256": "764f4c7b4b9823a8da3319321c605756cf45b74c92bb2728dc44a0fe491eea62",
+    "changedFiles": [
+      "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs"
+    ],
+    "unchangedOtherWriterPins": 4,
+    "buildStartObserved": true,
+    "deploymentVerified": true,
+    "deployedAtUtc": "2026-11-13T17:25:53Z",
+    "deployedAtMexicoCity": "2026-11-13T11:25:53-06:00",
+    "startupResponsesObserved": {
+      "401": 1,
+      "503": 12
+    }
+  },
+  "validation": {
+    "directedTestsPassed": 19,
+    "activeGraphWrapperCheckedLocally": true,
+    "normalStartPreserved": true,
+    "readyPreviewEventsPreserved": true,
+    "recoveryExecuted": true,
+    "publisherExecuted": false,
+    "cmsWriteExecuted": false
+  },
+  "runtimeObservation": {
+    "executionId": "39491",
+    "httpStatus": 200,
+    "observedAt": "2026-11-13T17:28:57.636Z",
+    "versionsMatch": true,
+    "noActiveN8nWriters": true,
+    "motorTerminationVerified": false,
+    "authorizesRecovery": false,
+    "pins": {
+      "bnzVMNkZuGO1GQCZ": "cf4f65ab-35b6-4120-a36d-ddce2e94b91c",
+      "Mt7ts2EGPbyaTC2o": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "4o7K5TmKc7joScqB": "bef4649d-38eb-436a-9a13-728750da6b8f",
+      "qBmLf0DmcMSfuWvm": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "C4hk6fQQomueYC8f": "1eca0334-b3af-45d9-ac80-341e99a09faa"
+    },
+    "probeRestoredExactly": true,
+    "probeInactive": true,
+    "probeVersionId": "1b700df7-5008-4772-acb1-16d07be5fe56"
+  },
+  "recoveryCommand": {
+    "sent": true,
+    "sendCount": 1,
+    "sameOriginalMotor": true,
+    "uiWorkingObserved": true,
+    "recoveryAcknowledgementConfirmed": true,
+    "publisherResultConfirmed": false
+  },
+  "postRecoveryReadOnlyObservation": {
+    "queryCount": 1,
+    "tokenHashSelected": false,
+    "observedAtUtc": "2026-11-13T17:31:19.800832Z",
+    "packageState": "READY",
+    "revision": 12,
+    "attemptState": "RUNNING",
+    "attemptUpdatedAtUtc": "2026-11-13T17:30:21.521372Z",
+    "priorAttemptUpdatedAtUtc": "2026-11-13T16:45:14.424618Z",
+    "fenceState": "AWAITING_DECISION",
+    "fenceUpdatedAtUtc": "2026-11-13T16:44:22.839706Z",
+    "decisionAcknowledgementConfirmed": false,
+    "publicationConfirmed": false
+  }
+}
