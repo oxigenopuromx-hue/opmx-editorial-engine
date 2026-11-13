@@ -1,0 +1,12 @@
+import {createRecoveryWiring} from './recovery-wiring.mjs';
+import assert from 'node:assert/strict';
+const id='1', packageId='tg_'+ 'a'.repeat(40), eventId='evt_'+ 'b'.repeat(48), previewHash='c'.repeat(64);
+let called=0;
+const pool={async getConnection(){return {async execute(sql){if(sql.startsWith('SELECT state FROM opmx_tg_motor_attempts'))return [[{state:'BLOCKED'}]];throw Error('unexpected sql')},release(){}}}};
+const fn=async()=>true;
+const events={enqueue:fn,initialize:fn,run:fn};const reviews={run:fn};
+const wiring=createRecoveryWiring({pool,secret:'a'.repeat(64),events,reviews,adminUserIds:[id],verifyTerminalRun:fn,verifyWriterCoverage:fn,verifyDecisionConsumer:fn,reconciliationEvidence:{lockSafetyBarrier:fn,lockVerifiedOutcomes:fn},recoverBlockedUnwritten:async x=>{called++;assert.equal(x.packageId,packageId);return {status:'PROVIDER_CALLED'}}});
+const result=await wiring.telegramAttempts.recoverUnacknowledged({owner:id,chat:id,packageId,revision:12,eventId,previewHash});
+assert.equal(result.status,'PROVIDER_CALLED');assert.equal(called,1);
+const denied=await wiring.telegramAttempts.recoverUnacknowledged({owner:'2',chat:'2',packageId,revision:12,eventId,previewHash});assert.equal(denied.status,'RECOVERY_NOT_AUTHORIZED');assert.equal(called,1);
+console.log('PASS: blocked recovery reaches injected provider; unauthorized actor is denied');
