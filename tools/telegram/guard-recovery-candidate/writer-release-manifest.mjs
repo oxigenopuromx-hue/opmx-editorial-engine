@@ -1,10 +1,10 @@
-// Audited publication status23: pending heading only; all writer enforcement preserved.
+// Publisher submission24: same writers, durable acceptance and historical result.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "c0de03ed-e7a7-4255-a9c8-9ca76404424e",
-      "graphHash": "4655c83baa44f05ef5907fd31af7b7810310e543e398b685900b5c02cc588873"
+      "versionId": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
+      "graphHash": "0513f7987a7f82fa47c380e3df93547a7b1674a95720d08a03bda0beade39a38"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",

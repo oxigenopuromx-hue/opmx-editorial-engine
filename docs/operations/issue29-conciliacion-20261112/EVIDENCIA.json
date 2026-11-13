@@ -1,0 +1,331 @@
+{
+  "scope": "read-only issue29 2026-11-12",
+  "monitorExecution": "37896",
+  "confirmed": [
+    {
+      "schema": "opmx.telegram.final-publication-observation.v1",
+      "status": "FINAL_PUBLICATION_CONFIRMED",
+      "packageId": "tg_2680906a5ab8c363f40af2fc26e74138e8d9139c",
+      "revision": 8,
+      "requestId": "tg_18c497317340b02de51fbfc8bcf23333c1716bc620fa8898d62e4fb74cc842e7",
+      "phase": "PUBLISH",
+      "destination": "TODOS",
+      "slug": "china-cuba-apoyo-sanciones-estados-unidos",
+      "receiptHash": "392baeba8cfb766e9bf143b29e771d1ba02b89892b9c52b6ca1f6e056e548779",
+      "receiptState": "RECORDED",
+      "targets": [
+        {
+          "destination": "OPURO",
+          "postId": 10488,
+          "slug": "china-cuba-apoyo-sanciones-estados-unidos",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "OPOL",
+          "postId": 3509,
+          "slug": "china-cuba-apoyo-sanciones-estados-unidos",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "LIBERAL",
+          "postId": 388,
+          "slug": "china-cuba-apoyo-sanciones-estados-unidos",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        }
+      ],
+      "writeAuthorized": false,
+      "retryPermitted": false,
+      "consistentSnapshot": true,
+      "writersIdleVerified": true,
+      "observedAt": "2026-11-12T23:31:56.721Z"
+    },
+    {
+      "schema": "opmx.telegram.final-publication-observation.v1",
+      "status": "FINAL_PUBLICATION_CONFIRMED",
+      "packageId": "tg_ae41ddbd480407eb263090c3ac41c2fa9dbe9c8f",
+      "revision": 12,
+      "requestId": "tg_1bc53fe002eb1f2e76f8f627c7ed9332eb07fd08123320d90fcabd96ad68fc97",
+      "phase": "PUBLISH",
+      "destination": "TODOS",
+      "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+      "receiptHash": "1a33540d000a2b2fdf98d39d699d44db1014a2234f7fb7a8b28ae28a921aa8c3",
+      "receiptState": "RECORDED",
+      "targets": [
+        {
+          "destination": "OPURO",
+          "postId": 10458,
+          "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "OPOL",
+          "postId": 3503,
+          "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        },
+        {
+          "destination": "LIBERAL",
+          "postId": 383,
+          "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+          "status": "publish",
+          "cmsVerified": true,
+          "ledgerVerified": true
+        }
+      ],
+      "writeAuthorized": false,
+      "retryPermitted": false,
+      "consistentSnapshot": true,
+      "writersIdleVerified": true,
+      "observedAt": "2026-11-12T23:32:07.226Z"
+    }
+  ],
+  "rows": [
+    1753,
+    1754
+  ],
+  "cmsExecutions": {
+    "liberalExact": "37940",
+    "liberalSearch": "37942",
+    "opuro": "37943",
+    "opol": "37944"
+  },
+  "cms": {
+    "liberal": [
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "simey_slug",
+        "httpStatus": 200,
+        "total": "1",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 393,
+            "status": "draft",
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+            "link": "https://cms.elliberal.mx/?p=393",
+            "date_gmt": "2026-11-12T01:00:31",
+            "modified_gmt": "2026-11-12T01:00:31",
+            "title": "Simey Olvera plantea inclusión digital en México",
+            "code": null
+          }
+        ]
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "servidores_search",
+        "httpStatus": 200,
+        "total": "0",
+        "pages": "0",
+        "posts": []
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "morena_search",
+        "httpStatus": 200,
+        "total": "4",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 311,
+            "status": "publish",
+            "slug": "senado-cuauhtemoc-cardenas-muro-honor",
+            "link": "https://cms.elliberal.mx/senado-cuauhtemoc-cardenas-muro-honor/",
+            "date_gmt": "2026-11-11T12:07:37",
+            "modified_gmt": "2026-11-11T16:35:59",
+            "title": "Senado inscribirá a Cuauhtémoc Cárdenas en Muro de Honor",
+            "code": null
+          }
+        ]
+      }
+    ],
+    "opuro": [
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "simey_slug",
+        "httpStatus": 200,
+        "total": "1",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 10493,
+            "status": "publish",
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+            "link": "https://cms.oxigenopuro.com.mx/simey-olvera-innovacion-tecnologica-reducir-desigualdades/",
+            "date_gmt": "2026-11-12T01:04:52",
+            "modified_gmt": "2026-11-12T01:31:55",
+            "title": "Simey Olvera plantea inclusión digital en México",
+            "code": null
+          }
+        ]
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "servidores_search",
+        "httpStatus": 200,
+        "total": "34",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 10359,
+            "status": "publish",
+            "slug": "robos-equipos-centros-datos-100-millones-estados-unidos",
+            "link": "https://cms.oxigenopuro.com.mx/robos-equipos-centros-datos-100-millones-estados-unidos/",
+            "date_gmt": "2026-11-10T17:40:57",
+            "modified_gmt": "2026-11-10T17:40:57",
+            "title": "Centros de datos: robos de equipos superan US$100 millones",
+            "code": null
+          }
+        ]
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "morena_search",
+        "httpStatus": 200,
+        "total": "76",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 10443,
+            "status": "publish",
+            "slug": "senado-cuauhtemoc-cardenas-muro-honor",
+            "link": "https://cms.oxigenopuro.com.mx/senado-cuauhtemoc-cardenas-muro-honor/",
+            "date_gmt": "2026-11-11T12:07:34",
+            "modified_gmt": "2026-11-11T12:07:34",
+            "title": "Senado inscribirá a Cuauhtémoc Cárdenas en Muro de Honor",
+            "code": null
+          }
+        ]
+      }
+    ],
+    "opol": [
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "simey_slug",
+        "httpStatus": 200,
+        "total": "1",
+        "pages": "1",
+        "posts": [
+          {
+            "id": 3515,
+            "status": "publish",
+            "slug": "simey-olvera-innovacion-tecnologica-reducir-desigualdades",
+            "link": "https://cms.oxigenopolitico.com.mx/congreso/simey-olvera-innovacion-tecnologica-reducir-desigualdades/",
+            "date_gmt": "2026-11-12T01:06:47",
+            "modified_gmt": "2026-11-12T01:06:48",
+            "title": "Simey Olvera plantea inclusión digital en México",
+            "code": null
+          }
+        ]
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "servidores_search",
+        "httpStatus": 200,
+        "total": "13",
+        "pages": "1",
+        "posts": []
+      },
+      {
+        "check": "ISSUE29_CMS_READ_ONLY",
+        "query": "morena_search",
+        "httpStatus": 200,
+        "total": "17",
+        "pages": "1",
+        "posts": []
+      }
+    ]
+  },
+  "guardExecution": "37946",
+  "guardResults": [
+    {
+      "check": "ISSUE29_GUARD_READ_ONLY",
+      "name": "simey",
+      "httpStatus": 200,
+      "result": {
+        "status": "RECONCILIATION_VERIFIED",
+        "packageId": "tg_00991fbbd87a751fb8513f4d4f6fcebca8469bee",
+        "revision": 10,
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "PUBLISHED",
+            "postId": 10493
+          },
+          {
+            "destination": "OPOL",
+            "status": "PUBLISHED",
+            "postId": 3515
+          },
+          {
+            "destination": "LIBERAL",
+            "status": "DRAFT",
+            "postId": 393
+          }
+        ],
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "check": "ISSUE29_GUARD_READ_ONLY",
+      "name": "servidores",
+      "httpStatus": 200,
+      "result": {
+        "status": "RECONCILIATION_VERIFIED",
+        "packageId": "tg_efdabf64148316df03e230122001e7311843a4ab",
+        "revision": 9,
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          }
+        ],
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    },
+    {
+      "check": "ISSUE29_GUARD_READ_ONLY",
+      "name": "morena",
+      "httpStatus": 200,
+      "result": {
+        "status": "RECONCILIATION_VERIFIED",
+        "packageId": "tg_c11966b7bf1994c072c1e54999dfbd3579f619fb",
+        "revision": 8,
+        "results": [
+          {
+            "destination": "OPURO",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "OPOL",
+            "status": "BLOCKED"
+          },
+          {
+            "destination": "LIBERAL",
+            "status": "BLOCKED"
+          }
+        ],
+        "writesRolledBack": true,
+        "writeAuthorized": false,
+        "processTerminationClaimed": false
+      }
+    }
+  ],
+  "cmsWrites": 0,
+  "telegramSends": 0,
+  "packageMutations": 0,
+  "issueRemainsOpen": true
+}

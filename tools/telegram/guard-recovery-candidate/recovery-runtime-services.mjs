@@ -12,7 +12,7 @@ import {updatePayloadSchema} from './update-payload-store.mjs';
 import {updateDeliverySchema,createUpdateDeliveryStore} from './update-delivery-store.mjs';
 import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
 import {canonicalUpdateValue,validUpdatePayload} from './update-executor.mjs';
-import {readCompletedWriterReceipt} from './writer-receipt-store.mjs';
+import {readSubmissionCompletedWriterReceipt} from './publisher-submission-store.mjs';
 import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
 import {createRecoveredCreationGate} from './recovered-creation-gate.mjs';
 import {literalPayloadSchema,createLiteralPayloadStore,readLiteralProofInTransaction} from './literal-payload-store.mjs';
@@ -75,7 +75,7 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
    const proof=await readLiteralProofInTransaction(c,{packageId:scope.packageId,revision:scope.revision,destination:d.destination,previewHash:d.preview_hash});
    return !!proof&&verifyLiteralRelease(c,scope);
   },
-  verifyCompletedWrites:readCompletedWriterReceipt,
+  verifyCompletedWrites:readSubmissionCompletedWriterReceipt,
   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
  });
  return Object.freeze({...wiring,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});

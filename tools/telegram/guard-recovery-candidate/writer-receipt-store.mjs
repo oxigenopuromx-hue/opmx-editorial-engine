@@ -59,14 +59,16 @@ export function createWriterReceiptStore({pool,readWordPress}){
 
 // Caller already owns the package, attempt and fence locks. This does not
 // manufacture a receipt from a CMS read: it requires the writer's durable ack.
-export async function readCompletedWriterReceipt(c,{packageId,revision,eventId}){
+export async function readCompletedWriterReceipt(c,{packageId,revision,eventId,expectedPhase=null}){
  if(!c?.execute||!/^tg_[a-f0-9]{40}$/.test(packageId??'')||!Number.isSafeInteger(revision)||revision<1||!/^evt_[a-f0-9]{48}$/.test(eventId??''))return null;
+ if(expectedPhase!==null&&!['DRAFT','PUBLISH'].includes(expectedPhase))return null;
  const [events]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? AND event_id=? FOR UPDATE',[packageId,revision,eventId]);if(events.length!==1)return null;
  const [decisions]=await c.execute('SELECT decision_json FROM opmx_tg_confirmed_decisions_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
  if(decisions.length>1)return null;
  if(decisions.length){
   let saved;try{saved=JSON.parse(decisions[0].decision_json)}catch{return null}
   if(saved?.action==='UPDATE'){
+   if(expectedPhase!==null)return null;
    let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId,revision})}catch{return null}
    if(!d?.finalPayloads||!Array.isArray(d.posts)||!d.posts.length)return null;
    const [claims]=await c.execute('SELECT destination,post_id,preview_hash,payload_hash,operation_id,state FROM opmx_tg_update_claims_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
@@ -78,7 +80,8 @@ export async function readCompletedWriterReceipt(c,{packageId,revision,eventId})
   }
  }
  const [claims]=await c.execute('SELECT request_id FROM opmx_tg_publication_claims_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);if(claims.length>1)return null;
- const phase=claims.length?'PUBLISH':'DRAFT';
+ const phase=expectedPhase??(claims.length?'PUBLISH':'DRAFT');
+ if(phase==='PUBLISH'&&claims.length!==1)return null;
  const [rows]=await c.execute('SELECT request_id,phase,receipt_hash,receipt_json FROM opmx_tg_writer_receipts_v1 WHERE package_id=? AND revision=? AND phase=? FOR UPDATE',[packageId,revision,phase]);
  if(rows.length!==1||digest(rows[0].receipt_json)!==rows[0].receipt_hash)return null;
  let value;try{value=JSON.parse(rows[0].receipt_json)}catch{return null}
