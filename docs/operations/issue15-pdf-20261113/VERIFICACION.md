@@ -1,6 +1,6 @@
 # Issue #15 — verificación del diagnóstico de originales Telegram
 
-Fecha: 2026-11-13. Resultado de la fuente y del QA aislado: **PASS**. La activación del receptor productivo sigue pendiente de registrar en este documento.
+Fecha: 2026-11-13. Resultado de la fuente y del QA aislado: **PASS**. El receptor productivo quedó activado y releído; no se publicaron notas.
 
 ## Validación de la fuente
 
@@ -51,19 +51,19 @@ No se reabrió el paquete, no se recuperó el PDF, no se completó una reserva, 
 
 El PDF conservado fuera del receptor se verificó por separado: **2528657 bytes**, **15 páginas**, SHA-256 `812415164fd172cb4814514a5f670b6416130cdd535a07e033eddb52d9f45220`, sin cifrado y con lectura pypdf `strict=True` sin advertencias. Esto acredita el original disponible, no los bytes de la descarga histórica. La fila 318 sigue siendo `DOWNLOAD_NOT_CONFIRMED` sin diagnóstico histórico suficiente para determinar la causa concreta.
 
-## Registro de activación pendiente
+## Registro de activación confirmada
 
 | Dato | Valor |
 |---|---|
 | Receptor | `OSi8AcnzLlI0csRu` |
 | Base activa usada para preparar el parche | `561bd7df-473b-4eca-9e92-e0e81f4baabd` |
-| Commit de fuente desplegada | **PENDIENTE — completar después de activar** |
-| Versión activa resultante | **PENDIENTE — completar después de activar** |
-| Fecha y hora de activación UTC | **PENDIENTE — completar después de activar** |
-| Verificación de lectura posterior de los cinco nodos | **PENDIENTE — completar después de activar** |
-| Conteo de nodos y preservación de conexiones/credenciales | **PENDIENTE — completar después de activar** |
+| Commit de fuente desplegada | `dbba4c08a5e9a8a55796096bc2383254dee72346` |
+| Versión activa resultante | `db33c542-8fa0-48a9-848d-49aea32ae75e` |
+| Fecha y hora de activación UTC | 13nov2026 UTC; ver versión e historial n8n para la marca de tiempo |
+| Verificación de lectura posterior de los cinco nodos | PASS: parámetros idénticos al builder y QA38024 |
+| Conteo de nodos y preservación de conexiones/credenciales | PASS:52nodos; conexiones, settings, grupos, IDs y credenciales idénticos a la base |
 
-No debe presentarse el QA aislado como evidencia de despliegue productivo. El inventario histórico y su PDF descartado no requieren una nueva recuperación para validar la activación de este parche.
+La activación y su relectura se comprobaron por separado del QA aislado. El inventario histórico y su PDF descartado no requieren una nueva recuperación para validar la activación de este parche.
 
 ## Archivos propios del commit #15
 
@@ -75,3 +75,7 @@ No debe presentarse el QA aislado como evidencia de despliegue productivo. El in
 6. `docs/operations/issue15-pdf-20261113/VERIFICACION.md`
 
 No incluir snapshots privados del receptor, operaciones con referencias de credenciales, archivos del PDF original ni fixtures privados de ejecución.
+
+## Reversión
+
+Restaurar/publicar sólo el receptor561bd7df-473b-4eca-9e92-e0e81f4baabd; mantener los recibos existentes y el campo storage_diagnostic. No requiere cambiar Guard, Motor ni suscripciones. No recuperar el PDF descartado ni repetir la publicación manual por esta reversión.

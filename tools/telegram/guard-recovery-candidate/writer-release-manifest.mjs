@@ -1,10 +1,10 @@
-// Issue21: static Shared normalization before durable Publisher acceptance.
+// Publisher submission24: same writers, durable acceptance and historical result.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
-      "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b"
+      "versionId": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
+      "graphHash": "0513f7987a7f82fa47c380e3df93547a7b1674a95720d08a03bda0beade39a38"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",

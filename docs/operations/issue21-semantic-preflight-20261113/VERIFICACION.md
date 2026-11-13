@@ -26,26 +26,23 @@ Shared sin cambios: `4o7K5TmKc7joScqB`, versión `4263fea4-90a4-406d-a234-da7397
 
 Las 11 operaciones candidatas agregan el grupo `Validación MASTER antes de aceptar` con ID `00e1fe38-96aa-4a71-94c0-da882b61421d`, cuyo único miembro es `MASTER — Validación estática Shared`. Se conserva la identidad y membresía de los cuatro grupos previos. El único miembro concentra todas las entradas y salidas externas del grupo; no se incluye ningún trigger ni se solapan miembros.
 
-## Integración y despliegue: completar antes del cierre
+## Integración comprobada; despliegue pendiente por entorno no disponible
 
-Estos campos son pendientes explícitos del integrador; no acreditan activación:
+Fuente21:4b9116419a2d5a6b7ff12152f7a26b762a58219a. Preparación n8n:11operaciones aplicadas,152nodos, cinco grupos; sólo advertencia de lienzo preexistente. Grafo cotejado exactamente contra builder, IDs originales y conexiones esperadas: huella1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b. Versión candidata guardada en historia:1b78dc88-cb9b-456f-b711-c3328031e61d. NO PUBLICADA.
 
-| Comprobación | Evidencia pendiente |
-| --- | --- |
-| Nueva versión MCP activa, 152 nodos | `PENDIENTE_ROOT_MCP_VERSION_ID` |
-| Huella del grafo MCP publicado, cotejado con candidato | `PENDIENTE_ROOT_MCP_GRAPH_SHA256` |
-| Relectura de grupos: sin grupos omitidos o eliminados | `PENDIENTE_ROOT_MCP_GROUPS_VERIFIED` |
-| Guard compatible: artefacto/versión y SHA-256 | `PENDIENTE_ROOT_GUARD_ARTIFACT_AND_SHA256` |
-| Manifiesto compartido y comprobación de compatibilidad | `PENDIENTE_ROOT_WRITER_MANIFEST_VERIFIED` |
-| Borrador ajeno de 112 nodos restaurado, versión resultante | `PENDIENTE_ROOT_RESTORED_DRAFT_VERSION_ID` |
-| Relectura final: activo 152, borrador ajeno 112 | `PENDIENTE_ROOT_ACTIVE_AND_DRAFT_VERIFIED` |
+Se ensambló un Guard basado íntegramente en issue24, conservando sus13deltas runtime anteriores y cambiando únicamente writer-release-manifest.mjs al pin candidato. Arranque y14rutas de denegación sin estado auténtico:PASS. Archivo preparado opmx-guard-semantic-preflight21.zip,195143bytes,SHA256c023a111a8448df8b0cf96c4fcfc5eb8fe26a2cd9d2d5468ecb8ab25dd45a3ec. Fuente/manifiesto candidato inmutable:edb20e76ad20b033cc68b80af98100dde33eb9a6. El ZIP local puede requerir reconstrucción si se pierde el entorno; el commit preserva las fuentes.
 
-El borrador ajeno previo es la versión `719ed751-2e44-418f-bbe9-90e9965084d1`, 112 nodos. Antes de preparar la candidata deben preservarse sus nodos, conexiones, grupos, parámetros, credenciales y configuración. La candidata se arma desde el grafo activo de 151 nodos. Tras publicar la nueva versión, se restaura el contenido del borrador ajeno sin publicarlo; la restauración genera otro identificador de borrador. La comprobación final debe volver a leer tanto `activeVersion` como el borrador y cotejar ambos contenidos con sus respectivos snapshots.
+El panel Hostinger se observó antes de subir: seguía Actual/completado opmx-guard-publisher-submission24.zip. La llamada de preparación de documentación del navegador agotó300s y el entorno pasó a unavailable; desapareció la capacidad de navegador. No se llegó a pulsar Redistribuir ni a subir el ZIP. No se modificó Hostinger y NO se publicó el MCP candidato. No hay bloqueo de aprobación ni una decisión pendiente del usuario.
+
+Por seguridad operativa se restauró el draft ajeno112nodos desde719ed751-2e44-418f-bbe9-90e9965084d1; nuevo draft a342823c-1a68-4dfc-81ab-622daf2061cd. Relectura: nodos/conexiones idénticos al snapshot original, activo todavía1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb/151nodos. El manifiesto de la punta de rama se devuelve al pin productivo anterior; el commit candidato anterior queda disponible. Shared y los otros escritores no cambiaron.
+
+## Continuación necesaria
+
+1. Recuperar un entorno con acceso al panel Hostinger y las fuentes fijadas; releer este índice, versiones activas y drafts por concurrencia.
+2. Reconstruir/preparar el release candidato desde la base24 y su único delta de manifest; volver a cotejar huella/pins y comprobar escritores inactivos. No activar el draft112.
+3. Desplegar Guard compatible y publicar exactamente la versión candidata152 de forma coordinada, o regenerarla desde activo si la historia expiró. Conservar/restaurar el draft ajeno.
+4. Comprobar estado Hostinger y observar versiones/huellas reales desde Guard. Sólo entonces cerrar21. No reenviar paquetes ni publicar notas como prueba.
 
 ## Límites y reversión
 
-Los diagnósticos conocidos de esta etapa son `VALIDATION_FAILED` con campos acotados, `writesStarted:false` y `retryPermitted:false`. Un error local no reconocido produce `FILES_REJECTED` sin datos crudos. `FILES_VALIDATED` declara el alcance estático y `live_cms_checks:NOT_CHECKED` / `request_binding:NOT_CHECKED`; no promete permisos o disponibilidad actual de WordPress.
-
-La aceptación durable del issue 24 y sus resultados asíncronos conservan su contrato. Un error posterior a aceptar o un resultado incierto requiere conciliación; esta corrección no autoriza reintentar paquetes históricos.
-
-La reversión debe usar la versión activa previa y un Guard/manifiesto compatibles, conservando recibos e intentos históricos. El borrador ajeno de 112 nodos no es una versión de reversión productiva. No se alteran la suscripción actual del Motor ni su evento de vista previa.
+VALIDATION_FAILED lleva campos acotados,writesStarted:false,retryPermitted:false. Errores locales desconocidos siguen FILES_REJECTED; resultados posteriores a aceptar siguen sujetos a conciliación24. La validación estática no promete disponibilidad/permisos actualesCMS. No se alteró el único Motor ni preview por esta candidata. Como21no se activó, no requiere reversión productiva; el draft112ya está restaurado y Guard/MCP actuales siguen compatibles.
