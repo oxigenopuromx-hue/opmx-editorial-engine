@@ -1,0 +1,30 @@
+{
+  "executionId": "38092",
+  "result": {
+    "status": "CATEGORY_HOME_REST_QA_PASSED",
+    "checks": 7,
+    "postId": 10533,
+    "fixtureSlug": "qa13-226004193e90",
+    "cleanup": "TRASHED",
+    "cmsPublished": 0,
+    "telegramMessages": 0,
+    "realEditorialPostsModified": 0,
+    "retryPermitted": false
+  },
+  "probe": {
+    "version": "9f1787c2-0a92-4fda-8d2a-05383e77c386",
+    "active": false,
+    "nodes": 3,
+    "restored": true,
+    "retention": false
+  },
+  "_evidence": {
+    "sourceSha256": "ac7f57f6dcfcaa769a2f86258e833ae819dbeb6bb64435fca0faaa3945bb9175",
+    "sourceArtifact": "task13-real-qa-evidence.json",
+    "sanitizedPublicCopy": true,
+    "removedFields": [],
+    "rawWorkflowNodesIncluded": false,
+    "credentialsIncluded": false,
+    "promptIncluded": false
+  }
+}

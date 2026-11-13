@@ -1,10 +1,35 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
+## Corte vigente — #18 y #13 desplegados/cerrados; #29 pendiente — 13nov2026 UTC / 12nov21:07 CDMX
+
+**Este corte reemplaza los estados candidatos/no activos de #13 de abajo.** No se publicaron ni editaron notas reales como prueba.
+
+| Componente | Versión activa verificada | Nodos |
+|---|---|---:|
+| Guard | `opmx-guard-category-home13.zip`, Actual/completado12nov21:07:57CDMX | 87 archivos |
+| Receptor Telegram `OSi8AcnzLlI0csRu` | `09d373b0-9d71-4cf1-99bd-c830f2275e7c` | 52, grupo original51 |
+| Shared `4o7K5TmKc7joScqB` | `bef4649d-38eb-436a-9a13-728750da6b8f` | 152 |
+| MCP `bnzVMNkZuGO1GQCZ` | `d4d3a75e-aec9-42ce-9439-d2ea4a931e8f` | 155 |
+| Form `Mt7ts2EGPbyaTC2o` | `5e0e1875-2996-4b8c-99aa-e4d07f7d8822` | 58 |
+| Reader y UPDATE | `1eca0334-b3af-45d9-ac80-341e99a09faa` / `d04fb5c2-ba36-48f9-9cd4-2958ab1f273e` | 10 / 9 |
+
+- **#18 cerrado:** cierre atómico y reintento sin acumular controles siguen íntegros. Guard13 se construyó sobre el ZIP18:75 archivos idénticos,9modificados y3nuevos; cero eliminados. ZIP13 SHA256 `456eaaa3fb3dfc5a6a7079f20f39de81df564a322549b27b9136a10890b06f35`,212025bytes. [Entrega18](issue18-close-quota-20261113/CIERRE_Y_DESPLIEGUE.md).
+- **#13 implementado y comprobado:** opción OPURO por categoría conforme D045. Una orden autenticada del receptor queda fuera del MASTER y se vuelve a comprobar en Guard antes de aceptar/medios/claim. Request/revisión/ciclo/actor y listas exactos, incluidos TODOS y UPDATE de otros destinos. Se bloquean controles huérfanos y sobres declarativos falsos. La lectura sin opción conserva paquetes históricos. La metadata no se copia a OPOL/LIBERAL ni modifica portada general. [Entrega, QA y rollback13](issue13-category-home-20261113/CIERRE_Y_DESPLIEGUE.md).
+- Comandos sobre paquete abierto: `/opciones portada OPURO 30` excluye de las posiciones superiores de la categoría30si pertenece a la nota; `ninguna` envía[]para limpiar; `conservar` retira la orden sin cambiar la metadata. No publican por sí solos. La nota conserva archivo, búsqueda y URL individual.
+- Motor único `6ae9095256948191b33f1e023fbfbf8b` habilitado: sólo se añadió el bloque de opción acreditada. READY/preview, suscripciones y pins anteriores del selector/fuentes se conservaron. Prompt54666caracteres, SHA256 `a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7`. No se creó otro Motor.
+- QA:231pruebas nativas dirigidas PASS; n8n38559 código real25casos/147aserciones y38554comandos20checks, sin I/O; arranque19rutas401/503; CMS38092borrador10533terminadoenTRASH; público38192sieteGETPASS. Producción38621seislecturasPASS, cinco pins/huellas coinciden. Capacidad149/1000paquetes,53,589,593/134,217,728bytes, cero PENDING y ambos riesgos de cierre legado0. Se conservan dos espacios históricos de descartes vacíos sin reajustarlos; `matchesCurrentRules:false` queda explícito.
+- Los borradores ajenos Shared138/Form54/MCP112 se restauraron idénticos a su fuente original tras publicar las versiones guardadas. ProbeQA inactivo,3nodos y retención original none/30s; no queda ejecutor de prueba activo.
+- **#29 sigue abierto:** ServidoresIA `tg_efdabf…` READY9/6elementos y ComisiónMorena `tg_c11966…` READY8/4elementos; el lector nuevo volvió a confirmarlos. La conciliación38084 mantiene bloqueo de reintento; la búsqueda CMS no fue exhaustiva. Simey no salió en LIBERAL según el usuario:393draft, OPURO10493/OPOL3515publish. No se reintentó ni recreó ninguna nota. [Revisión29](issue29-conciliacion-20261112/REVISION_ACTUAL.md).
+- HMAC real WordPress→Vercel no observado en esta entrega; limitación previa documentada, fallback de caché60s. Cancelación general#28 sigue aplazada por instrucción del usuario.
+- Fuente funcional13: `4f775f1eeccb3ae8502fbf3492fb1b2ce5c804ac` en `feat/telegram-reopen-recovery`. Main recibe contrato/manifest opcional e índice/documentación; no se fusionó el PRgrande#9.
+
+## Cortes anteriores (históricos)
+
 ## Corte vigente — #18 desplegado, #29 revisado y #13 en preparación — 13nov2026 UTC / 12nov CDMX
 
 - **#18 operativo:** Guard `opmx-guard-atomic-close18.zip` Actual/completado12nov20:27:00CDMX; SHA256 `e76550d99baa33d0b4839487d13040422f4f6805d7018238a3d5949a5b6d79aa`. Receptor único `OSi8AcnzLlI0csRu` activo `159d7833-1848-47f2-bfce-db9792751a78`,52nodos,grupo original51miembros. Cierre autenticado y atómico, replay sin consumir nuevos espacios y diagnóstico específico. [Entrega, QA y rollback](issue18-close-quota-20261113/CIERRE_Y_DESPLIEGUE.md).
 - Capacidad38113:145/1000paquetes,52,900,939/134,217,728bytes,0PENDING y ambos riesgos de cierre legado0. Dos espacios de diferencia contra la regla nueva se conservan como observación histórica; no se borraron ni reajustaron registros. 92pruebas dirigidasPASS; n8n38102:8casos/30aserciones; runtime38116 cinco pins correctos.
-- **#29 permanece abierto:** Servidores IA `tg_efdabf…` READY9(6STORED), Comisión Morena `tg_c11966…` READY8(4STORED); conciliación381? consultar evidencia exacta38084 y [revisión](issue29-conciliacion-20261112/REVISION_ACTUAL.md). Ambos siguen bloqueados para reintento; no se publicó ni recreó nada. El usuario confirma que **Simey no salió en LIBERAL**; el post393 permanece draft, OPURO10493/OPOL3515publish. No interpretar confirmaciones parciales como publicación completa.
+- **#29 permanece abierto:** Servidores IA `tg_efdabf…` READY9(6STORED), Comisión Morena `tg_c11966…` READY8(4STORED); conciliación38084; consultar evidencia exacta38084 y [revisión](issue29-conciliacion-20261112/REVISION_ACTUAL.md). Ambos siguen bloqueados para reintento; no se publicó ni recreó nada. El usuario confirma que **Simey no salió en LIBERAL**; el post393 permanece draft, OPURO10493/OPOL3515publish. No interpretar confirmaciones parciales como publicación completa.
 - **#13 NO ACTIVO:** candidata de metadata por categoría preparada sobre escritores reales. QA REST38092:7checks con borrador10533terminado enTRASH; lectura pública38192:7GETPASS. Antes de activar se incorpora procedencia acreditada de la orden del operador conforme D045; un MASTER generado por el Motor no basta. Los cambios Shared/Form guardados aún son borradores candidatos; activeVersion productivas siguen4263fea4/d6bbb33a/1b78dc88 y Guard conserva sus pins.
 - No se modificó el único Motor ni las suscripciones READY/vista previa. No se publicaron ni editaron notas reales en esta revisión. Cancelación general#28 sigue aplazada por instrucción del usuario.
 

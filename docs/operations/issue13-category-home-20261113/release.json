@@ -1,0 +1,248 @@
+{
+  "schema": "opmx.issue13.deployed-release.v1",
+  "issue": 13,
+  "status": "DEPLOYED",
+  "sourceCommit": "4f775f1eeccb3ae8502fbf3492fb1b2ce5c804ac",
+  "sourceUrl": "https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/4f775f1eeccb3ae8502fbf3492fb1b2ce5c804ac",
+  "deployedAtUtc": "2026-11-13T03:07:57Z",
+  "deployedAtMexicoCity": "2026-11-12T21:07:57-06:00",
+  "deploymentTimeSource": "DEPLOYMENT_COORDINATOR_REPORT",
+  "guard": {
+    "archive": "opmx-guard-category-home13.zip",
+    "sha256": "456eaaa3fb3dfc5a6a7079f20f39de81df564a322549b27b9136a10890b06f35",
+    "bytes": 212025,
+    "files": 87,
+    "baseFiles": 84,
+    "runtimeDelta": [
+      "tools/editorial/opuro-category-home.mjs",
+      "tools/mcp-publisher/guard-server.mjs",
+      "tools/telegram/guard-recovery-candidate/deployed-guard/guard-server.mjs",
+      "tools/telegram/guard-recovery-candidate/editorial-placement-integration.mjs",
+      "tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs",
+      "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+      "tools/telegram/guard-recovery-candidate/package-store.mjs",
+      "tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs",
+      "tools/telegram/guard-recovery-candidate/recovery-wiring.mjs",
+      "tools/telegram/guard-recovery-candidate/update-executor.mjs",
+      "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs",
+      "tools/telegram/package-store.mjs"
+    ],
+    "unchangedBaseFiles": 75
+  },
+  "writerManifestSha256": "f57632d59b1875765aa7b630e7839c0563d1aa1afc92b62d8ad36033fc671f70",
+  "workflows": {
+    "shared": {
+      "workflowId": "4o7K5TmKc7joScqB",
+      "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+      "activeNodes": 152,
+      "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6",
+      "originalDraftPreserved": true,
+      "draftVersionId": "4f6bb896-e5cb-4f67-999b-052a360ede8d",
+      "rollbackVersionId": "4263fea4-90a4-406d-a234-da7397d456bf"
+    },
+    "form": {
+      "workflowId": "Mt7ts2EGPbyaTC2o",
+      "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "activeNodes": 58,
+      "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee",
+      "originalDraftPreserved": true,
+      "draftVersionId": "ee44a18b-87a4-40bb-8434-63552e387003",
+      "rollbackVersionId": "d6bbb33a-ab6e-4f90-a88c-921623426444"
+    },
+    "mcp": {
+      "workflowId": "bnzVMNkZuGO1GQCZ",
+      "activeVersionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+      "activeNodes": 155,
+      "graphHash": "6a7d3438a735c0c645a086013589373c6f08192e69cfc5e956e5f0da39c96d53",
+      "originalDraftPreserved": true,
+      "draftVersionId": "fdd4c54f-8b23-4f5e-8ef7-1a9d26abe122",
+      "rollbackVersionId": "1b78dc88-cb9b-456f-b711-c3328031e61d"
+    },
+    "reader": {
+      "workflowId": "C4hk6fQQomueYC8f",
+      "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "activeNodes": 10,
+      "graphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318",
+      "originalDraftPreserved": true,
+      "draftVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "rollbackVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa"
+    },
+    "update": {
+      "workflowId": "qBmLf0DmcMSfuWvm",
+      "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "activeNodes": 9,
+      "graphHash": "a1692677f677681094531269d6beb60956060275dd7fb54405647c62e9787998",
+      "originalDraftPreserved": true,
+      "draftVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "rollbackVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e"
+    },
+    "receiver": {
+      "workflowId": "OSi8AcnzLlI0csRu",
+      "activeVersionId": "09d373b0-9d71-4cf1-99bd-c830f2275e7c",
+      "nodes": 52,
+      "originalGroupMembers": 51,
+      "rollbackVersionId": "159d7833-1848-47f2-bfce-db9792751a78"
+    }
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "promptSha256": "a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7",
+    "promptFileSha256": "97f7c5e1d5b7a1a9f8f39a206e7bd95897245d04c2efa1e024f7247baeb88314",
+    "enabled": true,
+    "promptCharacters": 54666,
+    "sameMotorId": true,
+    "triggersOmittedOnUpdate": true,
+    "existingSubscriptionPreserved": true,
+    "rollbackPromptCharacters": 51831,
+    "rollbackPromptTextSha256": "7b09b7b0b0e29de0e03c248a3900f6cd1ac7739864e08c02ef3e9328eceef3b1",
+    "exactPromptBackups": {
+      "before": {
+        "file": "motor-before.txt",
+        "characters": 51831,
+        "sha256": "7b09b7b0b0e29de0e03c248a3900f6cd1ac7739864e08c02ef3e9328eceef3b1"
+      },
+      "after": {
+        "file": "motor-after.txt",
+        "characters": 54666,
+        "sha256": "a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7"
+      }
+    }
+  },
+  "probe": {
+    "inactive": true,
+    "nodes": 3,
+    "originalRetentionRestored": true
+  },
+  "qa": {
+    "guardNativeNode": {
+      "passed": 231,
+      "runtime": "NATIVE_NODE_SAME_AS_GUARD",
+      "storeExecutedInsideN8n": false
+    },
+    "startup": {
+      "status": "GUARD13_ISOLATED_STARTUP_QA_PASSED",
+      "unauthenticated401Checks": 19,
+      "failClosed503Checks": 19,
+      "routeCases": 19,
+      "uniqueAuthorityRoutes": 2,
+      "evidence": "startup.json",
+      "realDatabaseConnections": 0,
+      "externalNetworkAttempts": 0
+    },
+    "n8nCommandHelpers": {
+      "executionId": "38554",
+      "status": "PASS",
+      "checks": 20,
+      "identityChecksOutsideHelpers": "NOT_EXERCISED"
+    },
+    "n8nRealGatesAndInventory": {
+      "executionId": "38559",
+      "status": "PASS",
+      "cases": 25,
+      "assertions": 147,
+      "codeSha256": "6dba64730a56cea576cf14155b36b10d4745007c5e8e74de70fcb93643dafa29",
+      "prototypeShims": false,
+      "productionSourcesModifiedForQa": false,
+      "guardResponse": "SIMULATED_HTTP_RESPONSE_ONLY",
+      "realGuardStoreCalled": false
+    },
+    "restDisposableDraft": {
+      "executionId": "38092",
+      "status": "PASS",
+      "checks": 7,
+      "evidence": "rest-38092.json",
+      "cleanup": "TRASHED",
+      "publishedPosts": 0,
+      "realEditorialPostsModified": 0
+    },
+    "publicReadOnly": {
+      "executionId": "38192",
+      "status": "PASS",
+      "checksScope": [
+        "category upper positions and lower archive",
+        "pagination",
+        "search",
+        "individual note selected from actual API response"
+      ],
+      "fixturePublished": false
+    },
+    "liveReadOnly": {
+      "executionId": "38621",
+      "status": "GUARD13_LIVE_READONLY_QA_PASSED",
+      "checks": 6,
+      "evidence": "live.json",
+      "editorialWrites": 0,
+      "packageMutations": 0,
+      "telegramMessages": 0
+    },
+    "realMcpReaderRegression": {
+      "status": "PASS",
+      "packets": [
+        {
+          "label": "servidores IA",
+          "state": "READY",
+          "revision": 9,
+          "items": 6,
+          "placementPresent": false
+        },
+        {
+          "label": "comisión Morena",
+          "state": "READY",
+          "revision": 8,
+          "items": 4,
+          "placementPresent": false
+        }
+      ],
+      "publishedForQa": false
+    },
+    "independentReview": {
+      "status": "PASS",
+      "resolvedRelativeImports": 288,
+      "javascriptSyntaxChecks": 86,
+      "writerPins": 5,
+      "preflight21ExactCopy": true,
+      "guardUpdateProviderBeforeClaim": true
+    }
+  },
+  "limitations": {
+    "hmacInvalidationObserved": false,
+    "hmacHttp200Observed": false,
+    "publicReadsDoNotProvePublishTriggeredRevalidation": true,
+    "guardStoreN8nHarnessRejectedExecutions": [
+      "38545",
+      "38550"
+    ],
+    "guardStoreN8nHarnessReason": "N8N_SANDBOX_HIDES_OBJECT_PROTOTYPES; no production invariant relaxed",
+    "legacySlotDifferenceRetained": 2,
+    "capacityMatchesCurrentRules": false,
+    "legacyCloseRiskCount": 0,
+    "realEditorialPostsPublishedForQa": 0
+  },
+  "rollback": {
+    "document": "ROLLBACK.md",
+    "guardArchive": "opmx-guard-atomic-close18.zip",
+    "guardSha256": "e76550d99baa33d0b4839487d13040422f4f6805d7018238a3d5949a5b6d79aa",
+    "writerBaseline": "ISSUE21",
+    "receiverBaseline": "POST_ISSUE18",
+    "motor": "RESTORE_EXACT_PRE13_PROMPT_ON_SAME_ID_OMITTING_TRIGGERS",
+    "deletePlacementHistory": false
+  },
+  "publicEvidence": {
+    "startup.json": {
+      "sha256": "e0154d8a7725bdb5a7d0a87563477db26f54666dd4ece4931b036e20d21da13a"
+    },
+    "readback.json": {
+      "sha256": "a1d83b438e934aa8da7d1c459c6f9c9827e1fae0b53f83e85600c9daea4091e9"
+    },
+    "live.json": {
+      "sha256": "e1c501b572b17b56c97a217799fb39dff305b086c8b0e767afcc008ef69934cf"
+    },
+    "rest-38092.json": {
+      "sha256": "63451437e144b5e8be1ec77540cd23b9af14cddae996bfb797e0a1049468cac3"
+    }
+  },
+  "containsRawWorkflowNodes": false,
+  "containsCredentials": false,
+  "containsPrompts": false,
+  "promptBackupsStoredSeparately": true
+}

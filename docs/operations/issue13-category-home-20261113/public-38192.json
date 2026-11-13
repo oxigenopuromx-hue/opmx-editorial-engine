@@ -1,0 +1,133 @@
+{
+  "executionId": "38192",
+  "status": "success",
+  "result": {
+    "status": "PUBLIC_FRONTEND_OBSERVATION_PASSED",
+    "selectedPostId": 10107,
+    "selectedSlug": "senado-embajador-cuba-cooperacion-noviembre-2026",
+    "checks": [
+      {
+        "name": "QA13 público — Categoría uno",
+        "statusCode": 200,
+        "shape": "VALID",
+        "heroIds": [
+          10443,
+          10438,
+          10399
+        ],
+        "featuredIds": [
+          10394,
+          10268,
+          10184,
+          10112
+        ],
+        "itemIds": [
+          10107,
+          10097,
+          10063,
+          10036,
+          9969,
+          9954,
+          9934,
+          9866,
+          9858,
+          9809,
+          9790,
+          9778,
+          9722,
+          9714,
+          9693,
+          5260,
+          5184,
+          5183,
+          5168,
+          5155
+        ],
+        "page": 1,
+        "pages": 9,
+        "total": 164
+      },
+      {
+        "name": "QA13 público — Categoría dos",
+        "statusCode": 200,
+        "shape": "VALID",
+        "heroIds": [
+          10443,
+          10438,
+          10399
+        ],
+        "featuredIds": [
+          10394,
+          10268,
+          10184,
+          10112
+        ],
+        "itemIds": [
+          2823,
+          2831,
+          2839,
+          2855,
+          2566,
+          2914,
+          2565,
+          2563,
+          2513,
+          2503,
+          2520,
+          2518,
+          2516,
+          2508,
+          2510,
+          2507,
+          2515,
+          2453,
+          2441,
+          2454
+        ],
+        "page": 2,
+        "pages": 9,
+        "total": 164
+      },
+      {
+        "name": "QA13 público — Búsqueda",
+        "statusCode": 200,
+        "matchedSlug": true,
+        "postId": 10107
+      },
+      {
+        "name": "QA13 público — Nota CMS",
+        "statusCode": 200,
+        "matchedSlug": true,
+        "postId": 10107
+      },
+      {
+        "name": "QA13 público — Portada categoría",
+        "statusCode": 200,
+        "hasTitle": true,
+        "hasHeroGrid": true,
+        "expectedContent": true
+      },
+      {
+        "name": "QA13 público — Archivo dos",
+        "statusCode": 200,
+        "hasTitle": true,
+        "hasHeroGrid": false,
+        "expectedContent": true
+      },
+      {
+        "name": "QA13 público — Nota pública",
+        "statusCode": 200,
+        "hasTitle": true,
+        "hasHeroGrid": false,
+        "sameCanonical": true,
+        "expectedContent": true
+      }
+    ],
+    "cmsWrites": 0,
+    "telegramMessages": 0,
+    "credentialsUsed": false,
+    "rawBodiesReturned": false,
+    "hmacInvalidationObserved": false,
+    "publishedFixtureUsed": false
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "shared": {
+    "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+    "activeNodes": 152,
+    "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6",
+    "originalDraftPreserved": true,
+    "draftVersionId": "4f6bb896-e5cb-4f67-999b-052a360ede8d"
+  },
+  "form": {
+    "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+    "activeNodes": 58,
+    "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee",
+    "originalDraftPreserved": true,
+    "draftVersionId": "ee44a18b-87a4-40bb-8434-63552e387003"
+  },
+  "mcp": {
+    "activeVersionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+    "activeNodes": 155,
+    "graphHash": "6a7d3438a735c0c645a086013589373c6f08192e69cfc5e956e5f0da39c96d53",
+    "originalDraftPreserved": true,
+    "draftVersionId": "fdd4c54f-8b23-4f5e-8ef7-1a9d26abe122"
+  },
+  "reader": {
+    "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+    "activeNodes": 10,
+    "graphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318",
+    "originalDraftPreserved": true,
+    "draftVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa"
+  },
+  "update": {
+    "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+    "activeNodes": 9,
+    "graphHash": "a1692677f677681094531269d6beb60956060275dd7fb54405647c62e9787998",
+    "originalDraftPreserved": true,
+    "draftVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e"
+  },
+  "receiver": {
+    "activeVersionId": "09d373b0-9d71-4cf1-99bd-c830f2275e7c",
+    "nodes": 52,
+    "originalGroupMembers": 51
+  },
+  "probe": {
+    "inactive": true,
+    "nodes": 3,
+    "originalRetentionRestored": true
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "promptSha256": "a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7",
+    "promptFileSha256": "97f7c5e1d5b7a1a9f8f39a206e7bd95897245d04c2efa1e024f7247baeb88314"
+  },
+  "_evidence": {
+    "sourceSha256": "456e0baeb011ae1cb344b0e6ce7c885c28012e67e03283c3722c1355eee797fe",
+    "sourceArtifact": "task13-final-readback-evidence.json",
+    "sanitizedPublicCopy": true,
+    "removedFields": [],
+    "rawWorkflowNodesIncluded": false,
+    "credentialsIncluded": false,
+    "promptIncluded": false
+  }
+}
