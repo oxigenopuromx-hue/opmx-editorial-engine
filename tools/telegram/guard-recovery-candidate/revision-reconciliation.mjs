@@ -20,7 +20,7 @@ const valid=(id,r)=>/^tg_[a-f0-9]{40}$/.test(id??'')&&Number.isSafeInteger(r)&&r
 // advances the revision and keeps the old fence closed. Any failure rolls the
 // entire reopen transaction back. An old ChatGPT process may remain alive;
 // its old revision no longer has a usable write capability.
-export function createRevisionReconciliation({observeRuntime,readWordPress,manifest=writerReleaseManifest,readUpdateDecision=readVerifiedUpdateDecisionInTransaction,readUpdateOrigins=readVerifiedUpdatePosts,nonWritingRecoveryExecution=null}){
+export function createRevisionReconciliation({observeRuntime,readWordPress,manifest=writerReleaseManifest,readUpdateDecision=readVerifiedUpdateDecisionInTransaction,readUpdateOrigins=readVerifiedUpdatePosts,nonWritingRecoveryExecution=null,allowQueuedAwaiting=false}){
  if(typeof observeRuntime!=='function'||typeof readWordPress!=='function')throw Error('RECONCILIATION_CONFIGURATION_INVALID');
  const observations=new WeakMap();
  async function lockSafetyBarrier(c,packageId,revision){
@@ -30,7 +30,7 @@ export function createRevisionReconciliation({observeRuntime,readWordPress,manif
   if(p.length!==1||p[0].state!=='READY'||Number(p[0].revision)!==revision)return null;
   const [attempts]=await c.execute('SELECT state,event_id FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
   const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
-  if(f.length!==1||attempts.length>1||!(['READY_TO_WRITE','WRITING','HISTORICAL_UNRECONCILED','HISTORICAL_WRITING','RECONCILING'].includes(f[0].state)||(f[0].state==='AWAITING_DECISION'&&attempts.length===1&&attempts[0].state==='QUEUED')))return null;
+  if(f.length!==1||attempts.length>1||!(['READY_TO_WRITE','WRITING','HISTORICAL_UNRECONCILED','HISTORICAL_WRITING','RECONCILING'].includes(f[0].state)||(allowQueuedAwaiting===true&&f[0].state==='AWAITING_DECISION'&&attempts.length===1&&attempts[0].state==='QUEUED')))return null;
   const [events]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
   if(events.length!==1||!/^evt_[a-f0-9]{48}$/.test(events[0].event_id??'')||attempts.length&&attempts[0].event_id!==events[0].event_id)return null;
   const eventId=events[0].event_id;
