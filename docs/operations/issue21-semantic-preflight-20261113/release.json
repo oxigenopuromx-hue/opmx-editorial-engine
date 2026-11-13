@@ -1,0 +1,26 @@
+{
+  "deployed": true,
+  "sourceCommit": "edb20e76ad20b033cc68b80af98100dde33eb9a6",
+  "archive": "opmx-guard-semantic-preflight21.zip",
+  "sha256": "f31660357f16ff087284e8929549a427cc5f85fb8ff2eba79a612d24c18d2220",
+  "bytes": 195143,
+  "fileCount": 83,
+  "hostingerCompletedLocal": "2026-11-12T19:07:12-06:00",
+  "hostingerCompletedUtc": "2026-11-13T01:07:12Z",
+  "mcp": {
+    "workflowId": "bnzVMNkZuGO1GQCZ",
+    "versionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
+    "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b",
+    "nodeCount": 152,
+    "groups": 5,
+    "draftVersion": "a342823c-1a68-4dfc-81ab-622daf2061cd",
+    "draftNodes": 112,
+    "draftExactlyPreserved": true
+  },
+  "runtimeDelta": [
+    "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs"
+  ],
+  "previousArchive": "opmx-guard-publisher-submission24.zip",
+  "previousSha256": "ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96",
+  "previousMcpVersion": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb"
+}
