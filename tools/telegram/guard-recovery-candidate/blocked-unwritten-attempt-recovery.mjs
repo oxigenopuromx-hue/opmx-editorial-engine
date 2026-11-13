@@ -28,7 +28,7 @@ export function createBlockedUnwrittenAttemptRecovery({pool,adminUserIds=[],obse
  return async input=>{
   if(!valid(input))return denied('RECOVERY_NOT_AUTHORIZED');
   const {packageId,revision,eventId,previewHash,origin}=input;
-  const evidence=createRevisionReconciliation({observeRuntime:scope=>observeRuntime(scope,origin?{nonWritingRecoveryExecution:origin}:{}),readWordPress,manifest,nonWritingRecoveryExecution:origin??null});
+  const evidence=createRevisionReconciliation({observeRuntime:scope=>observeRuntime(scope,origin?{nonWritingRecoveryExecution:origin}:{}),readWordPress,manifest,nonWritingRecoveryExecution:origin??null,allowQueuedAwaiting:true});
   const capture=createRevisionCapture({lockVerifiedBlockedOutcomes:evidence.lockVerifiedOutcomes});
   let c,started=false,committed=false,commitAttempted=false,result=denied();
   try{
