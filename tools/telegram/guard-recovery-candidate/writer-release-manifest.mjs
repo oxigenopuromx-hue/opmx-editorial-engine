@@ -1,10 +1,10 @@
-// Issue13: optional OPURO category-home policy; exact saved writer versions.
+// Issue31: bounded blocker diagnostics; all other writer pins preserved.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
-      "graphHash": "6a7d3438a735c0c645a086013589373c6f08192e69cfc5e956e5f0da39c96d53"
+      "versionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+      "graphHash": "e6cef96b20500667db3c02a9d2fe02450bbeec58ef38166277a3a232959831b6"
     },
     "Mt7ts2EGPbyaTC2o": {
       "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",

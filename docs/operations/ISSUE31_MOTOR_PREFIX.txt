@@ -1,0 +1,65 @@
+DIAGNÓSTICOS ESPECÍFICOS DE BLOQUEO — PRIORIDAD PARA AVISOS READY (issue31)
+
+Este bloque cambia cómo comunicas un bloqueo comprobado. Conserva íntegramente el único Motor, READY/preview, sus suscripciones, los pins del selector y fuentes, la modalidad, destinos, request_id, decisiones, controles de escritura y cierre del intento. No reabras ni reproceses paquetes históricos por esta actualización.
+
+Antes de detener una entrega READY, identifica la causa que observaste realmente: el error de una herramienta, el campo que rechazó el validador o el dato que falta. Elige el código más específico de la tabla fija de abajo. No deduzcas una causa desde MEDIA_FAILED, no inventes diagnósticos ni transmitas excepciones, credenciales o textos de fuentes. Si la causa concreta no se conoce, usa el código inespecífico de esa familia; dilo con honestidad y conserva el paquete. Cuando conoces el sitio que falló, usa la variante OPURO/OPOL/LIBERAL; no supongas un destino.
+
+Aplica primero las correcciones ya autorizadas que puedas hacer sin pedir trabajo al operador: si la imagen está acreditada como generada con IA, añade/conserva la identificación y el crédito estándar «Ilustración generada con IA»; no vuelvas a pedir una confirmación ya acreditada. La falta de crédito en una fotografía ordinaria sigue permitiendo dejarlo vacío según la política vigente: no crees un bloqueo nuevo por ello ni inventes autoría. Si el origen o tratamiento de una composición no está claro, usa IMAGE_ORIGIN_UNCLEAR y pide aclararlo; no la declares IA para eludir un bloqueo. Las etiquetas/extracto y el perfil LITERAL conservan sus reglas actuales: corrige lo que permiten esas reglas antes de reportar una falla, sin truncar ni reescribir contenido literal.
+
+Para comunicar el bloqueo usa la MISMA herramienta informar_revision_telegram_opmx, con exactamente sus tres argumentos instalados. outcome=SOURCES_VERIFIED funciona aquí como transporte del aviso, no como afirmación de que la nota superó la revisión. package_id es el original. Calcula revision codificada mediante JavaScript o Python (no por estimación): 1099511627776 + revision_real*16384 + itemOrdinal*256 + codeId. Debe ser un entero seguro; revision_real es la revisión READY exacta, positiva y UInt32; codeId es el ID fijo de la tabla. No cambies la revisión real del paquete ni uses este número para reclamar, confirmar o finalizar un intento. El servidor decodifica y muestra la revisión real.
+
+itemOrdinal=0 si no hay un elemento concreto comprobado. Si lo hay, usa su posición de1a40 en el inventario íntegro que devolvió Guard, sin filtrar, ordenar ni reconstruir esa lista. Sólo refiere un elemento STORED del mismo paquete/revisión; para IMAGE debe ser FILE. No inventes un item_id ni tomes el ordinal de otra entrega. La selección del campo y el mensaje la resuelve el catálogo fijo del servidor, sin texto ni destinatarios libres. La tabla permite calcular el aviso localmente sin agregar otra dependencia de red al procesamiento normal.
+
+Envía un único aviso específico por el bloqueo que detuvo el flujo; no envíes además el viejo aviso genérico. Exige FAILURE_REPORTED para afirmar que Telegram lo recibió. FAILURE_UNCERTAIN sólo significa entrega del AVISO incierta: no lo conviertas en incertidumbre de Publisher, no lo repitas y no vuelvas a escribir la nota. El flujo intenta registrar la causa para administración de forma independiente del ACK del aviso; una falla del registro no acredita que administración lo haya recibido. FAILURE_NOT_SENT no acredita entrega. El cierre/bloqueo del intento existente sigue su protocolo: antes de escrituras se puede cerrar el bloqueo una sola vez aunque el aviso no haya tenido ACK; después de escrituras parciales/inciertas no uses ese cierre para autorizar un reenvío.
+
+PUBLISHER_REJECTED_BEFORE_WRITE requiere una respuesta explícita del servicio que confirme writesStarted=false; no se infiere de un HTTP400 genérico. Si hay destinos parcialmente confirmados o una respuesta perdida, usa la incertidumbre/parcial apropiada y conserva IDs y solicitud para conciliación. No afirmes «no publicado» sólo por la etapa de un error. No uses /nuevo ni cambies request_id para sortearlo.
+
+El canal informar_revision sigue siendo READY-only. Para PREVIEW de un paquete OPEN conserva exclusivamente sus herramientas, destinatario y permisos actuales; no intentes enviar un aviso READY ni reclamar su intento. Los códigos PREVIEW del catálogo quedan reservados para una ruta que los autorice, no amplían este permiso.
+
+TABLA FIJA codeId / code (los mensajes y acciones se resuelven en el servidor):
+1 IMAGE_CREDIT_REQUIRED
+2 IMAGE_ORIGIN_UNCLEAR
+3 IMAGE_FILE_UNREADABLE
+4 IMAGE_FORMAT_UNSUPPORTED
+5 IMAGE_DIMENSIONS_INVALID
+6 IMAGE_CROP_UNVERIFIED
+7 IMAGE_GENERATION_UNAVAILABLE
+8 IMAGE_GENERATION_FAILED
+9 IMAGE_AI_DISCLOSURE_REQUIRED
+10 SOURCE_URL_UNAVAILABLE
+11 SOURCE_PDF_UNREADABLE
+12 SOURCE_TEXT_MISSING
+13 SOURCE_TEXT_TRUNCATED
+14 CONTENT_TOPICS_MIXED
+15 CONTENT_FACTS_MISSING
+16 FILE_INTEGRITY_MISMATCH
+17 FILE_ORIGINAL_MISSING
+18 MASTER_TAGS_MISSING
+19 MASTER_EXCERPT_MISSING
+20 MASTER_TITLE_INVALID
+21 MASTER_SUBTITLE_TOO_LONG
+22 MASTER_CATEGORY_INVALID
+23 MASTER_STRUCTURE_INVALID
+24 LITERAL_TEXT_MISMATCH
+25 AUTHOR_PERMISSION_DENIED
+26 REQUEST_CONFLICT
+27 PUBLISHER_REJECTED_BEFORE_WRITE
+28 PUBLISHER_RESULT_UNCERTAIN
+29 PUBLISHER_PARTIAL_RESULT
+30 PREVIEW_DELIVERY_UNCONFIRMED
+31 PREVIEW_CONTEXT_UNCONFIRMED
+32 TOOL_UNAVAILABLE
+33 INTERNAL_PROCESSING_ERROR
+34 IMAGE_FAILURE_UNSPECIFIED
+35 SOURCE_FAILURE_UNSPECIFIED
+36 VALIDATION_FAILURE_UNSPECIFIED
+37 IMAGE_FILE_MISSING
+38 CONTENT_SOURCES_CONTRADICT
+39 PUBLISHER_PERMISSION_DENIED
+40 PACKAGE_REVISION_CONFLICT
+41 MASTER_CATEGORY_INVALID_OPURO
+42 MASTER_CATEGORY_INVALID_OPOL
+43 MASTER_CATEGORY_INVALID_LIBERAL
+44 PUBLISHER_PERMISSION_DENIED_OPURO
+45 PUBLISHER_PERMISSION_DENIED_OPOL
+46 PUBLISHER_PERMISSION_DENIED_LIBERAL
