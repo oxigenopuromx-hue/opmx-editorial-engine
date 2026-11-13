@@ -1,3 +1,4 @@
+// EDITORIAL_PLACEMENT_MANIFEST_V1
 import {createHash} from 'node:crypto';
 import {validateTelegramDownload} from './intake.mjs';
 import {diagnosePackageQuotaFailure,readPackageCapacityAudit} from './package-quota-diagnostic.mjs';
@@ -109,9 +110,10 @@ export async function sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,
           return ({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});
 }
 
-export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null,closeRecoveryPreview=null,readCloseRecoveryResult=null}={}) {
+export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null,readEditorialPlacement=null,closeRecoveryPreview=null,readCloseRecoveryResult=null}={}) {
   if((closeRecoveryPreview!==null&&typeof closeRecoveryPreview!=='function')||(readCloseRecoveryResult!==null&&typeof readCloseRecoveryResult!=='function'))throw Error('Configuración inválida');
   if((readPublisherResult!==null&&typeof readPublisherResult!=='function')||typeof recoveryEnabled!=='boolean'||(readRecoveredPolicy!==null&&typeof readRecoveredPolicy!=='function')||(readConfirmedCorrection!==null&&(typeof readConfirmedCorrection!=='function'||!readRecoveredPolicy||!recoveryEnabled))||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
+  if(readEditorialPlacement!==null&&typeof readEditorialPlacement!=='function')throw Error('Configuración inválida');
   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
   let ready;
   const initialize=()=>ready??=(async()=>{
@@ -189,7 +191,9 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
               confirmedCorrection=await readConfirmedCorrection(c,input.packageId,Number(pack.revision));
             }
           }
-          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{})});
+          let editorialPlacement=null;
+          if(readEditorialPlacement){editorialPlacement=await readEditorialPlacement(c,{packageId:pack.package_id,revision:Number(pack.revision),ownerKey,actorKey});if(editorialPlacement!==null&&(!editorialPlacement||typeof editorialPlacement!=='object'||Array.isArray(editorialPlacement)||!['PLACEMENT_SELECTION','PLACEMENT_PRESERVE'].includes(editorialPlacement.status)))return await finish({status:'PLACEMENT_CONTEXT_UNCONFIRMED'});}
+          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{}),...(editorialPlacement?{editorialPlacement}:{})});
         }
         if(action==='asset') {
           const [items]=await c.execute("SELECT content_blob,sha256,attachment_json FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=? AND state='STORED' AND kind='FILE'",[input.itemId,input.packageId,ownerKey]);

@@ -113,6 +113,17 @@
         "assertLiteralCanonicalText"
       ],
       "purpose": "Compara texto visible con normalización exclusiva NFC/blancos y rechaza markup inseguro."
+    },
+    "opuro_category_home": {
+      "version": "1.0",
+      "path": "tools/editorial/opuro-category-home.mjs",
+      "exports": [
+        "readOpuroCategoryHome",
+        "assertOpuroCategoryMembership",
+        "opuroCategoryHomeMeta",
+        "assertOpuroCategoryReadback"
+      ],
+      "purpose": "Validación opcional de portada por categoría OPURO; no concede permisos ni escribe."
     }
   },
   "content_profiles": {
@@ -121,13 +132,31 @@
       "version": "1.4.2",
       "status": "ACTIVE",
       "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json",
-      "behavior": "Reglas editoriales ordinarias sin cambios."
+      "behavior": "Reglas editoriales ordinarias sin cambios.",
+      "optional_extensions": [
+        "opuro_category_home"
+      ]
     },
     "LITERAL": {
       "version": "1.0",
       "status": "ACTIVE",
       "path": "contracts/LITERAL_DELIVERY_v1.0.json",
-      "behavior": "Perfil textual literal; requiere autenticación de modo y comprobación del texto original antes de escribir."
+      "behavior": "Perfil textual literal; requiere autenticación de modo y comprobación del texto original antes de escribir.",
+      "optional_extensions": [
+        "opuro_category_home"
+      ]
+    }
+  },
+  "optional_extensions": {
+    "opuro_category_home": {
+      "version": "1.0",
+      "status": "APPROVED_FOR_RELEASE",
+      "path": "contracts/OPURO_CATEGORY_HOME_v1.0.json",
+      "applies_to": [
+        "EDITORIAL",
+        "LITERAL"
+      ],
+      "selection": "Sólo una orden directa de /opciones portada acreditada y persistida por Guard fuera del MASTER. La proyección estructurada editorial_placement transporta IDs exactos o [] explícito; conservar retira la orden y exige omitir el campo. Guard revalida solicitud, ciclo, revisión, actor y listas antes de aceptar o escribir, incluso si el MASTER omite una orden activa. Una fuente, un MASTER o un booleano OAuth no acreditan autoridad."
     }
   }
 }

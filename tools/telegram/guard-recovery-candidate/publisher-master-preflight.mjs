@@ -16,6 +16,7 @@ export function classifyPublisherMasterError(error) {
   'Falta el archivo DESTACADA (featured_file) para OPOL.':['FEATURED_FILE',['featured_file']],
  };
  const prefixes=[
+  ['OPURO_CATEGORY_HOME_','OPURO_CATEGORY_HOME',['PUBLICACION.OPURO.EXCLUIR_PORTADA_CATEGORIAS_IDS']],
   ['CONTRATO_V1_2_AUTOR_ID_PROHIBIDO:','AUTHOR_ID',['PUBLICACION.AUTOR_ID']],
   ['MASTER_LITERAL_PROFILE_INVALID:','LITERAL_PROFILE',['CONTROL_EDITORIAL.LITERAL']],
   ['CONTROL_EDITORIAL_NO_LISTO:','EDITORIAL_STATE',['CONTROL_EDITORIAL.ESTADO']],
@@ -74,14 +75,14 @@ export async function validatePublisherMasterStatically(input,request,implementa
   if(!prepared?.json||!prepared.binary)throw Error('PREFLIGHT_PREPARATION_UNCONFIRMED');
   const normalized=await implementations.normalize.call(io,prepared.json,{item:prepared});
   if(!normalized?.json?.canonical||!normalized.json.execution||normalized.json.canonical.status!=='READY_FOR_SELECTED_DRAFTS')throw Error('PREFLIGHT_NORMALIZATION_UNCONFIRMED');
-  return {ok:true,status:'MASTER_SEMANTICS_VALIDATED',scope:'STATIC_MASTER_AND_VERIFIED_IMAGE_BYTES',shared_workflow_id:pin.workflowId,shared_version_id:pin.versionId,prepare_sha256:pin.prepareSha256,normalizer_sha256:pin.normalizerSha256,live_cms_checks:'NOT_CHECKED',request_binding:'NOT_CHECKED',writesStarted:false,retryPermitted:false};
+  return {ok:true,status:'MASTER_SEMANTICS_VALIDATED',scope:'STATIC_MASTER_AND_VERIFIED_IMAGE_BYTES',shared_workflow_id:pin.workflowId,shared_version_id:pin.versionId,prepare_sha256:pin.prepareSha256,normalizer_sha256:pin.normalizerSha256,live_cms_checks:'NOT_CHECKED',placement_authority:'NOT_CHECKED',request_binding:'NOT_CHECKED',writesStarted:false,retryPermitted:false};
  }catch(error){return failed(error)}
 }
 
 export function semanticPreflightResponse(request,result) {
  const semantic=result?.semantic_preflight;
- const allowedFields=['request_id','MASTER','PUBLICAR','destino','SEO.SUBTITULO','IMAGENES.HERO_OPURO.CREDITO','CATEGORIAS.LIBERAL.PRINCIPAL','hero_file','featured_file','PUBLICACION.AUTOR_ID','CONTROL_EDITORIAL.LITERAL','CONTROL_EDITORIAL.ESTADO','CATEGORIAS.OPURO.PRINCIPAL','CATEGORIAS.OPOL.PRINCIPAL','CATEGORIAS.OPOL.SECUNDARIA','SEO.CATEGORIA','GUTENBERG_ENRIQUECIDO_FINAL','IMAGENES.HERO_OPURO.URL','IMAGENES.DESTACADA_OPURO.URL','GUTENBERG_FINAL','IMAGENES.DESTACADA_OPOL.URL','SEO.TITULO_SEO','SEO.SLUG','PUBLICACION.EXTRACTO','SEO.KEYWORD_PRINCIPAL','SEO.ETIQUETAS','IMAGENES.DESTACADA_OPURO.ALT','IMAGENES.DESTACADA_OPOL.ALT'];
- const allowedCodes=['REQUEST_ID','MASTER_OBJECT','DRAFT_TRANSPORT','DESTINATION','HERO_METADATA','LIBERAL_CATEGORY','HERO_FILE','FEATURED_FILE','AUTHOR_ID','LITERAL_PROFILE','EDITORIAL_STATE','OPURO_CATEGORY','OPOL_CATEGORY','OPOL_HIERARCHY','SEO_CATEGORY','ENRICHED_BLOCKS','ENRICHED_CONTENT','ENRICHED_IMAGE','HERO_PLACEHOLDER','FEATURED_PLACEHOLDER','OPOL_BLOCKS','OPOL_PLACEHOLDER','LIBERAL_INLINE_IMAGE','IMAGE_FILE','REQUIRED_FIELDS','SLUG_FORMAT'];
+ const allowedFields=['PUBLICACION.OPURO.EXCLUIR_PORTADA_CATEGORIAS_IDS','request_id','MASTER','PUBLICAR','destino','SEO.SUBTITULO','IMAGENES.HERO_OPURO.CREDITO','CATEGORIAS.LIBERAL.PRINCIPAL','hero_file','featured_file','PUBLICACION.AUTOR_ID','CONTROL_EDITORIAL.LITERAL','CONTROL_EDITORIAL.ESTADO','CATEGORIAS.OPURO.PRINCIPAL','CATEGORIAS.OPOL.PRINCIPAL','CATEGORIAS.OPOL.SECUNDARIA','SEO.CATEGORIA','GUTENBERG_ENRIQUECIDO_FINAL','IMAGENES.HERO_OPURO.URL','IMAGENES.DESTACADA_OPURO.URL','GUTENBERG_FINAL','IMAGENES.DESTACADA_OPOL.URL','SEO.TITULO_SEO','SEO.SLUG','PUBLICACION.EXTRACTO','SEO.KEYWORD_PRINCIPAL','SEO.ETIQUETAS','IMAGENES.DESTACADA_OPURO.ALT','IMAGENES.DESTACADA_OPOL.ALT'];
+ const allowedCodes=['OPURO_CATEGORY_HOME','REQUEST_ID','MASTER_OBJECT','DRAFT_TRANSPORT','DESTINATION','HERO_METADATA','LIBERAL_CATEGORY','HERO_FILE','FEATURED_FILE','AUTHOR_ID','LITERAL_PROFILE','EDITORIAL_STATE','OPURO_CATEGORY','OPOL_CATEGORY','OPOL_HIERARCHY','SEO_CATEGORY','ENRICHED_BLOCKS','ENRICHED_CONTENT','ENRICHED_IMAGE','HERO_PLACEHOLDER','FEATURED_PLACEHOLDER','OPOL_BLOCKS','OPOL_PLACEHOLDER','LIBERAL_INLINE_IMAGE','IMAGE_FILE','REQUIRED_FIELDS','SLUG_FORMAT'];
  const valid=semantic?.ok===false&&semantic.status==='VALIDATION_FAILED'&&semantic.writesStarted===false&&semantic.retryPermitted===false&&allowedCodes.includes(semantic.code)&&Array.isArray(semantic.fields)&&semantic.fields.length>0&&semantic.fields.every(x=>allowedFields.includes(x));
  const response=valid?{status:'VALIDATION_FAILED',code:semantic.code,field:semantic.fields[0],fields:semantic.fields,message:'El MASTER no cumple las validaciones estáticas del destino. Corrige los campos indicados.',writesStarted:false,retryPermitted:false}:{status:'FILES_REJECTED',code:'STATIC_PREFLIGHT_UNCONFIRMED',message:'La validación previa no pudo confirmarse; no se inició el envío a Publisher.',writesStarted:false,retryPermitted:false};
  if(typeof request?.request_id==='string')response.request_id=request.request_id;

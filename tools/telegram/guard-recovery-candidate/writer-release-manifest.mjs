@@ -1,18 +1,18 @@
-// Issue21: static Shared normalization before durable Publisher acceptance.
+// Issue13: optional OPURO category-home policy; exact saved writer versions.
 export default {
   "schema": "opmx.fenced-writer-release.v1",
   "workflows": {
     "bnzVMNkZuGO1GQCZ": {
-      "versionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
-      "graphHash": "1b1de2dea56ac4c738c9bf2c8ad26af6f082f520fd4cc64f361da2596b6ed56b"
+      "versionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+      "graphHash": "6a7d3438a735c0c645a086013589373c6f08192e69cfc5e956e5f0da39c96d53"
     },
     "Mt7ts2EGPbyaTC2o": {
-      "versionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
-      "graphHash": "be3dd5546e9445c1a4216dba52537ee020205d0e2ea33124f89bfbb8cb41ffe8"
+      "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee"
     },
     "4o7K5TmKc7joScqB": {
-      "versionId": "4263fea4-90a4-406d-a234-da7397d456bf",
-      "graphHash": "825040c5b4e7773177c0bd2030c4a40515d189caec2514374c509c6ee15eb538"
+      "versionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+      "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6"
     },
     "qBmLf0DmcMSfuWvm": {
       "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",

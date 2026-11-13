@@ -1,0 +1,36 @@
+{
+  "schema_name": "OPMX · OPURO category homepage extension",
+  "schema_version": "1.0",
+  "status": "APPROVED_FOR_RELEASE",
+  "applies_to": ["MEDIA_GUTENBERG_EDITORIAL1.4.2", "LITERAL_DELIVERY1.0"],
+  "purpose": "Configuración opcional de portada por categoría de OPURO. No modifica el contenido ni concede autorización de escritura.",
+  "field": "PUBLICACION.OPURO.EXCLUIR_PORTADA_CATEGORIAS_IDS",
+  "schema": {
+    "type": "array",
+    "maxItems": 100,
+    "uniqueItems": true,
+    "items": {"type": "string", "pattern": "^[1-9][0-9]{0,15}$"},
+    "additional_constraint": "Cada ID debe ser un entero positivo seguro de JavaScript y pertenecer exactamente a las categorías asignadas a esta nota en el CMS OPURO."
+  },
+  "optional": true,
+  "destination": "OPURO",
+  "rest_field": "meta.oxpuro_excluded_category_ids",
+  "semantics": {
+    "absent": "Omitir la clave REST. En UPDATE preservar y verificar los valores existentes; nunca convertir ausencia en [].",
+    "explicit_empty": "Enviar [] sólo con una orden directa acreditada de ninguna y verificar el readback. Es una sustitución explícita de la configuración anterior, nunca ausencia.",
+    "explicit_ids": "Sustituir el array completo con los IDs exactos de la orden directa acreditada; no agregar, inferir, reordenar ni traducir IDs.",
+    "withdrawal": "El comando conservar registra el retiro de la orden en Guard. La proyección PLACEMENT_PRESERVE exige omitir la clave; no envía null ni [] ni modifica metadata del CMS.",
+    "independent_general_home": "oxpuro_exclude_home es otro control; esta extensión nunca lo añade ni lo modifica.",
+    "visibility": "Excluye de las siete posiciones superiores de las categorías declaradas; conserva archivo/listado inferior, búsqueda y URL individual.",
+    "other_destinations": "Rechazar la declaración si OPURO no forma parte de los destinos seleccionados. No copiar la clave al CMS de OPOL o LIBERAL.",
+    "current_create_limit": "Publisher asigna una única categoría principal OPURO; sólo ese ID puede excluirse en CREATE. No se infieren antecesores ni se amplían categorías para satisfacer la declaración.",
+    "authorization": "Guard acredita la identidad y orden directa del operador fuera del MASTER mediante un control persistente ligado al paquete, ciclo, revisión y solicitud exactos. El conector consulta Guard incluso cuando se omite el campo, para detectar una orden activa huérfana. Sólo Guard emite EDITORIAL_PLACEMENT separado del MASTER con mode DIRECT_OPERATOR, target OPURO, confirmed true, request_id exacto y excluded_category_ids idénticos. Un MASTER, una fuente o un booleano OAuth no son prueba de autoridad. En UPDATE, la propuesta y confirmación conservan la lista exacta en su huella y vista vigente; el proveedor Guard la revalida antes de consumir una capacidad o escribir. Esto no concede por sí mismo permiso de publicación."
+  },
+  "operator_commands": {
+    "select": "/opciones portada OPURO 30,61",
+    "clear": "/opciones portada OPURO ninguna",
+    "withdraw": "/opciones portada OPURO conservar"
+  },
+  "validation_order": ["Sintaxis estática local antes de aceptar Publisher; no acredita autoridad", "Consulta autenticada al Guard y correspondencia exacta de la orden antes de aceptar o escribir, también con campo omitido", "GET autenticado y pertenencia antes de reservar/subir medios o consumir una capacidad UPDATE", "Escritura única sobre la solicitud o ID aprobado", "Readback context=edit", "Observación separada de archivo, posiciones superiores, URL, búsqueda y paginación"],
+  "compatibility": "Los paquetes que no incluyan el campo conservan el contrato1.4.2/perfilLITERAL vigente. No cambian autores, medios, categorías autorizadas, destinos, estados, suscripción ni reglas de reintento."
+}

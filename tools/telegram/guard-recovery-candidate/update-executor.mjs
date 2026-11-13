@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
 import {canonicalUpdateValue} from './canonical-json.mjs';
+import {checkOpuroCategoryUpdate,assertPreservedOpuroCategoryMeta} from '../../editorial/opuro-category-home.mjs';
 export {canonicalUpdateValue} from './canonical-json.mjs';
 
 const pkg=/^tg_[a-f0-9]{40}$/,hash=/^[a-f0-9]{64}$/;
@@ -39,8 +40,8 @@ export function createVerifiedUpdateDecisionLoader(pool){
 // credentials; those are resolved from the verified decision and trusted
 // server providers. WordPress is contacted only after the one-use guard claim.
 // A lost write or readback response remains uncertain and is never retried.
-export function createUpdateExecutor({loadDecision,loadPayload,claimStore,wordpress}){
- if(typeof loadDecision!=='function'||typeof loadPayload!=='function'||typeof claimStore?.begin!=='function'||typeof wordpress?.read!=='function'||typeof wordpress?.update!=='function')throw Error('UPDATE_EXECUTOR_INCOMPLETE');
+export function createUpdateExecutor({loadDecision,loadPayload,claimStore,wordpress,verifyEditorialPlacement}){
+ if(typeof loadDecision!=='function'||typeof loadPayload!=='function'||typeof claimStore?.begin!=='function'||typeof wordpress?.read!=='function'||typeof wordpress?.update!=='function'||verifyEditorialPlacement!==undefined&&typeof verifyEditorialPlacement!=='function')throw Error('UPDATE_EXECUTOR_INCOMPLETE');
  return {async execute(input){
   if(!object(input)||Object.keys(input).sort().join(',')!=='destination,packageId,previewHash,revision'||!pkg.test(input.packageId??'')||!Number.isSafeInteger(input.revision)||input.revision<2||!sites.has(input.destination)||!hash.test(input.previewHash??''))throw Error('INVALID_UPDATE_REQUEST');
   const {packageId,revision,destination,previewHash}=input;
@@ -53,6 +54,12 @@ export function createUpdateExecutor({loadDecision,loadPayload,claimStore,wordpr
   const encoded=canonicalUpdateValue(p.payload),payload=freezeDeep(JSON.parse(encoded)),slug=p.slug,payloadHash=sha(encoded),operationId='upd_'+sha(`${packageId}:${revision}:${destination}:${postId}:${previewHash}:${payloadHash}`);
   let before;try{before=await wordpress.read({destination,postId})}catch{return no('CMS_PREFLIGHT_UNCONFIRMED',{postId})}
   if(before?.statusCode!==200||before.post?.id!==postId||before.post?.type!=='post'||before.post?.slug!==slug||!['publish','draft'].includes(before.post?.status)||Object.hasOwn(payload,'status')&&payload.status!==before.post.status)return no('CMS_PREFLIGHT_UNCONFIRMED',{postId});
+  try{checkOpuroCategoryUpdate(destination,payload,before.post)}catch{return no('PAYLOAD_UNCONFIRMED',{postId})}
+  // Production supplies the Guard-backed verifier for every destination, even
+  // when the field is absent, so a stored operator order cannot be orphaned.
+  // An unconfigured adapter preserves legacy unrelated updates only; it can
+  // never authorise a newly declared placement change, including [].
+  try{if(typeof verifyEditorialPlacement==='function'?await verifyEditorialPlacement({packageId,revision,destination,previewHash,payload})!==true:Object.hasOwn(payload.meta??{},'oxpuro_excluded_category_ids')||Object.hasOwn(d.finalPayloads?.OPURO?.meta??{},'oxpuro_excluded_category_ids'))return no('EDITORIAL_PLACEMENT_UNCONFIRMED',{postId})}catch{return no('EDITORIAL_PLACEMENT_UNCONFIRMED',{postId})}
   let claimed;try{claimed=await claimStore.begin({packageId,revision,destination,postId,previewHash,payloadHash,operationId})}catch{return no('CLAIM_UNCONFIRMED',{postId})}
   if(!claimed||claimed.status!=='UPDATE_STARTED'||claimed.packageId!==packageId||claimed.revision!==revision||claimed.destination!==destination||claimed.postId!==postId||claimed.operationId!==operationId)return no('CLAIM_UNCONFIRMED',{postId});
   const writeScope={packageId,revision,destination,postId,previewHash,payloadHash,operationId,slug,payload};
@@ -60,6 +67,7 @@ export function createUpdateExecutor({loadDecision,loadPayload,claimStore,wordpr
   if(!sent||!Number.isInteger(sent.statusCode)||sent.statusCode<200||sent.statusCode>=300||sent.post?.id!==postId)return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});
   let after;try{after=await wordpress.read({destination,postId})}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
   if(after?.statusCode!==200||after.post?.status!==before.post.status||!cmsMatches(after.post,postId,slug,payload))return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});
+  try{checkOpuroCategoryUpdate(destination,payload,after.post);assertPreservedOpuroCategoryMeta(destination,payload,before.post,after.post)}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
   if(typeof wordpress.recordConfirmation==='function'){
    let receipt;try{receipt=await wordpress.recordConfirmation(writeScope)}catch{return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true})}
    if(receipt?.status!=='UPDATE_RECEIPT_RECORDED'||receipt.operationId!==operationId)return no('UPDATE_UNCERTAIN',{postId,writeAttempted:true});

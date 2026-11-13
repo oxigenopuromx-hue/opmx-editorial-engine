@@ -15,6 +15,8 @@ import {canonicalUpdateValue,validUpdatePayload} from './update-executor.mjs';
 import {readSubmissionCompletedWriterReceipt} from './publisher-submission-store.mjs';
 import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
 import {createRecoveredCreationGate} from './recovered-creation-gate.mjs';
+import {prepareEditorialPlacementServices} from './editorial-placement-integration.mjs';
+import {readPlacementForManifest} from './editorial-placement-store.mjs';
 import {literalPayloadSchema,createLiteralPayloadStore,readLiteralProofInTransaction} from './literal-payload-store.mjs';
 import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
 
@@ -50,6 +52,7 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
   return rows.length===1&&rows[0].event_id===eventId&&verifyWriterReleaseObservation(await observeRuntime({packageId,revision,eventId}),manifest,{requireIdle:false});
  }
  const literalPayloads=createLiteralPayloadStore({pool,verifyRelease:verifyLiteralRelease});
+ const placement=await prepareEditorialPlacementServices({pool});
  async function verifyUpdateEnforcement(c,scope){
   let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId:scope.packageId,revision:scope.revision})}catch{return false}
   if(!d||d.previewHash!==scope.previewHash||d.destination!==scope.destination||!d.finalPayloads||!await verifyRelease(c,d))return false;
@@ -59,6 +62,7 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
  }
  const notTermination=async()=>{throw Error('REVOCATION_PROVIDER_REQUIRED')};
  const wiring=createRecoveryWiring({pool,secret,events,reviews,adminUserIds,
+  readEditorialPlacement:readPlacementForManifest,verifyEditorialPlacement:placement.verifyUpdate,
   verifyTerminalRun:notTermination,verifyWriterCoverage:notTermination,
   reconciliationEvidence:createRevisionReconciliation({observeRuntime,readWordPress}),
   verifyDecisionConsumer:async(c,{preview})=>{
@@ -78,5 +82,5 @@ export async function prepareRecoveryRuntimeServices({pool,secret,events,reviews
   verifyCompletedWrites:readSubmissionCompletedWriterReceipt,
   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
  });
- return Object.freeze({...wiring,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
+ return Object.freeze({...wiring,telegramPlacement:placement,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
 }

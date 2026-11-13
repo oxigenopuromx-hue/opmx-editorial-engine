@@ -53,6 +53,7 @@ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRu
  telegramBlockedList:async(...args)=>(await requireRecovery()).telegramBlockedList(...args),
  telegramCorrections:Object.fromEntries(['preview','confirm'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramCorrections[method](...args)])),
  telegramSelections:{select:async(...args)=>(await requireRecovery()).telegramSelections.select(...args)},
+ telegramPlacement:Object.fromEntries(['select','prove'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramPlacement[method](...args)])),
  telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision','recoverUnacknowledged'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramAttempts[method](...args)])),
  telegramWriterReceipts:{report:async(...args)=>(await requireMotor()).telegramWriterReceipts.report(...args)},
  telegramSubmissions:Object.fromEntries(['begin','report'].map(method=>[method,async(...args)=>(await requireMotor()).telegramSubmissions[method](...args)])),

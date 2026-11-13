@@ -22,9 +22,10 @@ import {createHash} from 'node:crypto';
 // Production must supply independent, authoritative verifiers only after all
 // writers and the Motor have been wired and checked. No HTTP input, source
 // document or environment boolean can substitute for those providers.
-export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,verifyCompletedWrites=async()=>null,reconciliationEvidence=null,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,enqueuePreviewGeneration=null}){
+export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,verifyCompletedWrites=async()=>null,reconciliationEvidence=null,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,readEditorialPlacement=null,verifyEditorialPlacement=null,enqueuePreviewGeneration=null}){
  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
  if(updateProviders!==null&&(!updateProviders||typeof updateProviders!=='object'||Array.isArray(updateProviders)||!['verifyCmsPreflight,verifyPayload,verifyUpdateEnforcement,verifyUpdateReadiness','verifyUpdateEnforcement,verifyUpdateReadiness'].includes(Object.keys(updateProviders).sort().join(','))||!Object.values(updateProviders).every(x=>typeof x==='function')))throw Error('UPDATE_CLAIM_CONFIGURATION_INCOMPLETE');
+ if((readEditorialPlacement!==null&&typeof readEditorialPlacement!=='function')||(verifyEditorialPlacement!==null&&typeof verifyEditorialPlacement!=='function'))throw Error('PLACEMENT_CONFIGURATION_INVALID');
  let wordpress=null;
  if(updateExecution!==null){
   if(!updateProviders||!updateExecution||typeof updateExecution!=='object'||Array.isArray(updateExecution))throw Error('UPDATE_EXECUTOR_INCOMPLETE');
@@ -51,7 +52,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds,readSelection:readRecoverySelectionInTransaction}):null;
  const corrections=createCandidateCorrectionSubsystem({pool,events,readLockedSelection:readRecoverySelectionInTransaction,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
  const telegramPreviewMaterializer=previewPayloads?createPreviewMaterializer({pool,preview:corrections.preview,adminUserIds}):null;
- const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction,readDiagnostic:readPackageDiagnostic,readPublisherResult:readPublisherSubmissionResultInTransaction,closeRecoveryPreview:corrections.previewInTransaction,readCloseRecoveryResult:corrections.readClosePreviewInTransaction});
+ const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction,readDiagnostic:readPackageDiagnostic,readPublisherResult:readPublisherSubmissionResultInTransaction,readEditorialPlacement,closeRecoveryPreview:corrections.previewInTransaction,readCloseRecoveryResult:corrections.readClosePreviewInTransaction});
  // Ordinary sealing initializes the outbox before opening its transaction.
  // Confirmed recovery seals directly within the confirmation transaction, so
  // initialize it here as well; DDL must never run inside the seal transaction.
@@ -63,7 +64,7 @@ export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,ve
  },verifyCmsPreflight});
  const telegramUpdateClaims=payloadStore===null?null:createUpdateClaimStore({pool,loadVerifiedDecision:readVerifiedUpdateDecisionInTransaction,loadVerifiedPayloadEvidence:payloadStore.verifyClaim});
  const loadUpdateDecision=createVerifiedUpdateDecisionLoader(pool);
- const executor=wordpress===null?null:createUpdateExecutor({loadDecision:loadUpdateDecision,loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress});
+ const executor=wordpress===null?null:createUpdateExecutor({loadDecision:loadUpdateDecision,loadPayload:payloadStore.load,claimStore:telegramUpdateClaims,wordpress,...(verifyEditorialPlacement===null?{}:{verifyEditorialPlacement})});
  const telegramUpdateExecutor=executor===null?null:{async execute(input){
   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).sort().join(',')!=='chat,destination,owner,packageId,previewHash,revision'||typeof input.owner!=='string'||input.owner!==input.chat||!/^[1-9][0-9]{0,15}$/.test(input.owner))return {status:'UPDATE_NOT_READY',retryPermitted:false};
   const scope={packageId:input.packageId,revision:input.revision,destination:input.destination,previewHash:input.previewHash};

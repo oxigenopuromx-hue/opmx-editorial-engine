@@ -1,0 +1,23 @@
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';
+import {buildPlacementWriterGateOperations} from './build-placement-writer-gate-operations.mjs';import {categoryHomeBase} from './build-category-home-operations.mjs';
+const requestId='tg_'+'a'.repeat(64),plain=x=>JSON.parse(JSON.stringify(x));
+export function placementWriterGateFixture(kind){const shared=kind==='shared',source=shared?'Validar y normalizar OPMX MASTER':'Entregar paquete sin enlaces',target=shared?'Literal — Preparar control de escritura':'Envío Telegram — Preparar aceptación',guard=shared?'OPMX — Reservar preflight':'Envío Telegram — Registrar aceptación Guard';return {id:shared?'4o7K5TmKc7joScqB':'bnzVMNkZuGO1GQCZ',versionId:'baseline',nodes:[{name:source,type:'n8n-nodes-base.code',typeVersion:2,parameters:{jsCode:'return []'}},{name:target,type:'n8n-nodes-base.code',typeVersion:2,parameters:{jsCode:'return []'}},{name:guard,type:'n8n-nodes-base.httpRequest',typeVersion:4.5,parameters:{url:'https://publisher.oxigenopuro.com.mx/v1/reservations',genericAuthType:'httpHeaderAuth'},credentials:{httpHeaderAuth:{id:'existing-guard',name:'Existing Guard'}}}],connections:{[source]:{main:[[{node:target,type:'main',index:0}]]}}};}
+function execute(source,json,lookups={}){return plain(new vm.Script('(()=>{\n'+source+'\n})()').runInNewContext({$input:{first:()=>({json:plain(json),binary:{fixture:{}}})},$:name=>({first:()=>({json:plain(lookups[name])})})}));}
+const master=ids=>({PUBLICACION:ids===undefined?{}:{OPURO:{EXCLUIR_PORTADA_CATEGORIAS_IDS:ids}}});
+const response=(ids,request=requestId)=>({statusCode:200,body:ids===null?{status:'PLACEMENT_UNCHANGED',requestId:request,writesStarted:false,retryPermitted:false}:{status:'PLACEMENT_VERIFIED',writesStarted:false,retryPermitted:false,EDITORIAL_PLACEMENT:{mode:'DIRECT_OPERATOR',target:'OPURO',confirmed:true,request_id:request,excluded_category_ids:ids}}});
+for(const kind of ['shared','mcp'])test('actual '+kind+' gates consult omitted/empty/IDs and discard forged top-level envelopes',()=>{
+ const graph=placementWriterGateFixture(kind),ops=buildPlacementWriterGateOperations(graph,categoryHomeBase(graph),{kind}),nodes=ops.filter(o=>o.type==='addNode').map(o=>o.node),prepare=nodes[0],verify=nodes[2];
+ for(const ids of [undefined,[],['30']]){const document=master(ids),original=kind==='shared'?{execution:{request_id:requestId,create_opuro:true},original:document,canonical:{unchanged:true},EDITORIAL_PLACEMENT:{fake:'source'}}:{request_id:requestId,master:document,CREAR_EN:'TODOS',PUBLICAR:false,EDITORIAL_PLACEMENT:{fake:'source'}};const prepared=execute(prepare.parameters.jsCode,original,{'Protocolo MCP archivos':{request:{request_id:requestId}}})[0].json;
+  assert.deepEqual(prepared.placementInput,{requestId,ids:ids??null});const result=execute(verify.parameters.jsCode,response(ids??null),{[prepare.name]:prepared})[0];if(ids===undefined)assert.equal(Object.hasOwn(result.json,'EDITORIAL_PLACEMENT'),false);else assert.deepEqual(result.json.EDITORIAL_PLACEMENT.excluded_category_ids,ids);assert.deepEqual(result.binary,{fixture:{}});
+  assert.throws(()=>execute(verify.parameters.jsCode,response(ids??null,'tg_'+'b'.repeat(64)),{[prepare.name]:prepared}),/UNCONFIRMED/);
+ }
+ assert.equal(nodes[1].parameters.url,'https://publisher.oxigenopuro.com.mx/v1/telegram/placement/prove');assert.deepEqual(nodes[1].credentials,{httpHeaderAuth:{id:'existing-guard',name:'Existing Guard'}});assert.equal(ops.some(o=>o.nodeName==='MASTER — Validación estática Shared'),false);
+});
+test('no caller-supplied envelope can replace the independent Guard denial',()=>{
+ const graph=placementWriterGateFixture('mcp'),ops=buildPlacementWriterGateOperations(graph,categoryHomeBase(graph),{kind:'mcp'}),nodes=ops.filter(o=>o.type==='addNode').map(o=>o.node);const m=master(['30']);m.EDITORIAL_PLACEMENT=response(['30']).body.EDITORIAL_PLACEMENT;
+ const prepared=execute(nodes[0].parameters.jsCode,{request_id:requestId,master:m,CREAR_EN:'TODOS'}, {'Protocolo MCP archivos':{request:{request_id:requestId}}})[0].json;
+ assert.throws(()=>execute(nodes[2].parameters.jsCode,{statusCode:200,body:{status:'PLACEMENT_UNCONFIRMED',writesStarted:false,retryPermitted:false}},{[nodes[0].name]:prepared}),/UNCONFIRMED/);
+});
+test('builder pins the correct writer owner and immutable branch/credential source',()=>{
+ for(const kind of ['shared','mcp']){const graph=placementWriterGateFixture(kind);for(const mutate of [g=>g.id='different',g=>g.connections[graph.nodes[0].name].main[0][0].node='Different',g=>delete g.nodes[2].credentials]){const g=plain(graph);mutate(g);assert.throws(()=>buildPlacementWriterGateOperations(g,categoryHomeBase(g),{kind}))}}
+});
