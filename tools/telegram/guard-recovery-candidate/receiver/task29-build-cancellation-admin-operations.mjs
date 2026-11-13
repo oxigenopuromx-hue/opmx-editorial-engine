@@ -52,6 +52,10 @@ const records=[...publicationRecords,...cancellationRecords].filter(x=>!conflict
  return [
   ...[[n.prepare,prepare],[n.prepareRecords,records],[n.verify,verify],[n.select,select]].map(([name,source])=>({type:'updateNodeParameters',nodeName:name,parameters:{...codes[name].parameters,jsCode:prefix+source},replace:true})),
   {type:'addNode',node:newObserver},{type:'addNode',node:attach},
+  // addNode's API schema omits execution settings. Apply these explicitly so
+  // a network/timeout failure reaches the paired fallback instead of stopping
+  // the monitor before unresolved alerts can be retained.
+  {type:'setNodeSettings',nodeName:n.observeCancellation,settings:{retryOnFail:false,onError:'continueRegularOutput',alwaysOutputData:true}},
   {type:'removeConnection',source:n.attachPublication,target:n.prepareRecords,sourceIndex:0,targetIndex:0,connectionType:'main'},
   connection(n.attachPublication,n.observeCancellation),connection(n.observeCancellation,n.attachCancellation),connection(n.attachCancellation,n.prepareRecords)
  ];

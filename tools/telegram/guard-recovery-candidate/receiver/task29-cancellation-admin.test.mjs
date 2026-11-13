@@ -54,10 +54,20 @@ test('conflicting durable tombstone hashes never outvote an existing identity',(
  assert(!task29CancellationWasReconciled(candidate(),[a,b],options));assert.deepEqual(prepareTask29CancellationReconciliations([candidate()],[proof()],{...options,reconciliationRows:[b]}),[]);
 });
 test('builder changes four Code bodies and adds two read nodes; no sender, table, claim or publication observer changes',()=>{
- const g=graph(),before=structuredClone(g),operations=buildTask29CancellationAdminOperations(g,task29CancellationAdminBase(g));assert.deepEqual(g,before);assert.equal(operations.length,10);assert.equal(operations.filter(o=>o.type==='updateNodeParameters').length,4);assert.equal(operations.filter(o=>o.type==='addNode').length,2);assert(operations.filter(o=>o.type==='addNode').every(o=>['n8n-nodes-base.httpRequest','n8n-nodes-base.code'].includes(o.node.type)));
+ const g=graph(),before=structuredClone(g),operations=buildTask29CancellationAdminOperations(g,task29CancellationAdminBase(g));assert.deepEqual(g,before);assert.equal(operations.length,11);assert.equal(operations.filter(o=>o.type==='updateNodeParameters').length,4);assert.equal(operations.filter(o=>o.type==='addNode').length,2);assert(operations.filter(o=>o.type==='addNode').every(o=>['n8n-nodes-base.httpRequest','n8n-nodes-base.code'].includes(o.node.type)));
  assert(!operations.some(o=>['Notificar administrador','Registrar alertas confirmadas','Registrar publicación conciliada','Comprobar publicación final Guard'].includes(o.nodeName)));
  const added=operations.find(o=>o.node?.type==='n8n-nodes-base.httpRequest').node;assert.equal(new URL(added.parameters.url).origin,'https://guard.example.test');assert.deepEqual(added.credentials,g.nodes.find(n=>n.name==='Comprobar publicación final Guard').credentials);assert.equal(added.parameters.jsonBody,g.nodes.find(n=>n.name==='Comprobar publicación final Guard').parameters.jsonBody);
+ assert.deepEqual(operations.filter(o=>o.type==='setNodeSettings'),[{type:'setNodeSettings',nodeName:task29AdminNames.observeCancellation,settings:{retryOnFail:false,onError:'continueRegularOutput',alwaysOutputData:true}}]);
  for(const op of operations.filter(o=>o.type==='updateNodeParameters')){const old=g.nodes.find(n=>n.name===op.nodeName).parameters.jsCode,start='const persistence=(()=>{',end='\n})();';const capture=s=>s.slice(s.indexOf(start),s.indexOf(end,s.indexOf(start))+end.length);assert.equal(capture(op.parameters.jsCode),capture(old),'original #30 resolver remains exact');}
+});
+test('network failure or empty observer output reaches paired fallback and preserves the unresolved alert',()=>{
+ const [prepared]=run(task29AdminNames.prepare,tracking()),batch={...prepared.json,observe:{packageId:scope.packageId,revision:10},observation:{status:'FINAL_PUBLICATION_UNCONFIRMED'}};
+ const source=ops().find(o=>o.node?.name===task29AdminNames.attachCancellation).node.parameters.jsCode,attach=new Function('$json','$',source);
+ for(const response of[{}, {error:{message:'NETWORK_PRIVATE_EXCEPTION'}},{statusCode:503,body:{status:'DELIVERY_CANCELLATION_UNCONFIRMED'}}]){
+  const attached=attach(response,()=>({item:{json:batch}})).json;assert.equal(attached.cancellationObservation,null);assert.deepEqual(attached.observation,batch.observation);
+  const [records]=run(task29AdminNames.prepareRecords,[attached]);assert.equal(records.json.needsPersistence,false);assert.equal(records.json.reconciliationRecords.length,0);
+  const [selected]=run(task29AdminNames.select,[records.json]);assert.equal(selected.json.alerts.length,1);assert.doesNotMatch(selected.json.text,/NETWORK_PRIVATE_EXCEPTION/);
+ }
 });
 test('rebase, cross-origin URL, unexpected graph and duplicate patches fail closed',()=>{
  const g=graph(),expected=task29CancellationAdminBase(g);g.nodes[0].name+='x';assert.throws(()=>buildTask29CancellationAdminOperations(g,expected),/REBASE/);
