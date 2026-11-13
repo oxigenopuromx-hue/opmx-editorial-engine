@@ -1,5 +1,28 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
+## Corte vigente — 12nov2026, posterior al despliegue24/22
+
+Este corte prevalece sobre las fichas históricas que siguen. Fuente runtime inmutable57885f5fbe91b99b202d343bc2f2cd562a014745 en feat/telegram-reopen-recovery.
+
+- Guard vigente: opmx-guard-publisher-submission24.zip, SHA256ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96; Hostinger completado/Actual12nov18:03:54CDMX.
+- MCP activo1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb,151nodos; huella0513f7987a7f82fa47c380e3df93547a7b1674a95720d08a03bda0beade39a38. Su draft ajeno de112nodos se conserva como719ed751-2e44-418f-bbe9-90e9965084d1: NO publicarlo como si fuera la versión activa.
+- Receptor activo561bd7df-473b-4eca-9e92-e0e81f4baabd,52nodos. Cuatro parámetros cambiados; mismo webhook, conexiones, credenciales, remitentes y reintentos. La tabla existente de recepciones añade storage_diagnostic sin mezclarlo con el acuse Telegram.
+- Único Motor6ae9095256948191b33f1e023fbfbf8b: mismo estado, título, calendario, entornos y suscripción READY/preview; sólo prompt actualizado, SHA256ed1b77c7ce68d367288c66a63280be1b1fec42dc79aece45ac0f565f7e5e3eed. Reconoce aceptación durable y consulta acotada de resultado sin reenviar. Conserva LITERAL, autor3 y permisos anteriores.
+- Los demás escritores y monitor30 no cambian. PUBLICATION_RECONCILED de Waldo12(1754) y China–Cuba8(1753) ya se guardaron automáticamente en37896; no son notas pendientes de volver a publicar. Waldo12 vuelve a quedar confirmado en los tres CMS en37972.
+
+| Issue | Estado actual y alcance |
+| --- | --- |
+| 29 | Abierto: Simey tiene OPURO10493/OPOL3515 publish y LIBERAL393 draft; servidoresIA9 y comisiónMorena8 conservan recuperación pendiente. Guard37946 acreditó los resultados con ROLLBACK. [Revisión](issue29-conciliacion-20261112/REVISION.md). |
+| 24 | Respuesta larga corregida: aceptación guardada antes del ACK y resultado histórico verificable por scope/hash/fase. Continúa abierto por las interrupciones históricas ANTES de Publisher, cuya causa no se pudo reconstruir. [Despliegue, pruebas y reversión](issue24-publisher-submission-20261112/VERIFICACION.md). |
+| 22 | Corregido: diagnósticos seguros de apertura y replays READY/CANCELLED tratados como cerrados. No se atribuye retrospectivamente la causa del10nov. [Verificación](issue22-opening-20261112/VERIFICACION.md). |
+| 19 y30 | Cerrados: aceptación LITERAL real23 y persistencia de publicaciones conciliadas. |
+| 26 | Cerrado como conciliación del intento8; la nota de Waldo sí quedó publicada y conciliada en revisión12. No confundir ambas revisiones. |
+| 28 | Cancelación sigue diferida por orden del usuario. |
+
+675tests pasan. QA n8n37956(74checks),37960(15),37961/37962(ACK848ms→continuación),37979(Crypto/payload reales) y37972(backend activo/rechazos/replay/publicación histórica) pasaron sin publicaciones ni envíos. Probe inactivo3nodos, grafo original, sin retención; versiónfinal1beadd45-e5e0-44f3-bd37-b017f5020c11. No quedó webhook QA ni otra automatización.
+
+## Cortes anteriores — contexto histórico
+
 Corte inicial: 11 de noviembre de 2026, 14:30, America/Mexico_City. Actualización Waldo:14:48.
 Actualización posterior:12 de noviembre de2026, conciliación de alertas WEG. Las fichas previas conservan el corte de su fecha.
 Este índice está en main para todas las conversaciones. Es un registro de despliegues y evidencia; no implica que los exports históricos de main coincidan con producción. La consulta de issues abiertos no equivale a volver a conciliar todos sus paquetes.

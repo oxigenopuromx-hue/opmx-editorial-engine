@@ -1,0 +1,317 @@
+{
+  "sourceCommit": "57885f5fbe91b99b202d343bc2f2cd562a014745",
+  "guard": {
+    "archive": "opmx-guard-publisher-submission24.zip",
+    "sha256": "ee200f0986c682f109737b24192e961af54e9b51fd26f65fdcb1fec45aba3c96",
+    "bytes": 195002,
+    "deployedAtLocal": "2026-11-12T18:03:54-06:00"
+  },
+  "mcp": {
+    "activeVersion": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
+    "nodeCount": 151,
+    "graphHash": "0513f7987a7f82fa47c380e3df93547a7b1674a95720d08a03bda0beade39a38",
+    "draftPreservedVersion": "719ed751-2e44-418f-bbe9-90e9965084d1",
+    "draftNodes": 112
+  },
+  "receiver": {
+    "activeVersion": "561bd7df-473b-4eca-9e92-e0e81f4baabd",
+    "nodeCount": 52,
+    "parametersChanged": 4,
+    "column": "storage_diagnostic"
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "oldSha256": "91c3e9878c348ee13bbc24604c82ee0b33ffcf1b21d9fc326bd7d2cf46d60df6",
+    "newSha256": "ed1b77c7ce68d367288c66a63280be1b1fec42dc79aece45ac0f565f7e5e3eed",
+    "characters": 49859,
+    "sameEnabledTitleScheduleEnvironments": true,
+    "subscriptionChanged": false
+  },
+  "tests": {
+    "node": 675,
+    "openingQa": {
+      "execution": "37956",
+      "result": [
+        {
+          "status": "OPENING_DIAGNOSTIC_QA_PASSED",
+          "checksPassed": 74,
+          "checks": [
+            "prepare_open_route",
+            "new_open_confirmed",
+            "new_open_policy_and_owner",
+            "new_open_receipt_separates_ack",
+            "new_open_no_leaked_raw_response",
+            "already_open_confirmed",
+            "already_open_policy_and_owner",
+            "already_open_receipt_separates_ack",
+            "already_open_no_leaked_raw_response",
+            "open_replay_confirmed",
+            "open_replay_policy_and_owner",
+            "open_replay_receipt_separates_ack",
+            "open_replay_no_leaked_raw_response",
+            "READY_replay_closed",
+            "READY_no_policy_or_owner",
+            "READY_no_success_notice",
+            "CANCELLED_replay_closed",
+            "CANCELLED_no_policy_or_owner",
+            "CANCELLED_no_success_notice",
+            "quota_classified",
+            "quota_no_new_operation",
+            "quota_ack_independent",
+            "quota_no_raw_error_or_source",
+            "unauthorized_classified",
+            "unauthorized_no_new_operation",
+            "unauthorized_ack_independent",
+            "unauthorized_no_raw_error_or_source",
+            "forbidden_classified",
+            "forbidden_no_new_operation",
+            "forbidden_ack_independent",
+            "forbidden_no_raw_error_or_source",
+            "service_unavailable_classified",
+            "service_unavailable_no_new_operation",
+            "service_unavailable_ack_independent",
+            "service_unavailable_no_raw_error_or_source",
+            "timeout_classified",
+            "timeout_no_new_operation",
+            "timeout_ack_independent",
+            "timeout_no_raw_error_or_source",
+            "text_error_classified",
+            "text_error_no_new_operation",
+            "text_error_ack_independent",
+            "text_error_no_raw_error_or_source",
+            "invalid_success_classified",
+            "invalid_success_no_new_operation",
+            "invalid_success_ack_independent",
+            "invalid_success_no_raw_error_or_source",
+            "missing_http_classified",
+            "missing_http_no_new_operation",
+            "missing_http_ack_independent",
+            "missing_http_no_raw_error_or_source",
+            "telegram_ack_failure_does_not_hide_storage_success",
+            "SELECT_correct_route",
+            "SELECT_no_open_diagnostic_in_receipt",
+            "select_literal_destination_preserved",
+            "CONFIRM_correct_route",
+            "CONFIRM_no_open_diagnostic_in_receipt",
+            "confirm_identity_preserved",
+            "REOPEN_correct_route",
+            "REOPEN_no_open_diagnostic_in_receipt",
+            "reopen_does_not_create_new_policy",
+            "SEAL_correct_route",
+            "SEAL_no_open_diagnostic_in_receipt",
+            "seal_attested_control_preserved",
+            "CURRENT_STATUS_correct_route",
+            "CURRENT_STATUS_no_open_diagnostic_in_receipt",
+            "CURRENT_CONTENT_correct_route",
+            "CURRENT_CONTENT_no_open_diagnostic_in_receipt",
+            "CURRENT_LITERAL_correct_route",
+            "CURRENT_LITERAL_no_open_diagnostic_in_receipt",
+            "literal_attestation_preserved",
+            "current_empty_is_not_open_failure",
+            "shared_http_error_does_not_consume_success_body",
+            "receipt_rejects_extra_diagnostic_fields"
+          ],
+          "syntheticFixturesOnly": true,
+          "assertionsOnly": true,
+          "networkCalls": 0,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "dataTableWrites": 0,
+          "packageWrites": 0
+        }
+      ]
+    },
+    "submissionQa": {
+      "execution": "37960",
+      "result": [
+        {
+          "status": "ISSUE24_SUBMISSION_CODE_QA_PASSED",
+          "checks": 15,
+          "syntheticFixturesOnly": true,
+          "networkCalls": 0,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "dataTableWrites": 0
+        }
+      ]
+    },
+    "webhook": {
+      "client": "37961",
+      "backend": "37962",
+      "clientResponseMs": 848,
+      "backendAfterResponse": true,
+      "secondResponseIgnored": true,
+      "syntheticOnly": true
+    },
+    "crypto": {
+      "execution": "37979",
+      "result": [
+        {
+          "status": "ACTUAL_N8N_CRYPTO_AND_PAYLOAD_PASSED",
+          "fingerprintMatches": true,
+          "jsonPayloadAndBinaryStringsPreserved": true,
+          "synthetic": true,
+          "networkCalls": 0,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "dataTableWrites": 0
+        }
+      ]
+    },
+    "postDeploy": {
+      "execution": "37972",
+      "result": [
+        {
+          "check": "runtime",
+          "httpStatus": 200,
+          "passed": true,
+          "status": "RUNTIME_OBSERVED",
+          "versionsMatch": true,
+          "noActiveN8nWriters": true,
+          "workflows": [
+            {
+              "id": "bnzVMNkZuGO1GQCZ",
+              "activeVersionId": "1b3bb5c6-e871-4d43-a9c1-21f7ef11cacb",
+              "nodeCount": 151
+            },
+            {
+              "id": "Mt7ts2EGPbyaTC2o",
+              "activeVersionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+              "nodeCount": 58
+            },
+            {
+              "id": "4o7K5TmKc7joScqB",
+              "activeVersionId": "4263fea4-90a4-406d-a234-da7397d456bf",
+              "nodeCount": 146
+            },
+            {
+              "id": "C4hk6fQQomueYC8f",
+              "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+              "nodeCount": 10
+            },
+            {
+              "id": "qBmLf0DmcMSfuWvm",
+              "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+              "nodeCount": 9
+            }
+          ],
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "packageMutations": 0
+        },
+        {
+          "check": "final_publication_read_only",
+          "httpStatus": 200,
+          "passed": true,
+          "status": "FINAL_PUBLICATION_CONFIRMED",
+          "phase": "PUBLISH",
+          "requestId": "tg_1bc53fe002eb1f2e76f8f627c7ed9332eb07fd08123320d90fcabd96ad68fc97",
+          "targets": [
+            {
+              "destination": "OPURO",
+              "postId": 10458,
+              "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+              "status": "publish",
+              "cmsVerified": true,
+              "ledgerVerified": true
+            },
+            {
+              "destination": "OPOL",
+              "postId": 3503,
+              "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+              "status": "publish",
+              "cmsVerified": true,
+              "ledgerVerified": true
+            },
+            {
+              "destination": "LIBERAL",
+              "postId": 383,
+              "slug": "senado-waldo-fernandez-comision-seguimiento-tmec",
+              "status": "publish",
+              "cmsVerified": true,
+              "ledgerVerified": true
+            }
+          ],
+          "writersIdleVerified": true,
+          "consistentSnapshot": true,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "packageMutations": 0
+        },
+        {
+          "check": "submission_begin_denied",
+          "httpStatus": 409,
+          "passed": true,
+          "status": "SUBMISSION_UNCONFIRMED",
+          "retryPermitted": false,
+          "writeAuthorized": false,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "packageMutations": 0
+        },
+        {
+          "check": "submission_report_denied",
+          "httpStatus": 409,
+          "passed": true,
+          "status": "SUBMISSION_UNCONFIRMED",
+          "retryPermitted": false,
+          "writeAuthorized": false,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "packageMutations": 0
+        },
+        {
+          "check": "closed_opening_replay",
+          "httpStatus": 200,
+          "passed": true,
+          "guardStatus": "OPEN_REPLAY",
+          "state": "READY",
+          "diagnostic": {
+            "operation": "OPEN",
+            "httpStatus": 200,
+            "code": "OPEN_CLOSED_REPLAY"
+          },
+          "policyAnnounced": false,
+          "ownerRegistered": false,
+          "packageReopened": false,
+          "cmsWrites": 0,
+          "telegramSends": 0,
+          "packageMutations": 0
+        }
+      ]
+    }
+  },
+  "probe": {
+    "id": "7IDUF9PeHQ5v331Z",
+    "version": "1beadd45-e5e0-44f3-bd37-b017f5020c11",
+    "active": false,
+    "nodes": 3,
+    "originalGraphExactlyRestored": true,
+    "retention": false,
+    "timeoutSeconds": 30
+  },
+  "productionEditorialWrites": 0,
+  "telegramSends": 0,
+  "packageRevisionChanges": 0,
+  "issue24HistoricalRootCause": "UNDETERMINED_BEFORE_PUBLISHER",
+  "issue29Remaining": [
+    "Simey LIBERAL393 DRAFT",
+    "Servidores IA9",
+    "Comisión Morena8"
+  ],
+  "runtimeDelta": [
+    "tools/mcp-publisher/guard-server.mjs",
+    "tools/telegram/guard-recovery-candidate/deployed-guard/guard-server.mjs",
+    "tools/telegram/guard-recovery-candidate/fence-preview-start.mjs",
+    "tools/telegram/guard-recovery-candidate/motor-runtime-services.mjs",
+    "tools/telegram/guard-recovery-candidate/package-store.mjs",
+    "tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs",
+    "tools/telegram/guard-recovery-candidate/recovery-wiring.mjs",
+    "tools/telegram/guard-recovery-candidate/writer-receipt-store.mjs",
+    "tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs",
+    "tools/telegram/package-store.mjs",
+    "tools/telegram/guard-recovery-candidate/publisher-submission-store.mjs",
+    "tools/telegram/guard-recovery-candidate/publisher-submission-adapter.mjs",
+    "tools/telegram/guard-recovery-candidate/publisher-submission-policy.mjs"
+  ]
+}
