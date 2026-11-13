@@ -1,0 +1,163 @@
+{
+  "issue": 18,
+  "status": "DEPLOYED_AND_VERIFIED",
+  "checkedAtUtc": "2026-11-13T02:28:30Z",
+  "guard": {
+    "archive": "opmx-guard-atomic-close18.zip",
+    "bytes": 201671,
+    "sha256": "e76550d99baa33d0b4839487d13040422f4f6805d7018238a3d5949a5b6d79aa",
+    "hostingerLocalCompleted": "2026-11-12 20:27:00 America/Mexico_City",
+    "proof": "issue18-hostinger-completed.jpg",
+    "baseline": "opmx-guard-semantic-preflight21.zip"
+  },
+  "receiver": {
+    "workflowId": "OSi8AcnzLlI0csRu",
+    "activeVersionId": "159d7833-1848-47f2-bfce-db9792751a78",
+    "nodes": 52,
+    "groups": 1,
+    "groupMembers": 51,
+    "rollbackVersionId": "db33c542-8fa0-48a9-848d-49aea32ae75e"
+  },
+  "qa": {
+    "localTargetedTests": 92,
+    "n8nCodeExecution": "38102",
+    "cases": 8,
+    "assertions": 30,
+    "io": 0,
+    "regression": {
+      "passed": 1280,
+      "baselineFailures": 7,
+      "newFailures": 0
+    }
+  },
+  "capacity": {
+    "executionId": "38113",
+    "statusCode": 200,
+    "body": {
+      "schema": "opmx.package-capacity-audit.v1",
+      "status": "CAPACITY_OBSERVED",
+      "readOnly": true,
+      "readConsistency": "ONE_STATEMENT_SNAPSHOT",
+      "capacity": {
+        "packages": {
+          "used": 145,
+          "limit": 1000,
+          "remaining": 855
+        },
+        "bytes": {
+          "used": 52900939,
+          "limit": 134217728,
+          "remaining": 81316789
+        }
+      },
+      "inventory": {
+        "packages": 145,
+        "open": 1,
+        "ready": 143,
+        "cancelled": 1,
+        "itemRows": 767,
+        "packageItemSlots": 767,
+        "pendingItems": 0,
+        "pendingReservedBytes": 0,
+        "retainedCommittedBytes": 52900939,
+        "releasedPendingRows": 2
+      },
+      "legacyCloseRisk": {
+        "normalOpenAtControlLimit": 0,
+        "recoveryOpenAtControlLimitWithoutDurableResult": 0,
+        "requiresReconciliation": false,
+        "interpretation": "RISK_COUNTS_ONLY_NOT_CONFIRMED_INCIDENT"
+      },
+      "accounting": {
+        "differences": {
+          "packageCount": 0,
+          "quotaVsPackageBytes": 0,
+          "packageVsAccountedBytes": 0,
+          "packageVsCurrentRuleSlots": 2
+        },
+        "matchesCurrentRules": false,
+        "interpretation": "CURRENT_RULES_LEGACY_DIFFERENCES_REQUIRE_REVIEW"
+      },
+      "authorizesDeletion": false,
+      "authorizesLimitChange": false
+    }
+  },
+  "invalidClose": {
+    "executionId": "38115",
+    "statusCode": 400,
+    "body": {
+      "error": "not_confirmed"
+    }
+  },
+  "runtime": {
+    "executionId": "38116",
+    "statusCode": 200,
+    "body": {
+      "status": "RUNTIME_OBSERVED",
+      "scope": {
+        "packageId": "tg_0000000000000000000000000000000000000000",
+        "revision": 1,
+        "eventId": "evt_000000000000000000000000000000000000000000000000"
+      },
+      "observedAt": "2026-11-13T02:28:29.721Z",
+      "versionsMatch": true,
+      "noActiveN8nWriters": true,
+      "executionPages": [
+        {
+          "status": "running",
+          "complete": true,
+          "executions": []
+        },
+        {
+          "status": "waiting",
+          "complete": true,
+          "executions": []
+        },
+        {
+          "status": "new",
+          "complete": true,
+          "executions": []
+        }
+      ],
+      "authorizesRecovery": false,
+      "motorTerminationVerified": false,
+      "workflows": [
+        {
+          "id": "bnzVMNkZuGO1GQCZ",
+          "activeVersionId": "1b78dc88-cb9b-456f-b711-c3328031e61d",
+          "nodeCount": 152
+        },
+        {
+          "id": "Mt7ts2EGPbyaTC2o",
+          "activeVersionId": "d6bbb33a-ab6e-4f90-a88c-921623426444",
+          "nodeCount": 58
+        },
+        {
+          "id": "4o7K5TmKc7joScqB",
+          "activeVersionId": "4263fea4-90a4-406d-a234-da7397d456bf",
+          "nodeCount": 146
+        },
+        {
+          "id": "C4hk6fQQomueYC8f",
+          "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+          "nodeCount": 10
+        },
+        {
+          "id": "qBmLf0DmcMSfuWvm",
+          "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+          "nodeCount": 9
+        }
+      ]
+    }
+  },
+  "legacyAccounting": {
+    "observedDifferenceSlots": 2,
+    "emptyDiscardedRows": 2,
+    "historicalRule": "discard released bytes but retained item_count before 2026-11-10; historical counters intentionally not recalculated",
+    "repaired": false,
+    "limitation": "Per-package distribution was not queried; capacity aggregate exposes the current-rule difference truthfully."
+  },
+  "realNotesPublished": 0,
+  "realCmsNotesEdited": 0,
+  "motorAndSubscriptionsChanged": false
+}
