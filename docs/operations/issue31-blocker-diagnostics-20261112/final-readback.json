@@ -1,0 +1,101 @@
+{
+  "verifiedAtUtc": "2026-11-13T04:26:42.444Z",
+  "guard": {
+    "deployedAtMexicoCity": "2026-11-12T22:20:03-06:00",
+    "archive": "opmx-guard-blocker-diagnostics31.zip",
+    "actualCompletedObserved": true,
+    "runtimeExecutionId": "38814",
+    "runtime": {
+      "httpStatus": 200,
+      "body": {
+        "status": "RUNTIME_OBSERVED",
+        "scope": {
+          "packageId": "tg_0000000000000000000000000000000000000000",
+          "revision": 1,
+          "eventId": "evt_000000000000000000000000000000000000000000000000"
+        },
+        "observedAt": "2026-11-13T04:26:04.448Z",
+        "versionsMatch": true,
+        "noActiveN8nWriters": true,
+        "executionPages": [
+          {
+            "status": "running",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "waiting",
+            "complete": true,
+            "executions": []
+          },
+          {
+            "status": "new",
+            "complete": true,
+            "executions": []
+          }
+        ],
+        "authorizesRecovery": false,
+        "motorTerminationVerified": false,
+        "workflows": [
+          {
+            "id": "bnzVMNkZuGO1GQCZ",
+            "activeVersionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+            "nodeCount": 155
+          },
+          {
+            "id": "Mt7ts2EGPbyaTC2o",
+            "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+            "nodeCount": 58
+          },
+          {
+            "id": "4o7K5TmKc7joScqB",
+            "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+            "nodeCount": 152
+          },
+          {
+            "id": "C4hk6fQQomueYC8f",
+            "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+            "nodeCount": 10
+          },
+          {
+            "id": "qBmLf0DmcMSfuWvm",
+            "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+            "nodeCount": 9
+          }
+        ]
+      }
+    }
+  },
+  "motor": {
+    "id": "6ae9095256948191b33f1e023fbfbf8b",
+    "enabled": true,
+    "chars": 60558,
+    "matchesExactUpdatedPrompt": true,
+    "previousPromptExactSuffix": true,
+    "sha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83"
+  },
+  "stalePublicToolSmoke": {
+    "status": "FAILURE_NOT_SENT",
+    "package_id": "tg_3f682b3ea4561f11a423a483b636ca85ac96fb77",
+    "revision": 1,
+    "reason": "MEDIA_FAILED",
+    "retryPermitted": false,
+    "diagnostic": "REVISION_MISMATCH",
+    "error_code": "INVALID_ARGUMENT"
+  },
+  "probe": {
+    "versionId": "20d88d4e-e731-4f3d-8b44-35f0860bc7ce",
+    "active": false,
+    "nodes": 3,
+    "graphAndSettingsRestored": true,
+    "settings": {
+      "executionOrder": "v1",
+      "availableInMCP": true,
+      "saveManualExecutions": false,
+      "saveDataErrorExecution": "none",
+      "saveDataSuccessExecution": "none",
+      "saveExecutionProgress": false,
+      "executionTimeout": 30
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "sourceEvidenceSha256": "0ca7f93f38037f98b3b28b771e797b2a3e8fe3f7c3267d5ac5891d30703d5772",
+  "beforeChars": 54666,
+  "beforeSha256": "a59f79e5ba63ddaebdb91b4aa9f1088638e95be2d2a72069e7243f1d40b34bb7",
+  "afterChars": 60558,
+  "afterSha256": "3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83",
+  "oldPromptExactSuffix": true
+}

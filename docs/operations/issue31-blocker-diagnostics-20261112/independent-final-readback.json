@@ -1,0 +1,101 @@
+{
+  "schema": "opmx.blocker-diagnostic-final-readback.v1",
+  "status": "ISSUE31_PRODUCTION_READBACK_APPROVED",
+  "observedAtUtc": "2026-11-13T04:24:58.622Z",
+  "readOnly": true,
+  "workflows": {
+    "mcp": {
+      "workflowId": "bnzVMNkZuGO1GQCZ",
+      "activeVersionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+      "activeNodes": 155,
+      "activeGroups": 6,
+      "activeGraphHash": "e6cef96b20500667db3c02a9d2fe02450bbeec58ef38166277a3a232959831b6",
+      "activeExactlyMatchesPrepared": true,
+      "draftVersionId": "32d892b1-7982-46bd-a8a7-4c7e30406d14",
+      "draftNodes": 112,
+      "original112NodeDraftPreservedExactly": true,
+      "workflowSettingsUnchanged": true
+    },
+    "admin": {
+      "workflowId": "NFOBzPfHmvRjVFOA",
+      "activeVersionId": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+      "activeNodes": 16,
+      "activeGroups": 0,
+      "activeGraphHash": "897a2a069b6e76351b619aad3bdca21666eab3c56bb40344b6638f9c2d21bb60",
+      "activeExactlyMatchesPrepared": true,
+      "draftVersionId": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+      "draftNodes": 16,
+      "draftEqualsActive": true,
+      "workflowSettingsUnchanged": true
+    },
+    "shared": {
+      "workflowId": "4o7K5TmKc7joScqB",
+      "activeVersionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+      "activeNodes": 152,
+      "activeGroups": 4,
+      "activeGraphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6",
+      "activeAndDraftUnchangedSince13": true,
+      "draftVersionId": "4f6bb896-e5cb-4f67-999b-052a360ede8d",
+      "draftNodes": 138,
+      "workflowSettingsUnchanged": true
+    },
+    "form": {
+      "workflowId": "Mt7ts2EGPbyaTC2o",
+      "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "activeNodes": 58,
+      "activeGroups": 1,
+      "activeGraphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee",
+      "activeAndDraftUnchangedSince13": true,
+      "draftVersionId": "ee44a18b-87a4-40bb-8434-63552e387003",
+      "draftNodes": 54,
+      "workflowSettingsUnchanged": true
+    },
+    "reader": {
+      "workflowId": "C4hk6fQQomueYC8f",
+      "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "activeNodes": 10,
+      "activeGroups": 1,
+      "activeGraphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318",
+      "activeAndDraftUnchangedSince13": true,
+      "draftVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "draftNodes": 10,
+      "workflowSettingsUnchanged": true
+    },
+    "update": {
+      "workflowId": "qBmLf0DmcMSfuWvm",
+      "activeVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "activeNodes": 9,
+      "activeGroups": 1,
+      "activeGraphHash": "a1692677f677681094531269d6beb60956060275dd7fb54405647c62e9787998",
+      "activeAndDraftUnchangedSince13": true,
+      "draftVersionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "draftNodes": 9,
+      "workflowSettingsUnchanged": true
+    },
+    "receiver": {
+      "workflowId": "OSi8AcnzLlI0csRu",
+      "activeVersionId": "09d373b0-9d71-4cf1-99bd-c830f2275e7c",
+      "nodes": 52,
+      "groups": 1,
+      "originalGroupMembers": 51,
+      "activeAndDraftUnchanged": true,
+      "workflowSettingsUnchanged": true
+    }
+  },
+  "nodeGraphsOrCredentialsIncluded": false,
+  "productionMutations": 0,
+  "probe": {
+    "workflowId": "7IDUF9PeHQ5v331Z",
+    "draftVersionId": "eaf25ae1-acaa-4144-97f4-bf44b4616780",
+    "inactive": true,
+    "nodes": 3,
+    "originalGraphRestoredExactly": true,
+    "retentionRestored": true,
+    "executionTimeout": 30,
+    "allOriginalSettingsRestoredExactly": true
+  },
+  "guardManifest": {
+    "sha256": "10810f706bc31d015c240a3b80a8069809801a219de761f9e5a8e0731562ff0d",
+    "allFiveActivePinsMatch": true
+  }
+}

@@ -1,5 +1,19 @@
 # Estado compartido — Telegram, Publisher y Motor Editorial
 
+## Corte vigente — #31 desplegado y verificado — 13nov2026 UTC / 12nov22:20 CDMX
+
+**Este corte reemplaza las versiones activas MCP/Guard/Motor del corte anterior.** Los cambios de #13/#18/#21/#24/#30 se conservan. No se publicó, editó ni reintentó ninguna nota real en esta entrega.
+
+- **#31:** avisos READY con causa comprobada, dato o material afectado y acción concreta, iguales para operador y administrador. Catálogo de 46 causas; no se inventa la causa de revisiones antiguas. Una foto ordinaria puede conservar crédito vacío según la política vigente; para IA ya acreditada, el Motor añade el crédito estándar sin volver a preguntarlo. Sólo se pide aclaración de origen cuando falta esa información comprobada.
+- Guard `opmx-guard-blocker-diagnostics31.zip` Actual/completado 12nov2026 22:20:03 CDMX, SHA256 `bbbd1e46cf4d5d930eca2d769866704f2bd98d6f640bcde86abdbc1efd85e323`, 212023 bytes/87 archivos. Sólo cambia el manifiesto de writers frente al ZIP13; los otros 86 archivos son idénticos.
+- MCP `bnzVMNkZuGO1GQCZ` activo `29702889-430d-4a87-952a-a9ef6c5b6ece`, 155 nodos/6 grupos, cinco cuerpos Code. Monitor `NFOBzPfHmvRjVFOA` activo `cac1f08f-fff4-44ec-bd81-ed2f123287c8`, 16 nodos, dos Code. Otros cuatro writers y receptor permanecen idénticos. Borrador MCP original de 112 nodos preservado.
+- Motor único `6ae9095256948191b33f1e023fbfbf8b` habilitado, mismo READY/preview/suscripciones; prompt 60558 caracteres, SHA256 `3215baec271d589c859fbe11e29e41fd378db15235e78b88eb06e6ed4c7eea83`. El prompt anterior de 54666 caracteres se conserva como sufijo exacto.
+- Firma pública de tres argumentos compatible sin refrescar herramientas; carrier versionado, scope/revisión/inventario comprobados y registro acotado en stage. `request_id` conserva su función original. Persistencia de seguimiento best effort: no se afirma ACK ni se reintenta un envío incierto. Monitor normaliza DIAG antes de conciliación30 y sólo confirma las alertas completas incluidas.
+- QA: n8n38791, 91 comprobaciones de los cinco Code reales; n8n38793, 17 casos/52 comprobaciones administrativas; arranque sin DB ni red. Readback productivo38814 HTTP200: cinco pins correctos. Cliente público rechazó la revisión deliberadamente vieja con `FAILURE_NOT_SENT / REVISION_MISMATCH`, sin enviar aviso. Probe inactivo, tres nodos y grafo/ajustes originales none/30s restaurados.
+- Incidente `tg_3f682b3ea4561f11a423a483b636ca85ac96fb77`: revisión8 conservaba sólo MEDIA_FAILED; la causa concreta es la reportada por el usuario y no se reconstruye desde ese stage. Revisión posterior12 intacta. No se reabrió ni reprocesó.
+- Fuente [adc426f](https://github.com/oxigenopuromx-hue/opmx-editorial-engine/commit/adc426fbc3b8903991efde0f18833453673ae50e). [Entrega, QA, readback y rollback31](issue31-blocker-diagnostics-20261112/CIERRE_Y_DESPLIEGUE.md). Rollback: mantener el monitor nuevo compatible mientras existan filas DIAG pendientes, para no ocultar avisos.
+- #29 sigue abierto para conciliación de entregas históricas; #28 cancelación permanece diferido. Esta entrega no cambia sus autorizaciones ni reintenta esas notas.
+
 ## Corte vigente — #18 y #13 desplegados/cerrados; #29 pendiente — 13nov2026 UTC / 12nov21:07 CDMX
 
 **Este corte reemplaza los estados candidatos/no activos de #13 de abajo.** No se publicaron ni editaron notas reales como prueba.

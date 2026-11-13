@@ -1,0 +1,53 @@
+{
+  "sourceEvidenceSha256": "b225b61a3981e1609251c6f9a50d57ce88a386469769949d60cc1b1d4a3fa70a",
+  "mcp": {
+    "workflowId": "bnzVMNkZuGO1GQCZ",
+    "versionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+    "baseVersionId": "d4d3a75e-aec9-42ce-9439-d2ea4a931e8f",
+    "nodes": 155,
+    "groups": 6,
+    "exactChangedCodeNodes": [
+      "Protocolo MCP archivos",
+      "Preparar aviso de bloqueo",
+      "Resultado de bloqueo Telegram",
+      "Bloqueo no confirmado",
+      "Preparar registro de avance"
+    ],
+    "graphHash": "e6cef96b20500667db3c02a9d2fe02450bbeec58ef38166277a3a232959831b6"
+  },
+  "admin": {
+    "workflowId": "NFOBzPfHmvRjVFOA",
+    "versionId": "cac1f08f-fff4-44ec-bd81-ed2f123287c8",
+    "baseVersionId": "efa564a8-3f87-4936-ba1a-2b1a33a0879f",
+    "nodes": 16,
+    "groups": 0,
+    "exactChangedCodeNodes": [
+      "Preparar comprobación de alertas",
+      "Seleccionar alertas de administrador"
+    ],
+    "graphHash": "897a2a069b6e76351b619aad3bdca21666eab3c56bb40344b6638f9c2d21bb60"
+  },
+  "manifestSha256": "10810f706bc31d015c240a3b80a8069809801a219de761f9e5a8e0731562ff0d",
+  "workflows": {
+    "bnzVMNkZuGO1GQCZ": {
+      "versionId": "29702889-430d-4a87-952a-a9ef6c5b6ece",
+      "graphHash": "e6cef96b20500667db3c02a9d2fe02450bbeec58ef38166277a3a232959831b6"
+    },
+    "Mt7ts2EGPbyaTC2o": {
+      "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee"
+    },
+    "4o7K5TmKc7joScqB": {
+      "versionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+      "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6"
+    },
+    "qBmLf0DmcMSfuWvm": {
+      "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
+      "graphHash": "a1692677f677681094531269d6beb60956060275dd7fb54405647c62e9787998"
+    },
+    "C4hk6fQQomueYC8f": {
+      "versionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "graphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318"
+    }
+  }
+}
