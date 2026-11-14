@@ -5,10 +5,6 @@ import {randomUUID} from 'node:crypto';
 export function addOpolHero(graph) {
  const out=structuredClone(graph), byName=name=>{const n=out.nodes.find(x=>x.name===name);if(!n)throw Error('MISSING_NODE '+name);return n};
  const rep=(s,from,to)=>{if(s.split(from).length!==2)throw Error('UNEXPECTED_SOURCE '+from);return s.replace(from,to)};
- const prepare=byName('Preparar MASTER y binarios');
- prepare.parameters.jsCode=rep(prepare.parameters.jsCode,"['hero_file', destination !== 'OPOL']","['hero_file', true]");
- const normalize=byName('Validar y normalizar OPMX MASTER');
- normalize.parameters.jsCode=rep(normalize.parameters.jsCode,"if (execution.create_opol) {\n  const requiredOpol = {","if (execution.create_opol) {\n  if (!binary.hero_file) throw new Error('Falta el archivo HERO para OPOL.');\n  const requiredOpol = {");
  const pairs=[['GUARD OPOL — Iniciar destacada','GUARD OPOL — Iniciar Hero'],['GUARD OPOL — Verificar inicio destacada','GUARD OPOL — Verificar inicio Hero'],['OPOL — Recuperar binario destacada','OPOL — Recuperar binario Hero'],['OPOL — Subir DESTACADA','OPOL — Subir HERO'],['GUARD OPOL — Reportar destacada','GUARD OPOL — Reportar Hero'],['GUARD OPOL — Verificar reporte destacada','GUARD OPOL — Verificar reporte Hero'],['OPOL — Metadata DESTACADA','OPOL — Metadata HERO'],['OPOL — Leer destacada','OPOL — Leer Hero'],['OPOL — Verificar destacada','OPOL — Verificar Hero']];
  for(const [old,name] of pairs){
   if(out.nodes.some(n=>n.name===name))throw Error('NODE_EXISTS '+name);
@@ -17,11 +13,15 @@ export function addOpolHero(graph) {
   n.parameters=JSON.parse(p);out.nodes.push(n);
  }
  for(let i=0;i<pairs.length;i++)out.connections[pairs[i][1]]={main:[[{node:i===pairs.length-1?'GUARD OPOL — Iniciar destacada':pairs[i+1][1],type:'main',index:0}],[{node:'OPOL — Requiere conciliación',type:'main',index:0}]]};
+ const branchName='OPOL — ¿Hero disponible?';
+ if(out.nodes.some(n=>n.name===branchName))throw Error('NODE_EXISTS '+branchName);
+ out.nodes.push({id:randomUUID(),name:branchName,type:'n8n-nodes-base.if',typeVersion:2.2,position:[0,0],parameters:{conditions:{options:{caseSensitive:true,leftValue:'',typeValidation:'strict',version:2},conditions:[{leftValue:"={{ !!$('Validar y normalizar OPMX MASTER').first().binary?.hero_file }}",operator:{type:'boolean',operation:'true',singleValue:true}}],combinator:'and'},options:{}}});
+ out.connections[branchName]={main:[[{node:pairs[0][1],type:'main',index:0}],[{node:'GUARD OPOL — Iniciar destacada',type:'main',index:0}]]};
  const entry=out.connections['GUARD OPOL — Verificar destino']?.main?.[0]?.[0];
- if(entry?.node!=='GUARD OPOL — Iniciar destacada')throw Error('UNEXPECTED_ENTRY');entry.node=pairs[0][1];
+ if(entry?.node!=='GUARD OPOL — Iniciar destacada')throw Error('UNEXPECTED_ENTRY');entry.node=branchName;
  const meta=byName('OPOL — Escribir metadata editorial');
- meta.parameters.jsonBody=rep(meta.parameters.jsonBody,'  meta: {\n    opmx_editorial: {',"  meta: {\n    opmx_hero_media_id: Number($('OPOL — Subir HERO').first().json.id),\n    opmx_editorial: {");
+ meta.parameters.jsonBody=rep(meta.parameters.jsonBody,'  meta: {\n    opmx_editorial: {',"  meta: {\n    ...($('Validar y normalizar OPMX MASTER').first().binary?.hero_file ? {opmx_hero_media_id: Number($('OPOL — Subir HERO').first().json.id)} : {}),\n    opmx_editorial: {");
  const readback=byName('OPOL — Validar antes de publicar');
- readback.parameters.jsCode=rep(readback.parameters.jsCode,"p.featured_media!==$('OPOL — Subir DESTACADA').first().json.id", "p.featured_media!==$('OPOL — Subir DESTACADA').first().json.id||Number(p.meta?.opmx_hero_media_id)!==Number($('OPOL — Subir HERO').first().json.id)");
+ readback.parameters.jsCode=rep(readback.parameters.jsCode,"p.featured_media!==$('OPOL — Subir DESTACADA').first().json.id", "p.featured_media!==$('OPOL — Subir DESTACADA').first().json.id||($('Validar y normalizar OPMX MASTER').first().binary?.hero_file&&Number(p.meta?.opmx_hero_media_id)!==Number($('OPOL — Subir HERO').first().json.id))");
  return out;
 }
