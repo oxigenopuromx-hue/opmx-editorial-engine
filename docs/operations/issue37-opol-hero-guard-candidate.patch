@@ -35,3 +35,26 @@
   const key=createHash('sha256').update(`opmx:v1:${destination}:${slug}`).digest('hex'),c=await pool.getConnection();let committed=false,phase='begin';
   try{
    await c.beginTransaction();
+--- a/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs
++++ b/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs
+@@ -3,16 +3,16 @@
+   "schema": "opmx.fenced-writer-release.v1",
+   "workflows": {
+     "bnzVMNkZuGO1GQCZ": {
+-      "versionId": "7c2f6b5b-8f2e-469e-94dd-58a0532e2516",
+-      "graphHash": "2e045a6d959b3d458350251db558ceaef353c927e84d7c0edf108e38405aaec4"
++      "versionId": "8f01a744-1fd4-43af-bdd6-e5836f0175e1",
++      "graphHash": "f71f691fc31aaf3f81755c4fa6fdc13ca6503692046e9b566d92b4c62e4bece2"
+     },
+     "Mt7ts2EGPbyaTC2o": {
+       "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+       "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee"
+     },
+     "4o7K5TmKc7joScqB": {
+-      "versionId": "bef4649d-38eb-436a-9a13-728750da6b8f",
+-      "graphHash": "2a819dbfe43c1e7ca9517d74df1417e396dad2c8fc01cfb88cce2ab1a1f8beb6"
++      "versionId": "2130cf37-0a61-4897-b4c9-d5365c4c6b8d",
++      "graphHash": "173df1da25ab727e1778f5311c450b964d959b2edeaf141a5fd9a5f47b0291a2"
+     },
+     "qBmLf0DmcMSfuWvm": {
+       "versionId": "d04fb5c2-ba36-48f9-9cd4-2958ab1f273e",
