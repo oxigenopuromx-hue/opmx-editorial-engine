@@ -1,0 +1,22 @@
+--- a/tools/mcp-publisher/media-progress.mjs
++++ b/tools/mcp-publisher/media-progress.mjs
+@@ -16,7 +16,7 @@
+   if (typeof requestId !== 'string' || !/^[A-Za-z0-9_-]{16,128}$/.test(requestId) ||
+       typeof slug !== 'string' || slug.length > 200 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+       !['OPURO','OPOL','LIBERAL'].includes(destination) ||
+-      !((['OPURO','LIBERAL'].includes(destination) && ['hero','featured'].includes(role)) || (destination === 'OPOL' && role === 'featured'))) throw new Error('Solicitud inválida');
++      !(['OPURO','OPOL','LIBERAL'].includes(destination) && ['hero','featured'].includes(role))) throw new Error('Solicitud inválida');
+   return createHash('sha256').update(`opmx:v1:${destination}:${slug}`).digest('hex');
+ }
+ 
+--- a/tools/telegram/guard-recovery-candidate/fenced-media-candidate.mjs
++++ b/tools/telegram/guard-recovery-candidate/fenced-media-candidate.mjs
+@@ -27,7 +27,7 @@
+ // response is uncertain and never authorizes another upload.
+ export async function beginFencedMedia(pool,input){
+  const {requestId,slug,destination,role}=input??{};
+- if(!pool?.getConnection||typeof requestId!=='string'||!/^tg_[a-f0-9]{64}$/.test(requestId)||typeof slug!=='string'||slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!(['OPURO','LIBERAL'].includes(destination)&&['hero','featured'].includes(role)||destination==='OPOL'&&role==='featured'))throw Error('INVALID_MEDIA_REQUEST');
++ if(!pool?.getConnection||typeof requestId!=='string'||!/^tg_[a-f0-9]{64}$/.test(requestId)||typeof slug!=='string'||slug.length>200||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||!(['OPURO','OPOL','LIBERAL'].includes(destination)&&['hero','featured'].includes(role)))throw Error('INVALID_MEDIA_REQUEST');
+  const key=createHash('sha256').update(`opmx:v1:${destination}:${slug}`).digest('hex'),c=await pool.getConnection();let committed=false,phase='begin';
+  try{
+   await c.beginTransaction();
