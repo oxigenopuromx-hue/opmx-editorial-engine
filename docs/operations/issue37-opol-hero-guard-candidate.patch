@@ -9,6 +9,21 @@
    return createHash('sha256').update(`opmx:v1:${destination}:${slug}`).digest('hex');
  }
  
+--- a/tools/mcp-publisher/guard-server.mjs
++++ b/tools/mcp-publisher/guard-server.mjs
+@@ -134,6 +134,12 @@
+           const identity={requestId:input.requestId,slug:input.slug,destination:input.destination};
+           observed.target=await inspectTargetProgress(pool,identity);
+           for(const role of ['OPURO','LIBERAL'].includes(input.destination)?['hero','featured']:['featured']) observed[role]=await inspectMediaUpload(pool,{...identity,role});
++          // OPOL historically tracked only featured. Preserve the historical
++          // response shape unless this request actually recorded a hero.
++          if(input.destination==='OPOL'){
++            const hero=await inspectMediaUpload(pool,{...identity,role:'hero'});
++            if(hero.status!=='not_found')observed.hero=hero;
++          }
+         }
+         return end(200,{observed,action:'manual_reconciliation',retryPermitted:false,wordpressVerified:false,consistentSnapshot:false});
+       }
 --- a/tools/telegram/guard-recovery-candidate/fenced-media-candidate.mjs
 +++ b/tools/telegram/guard-recovery-candidate/fenced-media-candidate.mjs
 @@ -27,7 +27,7 @@
