@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {createEditorialPlacementStore} from './source/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs';
+const pkg='tg_'+'a'.repeat(40),rid='tg_'+'b'.repeat(64),owner='c'.repeat(64);
+const seen=[];let rolled=0,released=0;
+const c={async beginTransaction(){},async rollback(){rolled++},release(){released++},async execute(sql){seen.push(sql);if(sql.includes('opmx_tg_quota_v1'))throw Error('Unexpected global lock');if(sql.includes('opmx_tg_request_binding_v1'))return [[{package_id:pkg,revision:5}]];if(sql.includes('opmx_tg_packages_v1'))return [[{owner_key:owner,state:'READY',revision:5}]];if(sql.includes('opmx_tg_editorial_placements_v1'))return [[]];throw Error('Unexpected '+sql)}};
+const store=createEditorialPlacementStore({pool:{async getConnection(){return c}}});
+assert.equal((await store.prove({requestId:rid,ids:null})).status,'PLACEMENT_UNCHANGED');
+assert.equal((await store.prove({requestId:rid,ids:['42']})).status,'PLACEMENT_UNCONFIRMED');
+assert.equal((await store.prove({requestId:rid,ids:'42'})).status,'PLACEMENT_UNCONFIRMED');
+assert(seen.some(s=>s.includes('opmx_tg_packages_v1')&&s.includes('FOR UPDATE')));
+assert(!seen.some(s=>s.includes('opmx_tg_quota_v1')));
+assert.equal(rolled,3);assert.equal(released,3);
+console.log('Proof conserva bloqueo del paquete y rechazo no autorizado sin bloqueo global; rollback verificado');
