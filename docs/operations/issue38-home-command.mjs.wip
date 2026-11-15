@@ -1,0 +1,16 @@
+// Direct Telegram control for the OPURO general home; category placement is separate.
+export function parseHomeCommand(text) {
+ if(typeof text!=='string'||/[\r\n]/.test(text))throw Error('INVALID_HOME_COMMAND');
+ const match=/^\/opciones[ \t]+portada-general[ \t]+OPURO[ \t]+(excluir|incluir|conservar)$/i.exec(text.trim());
+ if(!match)throw Error('INVALID_HOME_COMMAND');
+ return {target:'OPURO',choice:match[1].toLowerCase()==='excluir'?true:match[1].toLowerCase()==='incluir'?false:null};
+}
+export function isHomeCommand(text) {return typeof text==='string'&&/^\s*\/opciones[ \t]+portada-general(?:\s|$)/i.test(text)}
+export function normalizeHomeControl(update) {
+ const m=update?.message,text=typeof m?.text==='string'?m.text:typeof m?.caption==='string'?m.caption:'';
+ if(!isHomeCommand(text))return null;
+ const rejected={kind:'REJECTED',has_file:false,home_placement_attested:false,reply_text:'Escribe /opciones portada-general OPURO excluir, incluir o conservar como mensaje nuevo y directo, sin respuesta, reenvío ni adjunto.'};
+ if(typeof m?.text!=='string'||m.document||m.photo||['reply_to_message','forward_origin','forward_date','forward_from','forward_from_chat','forward_sender_name','forward_signature','external_reply','quote','edit_date'].some(key=>Object.hasOwn(m,key))||Object.hasOwn(update,'edited_message'))return rejected;
+ let selected;try{selected=parseHomeCommand(text)}catch{return rejected}
+ return {kind:'TEXT',has_file:false,text,mode_attested:true,home_placement_attested:true,home_placement_target:selected.target,home_placement_choice:selected.choice};
+}
