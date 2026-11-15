@@ -1,0 +1,11 @@
+--- issue38-36/source-original/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs	2026-11-13 09:31:02.000000000 -0600
++++ issue39-timeout/source/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs	2026-11-14 21:56:36.129673610 -0600
+@@ -198,7 +198,7 @@
+     await c.commit();committed=true;return {status:'PLACEMENT_SELECTED',packageId:input.packageId,revision,target:'OPURO',ids};
+    }catch(error){if(!committed)try{await c.rollback()}catch{}throw Error('PLACEMENT_SELECTION_UNCONFIRMED',{cause:error})}finally{c.release()}
+   },
+-  async prove(input){const c=await pool.getConnection();try{await c.beginTransaction();const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)return unavailable();return await readEditorialPlacementForRequestInTransaction(c,input,{readScope})}catch{return unavailable()}finally{try{await c.rollback()}catch{}c.release()}},
++  async prove(input){const c=await pool.getConnection();try{await c.beginTransaction();return await readEditorialPlacementForRequestInTransaction(c,input,{readScope})}catch{return unavailable()}finally{try{await c.rollback()}catch{}c.release()}},
+   async verifyUpdate(input){const c=await pool.getConnection();try{await c.beginTransaction();const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)return false;return await verifyUpdateEditorialPlacementInTransaction(c,input)}catch{return false}finally{try{await c.rollback()}catch{}c.release()}},
+  };
+ }
