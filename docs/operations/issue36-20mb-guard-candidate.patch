@@ -1,0 +1,145 @@
+diff -ruN source-original/tools/mcp-publisher/guard-server.mjs source/tools/mcp-publisher/guard-server.mjs
+--- source-original/tools/mcp-publisher/guard-server.mjs	2026-11-14 15:06:12.000000000 -0600
++++ source/tools/mcp-publisher/guard-server.mjs	2026-11-14 20:22:15.949102786 -0600
+@@ -70,7 +70,7 @@
+     let data='',size=0;
+     try {
+       if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+-        const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:literalValidationAction?8*1024*1024:65536;
++        const chunks=[],limit=telegramAction==='complete'?(4*Math.ceil(20000000/3)+65536):updatePayload?5*1024*1024:literalValidationAction?8*1024*1024:65536;
+         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
+         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+         if(telegramDestinationCancellation&&await telegramDestinationCancellation.allowed(req.url,input)!==true)return end(409,{status:'DESTINATION_PERMISSION_NOT_CONFIRMED',writeAuthorized:false,retryPermitted:false});
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/blocked-unwritten-attempt-recovery.mjs source/tools/telegram/guard-recovery-candidate/blocked-unwritten-attempt-recovery.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/blocked-unwritten-attempt-recovery.mjs	2026-11-13 16:27:21.000000000 -0600
++++ source/tools/telegram/guard-recovery-candidate/blocked-unwritten-attempt-recovery.mjs	2026-11-14 20:22:15.948941111 -0600
+@@ -71,7 +71,7 @@
+     for(const row of rows){
+      if(!/^ti_[a-f0-9]{40}$/.test(row.item_id??'')||row.owner_key!==ownerKey||!['TEXT','FILE'].includes(row.kind)||!['STORED','DISCARDED'].includes(row.state))return denied();
+      const bytes=Number(row.content_bytes);let attachment=null;
+-     if(!Number.isSafeInteger(bytes)||bytes<0||bytes>10*1024*1024)return denied();
++     if(!Number.isSafeInteger(bytes)||bytes<0||bytes>20000000)return denied();
+      try{attachment=row.attachment_json?JSON.parse(row.attachment_json):null}catch{return denied()}
+      if(row.state==='STORED'){
+       if(!hex(row.sha256))return denied();
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/intake.mjs source/tools/telegram/guard-recovery-candidate/intake.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/intake.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source/tools/telegram/guard-recovery-candidate/intake.mjs	2026-11-14 20:22:15.949048903 -0600
+@@ -13,8 +13,8 @@
+  if(typeof m.text==='string' && /^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$|\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
+  if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
+  const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&/^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$|\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim());
+- const maxBytes=config.maxBytes??10*1024*1024;
+- if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
++ const maxBytes=config.maxBytes??20000000;
++ if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>20000000)throw Error('Límite piloto inválido');
+  let attachment=null;
+  if(m.document){const d=m.document;const name=String(d.file_name??'').slice(0,240),mime=String(d.mime_type??'');
+   const extensions={'application/pdf':['pdf'],'application/msword':['doc'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['docx'],'text/plain':['txt'],'image/jpeg':['jpg','jpeg'],'image/png':['png'],'image/webp':['webp']};
+@@ -27,10 +27,10 @@
+   attachment={file_id:p.file_id,file_unique_id:p.file_unique_id??null,file_name:'telegram-photo.jpg',mime_type:'image/jpeg',declared_bytes:p.file_size??null};
+  }
+  if(attachment){if(typeof attachment.file_id!=='string'||!attachment.file_id||attachment.file_id.length>4096)return null;
+-  if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 10 MiB o informa un tamaño inválido.'};
++  if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 20 MB o informa un tamaño inválido.'};
+   return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};
+  }
+- if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};
++ if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 20 MB; espera la confirmación de guardado.'};
+  return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
+ }
+ 
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/package-quota-diagnostic.mjs source/tools/telegram/guard-recovery-candidate/package-quota-diagnostic.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/package-quota-diagnostic.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source/tools/telegram/guard-recovery-candidate/package-quota-diagnostic.mjs	2026-11-14 20:22:15.948863454 -0600
+@@ -1,6 +1,6 @@
+ // Bounded diagnostics only. The package store remains the authority for locks,
+ // quota decisions and accounting; these helpers never change a counter.
+-export const packageCapacityLimits=Object.freeze({items:20,recoveryItems:40,packageBytes:26214400,totalBytes:134217728,packages:1000,closeControlAllowance:1024});
++export const packageCapacityLimits=Object.freeze({items:20,recoveryItems:40,packageBytes:41943040,totalBytes:134217728,packages:1000,closeControlAllowance:1024});
+ const integer=value=>typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?value:
+  typeof value==='string'&&/^(?:0|[1-9][0-9]*)$/.test(value)&&Number.isSafeInteger(Number(value))?Number(value):null;
+ const safeAdd=(a,b)=>Number.isSafeInteger(a+b)?a+b:null;
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/package-store.mjs source/tools/telegram/guard-recovery-candidate/package-store.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/package-store.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source/tools/telegram/guard-recovery-candidate/package-store.mjs	2026-11-14 20:22:15.948774462 -0600
+@@ -3,7 +3,7 @@
+ import {validateTelegramDownload} from './intake.mjs';
+ import {diagnosePackageQuotaFailure,readPackageCapacityAudit} from './package-quota-diagnostic.mjs';
+ 
+-export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:1000});
++export const PACKAGE_LIMITS = Object.freeze({fileBytes:20000000, packageBytes:41943040, totalBytes:134217728, items:20, packages:1000});
+ // An explicitly reopened package can accept additional information while
+ // retaining every original. The final slot is reserved for the attested /listo.
+ export const RECOVERY_ITEM_LIMIT=40;
+@@ -70,7 +70,7 @@
+   `CREATE TABLE IF NOT EXISTS opmx_tg_quota_v1 (id TINYINT PRIMARY KEY, used_bytes BIGINT UNSIGNED NOT NULL, package_count INT UNSIGNED NOT NULL) ENGINE=InnoDB`,
+   `CREATE TABLE IF NOT EXISTS opmx_tg_packages_v1 (package_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, state VARCHAR(16) NOT NULL, revision INT UNSIGNED NOT NULL, item_count INT UNSIGNED NOT NULL, used_bytes BIGINT UNSIGNED NOT NULL, created_at DATETIME(6) NOT NULL, updated_at DATETIME(6) NOT NULL) ENGINE=InnoDB`,
+   `CREATE TABLE IF NOT EXISTS opmx_tg_sessions_v1 (owner_key CHAR(64) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL) ENGINE=InnoDB`,
+-  `CREATE TABLE IF NOT EXISTS opmx_tg_items_v1 (item_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, receipt_key CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE, fingerprint CHAR(64) CHARACTER SET ascii NOT NULL, kind VARCHAR(8) NOT NULL, state VARCHAR(16) NOT NULL, text_content MEDIUMTEXT NOT NULL, attachment_json TEXT NULL, reserved_bytes INT UNSIGNED NOT NULL, content_bytes INT UNSIGNED NOT NULL, sha256 CHAR(64) CHARACTER SET ascii NULL, content_blob MEDIUMBLOB NULL, created_at DATETIME(6) NOT NULL, INDEX package_items (package_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
++  `CREATE TABLE IF NOT EXISTS opmx_tg_items_v1 (item_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, receipt_key CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE, fingerprint CHAR(64) CHARACTER SET ascii NOT NULL, kind VARCHAR(8) NOT NULL, state VARCHAR(16) NOT NULL, text_content MEDIUMTEXT NOT NULL, attachment_json TEXT NULL, reserved_bytes INT UNSIGNED NOT NULL, content_bytes INT UNSIGNED NOT NULL, sha256 CHAR(64) CHARACTER SET ascii NULL, content_blob LONGBLOB NULL, created_at DATETIME(6) NOT NULL, INDEX package_items (package_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
+ ];
+ 
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs source/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs	2026-11-14 15:08:06.000000000 -0600
++++ source/tools/telegram/guard-recovery-candidate/writer-release-manifest.mjs	2026-11-14 20:25:48.089266232 -0600
+@@ -3,8 +3,8 @@
+   "schema": "opmx.fenced-writer-release.v1",
+   "workflows": {
+     "bnzVMNkZuGO1GQCZ": {
+-      "versionId": "8f01a744-1fd4-43af-bdd6-e5836f0175e1",
+-      "graphHash": "f71f691fc31aaf3f81755c4fa6fdc13ca6503692046e9b566d92b4c62e4bece2"
++      "versionId": "90d6a9a2-710a-4328-beaa-6029363ce508",
++      "graphHash": "b35795b5cd4c50643af8a88ec1f3e4cdc000b24c3af04a1b224487e770e73580"
+     },
+     "Mt7ts2EGPbyaTC2o": {
+       "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+diff -ruN source-original/tools/telegram/intake.mjs source/tools/telegram/intake.mjs
+--- source-original/tools/telegram/intake.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source/tools/telegram/intake.mjs	2026-11-14 20:22:15.949001217 -0600
+@@ -13,8 +13,8 @@
+  if(typeof m.text==='string' && /^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$|\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim()) && (m.forward_origin||m.forward_date||m.forward_from||m.forward_from_chat||m.forward_sender_name))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe el comando directamente; no lo reenvíes.'};
+  if(typeof m.text==='string' && m.text.includes('OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d'))return {...identity,kind:'REJECTED',has_file:false,reply_text:'Mensaje no admitido.'};
+  const modeAttested=typeof m.text==='string'&&!m.document&&!m.photo&&/^(?:\/(?:publicar|borrador)(?:\s+(?:ambos|opuro|opol))?$|\/imagen\s+generar$|(?:genera|generar|crea|crear)\s+(?:una\s+)?(?:imagen|ilustraci[oó]n)[^\n]{0,180}(?:\n|$))/i.test(m.text.trim());
+- const maxBytes=config.maxBytes??10*1024*1024;
+- if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>10*1024*1024)throw Error('Límite piloto inválido');
++ const maxBytes=config.maxBytes??20000000;
++ if(!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>20000000)throw Error('Límite piloto inválido');
+  let attachment=null;
+  if(m.document){const d=m.document;const name=String(d.file_name??'').slice(0,240),mime=String(d.mime_type??'');
+   const extensions={'application/pdf':['pdf'],'application/msword':['doc'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['docx'],'text/plain':['txt'],'image/jpeg':['jpg','jpeg'],'image/png':['png'],'image/webp':['webp']};
+@@ -27,10 +27,10 @@
+   attachment={file_id:p.file_id,file_unique_id:p.file_unique_id??null,file_name:'telegram-photo.jpg',mime_type:'image/jpeg',declared_bytes:p.file_size??null};
+  }
+  if(attachment){if(typeof attachment.file_id!=='string'||!attachment.file_id||attachment.file_id.length>4096)return null;
+-  if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 10 MiB o informa un tamaño inválido.'};
++  if(attachment.declared_bytes!==null&&(!Number.isSafeInteger(attachment.declared_bytes)||attachment.declared_bytes<1||attachment.declared_bytes>maxBytes))return {...identity,kind:'REJECTED',has_file:false,reply_text:'El archivo supera el límite piloto de 20 MB o informa un tamaño inválido.'};
+   return {...identity,kind:'FILE',has_file:true,text,attachment,max_bytes:maxBytes};
+  }
+- if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 10 MiB; espera la confirmación de guardado.'};
++ if(!text.trim())return {...identity,kind:'REJECTED',has_file:false,reply_text:'No pude procesar este tipo de mensaje. Si enviaste una imagen, mándala como archivo JPG, PNG o WEBP de hasta 20 MB; espera la confirmación de guardado.'};
+  return {...identity,kind:'TEXT',has_file:false,text,mode_attested:modeAttested,reply_text:'Texto recibido. Este piloto aún no agrupa paquetes, genera notas ni publica contenido.'};
+ }
+ 
+diff -ruN source-original/tools/telegram/package-store.mjs source/tools/telegram/package-store.mjs
+--- source-original/tools/telegram/package-store.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source/tools/telegram/package-store.mjs	2026-11-14 20:22:15.948379373 -0600
+@@ -3,7 +3,7 @@
+ import {validateTelegramDownload} from './intake.mjs';
+ import {diagnosePackageQuotaFailure,readPackageCapacityAudit} from './guard-recovery-candidate/package-quota-diagnostic.mjs';
+ 
+-export const PACKAGE_LIMITS = Object.freeze({fileBytes:10485760, packageBytes:26214400, totalBytes:134217728, items:20, packages:1000});
++export const PACKAGE_LIMITS = Object.freeze({fileBytes:20000000, packageBytes:41943040, totalBytes:134217728, items:20, packages:1000});
+ // An explicitly reopened package can accept additional information while
+ // retaining every original. The final slot is reserved for the attested /listo.
+ export const RECOVERY_ITEM_LIMIT=40;
+@@ -70,7 +70,7 @@
+   `CREATE TABLE IF NOT EXISTS opmx_tg_quota_v1 (id TINYINT PRIMARY KEY, used_bytes BIGINT UNSIGNED NOT NULL, package_count INT UNSIGNED NOT NULL) ENGINE=InnoDB`,
+   `CREATE TABLE IF NOT EXISTS opmx_tg_packages_v1 (package_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, state VARCHAR(16) NOT NULL, revision INT UNSIGNED NOT NULL, item_count INT UNSIGNED NOT NULL, used_bytes BIGINT UNSIGNED NOT NULL, created_at DATETIME(6) NOT NULL, updated_at DATETIME(6) NOT NULL) ENGINE=InnoDB`,
+   `CREATE TABLE IF NOT EXISTS opmx_tg_sessions_v1 (owner_key CHAR(64) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL) ENGINE=InnoDB`,
+-  `CREATE TABLE IF NOT EXISTS opmx_tg_items_v1 (item_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, receipt_key CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE, fingerprint CHAR(64) CHARACTER SET ascii NOT NULL, kind VARCHAR(8) NOT NULL, state VARCHAR(16) NOT NULL, text_content MEDIUMTEXT NOT NULL, attachment_json TEXT NULL, reserved_bytes INT UNSIGNED NOT NULL, content_bytes INT UNSIGNED NOT NULL, sha256 CHAR(64) CHARACTER SET ascii NULL, content_blob MEDIUMBLOB NULL, created_at DATETIME(6) NOT NULL, INDEX package_items (package_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
++  `CREATE TABLE IF NOT EXISTS opmx_tg_items_v1 (item_id VARCHAR(43) CHARACTER SET ascii PRIMARY KEY, package_id VARCHAR(43) CHARACTER SET ascii NOT NULL, owner_key CHAR(64) CHARACTER SET ascii NOT NULL, receipt_key CHAR(64) CHARACTER SET ascii NOT NULL UNIQUE, fingerprint CHAR(64) CHARACTER SET ascii NOT NULL, kind VARCHAR(8) NOT NULL, state VARCHAR(16) NOT NULL, text_content MEDIUMTEXT NOT NULL, attachment_json TEXT NULL, reserved_bytes INT UNSIGNED NOT NULL, content_bytes INT UNSIGNED NOT NULL, sha256 CHAR(64) CHARACTER SET ascii NULL, content_blob LONGBLOB NULL, created_at DATETIME(6) NOT NULL, INDEX package_items (package_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+   `INSERT IGNORE INTO opmx_tg_quota_v1 (id,used_bytes,package_count) VALUES (1,0,0)`
+ ];
+ 
