@@ -1,0 +1,7 @@
+import {strict as assert} from 'node:assert';
+import {parseHomeCommand,isHomeCommand,normalizeHomeControl} from './home-command.mjs';
+for(const [v,w] of [['excluir',true],['incluir',false],['conservar',null]]){const text=`/opciones portada-general OPURO ${v}`;assert.equal(parseHomeCommand(text).choice,w);assert.equal(normalizeHomeControl({message:{text}}).home_placement_choice,w);for(const extra of [{forward_origin:{}},{reply_to_message:{}},{photo:[{}]}])assert.equal(normalizeHomeControl({message:{text,...extra}}).kind,'REJECTED');}
+assert.equal(isHomeCommand('/opciones portada OPURO ninguna'),false);
+assert.throws(()=>parseHomeCommand('/opciones portada-general OPURO excluir texto'));
+assert.throws(()=>parseHomeCommand('/opciones portada-general OPURO excluir\ntexto'));
+console.log('Comando de portada general: excluir, incluir, conservar y rechazos verificados');
