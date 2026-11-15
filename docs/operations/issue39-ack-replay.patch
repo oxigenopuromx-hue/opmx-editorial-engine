@@ -1,0 +1,22 @@
+--- a/tools/telegram/guard-recovery-candidate/motor-attempt-store.mjs
++++ b/tools/telegram/guard-recovery-candidate/motor-attempt-store.mjs
+@@ -100,7 +100,7 @@
+     const [a]=await c.execute('SELECT state,event_id,token_hash FROM opmx_tg_motor_attempts_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+     if(a.length!==1||a[0].state!=='RUNNING'||a[0].event_id!==eventId||!equal(a[0].token_hash,digest(token)))return {status:'ATTEMPT_NOT_AUTHORIZED',retryPermitted:false};
+     const [f]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
+-    if(f.length!==1||f[0].state!=='AWAITING_DECISION')return {status:'DECISION_ACK_NOT_PERMITTED',retryPermitted:false};
++    if(f.length!==1||!['AWAITING_DECISION','READY_TO_WRITE'].includes(f[0].state))return {status:'DECISION_ACK_NOT_PERMITTED',retryPermitted:false};
+     let d;try{d=action==='UPDATE'?await readUpdateDecision(c,{packageId,revision}):await readDecision(c,packageId,revision)}catch{return {status:'DECISION_UNCONFIRMED',retryPermitted:false}}
+     const normalized=action==='UPDATE'?d:d&&{packageId:d.package_id,revision:d.revision,previewHash:d.preview_hash,destination:d.destination,contentMode:d.content_mode,action:d.action};
+     if(!normalized||normalized.packageId!==packageId||normalized.revision!==revision||normalized.previewHash!==previewHash||normalized.destination!==destination||normalized.contentMode!==contentMode||normalized.action!==action)return {status:'DECISION_MISMATCH',retryPermitted:false};
+@@ -113,6 +113,10 @@
+     // An acknowledgement does not prove the writer preserves literal text.
+     // Until a server-owned enforcement proof exists, literal remains fenced.
+     if(contentMode==='LITERAL'&&await verifyLiteralEnforcement(c,{packageId,revision,eventId,previewHash,destination})!==true)return {status:'LITERAL_ENFORCEMENT_UNCONFIRMED',retryPermitted:false};
++    // A repeated acknowledgement is safe only while the original capability,
++    // exact confirmed decision and all applicable writer proofs still match,
++    // and the fence has not advanced to writing or reconciliation.
++    if(f[0].state==='READY_TO_WRITE')return {status:'DECISION_ACKNOWLEDGED',packageId,revision,replayed:true,retryPermitted:false};
+     const [changed]=await c.execute("UPDATE opmx_tg_publication_fence_v1 SET state='READY_TO_WRITE',updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND revision=? AND state='AWAITING_DECISION'",[packageId,revision]);
+     if(changed.affectedRows!==1)throw Error('FENCE_CONFLICT');
+     return {status:'DECISION_ACKNOWLEDGED',packageId,revision,retryPermitted:false};
