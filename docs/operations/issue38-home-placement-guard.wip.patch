@@ -1,0 +1,370 @@
+diff -ruN source-original/tools/mcp-publisher/guard-server.mjs source38/tools/mcp-publisher/guard-server.mjs
+--- source-original/tools/mcp-publisher/guard-server.mjs	2026-11-14 15:06:12.000000000 -0600
++++ source38/tools/mcp-publisher/guard-server.mjs	2026-11-14 20:26:59.380081469 -0600
+@@ -8,7 +8,7 @@
+ const MAX_BODY=4096;
+ // Integration candidate derived from the verified last-source blob 7881ae8.
+ // Recovery and writer hooks are opt-in; production is not changed by this file.
+-export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramRecoveryReadiness=null,telegramDestinationCancellation=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
++export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramRecoveryReadiness=null,telegramDestinationCancellation=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramHomePlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
+   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
+   if(telegramUpdateDeliveries!==null&&typeof telegramUpdateDeliveries.consume!=='function')throw new Error('Configuración incompleta');
+   if(telegramLiteralValidation!==null&&typeof telegramLiteralValidation!=='function')throw Error('Configuración incompleta');
+@@ -24,6 +24,7 @@
+   if(telegramPreviewPayloads!==null&&typeof telegramPreviewPayloads?.stage!=='function')throw new Error('Configuración incompleta');
+   if ((telegramRecovery!==null&&typeof telegramRecovery!=='function') || (telegramBlockedList!==null&&typeof telegramBlockedList!=='function') || (telegramAttempts!==null&&(!telegramAttempts||typeof telegramAttempts.begin!=='function'||typeof telegramAttempts.block!=='function')) || (telegramCorrections!==null&&(!telegramCorrections||typeof telegramCorrections.preview!=='function'||typeof telegramCorrections.confirm!=='function')) || (telegramSelections!==null&&(!telegramSelections||typeof telegramSelections.select!=='function')) || (telegramPreviewDelivery!==null&&(!telegramPreviewDelivery||!['initialize','claim','report'].every(k=>typeof telegramPreviewDelivery[k]==='function'))) || (telegramPublicationBegin!==null&&typeof telegramPublicationBegin!=='function') || (telegramUpdateClaims!==null&&(!telegramUpdateClaims||typeof telegramUpdateClaims.begin!=='function')) || (telegramUpdateExecutor!==null&&(!telegramUpdateExecutor||typeof telegramUpdateExecutor.execute!=='function')) || (telegramUpdatePayloads!==null&&(!telegramUpdatePayloads||typeof telegramUpdatePayloads.stage!=='function')) || typeof targetBegin!=='function'||typeof mediaBegin!=='function') throw new Error('Configuración incompleta');
+   if(telegramPlacement!==null&&(!telegramPlacement||typeof telegramPlacement.select!=='function'||typeof telegramPlacement.prove!=='function'))throw Error('Configuración incompleta');
++  if(telegramHomePlacement!==null&&(!telegramHomePlacement||typeof telegramHomePlacement.select!=='function'||typeof telegramHomePlacement.prove!=='function'))throw Error('Configuración incompleta');
+   const expected=Buffer.from('Bearer '+secret);
+   let windowStart=Date.now(), requestCount=0;
+   return createServer(async(req,res)=>{
+@@ -44,6 +45,7 @@
+     const correctionAction=telegramCorrections&&/^\/v1\/telegram\/corrections\/(preview|confirm)$/.exec(req.url)?.[1];
+     const selectionAction=telegramSelections&&req.url==='/v1/telegram/corrections/select';
+     const placementAction=telegramPlacement&&/^\/v1\/telegram\/placement\/(select|prove)$/.exec(req.url)?.[1];
++    const homePlacementAction=telegramHomePlacement&&/^\/v1\/telegram\/home-placement\/(select|prove)$/.exec(req.url)?.[1];
+     const deliveryAction=telegramPreviewDelivery&&/^\/v1\/telegram\/previews\/delivery\/(initialize|claim|report)$/.exec(req.url)?.[1];
+     const previewPayloadAction=telegramPreviewPayloads&&req.url==='/v1/telegram/previews/payload';
+     const previewMaterializeAction=telegramPreviewMaterializer&&req.url==='/v1/telegram/previews/materialize';
+@@ -65,11 +67,11 @@
+     const previewDiagnostic=req.url==='/v1/telegram/previews/diagnostic';
+     const runtimeAction=runtimeObserver&&req.url==='/v1/telegram/runtime/observe';
+     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
+-    if(req.method!=='POST'||(!destinationCancellationAction&&!recoveryReadinessAction&&!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
++    if(req.method!=='POST'||(!destinationCancellationAction&&!recoveryReadinessAction&&!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!homePlacementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
+     let data='',size=0;
+     try {
+-      if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
++      if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||homePlacementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:literalValidationAction?8*1024*1024:65536;
+         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
+         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+@@ -99,6 +101,7 @@
+         if(correctionAction)return end(200,await telegramCorrections[correctionAction](input));
+         if(selectionAction)return end(200,await telegramSelections.select(input));
+         if(placementAction)return end(200,await telegramPlacement[placementAction](input));
++        if(homePlacementAction)return end(200,await telegramHomePlacement[homePlacementAction](input));
+         if(deliveryAction)return end(200,await telegramPreviewDelivery[deliveryAction](input));
+         if(previewMaterializeAction){const r=await telegramPreviewMaterializer(input);return end(r.status==='PREVIEW_MATERIALIZED'?200:409,r)}
+         if(previewContextAction){const r=await telegramPreviewPayloads.context(input);return end(r.status==='PREVIEW_CONTEXT'?200:409,r)}
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs source38/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/editorial-placement-store.mjs	2026-11-14 20:26:49.260978178 -0600
+@@ -191,7 +191,8 @@
+     if(boundary===null||BigInt(r[2])<=BigInt(boundary)){await c.rollback();return {status:'STALE_PLACEMENT'}}
+     const [last]=await c.execute('SELECT message_id FROM opmx_tg_editorial_placements_v1 WHERE package_id=? AND actor_key=? AND lease_opening_revision=? AND lease_key=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision,lease.leaseKey]);
+     const [choices]=await c.execute('SELECT message_id FROM opmx_tg_correction_selections_v2 WHERE package_id=? AND owner_key=? AND revision>=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision]);
+-    if([...last,...choices].some(x=>BigInt(r[2])<=BigInt(x.message_id))){await c.rollback();return {status:'STALE_PLACEMENT'}}
++    const [otherPlacements]=await c.execute('SELECT message_id FROM opmx_tg_home_placements_v1 WHERE package_id=? AND actor_key=? AND lease_opening_revision=? AND lease_key=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision,lease.leaseKey]);
++    if([...last,...choices,...otherPlacements].some(x=>BigInt(r[2])<=BigInt(x.message_id))){await c.rollback();return {status:'STALE_PLACEMENT'}}
+     const revision=input.revision+1;
+     await c.execute('INSERT INTO opmx_tg_editorial_placements_v1 (package_id,revision,actor_key,owner_key,lease_opening_revision,lease_key,receipt_key,message_id,ids_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,revision,actorKey,ownerKey,lease.openingRevision,lease.leaseKey,receiptKey,r[2],idsJson]);
+     const [changed]=await c.execute("UPDATE opmx_tg_packages_v1 SET revision=?,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND state='OPEN' AND revision=?",[revision,input.packageId,input.revision]);if(changed.affectedRows!==1)throw Error('PLACEMENT_SELECTION_CONFLICT');
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs source38/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs	2026-11-13 09:33:10.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs	2026-11-14 20:26:59.380865603 -0600
+@@ -54,6 +54,7 @@
+  telegramCorrections:Object.fromEntries(['preview','confirm'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramCorrections[method](...args)])),
+  telegramSelections:{select:async(...args)=>(await requireRecovery()).telegramSelections.select(...args)},
+  telegramPlacement:Object.fromEntries(['select','prove'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramPlacement[method](...args)])),
++ telegramHomePlacement:Object.fromEntries(['select','prove'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramHomePlacement[method](...args)])),
+  telegramAttempts:Object.fromEntries(['begin','start','block','complete','acknowledgeDecision','recoverUnacknowledged'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramAttempts[method](...args)])),
+  telegramWriterReceipts:{report:async(...args)=>(await requireMotor()).telegramWriterReceipts.report(...args)},
+  telegramSubmissions:Object.fromEntries(['begin','report'].map(method=>[method,async(...args)=>(await requireMotor()).telegramSubmissions[method](...args)])),
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/home-placement-store.mjs source38/tools/telegram/guard-recovery-candidate/home-placement-store.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/home-placement-store.mjs	1969-12-31 18:00:00.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/home-placement-store.mjs	2026-11-14 20:26:49.259169049 -0600
+@@ -0,0 +1,205 @@
++import {createHash} from 'node:crypto';
++import {canonicalUpdateValue} from './canonical-json.mjs';
++import {expectedDraftRequestId} from './correlation-candidate.mjs';
++import {resolveDestinations,destinationLabel} from './original-destinations.mjs';
++import {decodeControl} from './original-destination-policy.mjs';
++import {readLiteralScopeInTransaction} from './literal-payload-store.mjs';
++import {readVerifiedUpdateDecisionInTransaction} from './confirmed-correction-reader.mjs';
++const homeChoice = value => { if (value !== true && value !== false) throw Error('HOME_CHOICE_INVALID'); return value; };
++
++const hash=x=>createHash('sha256').update(x).digest('hex');
++const pkg=/^tg_[a-f0-9]{40}$/,digest=/^[a-f0-9]{64}$/,tgRequest=/^tg_[a-f0-9]{64}$/;
++const receipt=/^telegram-([1-9][0-9]{0,15})-([1-9][0-9]{0,15})-([0-9]{1,16})$/;
++const validRevision=x=>Number.isSafeInteger(x)&&x>0&&x<4294967295;
++const unavailable=()=>({status:'HOME_PLACEMENT_UNCONFIRMED',writesStarted:false,writeAuthorized:false,retryPermitted:false});
++const unchanged=requestId=>({status:'HOME_PLACEMENT_UNCHANGED',requestId,writesStarted:false,writeAuthorized:false,retryPermitted:false});
++
++export const homePlacementSchema=`CREATE TABLE IF NOT EXISTS opmx_tg_home_placements_v1 (
++ package_id VARCHAR(43) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ revision INT UNSIGNED NOT NULL, actor_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ owner_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ lease_opening_revision INT UNSIGNED NOT NULL, lease_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
++ receipt_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL, message_id BIGINT UNSIGNED NOT NULL,
++ choice_json TEXT NOT NULL, created_at DATETIME(6) NOT NULL,
++ PRIMARY KEY(package_id,revision), UNIQUE KEY(receipt_key)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
++
++function leaseIdentity(rows,packageId,ownerKey,revision) {
++ if(rows.length===0)return {actorKey:ownerKey,openingRevision:0,leaseKey:hash('opmx:home-placement:normal:'+packageId)};
++ if(rows.length!==1)return null;
++ const l=rows[0],r=receipt.exec(l.receipt_id??''),opening=Number(l.opening_revision);
++ if(!r||l.owner_key!==ownerKey||!digest.test(l.actor_key??'')||!Number.isSafeInteger(opening)||opening<1||opening>revision||hash(`opmx:telegram:v1:${r[1]}:${r[1]}`)!==l.actor_key)return null;
++ return {actorKey:l.actor_key,openingRevision:opening,leaseKey:hash(l.receipt_id),openingMessageId:r[2]};
++}
++
++async function sealedPlacementIdentity(c,{packageId,revision,ownerKey,scope}) {
++ const [closures]=await c.execute('SELECT snapshot_revision,actor_key,close_receipt_key FROM opmx_tg_recovery_closures_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
++ if(!closures.length)return scope.action==='UPDATE'?null:{actorKey:ownerKey,openingRevision:0,leaseKey:hash('opmx:home-placement:normal:'+packageId)};
++ if(closures.length!==1)return null;
++ const row=closures[0],base=Number(row.snapshot_revision);
++ if(!Number.isSafeInteger(base)||base<1||base+1>=revision||!digest.test(row.actor_key??'')||!digest.test(row.close_receipt_key??''))return null;
++ if(scope.action==='UPDATE'&&(scope.baseRevision!==base||scope.actorKey!==row.actor_key))return null;
++ // Confirmation atomically removes the live lease. Its durable closure and
++ // verified decision retain the cycle/actor; the opening revision is unique
++ // for a monotonically versioned package and cannot be inherited on reopen.
++ return {actorKey:row.actor_key,openingRevision:base+1,leaseKey:null};
++}
++
++// CREATE reuses the same authoritative original/recovered policy reader as
++// LITERAL; it validates EDITORIAL too. UPDATE resolves only a real persisted
++// confirmation and its exact final payload, never a caller-supplied envelope.
++export async function readHomePlacementScopeInTransaction(c,scope) {
++ try{return {...await readLiteralScopeInTransaction(c,scope),action:'CREATE'}}catch{}
++ const d=await readVerifiedUpdateDecisionInTransaction(c,scope);
++ if(!d||d.action!=='UPDATE'||!d.finalPayloads)return null;
++ return {...d,action:'UPDATE'};
++}
++
++// Trusted inventory projection for the existing Motor. Caller derives owner
++// identity from the package/context, never from source content. OPEN has no
++// future request ID yet; READY derives the exact canonical bound request.
++// The projection is selection data, not the fresh prove() response or a grant.
++export async function readHomePlacementForManifest(c,{packageId,revision,ownerKey,actorKey}={},{readScope=readHomePlacementScopeInTransaction}={}) {
++ const fail=()=>{throw Error('HOME_PLACEMENT_MANIFEST_UNCONFIRMED')};
++ if(!c?.execute||!pkg.test(packageId??'')||!validRevision(revision)||!digest.test(ownerKey??'')||actorKey!==undefined&&!digest.test(actorKey))fail();
++ const [packs]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
++ if(packs.length!==1||packs[0].owner_key!==ownerKey||Number(packs[0].revision)!==revision||!['OPEN','READY'].includes(packs[0].state))fail();
++ const [history]=await c.execute('SELECT revision FROM opmx_tg_home_placements_v1 WHERE package_id=? AND revision<=? LIMIT 1 FOR UPDATE',[packageId,revision]);
++ // No new option must not introduce new source/policy requirements for an
++ // otherwise readable historical package. This is absence, never authority.
++ if(!history.length)return null;
++ let lease,scope=null;
++ if(packs[0].state==='OPEN'){
++  const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[packageId]);
++  lease=leaseIdentity(leases,packageId,ownerKey,revision);
++  if(lease){const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[lease.actorKey]);if(sessions.length!==1||sessions[0].package_id!==packageId)fail()}
++ }else{
++  scope=await readScope(c,{packageId,revision});if(!scope||scope.ownerKey!==ownerKey)fail();
++  lease=await sealedPlacementIdentity(c,{packageId,revision,ownerKey,scope});
++ }
++ // An authorised inventory reader may differ from the order's operator. The
++ // live lease/session (OPEN) or durable closure (READY) checks that operator;
++ // the outer package reader already authenticates/authorises the reader.
++ if(!lease)fail();
++ const [rows]=await c.execute('SELECT revision,actor_key,owner_key,lease_opening_revision,lease_key,receipt_key,message_id,choice_json FROM opmx_tg_home_placements_v1 WHERE package_id=? AND revision<=? AND lease_opening_revision=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[packageId,revision,lease.openingRevision]);
++ if(!rows.length)return null;if(rows.length!==1)fail();const row=rows[0];let choice;
++ try{choice=row.choice_json==='null'?null:homeChoice(JSON.parse(row.choice_json));if(canonicalUpdateValue(choice)!==row.choice_json)fail()}catch{fail()}
++ if(row.owner_key!==ownerKey||row.actor_key!==lease.actorKey||Number(row.lease_opening_revision)!==lease.openingRevision||!digest.test(row.lease_key??'')||lease.leaseKey!==null&&row.lease_key!==lease.leaseKey||!digest.test(row.receipt_key??'')||!validRevision(Number(row.revision))||Number(row.revision)>revision||Number(row.revision)<lease.openingRevision)fail();
++ let requestId;
++ if(scope){try{requestId=expectedDraftRequestId({packageId,revision,destination:scope.destination});const [binding]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);if(binding.length!==1||binding[0].package_id!==packageId||Number(binding[0].revision)!==revision)fail()}catch{fail()}}
++ return {status:choice===null?'HOME_PLACEMENT_PRESERVE':'HOME_PLACEMENT_SELECTION',mode:'DIRECT_OPERATOR',target:'OPURO',confirmed:true,...(choice===null?{}:{exclude_home:choice}),control_revision:Number(row.revision),current_revision:revision,source:'GUARD_TELEGRAM_CONTROL',...(requestId?{request_id:requestId}:{}),writesStarted:false,writeAuthorized:false,retryPermitted:false};
++}
++
++// Caller holds a transaction with quota lock. This read grants no capability,
++// opens no fence and mutates no state. A later reopen is still blocked by the
++// ordinary writer fence; the exact binding and current READY revision matter.
++export async function readHomePlacementForRequestInTransaction(c,input,{readScope=readHomePlacementScopeInTransaction}={}) {
++ if(!c?.execute||!input||Object.keys(input).sort().join(',')!=='choice,requestId'||typeof input.requestId!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(input.requestId))return unavailable();
++ let choice=null;try{if(input.choice!==null)choice=homeChoice(input.choice)}catch{return unavailable()}
++ const requestId=input.requestId;
++ if(!tgRequest.test(requestId))return !/^tg_/i.test(requestId)&&choice===null?unchanged(requestId):unavailable();
++ const [bindings]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=?',[requestId]);
++ if(bindings.length!==1||!pkg.test(bindings[0].package_id??'')||!validRevision(Number(bindings[0].revision)))return unavailable();
++ const packageId=bindings[0].package_id,revision=Number(bindings[0].revision);
++ const [packages]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[packageId]);
++ if(packages.length!==1||packages[0].state!=='READY'||Number(packages[0].revision)!==revision||!digest.test(packages[0].owner_key??''))return unavailable();
++ const ownerKey=packages[0].owner_key;
++ const [history]=await c.execute('SELECT revision FROM opmx_tg_home_placements_v1 WHERE package_id=? AND revision<=? LIMIT 1 FOR UPDATE',[packageId,revision]);
++ if(!history.length)return choice===null?unchanged(requestId):unavailable();
++ const earlyLease=await sealedPlacementIdentity(c,{packageId,revision,ownerKey,scope:{action:'CREATE'}});if(!earlyLease)return unavailable();
++ const [rows]=await c.execute('SELECT revision,actor_key,owner_key,lease_opening_revision,lease_key,receipt_key,message_id,choice_json FROM opmx_tg_home_placements_v1 WHERE package_id=? AND revision<=? AND lease_opening_revision=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[packageId,revision,earlyLease.openingRevision]);
++ if(rows.length>1)return unavailable();
++ if(!rows.length)return choice===null?unchanged(requestId):unavailable();
++ const row=rows[0];let saved;
++ try{saved=row.choice_json==='null'?null:homeChoice(JSON.parse(row.choice_json));if(canonicalUpdateValue(saved)!==row.choice_json)return unavailable()}catch{return unavailable()}
++ if(row.actor_key!==earlyLease.actorKey||row.owner_key!==ownerKey||Number(row.lease_opening_revision)!==earlyLease.openingRevision||!digest.test(row.lease_key??'')||earlyLease.leaseKey!==null&&row.lease_key!==earlyLease.leaseKey||!digest.test(row.receipt_key??'')||!validRevision(Number(row.revision))||Number(row.revision)>revision||Number(row.revision)<earlyLease.openingRevision)return unavailable();
++ // Retiring a preference or omitting an option does not open a fence. The
++ // ordinary writer still performs its original checks, including historical
++ // fenced paths. Positive metadata changes always take the full path below.
++ if(saved===null)return choice===null?unchanged(requestId):unavailable();
++ if(choice===null||canonicalUpdateValue(saved)!==canonicalUpdateValue(choice))return unavailable();
++ let scope;try{scope=await readScope(c,{packageId,revision})}catch{return unavailable()}
++ if(scope?.packageId!==packageId||scope.revision!==revision||!digest.test(scope.ownerKey??''))return unavailable();
++ let destinations;try{destinations=resolveDestinations(scope.destination);if(destinationLabel(destinations)!==scope.destination||expectedDraftRequestId({packageId,revision,destination:scope.destination})!==requestId)return unavailable()}catch{return unavailable()}
++ if(scope.action==='UPDATE'){
++  const p=scope.finalPayloads?.OPURO,declared=Object.hasOwn(p?.meta??{},'oxpuro_exclude_home');
++  try{if(declared?(choice===null||canonicalUpdateValue(homeChoice(p.meta.oxpuro_exclude_home))!==canonicalUpdateValue(choice)):choice!==null)return unavailable()}catch{return unavailable()}
++ }
++ const [fences]=await c.execute('SELECT state FROM opmx_tg_publication_fence_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,revision]);
++ if(fences.length!==1||!['AWAITING_DECISION','READY_TO_WRITE','WRITING'].includes(fences[0].state))return unavailable();
++ const [confirmed]=await c.execute('SELECT package_id,revision FROM opmx_tg_request_binding_v1 WHERE request_id=? FOR UPDATE',[requestId]);
++ if(confirmed.length!==1||confirmed[0].package_id!==packageId||Number(confirmed[0].revision)!==revision)return unavailable();
++ const lease=await sealedPlacementIdentity(c,{packageId,revision,ownerKey:scope.ownerKey,scope});if(!lease)return unavailable();
++ if(scope.action==='UPDATE'&&scope.actorKey!==lease.actorKey)return unavailable();
++ if(row.actor_key!==lease.actorKey||row.owner_key!==scope.ownerKey||Number(row.lease_opening_revision)!==lease.openingRevision||!digest.test(row.lease_key??'')||lease.leaseKey!==null&&row.lease_key!==lease.leaseKey||!digest.test(row.receipt_key??'')||!validRevision(Number(row.revision))||Number(row.revision)>revision||Number(row.revision)<lease.openingRevision)return unavailable();
++ if(!destinations.includes('OPURO'))return unavailable();
++ if(scope.action==='UPDATE'){
++  const payload=scope.finalPayloads?.OPURO;
++  try{if(!payload||!Object.hasOwn(payload.meta??{},'oxpuro_exclude_home')||canonicalUpdateValue(homeChoice(payload.meta.oxpuro_exclude_home))!==canonicalUpdateValue(choice))return unavailable()}catch{return unavailable()}
++ }
++ return {status:'HOME_PLACEMENT_VERIFIED',requestId,packageId,revision,controlHash:hash(canonicalUpdateValue({requestId,packageId,revision,receiptKey:row.receipt_key,choice})),HOME_PLACEMENT:{mode:'DIRECT_OPERATOR',target:'OPURO',confirmed:true,request_id:requestId,exclude_home:choice},writesStarted:false,writeAuthorized:false,retryPermitted:false};
++}
++
++// UPDATE's full confirmed destination set is authoritative. An OPOL write in
++// TODOS must inspect the confirmed OPURO payload as well, rather than inventing
++// choice:null and treating the same approved control as orphaned.
++export async function verifyUpdateHomePlacementInTransaction(c,input,{readDecision=readVerifiedUpdateDecisionInTransaction}={}) {
++ if(!c?.execute||!input||Object.keys(input).sort().join(',')!=='destination,packageId,payload,previewHash,revision'||!pkg.test(input.packageId??'')||!validRevision(input.revision)||!digest.test(input.previewHash??'')||!['OPURO','OPOL','LIBERAL'].includes(input.destination))return false;
++ let d;try{d=await readDecision(c,{packageId:input.packageId,revision:input.revision})}catch{return false}
++ if(!d||d.action!=='UPDATE'||d.packageId!==input.packageId||d.revision!==input.revision||d.previewHash!==input.previewHash||!d.finalPayloads||!Object.hasOwn(d.finalPayloads,input.destination))return false;
++ try{if(canonicalUpdateValue(d.finalPayloads[input.destination])!==canonicalUpdateValue(input.payload))return false}catch{return false}
++ const opuro=d.finalPayloads.OPURO,declared=Object.hasOwn(opuro?.meta??{},'oxpuro_exclude_home');
++ let choice=null;try{if(declared)choice=homeChoice(opuro.meta.oxpuro_exclude_home)}catch{return false}
++ let requestId;try{requestId=expectedDraftRequestId({packageId:d.packageId,revision:d.revision,destination:d.destination})}catch{return false}
++ const result=await readHomePlacementForRequestInTransaction(c,{requestId,choice},{readScope:async()=>d});
++ return result.status==='HOME_PLACEMENT_VERIFIED'||result.status==='HOME_PLACEMENT_UNCHANGED';
++}
++
++// Only the authenticated receiver calls select. It supplies an actual direct
++// Telegram receipt; MASTER, forwarded messages and Motor tools cannot call it.
++// Store initialization/DDL is performed by composition before any transaction.
++export function createHomePlacementStore({pool,readScope=readHomePlacementScopeInTransaction}) {
++ if(!pool?.getConnection||typeof readScope!=='function')throw Error('HOME_PLACEMENT_CONFIGURATION_INVALID');
++ return {
++  async select(input){
++   if(!input||Object.keys(input).sort().join(',')!=='chat,choice,owner,packageId,receiptId,revision'||typeof input.owner!=='string'||input.owner!==input.chat||!/^[1-9][0-9]{0,15}$/.test(input.owner)||!pkg.test(input.packageId??'')||!validRevision(input.revision))throw Error('HOME_PLACEMENT_SELECTION_INVALID');
++   const r=receipt.exec(input.receiptId??'');if(!r||r[1]!==input.chat)throw Error('HOME_PLACEMENT_SELECTION_INVALID');
++   const choice=input.choice===null?null:homeChoice(input.choice),choiceJson=canonicalUpdateValue(choice),actorKey=hash(`opmx:telegram:v1:${input.owner}:${input.chat}`),receiptKey=hash(input.receiptId),c=await pool.getConnection();let committed=false;
++   try{
++    await c.beginTransaction();const [quota]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(quota.length!==1)throw Error('QUOTA_MISSING');
++    const [packages]=await c.execute('SELECT owner_key,state,revision FROM opmx_tg_packages_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);if(packages.length!==1||!digest.test(packages[0].owner_key??'')){await c.rollback();return {status:'NOT_AVAILABLE'}}
++    const ownerKey=packages[0].owner_key;
++    const [leases]=await c.execute('SELECT actor_key,owner_key,receipt_id,opening_revision FROM opmx_tg_recovery_leases_v1 WHERE package_id=? FOR UPDATE',[input.packageId]);
++    const lease=leaseIdentity(leases,input.packageId,ownerKey,Number(packages[0].revision));
++    const [prior]=await c.execute('SELECT package_id,revision,actor_key,owner_key,lease_opening_revision,lease_key,receipt_key,choice_json FROM opmx_tg_home_placements_v1 WHERE receipt_key=? FOR UPDATE',[receiptKey]);
++    if(prior.length){
++     const p=prior[0],same=prior.length===1&&lease&&p.package_id===input.packageId&&Number(p.revision)<=Number(packages[0].revision)&&input.revision<=Number(packages[0].revision)&&(Number(p.revision)===input.revision+1||input.revision>=Number(p.revision))&&p.actor_key===actorKey&&lease.actorKey===actorKey&&p.owner_key===ownerKey&&Number(p.lease_opening_revision)===lease.openingRevision&&p.lease_key===lease.leaseKey&&p.choice_json===choiceJson;
++     if(!same){await c.rollback();return {status:'RECEIPT_CONFLICT'}}
++     const [latest]=await c.execute('SELECT receipt_key FROM opmx_tg_home_placements_v1 WHERE package_id=? AND actor_key=? AND lease_opening_revision=? AND lease_key=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision,lease.leaseKey]);
++     await c.rollback();return latest.length===1&&latest[0].receipt_key===receiptKey?{status:'HOME_PLACEMENT_REPLAY',packageId:input.packageId,revision:Number(p.revision),target:'OPURO',choice}:{status:'STALE_PLACEMENT'};
++    }
++    if(packages[0].state!=='OPEN'||Number(packages[0].revision)!==input.revision){await c.rollback();return {status:'STALE_REVISION'}}
++    const [sessions]=await c.execute('SELECT package_id FROM opmx_tg_sessions_v1 WHERE owner_key=? FOR UPDATE',[actorKey]);
++    if(!lease||lease.actorKey!==actorKey||sessions.length!==1||sessions[0].package_id!==input.packageId){await c.rollback();return {status:'NOT_AVAILABLE'}}
++    let boundary=lease.openingMessageId??null;
++    if(lease.openingRevision===0){
++     const [items]=await c.execute("SELECT owner_key,text_content,content_bytes,sha256 FROM opmx_tg_items_v1 WHERE package_id=? AND kind='TEXT' AND state='STORED' ORDER BY created_at,item_id FOR UPDATE",[input.packageId]);
++     const controls=[];for(const item of items){if(item.owner_key!==ownerKey||typeof item.text_content!=='string'||Buffer.byteLength(item.text_content)!==Number(item.content_bytes)||hash(item.text_content)!==item.sha256)throw Error('HOME_PLACEMENT_BOUNDARY_UNCONFIRMED');let control;try{control=decodeControl(item.text_content.trim(),input.packageId)}catch{throw Error('HOME_PLACEMENT_BOUNDARY_UNCONFIRMED')}if(control&&!control.legacy)controls.push(control)}
++     const opens=controls.filter(x=>x.command==='/nuevo');if(opens.length!==1){await c.rollback();return {status:'NOT_AVAILABLE'}}
++     boundary=String(Math.max(...controls.map(x=>x.message_id),opens[0].notice_message_id));
++    }
++    if(boundary===null||BigInt(r[2])<=BigInt(boundary)){await c.rollback();return {status:'STALE_PLACEMENT'}}
++    const [last]=await c.execute('SELECT message_id FROM opmx_tg_home_placements_v1 WHERE package_id=? AND actor_key=? AND lease_opening_revision=? AND lease_key=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision,lease.leaseKey]);
++    const [choices]=await c.execute('SELECT message_id FROM opmx_tg_correction_selections_v2 WHERE package_id=? AND owner_key=? AND revision>=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision]);
++    const [otherPlacements]=await c.execute('SELECT message_id FROM opmx_tg_editorial_placements_v1 WHERE package_id=? AND actor_key=? AND lease_opening_revision=? AND lease_key=? ORDER BY revision DESC LIMIT 1 FOR UPDATE',[input.packageId,actorKey,lease.openingRevision,lease.leaseKey]);
++    if([...last,...choices,...otherPlacements].some(x=>BigInt(r[2])<=BigInt(x.message_id))){await c.rollback();return {status:'STALE_PLACEMENT'}}
++    const revision=input.revision+1;
++    await c.execute('INSERT INTO opmx_tg_home_placements_v1 (package_id,revision,actor_key,owner_key,lease_opening_revision,lease_key,receipt_key,message_id,choice_json,created_at) VALUES (?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,revision,actorKey,ownerKey,lease.openingRevision,lease.leaseKey,receiptKey,r[2],choiceJson]);
++    const [changed]=await c.execute("UPDATE opmx_tg_packages_v1 SET revision=?,updated_at=UTC_TIMESTAMP(6) WHERE package_id=? AND state='OPEN' AND revision=?",[revision,input.packageId,input.revision]);if(changed.affectedRows!==1)throw Error('HOME_PLACEMENT_SELECTION_CONFLICT');
++    await c.commit();committed=true;return {status:'HOME_PLACEMENT_SELECTED',packageId:input.packageId,revision,target:'OPURO',choice};
++   }catch(error){if(!committed)try{await c.rollback()}catch{}throw Error('HOME_PLACEMENT_SELECTION_UNCONFIRMED',{cause:error})}finally{c.release()}
++  },
++  async prove(input){const c=await pool.getConnection();try{await c.beginTransaction();const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)return unavailable();return await readHomePlacementForRequestInTransaction(c,input,{readScope})}catch{return unavailable()}finally{try{await c.rollback()}catch{}c.release()}},
++  async verifyUpdate(input){const c=await pool.getConnection();try{await c.beginTransaction();const [q]=await c.execute('SELECT id FROM opmx_tg_quota_v1 WHERE id=1 FOR UPDATE');if(q.length!==1)return false;return await verifyUpdateHomePlacementInTransaction(c,input)}catch{return false}finally{try{await c.rollback()}catch{}c.release()}},
++ };
++}
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/package-store.mjs source38/tools/telegram/guard-recovery-candidate/package-store.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/package-store.mjs	2026-11-13 09:31:02.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/package-store.mjs	2026-11-14 20:26:59.380449893 -0600
+@@ -110,10 +110,11 @@
+           return ({status:'READY',packageId:pack.package_id,revision:Number(pack.revision)+1,eventId});
+ }
+ 
+-export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null,readEditorialPlacement=null,closeRecoveryPreview=null,readCloseRecoveryResult=null}={}) {
++export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=false,adminUserIds=[],initializePublicationFence=null,initializeMotorAttempt=null,readRecoveredPolicy=null,readConfirmedCorrection=null,readDiagnostic=null,readPublisherResult=null,readEditorialPlacement=null,readHomePlacement=null,closeRecoveryPreview=null,readCloseRecoveryResult=null}={}) {
+   if((closeRecoveryPreview!==null&&typeof closeRecoveryPreview!=='function')||(readCloseRecoveryResult!==null&&typeof readCloseRecoveryResult!=='function'))throw Error('Configuración inválida');
+   if((readPublisherResult!==null&&typeof readPublisherResult!=='function')||typeof recoveryEnabled!=='boolean'||(readRecoveredPolicy!==null&&typeof readRecoveredPolicy!=='function')||(readConfirmedCorrection!==null&&(typeof readConfirmedCorrection!=='function'||!readRecoveredPolicy||!recoveryEnabled))||(initializePublicationFence!==null&&typeof initializePublicationFence!=='function')||(initializeMotorAttempt!==null&&(typeof initializeMotorAttempt!=='function'||!events||!initializePublicationFence))||!Array.isArray(adminUserIds)||adminUserIds.some(id=>typeof id!=='string'||!/^[1-9][0-9]{0,15}$/.test(id)))throw Error('Configuración inválida');
+   if(readEditorialPlacement!==null&&typeof readEditorialPlacement!=='function')throw Error('Configuración inválida');
++  if(readHomePlacement!==null&&typeof readHomePlacement!=='function')throw Error('Configuración inválida');
+   const admins=new Set(adminUserIds.map(id=>identity({owner:id,chat:id})));
+   let ready;
+   const initialize=()=>ready??=(async()=>{
+@@ -193,7 +194,9 @@
+           }
+           let editorialPlacement=null;
+           if(readEditorialPlacement){editorialPlacement=await readEditorialPlacement(c,{packageId:pack.package_id,revision:Number(pack.revision),ownerKey,actorKey});if(editorialPlacement!==null&&(!editorialPlacement||typeof editorialPlacement!=='object'||Array.isArray(editorialPlacement)||!['PLACEMENT_SELECTION','PLACEMENT_PRESERVE'].includes(editorialPlacement.status)))return await finish({status:'PLACEMENT_CONTEXT_UNCONFIRMED'});}
+-          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{}),...(editorialPlacement?{editorialPlacement}:{})});
++          let homePlacement=null;
++          if(readHomePlacement){homePlacement=await readHomePlacement(c,{packageId:pack.package_id,revision:Number(pack.revision),ownerKey,actorKey});if(homePlacement!==null&&(!homePlacement||typeof homePlacement!=='object'||Array.isArray(homePlacement)||!['HOME_PLACEMENT_SELECTION','HOME_PLACEMENT_PRESERVE'].includes(homePlacement.status)))return await finish({status:'HOME_PLACEMENT_CONTEXT_UNCONFIRMED'});}
++          return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{}),...(editorialPlacement?{editorialPlacement}:{}),...(homePlacement?{homePlacement}:{})});
+         }
+         if(action==='asset') {
+           const [items]=await c.execute("SELECT content_blob,sha256,attachment_json FROM opmx_tg_items_v1 WHERE item_id=? AND package_id=? AND owner_key=? AND state='STORED' AND kind='FILE'",[input.itemId,input.packageId,ownerKey]);
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs source38/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs	2026-11-13 13:18:08.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs	2026-11-14 20:26:59.380782897 -0600
+@@ -17,6 +17,7 @@
+ import {enqueuePreviewGeneration} from './preview-generation-outbox.mjs';
+ import {createRecoveredCreationGate} from './recovered-creation-gate.mjs';
+ import {prepareEditorialPlacementServices} from './editorial-placement-integration.mjs';
++import {homePlacementSchema,createHomePlacementStore,readHomePlacementForManifest} from './home-placement-store.mjs';
+ import {readPlacementForManifest} from './editorial-placement-store.mjs';
+ import {literalPayloadSchema,createLiteralPayloadStore,readLiteralProofInTransaction} from './literal-payload-store.mjs';
+ import {readConfirmedCorrectionInTransaction} from './confirmed-correction-reader.mjs';
+@@ -53,6 +54,8 @@
+   return rows.length===1&&rows[0].event_id===eventId&&verifyWriterReleaseObservation(await observeRuntime({packageId,revision,eventId}),manifest,{requireIdle:false});
+  }
+  const literalPayloads=createLiteralPayloadStore({pool,verifyRelease:verifyLiteralRelease});
++ const homeConnection=await pool.getConnection();try{await homeConnection.execute(homePlacementSchema)}finally{homeConnection.release()}
++ const homePlacement=createHomePlacementStore({pool});
+  const placement=await prepareEditorialPlacementServices({pool});
+  async function verifyUpdateEnforcement(c,scope){
+   let d;try{d=await readVerifiedUpdateDecisionInTransaction(c,{packageId:scope.packageId,revision:scope.revision})}catch{return false}
+@@ -64,7 +67,7 @@
+  const notTermination=async()=>{throw Error('REVOCATION_PROVIDER_REQUIRED')};
+  const recoverBlockedUnwritten=createBlockedUnwrittenAttemptRecovery({pool,adminUserIds,observeRuntime,readWordPress});
+  const wiring=createRecoveryWiring({pool,secret,events,reviews,adminUserIds,recoverBlockedUnwritten,
+-  readEditorialPlacement:readPlacementForManifest,verifyEditorialPlacement:placement.verifyUpdate,
++  readEditorialPlacement:readPlacementForManifest,readHomePlacement:readHomePlacementForManifest,verifyEditorialPlacement:async input=>(await placement.verifyUpdate(input))&&(await homePlacement.verifyUpdate(input)), 
+   verifyTerminalRun:notTermination,verifyWriterCoverage:notTermination,
+   reconciliationEvidence:createRevisionReconciliation({observeRuntime,readWordPress}),
+   verifyDecisionConsumer:async(c,{preview})=>{
+@@ -84,5 +87,5 @@
+   verifyCompletedWrites:readSubmissionCompletedWriterReceipt,
+   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
+  });
+- return Object.freeze({...wiring,telegramPlacement:placement,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
++ return Object.freeze({...wiring,telegramPlacement:placement,telegramHomePlacement:homePlacement,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
+ }
+diff -ruN source-original/tools/telegram/guard-recovery-candidate/recovery-wiring.mjs source38/tools/telegram/guard-recovery-candidate/recovery-wiring.mjs
+--- source-original/tools/telegram/guard-recovery-candidate/recovery-wiring.mjs	2026-11-13 13:18:08.000000000 -0600
++++ source38/tools/telegram/guard-recovery-candidate/recovery-wiring.mjs	2026-11-14 20:26:59.380648895 -0600
+@@ -22,9 +22,10 @@
+ // Production must supply independent, authoritative verifiers only after all
+ // writers and the Motor have been wired and checked. No HTTP input, source
+ // document or environment boolean can substitute for those providers.
+-export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,verifyCompletedWrites=async()=>null,reconciliationEvidence=null,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,readEditorialPlacement=null,verifyEditorialPlacement=null,enqueuePreviewGeneration=null,recoverBlockedUnwritten=null}){
++export function createRecoveryWiring({pool,secret,events,reviews,adminUserIds,verifyTerminalRun,verifyWriterCoverage,verifyDecisionConsumer,verifyLiteralEnforcement=async()=>false,verifyCompletedWrites=async()=>null,reconciliationEvidence=null,legacyTargetBegin=beginTargetWrite,updateProviders=null,updateExecution=null,readFinalPayloads=null,readEditorialPlacement=null,readHomePlacement=null,verifyEditorialPlacement=null,enqueuePreviewGeneration=null,recoverBlockedUnwritten=null}){
+  if(!pool?.getConnection||typeof secret!=='string'||!/^[a-f0-9]{64,}$/.test(secret)||!events||typeof events.enqueue!=='function'||typeof events.initialize!=='function'||typeof events.run!=='function'||!reviews||typeof reviews.run!=='function'||!Array.isArray(adminUserIds)||typeof verifyTerminalRun!=='function'||typeof verifyWriterCoverage!=='function'||typeof verifyDecisionConsumer!=='function'||typeof legacyTargetBegin!=='function')throw Error('RECOVERY_WIRING_INCOMPLETE');
+  if(updateProviders!==null&&(!updateProviders||typeof updateProviders!=='object'||Array.isArray(updateProviders)||!['verifyCmsPreflight,verifyPayload,verifyUpdateEnforcement,verifyUpdateReadiness','verifyUpdateEnforcement,verifyUpdateReadiness'].includes(Object.keys(updateProviders).sort().join(','))||!Object.values(updateProviders).every(x=>typeof x==='function')))throw Error('UPDATE_CLAIM_CONFIGURATION_INCOMPLETE');
++ if(readHomePlacement!==null&&typeof readHomePlacement!=='function')throw Error('HOME_PLACEMENT_CONFIGURATION_INVALID');
+  if((readEditorialPlacement!==null&&typeof readEditorialPlacement!=='function')||(verifyEditorialPlacement!==null&&typeof verifyEditorialPlacement!=='function'))throw Error('PLACEMENT_CONFIGURATION_INVALID');
+  let wordpress=null;
+  if(updateExecution!==null){
+@@ -52,7 +53,7 @@
+  const previewPayloads=updateProviders?createPreviewPayloadStore({pool,adminUserIds,readSelection:readRecoverySelectionInTransaction}):null;
+  const corrections=createCandidateCorrectionSubsystem({pool,events,readLockedSelection:readRecoverySelectionInTransaction,verifyDecisionConsumer,enqueuePreviewGeneration,readFinalPayloads:readFinalPayloads??previewPayloads?.read??null,...(updateProviders?{verifyUpdateReadiness:updateProviders.verifyUpdateReadiness,readVerifiedUpdatePosts}:{})});
+  const telegramPreviewMaterializer=previewPayloads?createPreviewMaterializer({pool,preview:corrections.preview,adminUserIds}):null;
+- const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction,readDiagnostic:readPackageDiagnostic,readPublisherResult:readPublisherSubmissionResultInTransaction,readEditorialPlacement,closeRecoveryPreview:corrections.previewInTransaction,readCloseRecoveryResult:corrections.readClosePreviewInTransaction});
++ const telegramStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true,adminUserIds,initializePublicationFence:recovery.initializePublicationFence,initializeMotorAttempt:recovery.initializeMotorAttempt,readRecoveredPolicy:recovery.readRecoveredPolicy,readConfirmedCorrection:readConfirmedCorrectionManifestInTransaction,readDiagnostic:readPackageDiagnostic,readPublisherResult:readPublisherSubmissionResultInTransaction,readEditorialPlacement,readHomePlacement,closeRecoveryPreview:corrections.previewInTransaction,readCloseRecoveryResult:corrections.readClosePreviewInTransaction});
+  // Ordinary sealing initializes the outbox before opening its transaction.
+  // Confirmed recovery seals directly within the confirmation transaction, so
+  // initialize it here as well; DDL must never run inside the seal transaction.
