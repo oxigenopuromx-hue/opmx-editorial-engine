@@ -39,8 +39,9 @@ function preparePackageIntent(input) {
  if(placementCommandText(x.text)){const placement=preparePlacementControl(x);return placement??response(x,'No pude acreditar una orden directa de colocación. Escríbela como mensaje nuevo y separado.');}
  const reopen=/^\/abrir[ \t]+(tg_[a-f0-9]{40})$/.exec(cmd);
  if(reopen)return {...x,kind:'COMMAND',package_operation:'REOPEN',requires_storage:true,storage_action:'reopen',storage_body:{...who(x),packageId:reopen[1],receiptId:x.receipt_id}};
- if(cmd==='/cancelar duplicado'){
-  if(x.cancel_attested!==true)return response(x,'No pude acreditar la orden directa de cancelación.');
+ const cancellation=/^\/cancelar[ \t]+duplicado[ \t]+(tg_[a-f0-9]{40})[ \t]+([1-9][0-9]{0,9})$/.exec(cmd);
+ if(cancellation){
+  if(x.cancel_attested!==true||x.cancel_package_id!==cancellation[1]||x.cancel_revision!==Number(cancellation[2]))return response(x,'No pude acreditar la orden directa de cancelación.');
   return {...x,kind:'COMMAND',package_operation:'CANCEL_DUPLICATE',requires_storage:true,storage_action:'current',storage_body:who(x)};
  }
  if(cmd==='/bloqueados')return {...x,kind:'COMMAND',package_operation:'BLOCKED_LIST',requires_storage:true,storage_action:'blocked',storage_body:who(x)};
