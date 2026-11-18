@@ -8,7 +8,7 @@ Estado: **trabajo aislado, incompleto y no desplegable**. El patch se preparó c
 
 - Guard: migración de auditoría, operación transaccional, registro en el arranque y ruta autenticada `POST /v1/telegram/packages/cancel-duplicate`. Evita cancelar si hay reservas, evento, fence o intento de la revisión actual, trabajos de vista de revisión actual o una reapertura sin fence conciliado. Conserva materiales y no crea publicaciones ni vincula notas.
 - Lectura: no busca la selección de portada en paquetes terminales CANCELLED.
-- Receptor: orden directa `/cancelar duplicado`, con identidad real y revisión obtenida de la sesión; rechaza reenvíos, respuestas, archivos, ediciones y texto adicional. La respuesta verifica paquete, revisión, motivo y flags recibidos.
+- Receptor: orden directa `/cancelar duplicado <paquete> <revisión>`, con identidad real y cotejo de paquete y revisión con la sesión; rechaza reenvíos, respuestas, archivos, ediciones y texto adicional. La respuesta verifica paquete, revisión, motivo y flags recibidos.
 - El rechazo frente a cualquier trabajo de vista existente es deliberadamente conservador: se requiere reconciliación posterior. No se ha confirmado que permita cancelar el caso real.
 
 ## Pruebas ejecutadas
@@ -17,6 +17,8 @@ Estado: **trabajo aislado, incompleto y no desplegable**. El patch se preparó c
 - Ruta HTTP en copia reconstruida: autenticación, resultado y error de estado simulados.
 - Flujo de los cuatro nodos del receptor en simulación con datos inventados, incluido rechazo de reenvíos y texto adicional. La prueba persistida es `node prototypes/issue28/integration/test-receiver.mjs`; la prueba transaccional es `node prototypes/issue28/integration/test-cancel.mjs`. `test-http.mjs` requiere colocar el archivo en una copia de la fuente reconstruida con el patch aplicado.
 
-Estas pruebas no cubren MySQL real ni concurrencia, caída del proceso, mensajería atrasada, todos los posibles escritores, el flujo de n8n real ni equivalencia con el Guard desplegado. Deben cubrirse antes de producción. Hace falta además garantizar la lectura verificable de estado terminal, la liberación real de sesión y el comportamiento del receptor ante respuestas HTTP inciertas.
+Las pruebas con MySQL aislado cubren cancelaciones simultáneas y una carrera con emisor simplificado. La ampliación contra el almacén de paquetes del Guard está en verificación. No cubren caída del proceso, todos los posibles escritores, el flujo de n8n real ni equivalencia con el Guard desplegado. Deben cubrirse antes de producción. Hace falta además garantizar la lectura verificable de estado terminal, la liberación real de sesión y el comportamiento del receptor ante respuestas HTTP inciertas.
 
 El patch y el módulo deben aplicarse juntos sólo después de verificar la fuente correspondiente. No activar nodos ni ejecutar contra datos reales con esta versión. El paquete objetivo se observó OPEN revisión 9; debe consultarse de nuevo antes de actuar.
+
+La copia local coincide con el ZIP del Guard desplegado documentado el 14/11 (SHA-256 2d308f082dc3aba42652b294a4987b051b6f822a485e47bcd0847444c46ec47f), sin verificar que siga activo. El fixture actual-guard introduce únicamente los cambios candidatos de manifest, compatibilidad MySQL 8 y detalle de error para pruebas; no es evidencia de producción.
