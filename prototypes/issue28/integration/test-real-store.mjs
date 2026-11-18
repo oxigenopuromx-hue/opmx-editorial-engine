@@ -6,6 +6,7 @@ const config={host:'127.0.0.1',port:3306,user:'root',password:'testroot'};
 const admin=await mysql.createConnection(config);
 await admin.query('CREATE DATABASE issue28_real_store');await admin.end();
 const pool=mysql.createPool({...config,database:'issue28_real_store',connectionLimit:8});
+const getConnection=pool.getConnection.bind(pool);pool.getConnection=async()=>{const c=await getConnection();const execute=c.execute.bind(c);c.execute=async(sql,args)=>{try{return await execute(sql,args)}catch(e){console.error('ISOLATED_SQL_FAILURE',e.code,e.sqlMessage);throw e}};return c};
 try{
  const ddl=[
   'CREATE TABLE opmx_tg_recovery_leases_v1 (package_id VARCHAR(43) PRIMARY KEY,actor_key CHAR(64),owner_key CHAR(64),receipt_id VARCHAR(128),opening_revision INT UNSIGNED) ENGINE=InnoDB',
