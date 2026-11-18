@@ -42,3 +42,4 @@ jobs:
           node prototypes/issue28/integration/test-cancel.mjs
           node prototypes/issue28/integration/test-receiver.mjs
           node prototypes/issue28/integration/test-mysql.mjs
+          node prototypes/issue28/integration/test-real-store.mjs
