@@ -1,3 +1,5 @@
+> **Actualización 18/11:** el usuario reutilizó `tg_e1b0f978ddbad040412d44dbb0dd89d7b99aaa1b` para otra nota y retiró la orden anterior de cancelación. No usarlo en pruebas ni cancelarlo por esa orden. Las referencias siguientes son históricas y están sustituidas por esta instrucción.
+
 # Integración candidata del issue 28
 
 Estado: **trabajo aislado, incompleto y no desplegable**. El patch se preparó contra la fuente reconstruida a partir del artefacto issue 37 y ajustes locales issue 39; no se ha verificado que esta fuente coincida con el Guard activo. Los archivos del receptor derivan de la versión activa n8n 8ce13116-eaeb-4010-a0c0-b2e839a2812f observada durante esta sesión; existe un borrador diferente que debe preservarse y reconciliarse antes de cualquier cambio.
