@@ -197,7 +197,7 @@ function resolvePackageSession(intent,result) {
  if(x.content_mode_command!==undefined&&x.content_mode_command!==null){const content=contentModeCommand(x.text);if(x.kind!=='TEXT'||x.mode_attested!==true||!content||content.command!==x.content_mode_command)return response(intent,'No pude confirmar la selección del modo de contenido.');if(x.recovery_session)return response(intent,'En un paquete reabierto usa /opciones crear literal DESTINO o /opciones actualizar literal DESTINO, según la acción y los destinos que deseas confirmar. Para redacción usa editorial en lugar de literal.');}
  let action,body={...who(x),packageId:x.packageId};
  if(x.package_operation==='CANCEL_DUPLICATE'){
-  if(x.cancel_attested!==true||!Number.isSafeInteger(result.revision)||result.revision<1)return response(intent,'No pude acreditar la revisión a cancelar. Consulta /estado.');
+  if(x.cancel_attested!==true||!Number.isSafeInteger(result.revision)||result.revision<1||x.cancel_package_id!==result.packageId||x.cancel_revision!==result.revision)return response(intent,'El paquete o la revisión cambió. Consulta /estado antes de cancelar.');
   action='cancel-duplicate';Object.assign(body,{revision:result.revision,receiptId:x.receipt_id});
  }
  else if(x.package_operation==='PLACEMENT'){
