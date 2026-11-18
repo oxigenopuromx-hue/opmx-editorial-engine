@@ -1,0 +1,40 @@
+name: Issue 28 isolated MySQL tests
+on:
+  push:
+    branches:
+      - wip/issue28-cancelacion-duplicados
+    paths:
+      - 'prototypes/issue28/integration/**'
+      - '.github/workflows/issue28-isolated-mysql.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cancellation:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testroot
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: issue28_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptestroot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install MySQL client for isolated tests
+        run: npm install --prefix prototypes/issue28/integration --no-save --no-package-lock mysql2@3.24.6
+      - name: Run cancellation tests
+        run: |
+          node prototypes/issue28/integration/test-cancel.mjs
+          node prototypes/issue28/integration/test-receiver.mjs
+          node prototypes/issue28/integration/test-mysql.mjs
