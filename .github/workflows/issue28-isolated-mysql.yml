@@ -6,7 +6,7 @@ on:
     paths:
       - 'prototypes/issue28/integration/**'
       - '.github/workflows/issue28-isolated-mysql.yml'
-  workflow_dispatch:
+  pull_request:\n    paths:\n      - 'prototypes/issue28/integration/**'\n      - '.github/workflows/issue28-isolated-mysql.yml'\n  workflow_dispatch:
 permissions:
   contents: read
 jobs:
