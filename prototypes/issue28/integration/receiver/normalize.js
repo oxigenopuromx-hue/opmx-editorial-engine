@@ -83,8 +83,9 @@ function normalizeTelegramUpdate(update,config={}) {
  if(!users.includes(identity.user_id)||!chats.includes(identity.chat_id))return null;
  const cancellationText=typeof m.text==='string'?m.text:typeof m.caption==='string'?m.caption:'';
  if(/^\s*\/cancelar(?:\s|$)/i.test(cancellationText)){
-  const safe=typeof m.text==='string'&&m.text.trim()==='/cancelar duplicado'&&!/[\r\n]/.test(m.text)&&!m.document&&!m.photo&&!['forward_origin','forward_date','forward_from','forward_from_chat','forward_sender_name','reply_to_message','external_reply','quote','edit_date'].some(key=>Object.hasOwn(m,key))&&!Object.hasOwn(update,'edited_message');
-  return safe?{...identity,kind:'TEXT',has_file:false,text:m.text,cancel_attested:true}:{...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe /cancelar duplicado como mensaje nuevo y directo, sin responder, reenviar ni adjuntar archivos.'};
+  const requested=typeof m.text==='string'?/^\/cancelar[ \t]+duplicado[ \t]+(tg_[a-f0-9]{40})[ \t]+([1-9][0-9]{0,9})$/.exec(m.text.trim()):null;
+  const safe=!!requested&&Number.isSafeInteger(Number(requested[2]))&&Number(requested[2])<4294967295&&!/[\r\n]/.test(m.text)&&!m.document&&!m.photo&&!['forward_origin','forward_date','forward_from','forward_from_chat','forward_sender_name','reply_to_message','external_reply','quote','edit_date'].some(key=>Object.hasOwn(m,key))&&!Object.hasOwn(update,'edited_message');
+  return safe?{...identity,kind:'TEXT',has_file:false,text:m.text,cancel_attested:true,cancel_package_id:requested[1],cancel_revision:Number(requested[2])}:{...identity,kind:'REJECTED',has_file:false,reply_text:'Escribe /cancelar duplicado seguido del paquete y la revisión indicados en /estado, como mensaje nuevo y directo.'};
  }
  const placementControl=normalizePlacementControl(update);if(placementControl)return {...identity,...placementControl};
  const contentControl=typeof m.text==='string'&&!m.document&&!m.photo?contentModeCommand(m.text):null;
