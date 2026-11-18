@@ -1,0 +1,96 @@
+--- a/tools/mcp-publisher/guard-server.mjs
++++ b/tools/mcp-publisher/guard-server.mjs
+@@ -8,8 +8,9 @@
+ const MAX_BODY=4096;
+ // Integration candidate derived from the verified last-source blob 7881ae8.
+ // Recovery and writer hooks are opt-in; production is not changed by this file.
+-export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramRecoveryReadiness=null,telegramDestinationCancellation=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
++export function createGuard({pool,secret,diagnosticLogger=console.error,runtimeObserver=null,telegramStore=null,telegramEvents=null,telegramReviews=null,telegramRecovery=null,telegramDuplicateCancellation=null,telegramBlockedList=null,telegramAttempts=null,telegramWriterReceipts=null,telegramSubmissions=null,telegramUpdateDeliveries=null,telegramReconciliation=null,telegramReconciliationFreeze=null,telegramRecoveryReadiness=null,telegramDestinationCancellation=null,telegramFinalPublication=null,telegramLiteralValidation=null,telegramCorrections=null,telegramSelections=null,telegramPlacement=null,telegramPreviewDelivery=null,telegramPreviewPayloads=null,telegramPreviewMaterializer=null,telegramPublicationBegin=null,telegramUpdateClaims=null,telegramUpdateExecutor=null,telegramUpdatePayloads=null,targetBegin=beginTargetWrite,mediaBegin=beginMediaUpload}) {
+   if (!pool?.getConnection || typeof secret!=='string' || !/^[a-f0-9]{64,}$/.test(secret)) throw new Error('Configuración incompleta');
++  if(telegramDuplicateCancellation!==null&&typeof telegramDuplicateCancellation!=='function')throw new Error('Configuración incompleta');
+   if(telegramUpdateDeliveries!==null&&typeof telegramUpdateDeliveries.consume!=='function')throw new Error('Configuración incompleta');
+   if(telegramLiteralValidation!==null&&typeof telegramLiteralValidation!=='function')throw Error('Configuración incompleta');
+   if(telegramFinalPublication!==null&&typeof telegramFinalPublication!=='function')throw Error('Configuración incompleta');
+@@ -37,6 +38,7 @@
+     if(given.length!==expected.length || !timingSafeEqual(given,expected)) {req.resume();return end(401,{error:'unauthorized'});}
+     const telegramAction=telegramStore&&/^\/v1\/telegram\/packages\/(capacity|capabilities|current|open|reserve|close|complete|manifest|asset|chunk|seal|discard)$/.exec(req.url)?.[1];
+     const recoverAction=telegramRecovery&&req.url==='/v1/telegram/packages/reopen';
++    const cancelDuplicateAction=telegramDuplicateCancellation&&req.url==='/v1/telegram/packages/cancel-duplicate';
+     const blockedListAction=telegramBlockedList&&req.url==='/v1/telegram/packages/blocked';
+     const attemptMatch=telegramAttempts&&/^\/v1\/telegram\/attempts\/(begin|block|start|complete|decision|recover-unacknowledged)$/.exec(req.url)?.[1];
+     const attemptMethod=attemptMatch==='decision'?'acknowledgeDecision':attemptMatch==='recover-unacknowledged'?'recoverUnacknowledged':attemptMatch;
+@@ -65,11 +67,11 @@
+     const previewDiagnostic=req.url==='/v1/telegram/previews/diagnostic';
+     const runtimeAction=runtimeObserver&&req.url==='/v1/telegram/runtime/observe';
+     const reviewAction=telegramReviews&&/^\/v1\/telegram\/reviews\/(begin|report)$/.exec(req.url)?.[1];
+-    if(req.method!=='POST'||(!destinationCancellationAction&&!recoveryReadinessAction&&!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
++    if(req.method!=='POST'||(!destinationCancellationAction&&!recoveryReadinessAction&&!submissionAction&&!previewDiagnostic&&!updateDeliveryAction&&!reconciliationAction&&!freezeUnwrittenAction&&!finalPublicationAction&&!literalValidationAction&&!writerReceiptAction&&!runtimeAction&&!reviewAction&&!eventAction&&!telegramAction&&!recoverAction&&!cancelDuplicateAction&&!blockedListAction&&!attemptAction&&!correctionAction&&!selectionAction&&!placementAction&&!deliveryAction&&!previewPayloadAction&&!previewContextAction&&!previewMaterializeAction&&!publicationAction&&!updateAction&&!updateExecute&&!updatePayload&&!['/v1/reservations','/v1/reservations/status','/v1/targets/begin','/v1/targets/report','/v1/targets/status','/v1/media/begin','/v1/media/report','/v1/media/status','/v1/recovery/status'].includes(req.url))) {req.resume();return end(404,{error:'not_found'});}
+     if(!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type']??'')) {req.resume();return end(415,{error:'content_type'});}
+     let data='',size=0;
+     try {
+-      if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
++      if(destinationCancellationAction||recoveryReadinessAction||submissionAction||previewDiagnostic||updateDeliveryAction||reconciliationAction||freezeUnwrittenAction||finalPublicationAction||literalValidationAction||writerReceiptAction||runtimeAction||telegramAction||eventAction||reviewAction||recoverAction||cancelDuplicateAction||blockedListAction||attemptAction||correctionAction||selectionAction||placementAction||deliveryAction||previewPayloadAction||previewContextAction||previewMaterializeAction||publicationAction||updateAction||updateExecute||updatePayload) {
+         const chunks=[],limit=telegramAction==='complete'?14*1024*1024:updatePayload?5*1024*1024:literalValidationAction?8*1024*1024:65536;
+         for await(const chunk of req){size+=chunk.length;if(size>limit){req.resume();return end(413,{error:'too_large'});}chunks.push(chunk);}
+         const input=JSON.parse(Buffer.concat(chunks).toString('utf8'));
+@@ -94,6 +96,7 @@
+         if(writerReceiptAction){const r=await telegramWriterReceipts.report(input);return end(['WRITER_RECEIPT_RECORDED','WRITER_RECEIPT_REPLAY'].includes(r.status)?200:409,r)}
+         if(runtimeAction){const r=await runtimeObserver(input);const {workflows,...summary}=r;return end(r.status==='RUNTIME_OBSERVED'?200:503,{...summary,...(workflows?{workflows:workflows.map(w=>({id:w.id,activeVersionId:w.activeVersionId,nodeCount:w.graph.nodes.length}))}:{})})}
+         if(recoverAction)return end(200,await telegramRecovery(input));
++        if(cancelDuplicateAction)return end(200,await telegramDuplicateCancellation(input));
+         if(blockedListAction)return end(200,await telegramBlockedList(input));
+         if(attemptAction)return end(200,await telegramAttempts[attemptAction](input));
+         if(correctionAction)return end(200,await telegramCorrections[correctionAction](input));
+--- a/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs
++++ b/tools/telegram/guard-recovery-candidate/fence-preview-start.mjs
+@@ -50,6 +50,7 @@
+ const telegramStore={capacity:async(...args)=>(await requireRecovery()).telegramStore.capacity(...args),capabilities:async(...args)=>(await requireRecovery()).telegramStore.capabilities(...args),async run(action,input){if(action==='seal'||action==='close')await Promise.all([requireFence(),requireMotor()]);return (await requireRecovery()).telegramStore.run(action,input)}};
+ const server=createGuard({pool,secret:OPMX_GUARD_SECRET,runtimeObserver:createRuntimeObserver({secret:OPMX_GUARD_SECRET}),telegramStore,telegramEvents,telegramReviews:reviews,
+  telegramRecovery:async(...args)=>(await requireRecovery()).telegramRecovery(...args),
++ telegramDuplicateCancellation:async(...args)=>(await requireRecovery()).telegramDuplicateCancellation(...args),
+  telegramBlockedList:async(...args)=>(await requireRecovery()).telegramBlockedList(...args),
+  telegramCorrections:Object.fromEntries(['preview','confirm'].map(method=>[method,async(...args)=>(await requireRecovery()).telegramCorrections[method](...args)])),
+  telegramSelections:{select:async(...args)=>(await requireRecovery()).telegramSelections.select(...args)},
+--- a/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs
++++ b/tools/telegram/guard-recovery-candidate/recovery-runtime-services.mjs
+@@ -1,3 +1,4 @@
++import {cancellationSchema,createDuplicateCancellation} from './duplicate-cancellation.mjs';
+ import {createHash} from 'node:crypto';
+ import {createRecoveryWiring} from './recovery-wiring.mjs';
+ import {createRevisionReconciliation} from './revision-reconciliation.mjs';
+@@ -30,7 +31,7 @@
+  const readEditorial=createCmsObserver({secret,editorial:true});
+  const read=async({destination,postId})=>{const site=destinationRegistry()[destination]?.cms;return site?readEditorial({site,postId}):{statusCode:0,post:null}};
+  const transport=createUpdateDeliveryStore({pool,secret,readWordPress:read});
+- const c=await pool.getConnection();try{for(const sql of [confirmedDecisionSchema,updateClaimSchema,updatePayloadSchema,updateDeliverySchema,literalPayloadSchema])await c.execute(sql)}finally{c.release()}
++ const c=await pool.getConnection();try{for(const sql of [confirmedDecisionSchema,updateClaimSchema,updatePayloadSchema,updateDeliverySchema,literalPayloadSchema,cancellationSchema])await c.execute(sql)}finally{c.release()}
+  async function verifyRelease(c,{packageId,baseRevision}){
+   if(manifest.workflows.qBmLf0DmcMSfuWvm?.versionId!=='d04fb5c2-ba36-48f9-9cd4-2958ab1f273e')return false;
+   const [rows]=await c.execute('SELECT event_id FROM opmx_tg_events_v1 WHERE package_id=? AND revision=? FOR UPDATE',[packageId,baseRevision]);
+@@ -84,5 +85,5 @@
+   verifyCompletedWrites:readSubmissionCompletedWriterReceipt,
+   updateProviders:{verifyUpdateReadiness,verifyUpdateEnforcement},updateExecution:{wordpress:transport.wordpress},enqueuePreviewGeneration
+  });
+- return Object.freeze({...wiring,telegramPlacement:placement,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
++ return Object.freeze({...wiring,telegramDuplicateCancellation:createDuplicateCancellation({pool}),telegramPlacement:placement,creationWriteAllowed:createRecoveredCreationGate({pool,readWordPress:read}),telegramLiteralValidation:literalPayloads.validate,telegramUpdateDeliveries:{consume:transport.consume}});
+ }
+--- a/tools/telegram/guard-recovery-candidate/package-store.mjs
++++ b/tools/telegram/guard-recovery-candidate/package-store.mjs
+@@ -96,7 +96,7 @@
+             if(!Number.isSafeInteger(Number(lease.opening_revision))||Number(lease.opening_revision)<2||Number(lease.opening_revision)>Number(pack.revision))return ({status:'CLOSE_NOT_CONFIRMED'});
+             recoveryCloseId=closing[0].item_id;
+           }
+-          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
++          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS `stored` FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
+           if(!Number(counts[0].stored)||Number(counts[0].pending))return ({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
+           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
+           if(lease)await c.execute('INSERT INTO opmx_tg_recovery_closures_v1 (package_id,revision,snapshot_revision,actor_key,close_item_id,close_receipt_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,Number(pack.revision)+1,Number(lease.opening_revision)-1,actorKey,recoveryCloseId,digest(input.receiptId)]);
+@@ -192,7 +192,7 @@
+             }
+           }
+           let editorialPlacement=null;
+-          if(readEditorialPlacement){editorialPlacement=await readEditorialPlacement(c,{packageId:pack.package_id,revision:Number(pack.revision),ownerKey,actorKey});if(editorialPlacement!==null&&(!editorialPlacement||typeof editorialPlacement!=='object'||Array.isArray(editorialPlacement)||!['PLACEMENT_SELECTION','PLACEMENT_PRESERVE'].includes(editorialPlacement.status)))return await finish({status:'PLACEMENT_CONTEXT_UNCONFIRMED'});}
++          if(readEditorialPlacement&&pack.state!=='CANCELLED'){editorialPlacement=await readEditorialPlacement(c,{packageId:pack.package_id,revision:Number(pack.revision),ownerKey,actorKey});if(editorialPlacement!==null&&(!editorialPlacement||typeof editorialPlacement!=='object'||Array.isArray(editorialPlacement)||!['PLACEMENT_SELECTION','PLACEMENT_PRESERVE'].includes(editorialPlacement.status)))return await finish({status:'PLACEMENT_CONTEXT_UNCONFIRMED'});}
+           return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{}),...(editorialPlacement?{editorialPlacement}:{})});
+         }
+         if(action==='asset') {
