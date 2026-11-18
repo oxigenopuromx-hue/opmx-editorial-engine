@@ -96,7 +96,7 @@ export async function sealOpenPackageInTransaction(c,{input,pack,lease,actorKey,
             if(!Number.isSafeInteger(Number(lease.opening_revision))||Number(lease.opening_revision)<2||Number(lease.opening_revision)>Number(pack.revision))return ({status:'CLOSE_NOT_CONFIRMED'});
             recoveryCloseId=closing[0].item_id;
           }
-          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
+          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS `stored` FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
           if(!Number(counts[0].stored)||Number(counts[0].pending))return ({status:'NOT_READY',pending:Number(counts[0].pending??0),stored:Number(counts[0].stored??0)});
           await c.execute("UPDATE opmx_tg_packages_v1 SET state='READY',revision=revision+1,updated_at=UTC_TIMESTAMP(6) WHERE package_id=?",[input.packageId]);
           if(lease)await c.execute('INSERT INTO opmx_tg_recovery_closures_v1 (package_id,revision,snapshot_revision,actor_key,close_item_id,close_receipt_key,created_at) VALUES (?,?,?,?,?,?,UTC_TIMESTAMP(6))',[input.packageId,Number(pack.revision)+1,Number(lease.opening_revision)-1,actorKey,recoveryCloseId,digest(input.receiptId)]);
