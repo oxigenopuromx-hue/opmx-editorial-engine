@@ -331,7 +331,7 @@ export function createTelegramPackageStore(pool,{events=null,recoveryEnabled=fal
         bad();
       }catch(error){
         if(!committed)try{await c.rollback();}catch{}
-        throw error.message==='Solicitud inválida'?error:Error('Almacenamiento no confirmado');
+        throw error.message==='Solicitud inválida'?error:Error('Almacenamiento no confirmado',{cause:error});
       }finally{c.release();}
     }
   };
