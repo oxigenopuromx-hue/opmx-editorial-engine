@@ -85,3 +85,8 @@
            return await finish({status:'FOUND',packageId:pack.package_id,state:pack.state,revision:pack.revision,items:items.map(row=>({...row,attachment:row.attachment_json?JSON.parse(row.attachment_json):null,attachment_json:undefined})),...(recoveredPolicy?{recoveredPolicy}:{}),...(confirmedCorrection?{confirmedCorrection}:{}),...(readDiagnostic?{diagnostic:await readDiagnostic(c,{pack,lease,actorKey,ownerKey,items})}:{}),...(readPublisherResult?{publisherResult:await readPublisherResult(c,{pack,lease,actorKey,ownerKey})}:{}),...(editorialPlacement?{editorialPlacement}:{})});
          }
          if(action==='asset') {
+
+# Portabilidad MySQL (aplicar a package-store.mjs con parche específico; no integrar esta anotación automáticamente)
+@@ -96,7 +96,7 @@
+-          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS stored FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
++          const [counts]=await c.execute("SELECT COUNT(*) AS total, SUM(state='PENDING') AS pending, SUM(state='STORED') AS `stored` FROM opmx_tg_items_v1 WHERE package_id=?",[input.packageId]);
