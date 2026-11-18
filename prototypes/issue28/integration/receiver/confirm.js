@@ -150,6 +150,7 @@ function confirmPackageOperation(context,result) {
    else if(d.next==='RECONCILE_OPTIONS')lines.push('Las opciones requieren conciliación. No se enviará a publicar ni se inferirá una acción.');
    else if(d.recovery)lines.push('Puedes agregar aquí texto, fotos o instrucciones. Después envía /listo para recibir la revisión y su comando de confirmación. /listo no publica por sí solo este paquete reabierto.');
    else lines.push('Para cerrar y procesar según la orden registrada: /listo.');
+   if(result.state==='OPEN'&&Number.isSafeInteger(Number(result.revision))&&Number(result.revision)>0)lines.push('Para cerrar por duplicidad, sin publicar:\n<code>/cancelar duplicado '+escape(context.packageId)+' '+Number(result.revision)+'</code>');
    return response(context,lines.join('\n\n'));
   }
   return response(context,`Paquete <code>${context.packageId}</code>: ${escape(result.state)}. ${stored} elemento(s) guardado(s), ${pending.length} pendiente(s).${pendingHelp}\n${context.recovery_session?'Agrega material y envía /listo para solicitar una vista; después debes confirmarla.':'Para terminar: /listo.'}`);
