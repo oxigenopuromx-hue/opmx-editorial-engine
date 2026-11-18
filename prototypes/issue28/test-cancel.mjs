@@ -16,7 +16,7 @@ function fixture(over={}){
  if(sql.includes('SELECT revision FROM opmx_tg_'))return [s.currentEvent?[{revision:9}]:[]];
  if(sql.startsWith('INSERT INTO opmx_tg_duplicate')){s.audit={package_id:args[0],revision:args[1],actor_key:args[2],owner_key:args[3],receipt_key:args[4],reason:'DUPLICATE'};return [{affectedRows:1}]}
  if(sql.startsWith('UPDATE opmx_tg_packages')){s.pack.state='CANCELLED';return [{affectedRows:1}]}
- if(sql.startsWith('DELETE FROM opmx_tg_sessions')){s.session=null;return [{affectedRows:1}]}
+ if(sql.startsWith('DELETE FROM opmx_tg_sessions')){if(s.failSessionRelease)throw Error('injected session release failure');s.session=null;return [{affectedRows:1}]}
  if(sql.startsWith('DELETE FROM opmx_tg_recovery_leases')){s.lease=null;return [{affectedRows:1}]}
  throw Error(sql)}};
  return {state,run:createDuplicateCancellation({pool:{async getConnection(){return c}}}),get tx(){return tx}};
@@ -28,4 +28,5 @@ const req={owner:'111',chat:'111',packageId:pkg,revision:9,receiptId:'telegram-1
 for(const [over,status] of [[{pending:true},'PENDING_RESERVATION'],[{currentEvent:true},'RECONCILIATION_REQUIRED'],[{fence:'WRITING'},'RECONCILIATION_REQUIRED'],[{attempt:'RUNNING'},'RECONCILIATION_REQUIRED'],[{session:null},'NO_EDIT_SESSION']]){const f=fixture(over);assert.equal((await f.run(req)).status,status);assert.equal(f.state.pack.state,'OPEN');assert.equal(f.state.audit,null);assert.deepEqual(f.state.materials,['sha1','sha2'])}
 {const f=fixture();assert.equal((await f.run({...req,revision:8})).status,'STALE_REVISION');assert.equal((await f.run({...req,owner:'222'})).status,'INVALID_CANCELLATION');assert.equal((await f.run({...req,receiptId:'telegram-111-299-54'})).status,'NOT_AVAILABLE');assert.equal(f.state.pack.state,'OPEN')}
 {const f=fixture({lease:null});assert.equal((await f.run(req)).status,'CANCELLED');assert.equal(f.state.session,null)}
-console.log('PASS: transacción, reapertura cercada, sesión, originales, replay y rechazos');
+{const f=fixture({failSessionRelease:true});await assert.rejects(f.run(req),/CANCELLATION_UNCONFIRMED/);assert.equal(f.state.pack.state,'OPEN');assert.equal(f.state.audit,null);assert.notEqual(f.state.session,null);assert.notEqual(f.state.lease,null);assert.deepEqual(f.state.materials,['sha1','sha2']);assert.equal(f.tx,false)}
+console.log('PASS: transacción simulada, rollback, reapertura cercada, sesión, originales, replay y rechazos');
