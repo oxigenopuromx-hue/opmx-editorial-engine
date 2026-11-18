@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {createDuplicateCancellation} from './tools/telegram/guard-recovery-candidate/duplicate-cancellation.mjs';
+import {createDuplicateCancellation} from './duplicate-cancellation.mjs';
 const hash=x=>createHash('sha256').update(x).digest('hex');
 const actor=hash('opmx:telegram:v1:111:111'),pkg='tg_'+'a'.repeat(40);
 function fixture(over={}){
