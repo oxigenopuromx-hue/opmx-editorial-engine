@@ -10,6 +10,7 @@ const getConnection=pool.getConnection.bind(pool);pool.getConnection=async()=>{c
 try{
  const ddl=[
   'CREATE TABLE opmx_tg_recovery_leases_v1 (package_id VARCHAR(43) PRIMARY KEY,actor_key CHAR(64),owner_key CHAR(64),receipt_id VARCHAR(128),opening_revision INT UNSIGNED) ENGINE=InnoDB',
+  'CREATE TABLE opmx_tg_recovery_contributions_v1 (item_id VARCHAR(43) PRIMARY KEY,package_id VARCHAR(43),actor_key CHAR(64),created_at DATETIME(6)) ENGINE=InnoDB',
   'CREATE TABLE opmx_tg_publication_fence_v1 (package_id VARCHAR(43),revision INT UNSIGNED,state VARCHAR(32),PRIMARY KEY(package_id,revision)) ENGINE=InnoDB',
   'CREATE TABLE opmx_tg_motor_attempts_v1 (package_id VARCHAR(43),revision INT UNSIGNED,state VARCHAR(32),PRIMARY KEY(package_id,revision)) ENGINE=InnoDB',
   'CREATE TABLE opmx_tg_events_v1 (package_id VARCHAR(43),revision INT UNSIGNED,PRIMARY KEY(package_id,revision)) ENGINE=InnoDB',
@@ -44,5 +45,16 @@ try{
   const f=n%2?[write,()=>cancel(req(n,packageId))]:[()=>cancel(req(n,packageId)),write];const v=await Promise.all(f.map(x=>x()));const c=n%2?v[1]:v[0],w=n%2?v[0]:v[1];
   assert.ok(!(c.status==='CANCELLED'&&w.status==='STORED'));assert.ok(['CANCELLED','STALE_REVISION'].includes(c.status));assert.ok(['PACKAGE_CLOSED','STORED'].includes(w.status));
  }
- console.log('PASS MySQL: rutas reales del almacén contra cancelación, sello, escritura posterior y carreras');
+ const recoveryStore=createTelegramPackageStore(pool,{events,recoveryEnabled:true});
+ for(let n=3300;n<3308;n++){
+  const packageId=await setup(n),ownerKey=(await import('node:crypto')).createHash('sha256').update('opmx:telegram:v1:'+n+':'+n).digest('hex');
+  await pool.execute('INSERT INTO opmx_tg_recovery_leases_v1 VALUES (?,?,?,?,2)',[packageId,ownerKey,ownerKey,receipt(n,101)]);
+  await pool.execute("INSERT INTO opmx_tg_publication_fence_v1 VALUES (?,1,'RECOVERY_FENCED')",[packageId]);
+  await pool.execute("INSERT INTO opmx_tg_motor_attempts_v1 VALUES (?,1,'REVOKED')",[packageId]);
+  const write=()=>recoveryStore.run('reserve',{...who(n),packageId,receiptId:receipt(n,103),kind:'TEXT',text:'Texto nuevo aislado',attachment:null});
+  const f=n%2?[write,()=>cancel(req(n,packageId))]:[()=>cancel(req(n,packageId)),write];const v=await Promise.all(f.map(x=>x()));const c=n%2?v[1]:v[0],w=n%2?v[0]:v[1];
+  assert.ok(!(c.status==='CANCELLED'&&w.status==='STORED'));assert.ok(['CANCELLED','STALE_REVISION'].includes(c.status));assert.ok(['PACKAGE_CLOSED','NO_EDIT_SESSION','STORED'].includes(w.status));
+  const [[record]]=await pool.execute('SELECT state FROM opmx_tg_packages_v1 WHERE package_id=?',[packageId]);assert.equal(c.status==='CANCELLED',record.state==='CANCELLED');
+ }
+ console.log('PASS MySQL: rutas reales del almacén, escritura posterior y carreras en sesiones nuevas y reabiertas');
 }finally{await pool.end()}
