@@ -18,6 +18,10 @@ for(const different of [{status:'OPEN',packageId:'tg_'+'b'.repeat(40),revision:9
 assert.ok(resolved.next_url.endsWith('/packages/cancel-duplicate'));
 const response=run('confirm',{status:'CANCELLED',packageId,revision:9,reason:'DUPLICATE',writeAuthorized:false,retryPermitted:false},{'Resolver paquete Telegram':resolved})[0].json;
 assert.equal(response.package_state,'CANCELLED');
+const wrong=run('confirm',{status:'CANCELLED',packageId,revision:10,reason:'DUPLICATE',writeAuthorized:false,retryPermitted:false},{'Resolver paquete Telegram':resolved})[0].json;
+assert.notEqual(wrong.package_state,'CANCELLED');
+const state=run('confirm',{status:'FOUND',packageId,state:'OPEN',revision:9,items:[],diagnostic:{schema:'opmx.package-diagnostic.v1',origin:'OWN'}},{'Resolver paquete Telegram':{...resolved,package_operation:'STATUS'}})[0].json;
+assert.ok(state.reply_text.includes('/cancelar duplicado '+packageId+' 9'));
 for(const m of [{...msg,forward_origin:{}},{...msg,document:{}},{...msg,text:'/cancelar duplicado'},{...msg,reply_to_message:{}},{...msg,text:'/cancelar duplicado adicional'},{...msg,text:'/cancelar duplicado\nextra'}]){
  const rejected=run('normalize',{update:{...update,message:m},config})[0].json;
  assert.equal(rejected.kind,'REJECTED');
