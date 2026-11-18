@@ -1,3 +1,5 @@
+> **Actualización 18/11:** el usuario reutilizó `tg_e1b0f978ddbad040412d44dbb0dd89d7b99aaa1b` para otra nota y retiró la orden anterior de cancelación. No usarlo en pruebas ni cancelarlo por esa orden. Las referencias siguientes son históricas y están sustituidas por esta instrucción.
+
 # Issue 28: cancelación de duplicados (trabajo incompleto)
 
 **Prototipo aislado, no integrado ni apto para desplegar.** No ejecutar contra producción.
