@@ -1,8 +1,10 @@
+import {validateHorizonteClassification} from './horizonte-validation.mjs';
 // Pure preflight: exact catalog membership per requested destination; no network or writes.
-export function validateSelectedCategories(master, catalog, selected) {
+export function validateSelectedCategories(master, catalog, selected, {horizonteCatalog}={}) {
  const errors=[];
- if (!Array.isArray(selected)||!selected.length||selected.some(s=>!['OPURO','OPOL','LIBERAL'].includes(s))) return {ok:false,errors:['DESTINOS_INVALIDOS']};
+ if (!Array.isArray(selected)||!selected.length||selected.some(s=>!['OPURO','OPOL','LIBERAL','HORIZONTE'].includes(s))) return {ok:false,errors:['DESTINOS_INVALIDOS']};
  for (const site of new Set(selected)) {
+  if(site==='HORIZONTE'){errors.push(...validateHorizonteClassification(master,horizonteCatalog).errors);continue;}
   const allowed=catalog?.sites?.[site]?.allowed_names;
   const value=master?.CATEGORIAS?.[site]?.PRINCIPAL;
   if(!Array.isArray(allowed)) {errors.push(`CATALOGO_${site}_NO_DISPONIBLE`);continue;}
@@ -18,3 +20,4 @@ export function validateSelectedCategories(master, catalog, selected) {
  if(selected.includes('OPURO')&&master?.SEO?.CATEGORIA!==master?.CATEGORIAS?.OPURO?.PRINCIPAL) errors.push('SEO_CATEGORIA_INCONSISTENTE');
  return {ok:errors.length===0,errors};
 }
+

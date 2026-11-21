@@ -1,7 +1,7 @@
 {
   "schema": "OPMX_ENGINE_MANIFEST",
   "schema_version": "1.0",
-  "updated_at": "2026-11-13",
+  "updated_at": "2026-11-21",
   "branch": "main",
   "discovery_rule": "Highest semantic version per family; manifest records the currently approved pointers and does not authorize downgrades.",
   "masters": {
@@ -90,14 +90,14 @@
   },
   "validation_tools": {
     "editorial_category_preflight": {
-      "version": "1.0",
+      "version": "1.1",
       "path": "tools/editorial/category-validation.mjs",
       "export": "validateSelectedCategories",
       "purpose": "Valida categorías literales e independencia de los destinos seleccionados antes de Publisher."
     },
     "literal_delivery": {
-      "version": "1.0",
-      "path": "tools/editorial/literal-delivery.mjs",
+      "version": "1.1",
+      "path": "tools/editorial/literal-delivery-v3.mjs",
       "exports": [
         "buildLiteralDelivery",
         "validateLiteralMaster"
@@ -105,14 +105,21 @@
       "purpose": "Serializa y valida el perfil textual LITERAL sin añadir secciones; no autentica ni concede permiso de escritura. Guard comprueba la fuente y el alcance real."
     },
     "literal_text": {
-      "version": "1.0",
-      "path": "tools/editorial/literal-text.mjs",
+      "version": "1.1",
+      "path": "tools/editorial/literal-text-v3.mjs",
       "exports": [
         "normalizeLiteralText",
         "extractLiteralVisibleText",
         "assertLiteralCanonicalText"
       ],
       "purpose": "Compara texto visible con normalización exclusiva NFC/blancos y rechaza markup inseguro."
+    },
+    "telegram_mode_policy": {
+      "version": "3.0",
+      "path": "tools/telegram/guard-recovery-candidate/motor-policy-v3.mjs",
+      "export": "chooseMotorPolicy",
+      "status": "PREPARED_NOT_DEPLOYED",
+      "purpose": "Valida la selección acreditada y conserva la política histórica por revisión; la recuperación CREATE v3 requiere pruebas integrales; UPDATE v3 permanece bloqueada."
     }
   },
   "content_profiles": {
@@ -123,7 +130,8 @@
       "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json",
       "behavior": "Reglas editoriales ordinarias sin cambios.",
       "optional_extensions": [
-        "opuro_category_home"
+        "opuro_category_home",
+        "horizonte"
       ]
     },
     "LITERAL": {
@@ -132,7 +140,8 @@
       "path": "contracts/LITERAL_DELIVERY_v1.0.json",
       "behavior": "Perfil textual literal; requiere autenticación de modo y comprobación del texto original antes de escribir.",
       "optional_extensions": [
-        "opuro_category_home"
+        "opuro_category_home",
+        "horizonte"
       ]
     }
   },
@@ -146,6 +155,15 @@
         "LITERAL"
       ],
       "selection": "Sólo una orden directa de /opciones portada acreditada y persistida por Guard fuera del MASTER. La proyección estructurada editorial_placement transporta IDs exactos o [] explícito; conservar retira la orden y exige omitir el campo. Guard revalida solicitud, ciclo, revisión, actor y listas antes de aceptar o escribir, incluso si el MASTER omite una orden activa. Una fuente, un MASTER o un booleano OAuth no acreditan autoridad."
+    },
+    "horizonte": {
+      "version": "1.0",
+      "status": "PREPARED_NOT_DEPLOYED",
+      "path": "contracts/HORIZONTE_PUBLISHER_DRAFT_v1.0.md",
+      "applies_to": [
+        "EDITORIAL",
+        "LITERAL"
+      ]
     }
   }
 }
