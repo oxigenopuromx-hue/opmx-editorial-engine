@@ -2,7 +2,7 @@
 // update. Activate only after matching Guard/Publisher/receiver deployment and
 // full integration tests. Rejects drift and avoids growing the saved prompt.
 const oldPin='e7fae39e62d8b233c379198d24c516fe4b580071';
-export const candidatePin='b7648ab68722358d01112c590ba730f1ea7e0e3a';
+export const candidatePin='2285262cb131cc90e528099f8f230dd978d77256';
 export function patchMotorPromptV3(prompt){
  if(typeof prompt!=='string'||prompt.length>65536)throw Error('MOTOR_PROMPT_INVALID');let s=prompt;
  function once(a,b){if(s.split(a).length!==2)throw Error('MOTOR_PROMPT_CHANGED');s=s.replace(a,()=>b)}

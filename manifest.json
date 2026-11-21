@@ -119,7 +119,7 @@
       "path": "tools/telegram/guard-recovery-candidate/motor-policy-v3.mjs",
       "export": "chooseMotorPolicy",
       "status": "PREPARED_NOT_DEPLOYED",
-      "purpose": "Valida la selección acreditada y conserva la política histórica por revisión; la recuperación v3 permanece bloqueada."
+      "purpose": "Valida la selección acreditada y conserva la política histórica por revisión; la recuperación CREATE v3 requiere pruebas integrales; UPDATE v3 permanece bloqueada."
     }
   },
   "content_profiles": {
