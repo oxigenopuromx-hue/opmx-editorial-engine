@@ -18,6 +18,10 @@ test('rejects ambiguous names and requires a matching ID when duplicated', async
   assert.equal(resolveCategory(catalog,{name:'BCS',id:2}).id,2);
   assert.throws(() => resolveCategory(catalog,{name:'BCS',id:3}), /UNCONFIRMED/);
 });
+test('detects names the production writer would conflate by accent', async () => {
+  const catalog = await readCategoryCatalog('LIBERAL', async () => ({status:200,totalPages:1,body:[row(1,'Política'),row(2,'Politica')]}));
+  assert.throws(() => resolveCategory(catalog,{name:'Política'}), /AMBIGUOUS/);
+});
 test('rejects incomplete, unavailable, inconsistent and duplicate catalogs', async () => {
   for (const fetchPage of [async()=>{throw Error('timeout')}, async()=>({status:401,totalPages:1,body:[]}),
     async()=>({status:200,totalPages:2,body:[row(1)]}),
