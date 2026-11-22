@@ -16,7 +16,8 @@ export async function readCategoryCatalog(site, fetchPage) {
     try { response = await fetchPage({site, page, perPage: 100}); }
     catch { throw Error('CATEGORY_CATALOG_UNAVAILABLE'); }
     const total = Number(response?.totalPages);
-    if (response?.status !== 200 || !Number.isSafeInteger(total) || total < 1 || total > 100 ||
+    if (response?.status !== 200 || (response.site !== undefined && response.site !== site) ||
+        (response.page !== undefined && response.page !== page) || !Number.isSafeInteger(total) || total < 1 || total > 100 ||
         (pages !== undefined && pages !== total) || !Array.isArray(response.body) ||
         response.body.length > 100 || (page < total && response.body.length !== 100))
       throw Error('CATEGORY_CATALOG_INCOMPLETE');
