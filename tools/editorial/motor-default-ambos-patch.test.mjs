@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchMotorDefaultAmbos as patch} from './motor-default-ambos-patch.mjs';
+test('corrects only the current default while preserving the rest',()=>{const out=patch('Antes. TODOS agrega HORIZONTE y es predeterminado. Después.');assert.equal(out,'Antes. TODOS agrega HORIZONTE; el predeterminado actual es AMBOS. Después.')});
+test('refuses a changed or duplicated source',()=>{assert.throws(()=>patch('changed'),/CHANGED/);assert.throws(()=>patch('TODOS agrega HORIZONTE y es predeterminado. TODOS agrega HORIZONTE y es predeterminado.'),/CHANGED/)});

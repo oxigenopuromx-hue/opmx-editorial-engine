@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateEditorialDestinations as validate} from './horizonte-preflight.mjs';
 const term=(id,slug)=>({id,slug,name:slug});
-const response={statusCode:200,body:{category:[term(1,'sin-categoria')],ehc_region:[term(2,'bcs')],ehc_topic:[term(10,'politica')],ehc_municipality:[term(5,'la-paz')]}};
-const master={SEO:{CATEGORIA:'Política'},CATEGORIAS:{OPURO:{PRINCIPAL:'Política'},HORIZONTE:{PRINCIPAL:'sin-categoria',REGION:'bcs',TEMA:'politica',TIPO:'news',MUNICIPIO:'la-paz'}}};
+const response={statusCode:200,body:{category:[term(28,'politica')],ehc_region:[term(2,'bcs')],ehc_topic:[term(10,'politica')],ehc_municipality:[term(5,'la-paz')]}};
+const master={SEO:{CATEGORIA:'Política'},CATEGORIAS:{OPURO:{PRINCIPAL:'Política'},HORIZONTE:{PRINCIPAL:'politica',REGION:'bcs',TEMA:'politica',TIPO:'news',MUNICIPIO:'la-paz'}}};
 const catalog={sites:{OPURO:{allowed_names:['Política']}}};
 test('queries Horizonte only when selected and validates its live terms',async()=>{
  let calls=0;const fetchHorizonteCatalog=async()=>{calls++;return response};

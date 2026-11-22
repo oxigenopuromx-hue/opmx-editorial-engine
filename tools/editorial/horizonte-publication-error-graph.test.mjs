@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchHorizontePublicationError as patch} from './horizonte-publication-error-graph.mjs';
+const input={nodes:[{name:'Publicación — Evaluar HORIZONTE'}],connections:{'Publicación — Evaluar HORIZONTE':{main:[[{node:'Conservar publicación HORIZONTE'}],[{node:'Publicación resultado incierto'}]]}}};
+test('enables the existing uncertain result path without changing its routing',()=>{const result=patch(input);assert.equal(result.nodes[0].onError,'continueErrorOutput');assert.deepEqual(result.connections,input.connections);assert.equal(input.nodes[0].onError,undefined)});
+test('refuses a changed error path',()=>{const x=structuredClone(input);x.connections['Publicación — Evaluar HORIZONTE'].main[1][0].node='OTHER';assert.throws(()=>patch(x),/CHANGED/)});

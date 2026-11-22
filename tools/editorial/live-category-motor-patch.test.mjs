@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchMotorLiveCategories as patch} from './live-category-motor-patch.mjs';
+const line='CATEGORÍAS: valida con validation_tools.editorial_category_preflight lo anterior';
+test('replaces only the exact category instruction and pins code',()=>{const out=patch('before\n'+line+'\nafter','a'.repeat(40));assert.match(out,/consultar_categorias_editoriales_opmx/);assert.match(out,/PRINCIPAL_ID/);assert.equal(out.startsWith('before\n'),true);assert.equal(out.endsWith('\nafter'),true)});
+test('rejects stale, ambiguous, oversized or unpinned prompts',()=>{assert.throws(()=>patch('missing','a'.repeat(40)),/CHANGED/);assert.throws(()=>patch(line+'\n'+line,'a'.repeat(40)),/CHANGED/);assert.throws(()=>patch(line,'main'),/INVALID/);assert.throws(()=>patch('x'.repeat(65536)+'\n'+line,'a'.repeat(40)),/TOO_LONG/)});

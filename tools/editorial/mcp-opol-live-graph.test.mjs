@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchMcpOpolLiveGraph as patch} from './mcp-opol-live-graph.mjs';
+const one=`const CATS=d.CATEGORIAS??d.categorias??{};
+if (execution.create_opol && !CATEGORY_CATALOG.OPOL_ALLOWED.includes(categoryOpol)) {throw Error('old')}
+const seoCategory = str(SEO.CATEGORIA ?? SEO.category);
+const result={categories:{opuro:{principal:category},opol:{principal:categoryOpol,secundaria:categoryOpolSecondary}},};
+normalized.json.canonical.categories.liberal={principal:liberalCategory};`;
+const staticCode=`const map=[['CATEGORIA_OPOL_NO_AUTORIZADA:','OPOL_CATEGORY',[]]];const pin={"normalizerSha256":"2538657e6a8310295898dd5459d7cdfa4dd078db9852e4bc88ea6fffb0f632eb"};function a(){${one}}function b(){${one}}`;
+const input={nodes:[{name:'MASTER — Validación estática Shared',parameters:{jsCode:staticCode}},{name:'¿Requiere Hero?'},{name:'Comprobar Hero'},{name:'Acreditar alcance Publisher'},{name:'Archivo rechazado',parameters:{jsCode:"else if(raw.includes('HORIZONTE_PREFLIGHT_UNCONFIRMED')){}"}}],connections:{'¿Requiere Hero?':{main:[[],[{node:'MASTER — Validación estática Shared'}]]},'Comprobar Hero':{main:[[{node:'MASTER — Validación estática Shared'}],[{node:'Archivo rechazado'}]]}}};
+const opts={proofCode:'function buildOpolCategoryProof(){}',credential:{id:'id',name:'name'}};
+test('both paths pass through authenticated gate and non-OPOL stays unchanged',()=>{const g=patch(input,opts);assert.equal(g.connections['¿Requiere Hero?'].main[1][0].node,'Categoría OPOL — Entrada');assert.equal(g.connections['Comprobar Hero'].main[0][0].node,'Categoría OPOL — Entrada');assert.equal(g.connections['¿MCP catálogo OPOL?'].main[1][0].node,'MASTER — Validación estática Shared');assert.equal(g.connections['Categoría OPOL — Verificar catálogo'].main[1][0].node,'Archivo rechazado');assert.equal(g.nodes.find(n=>n.name==='MCP OPOL — Leer páginas').parameters.method,'GET');assert.equal(input.nodes.length,5)});
+test('rejects changed graph or missing evidence',()=>{assert.throws(()=>patch(input,{proofCode:'',credential:opts.credential}),/INVALID/);const c=structuredClone(input);c.connections['Comprobar Hero'].main[0][0].node='Other';assert.throws(()=>patch(c,opts),/CHANGED/)});

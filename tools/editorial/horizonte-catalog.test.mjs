@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {normalizeHorizonteCatalog as read} from './horizonte-catalog.mjs';
 import {validateSelectedCategories} from './category-validation.mjs';
 const item=(id,slug)=>({id,slug,name:slug});
-const body={category:[item(1,'sin-categoria')],ehc_region:[item(2,'bcs')],ehc_topic:[item(10,'politica')],ehc_municipality:[item(5,'la-paz')]};
+const body={category:[item(28,'politica')],ehc_region:[item(2,'bcs')],ehc_topic:[item(10,'politica')],ehc_municipality:[item(5,'la-paz')]};
 test('verified response feeds the selected editorial validator',()=>{
- const catalog=read({statusCode:200,body});const master={CATEGORIAS:{HORIZONTE:{PRINCIPAL:'sin-categoria',REGION:'bcs',TEMA:'politica',TIPO:'news',MUNICIPIO:'la-paz'}}};
+ const catalog=read({statusCode:200,body});const master={CATEGORIAS:{HORIZONTE:{PRINCIPAL:'politica',REGION:'bcs',TEMA:'politica',TIPO:'news',MUNICIPIO:'la-paz'}}};
  assert.deepEqual(validateSelectedCategories(master,{},['HORIZONTE'],{horizonteCatalog:catalog}),{ok:true,errors:[]});
 });
 test('fails closed for missing, ambiguous, oversized and unsuccessful CMS responses',()=>{
