@@ -1,5 +1,7 @@
 import {readCategoryCatalog, resolveCategory} from './live-category-catalog.mjs';
 import {validateEditorialDestinations} from './horizonte-preflight.mjs';
+import {normalizeHorizonteCatalog} from './horizonte-catalog.mjs';
+import {normalizeHorizonteEditorialClassification} from './horizonte-authoritative-catalog.mjs';
 
 // Trusted callers supply per-site CMS transport; neither a source document nor
 // a MASTER supplies a URL or credentials. Failure never falls back to a stale
@@ -32,5 +34,15 @@ export async function validateLiveEditorialDestinations(master, selected, transp
       categories:live.categories.map(c=>({name:c.name,parent_id:c.parent,parent_name:byId.get(c.parent)?.name ?? null}))
     };
   }
-  return validateEditorialDestinations(master,catalog,selected,{fetchHorizonteCatalog:transport.fetchHorizonteCatalog});
+  if(selected.includes('HORIZONTE')){
+    try {
+      if(typeof transport.fetchHorizonteCatalog!=='function'||typeof transport.fetchHorizonteEditorialClassification!=='function')throw Error('CATALOG_UNAVAILABLE');
+      const raw=await transport.fetchHorizonteCatalog();
+      const normalized=normalizeHorizonteCatalog(raw);
+      normalized.editorialSlugs=normalizeHorizonteEditorialClassification(await transport.fetchHorizonteEditorialClassification(),normalized);
+      const {validateSelectedCategories}=await import('./category-validation.mjs');
+      return validateSelectedCategories(master,catalog,selected,{horizonteCatalog:normalized});
+    }catch{return {ok:false,errors:['HORIZONTE_CATALOGO_NO_CONFIRMADO']};}
+  }
+  return validateEditorialDestinations(master,catalog,selected);
 }
