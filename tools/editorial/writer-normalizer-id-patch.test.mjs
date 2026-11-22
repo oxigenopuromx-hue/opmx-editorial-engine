@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchWriterNormalizerIds as patch} from './writer-normalizer-id-patch.mjs';
+const one=`const d=input;const CATS=d.CATEGORIAS??d.categorias??{};
+const category='Deporte',categoryOpol='ESTADOS',categoryOpolSecondary='GUERRERO',liberalCategory='Economía';
+const result={categories:{opuro:{principal:category},opol:{principal:categoryOpol,secundaria:categoryOpolSecondary}},};
+const normalized={json:{canonical:{categories:result.categories}}};normalized.json.canonical.categories.liberal={principal:liberalCategory};return normalized;`;
+const source=`if(first){${one}}else{${one}}`;
+const run=(input,first)=>new Function('input','first',patch(source))(input,first).json.canonical.categories;
+test('preserves destination IDs in both policy branches',()=>{for(const first of [true,false]){const out=run({CATEGORIAS:{OPURO:{PRINCIPAL_ID:43},OPOL:{PRINCIPAL_ID:10,SECUNDARIA_ID:1731},LIBERAL:{PRINCIPAL_ID:3}}},first);assert.equal(out.opuro.principal_id,43);assert.equal(out.opol.secundaria_id,1731);assert.equal(out.liberal.principal_id,3)}});
+test('retains the legacy shape and rejects malformed IDs',()=>{assert.equal('principal_id' in run({},true).opuro,false);assert.throws(()=>run({CATEGORIAS:{OPURO:{PRINCIPAL_ID:'43'}}},true),/INVALID/)});
+test('does not patch unexpected source versions',()=>assert.throws(()=>patch(one),/SOURCE_CHANGED/));
