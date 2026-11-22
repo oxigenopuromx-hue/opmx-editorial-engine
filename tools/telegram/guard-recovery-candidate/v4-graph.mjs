@@ -10,12 +10,12 @@ export function patchV4Code(code,{receiver=false}={}){
  let s=code;
  s=s.replaceAll(oldRegistry,oldRegistry+",'publish-ambos-v4':Object.freeze(['OPURO','OPOL','LIBERAL','HORIZONTE'])");
  s=s.replaceAll(allowed,allowed+",'publish-ambos-v4'");
+ s=s.replace("policy==='publish-ambos-v1'?'AMBOS':'TODOS'","['publish-ambos-v1','publish-ambos-v4'].includes(policy)?'AMBOS':'TODOS'");
  // Every equality here is a switch into the existing four-site behavior.
  s=s.replace(/([\w$]+(?:\?\.[\w$]+|\.[\w$]+)*)==='publish-todos-v3'/g,(_,x)=>`${modern}.includes(${x})`);
  if(receiver){
   s=s.replaceAll(oldHelp,newHelp);
   s=s.replace('Por defecto se PUBLICARÁ EN TODOS: OXígeno Puro, OXígeno Político, El Liberal y El Horizonte de California','Por defecto se PUBLICARÁ EN AMBOS: OXígeno Puro y OXígeno Político');
-  s=s.replace("policy==='publish-ambos-v1'?'AMBOS':'TODOS'","['publish-ambos-v1','publish-ambos-v4'].includes(policy)?'AMBOS':'TODOS'");
   s=s.replace('const POLICY="publish-todos-v3";','const POLICY="publish-ambos-v4";');
  }
  return s;
