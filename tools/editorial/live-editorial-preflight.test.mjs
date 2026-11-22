@@ -47,7 +47,7 @@ test('four destinations use separate catalogs and reject inconsistent Horizonte 
  const term=(id,slug)=>({id,slug,name:slug});
  const response={statusCode:200,body:{category:[term(8,'politica')],ehc_region:[term(9,'bcs')],ehc_topic:[term(10,'politica'),term(11,'economia')],ehc_municipality:[term(12,'la-paz')]}};
  const master=structuredClone(m);master.CATEGORIAS.HORIZONTE={PRINCIPAL:'politica',TEMA:'politica',REGION:'bcs',TIPO:'news',MUNICIPIO:'la-paz'};
- const t={...transport(),fetchHorizonteCatalog:async()=>response};
+ const t={...transport(),fetchHorizonteCatalog:async()=>response,fetchHorizonteEditorialClassification:async()=>({statusCode:200,body:{schemaVersion:1,items:[{slug:'politica',name:'Política',categoryId:8,topicId:10}]}})};
  assert.equal((await validate(master,['OPURO','OPOL','LIBERAL','HORIZONTE'],t)).ok,true);
  master.CATEGORIAS.HORIZONTE.TEMA='economia';
  assert.equal((await validate(master,['OPURO','OPOL','LIBERAL','HORIZONTE'],t)).ok,false);
@@ -68,7 +68,7 @@ test('all 15 destination combinations independently query exactly their scoped c
  const master=structuredClone(m);master.CATEGORIAS.HORIZONTE={PRINCIPAL:'politica',TEMA:'politica',REGION:'bcs',TIPO:'news',MUNICIPIO:'la-paz'};
  for(let mask=1;mask<16;mask++){
   const selected=all.filter((_,i)=>mask&(1<<i)),calls=[];
-  const t={fetchPage:async({site})=>{calls.push(site);return {status:200,totalPages:1,body:catalogs[site]}},fetchHorizonteCatalog:async()=>{calls.push('HORIZONTE');return response}};
+  const t={fetchPage:async({site})=>{calls.push(site);return {status:200,totalPages:1,body:catalogs[site]}},fetchHorizonteCatalog:async()=>{calls.push('HORIZONTE');return response},fetchHorizonteEditorialClassification:async()=>({statusCode:200,body:{schemaVersion:1,items:[{slug:'politica',name:'Política',categoryId:8,topicId:10}]}})};
   assert.equal((await validate(master,selected,t)).ok,true,selected.join(','));
   assert.deepEqual(calls.sort(),[...selected].sort());
  }
