@@ -1,7 +1,7 @@
 // Read-only MCP adapter. The surrounding workflow owns the allowed CMS URLs,
 // credentials and authentication; neither argument may be supplied by callers.
 const NAME='consultar_categorias_editoriales_opmx';
-const sites=['OPURO','OPOL','LIBERAL'];
+const sites=['OPURO','OPOL','LIBERAL','HORIZONTE'];
 export function classifyCategoryCatalog(message,base,identity) {
   if (message?.method==='tools/list' && Array.isArray(base?.response?.result?.tools)) {
     if (base.response.result.tools.some(t=>t.name===NAME)) throw Error('CATEGORY_TOOL_DUPLICATE');
@@ -11,7 +11,7 @@ export function classifyCategoryCatalog(message,base,identity) {
   if (message?.method!=='tools/call' || message?.params?.name!==NAME) return base;
   const fail=()=>({httpStatus:200,response:{jsonrpc:'2.0',id:message?.id??null,error:{code:-32602,message:'Invalid category catalog request'}}});
   const a=message?.params?.arguments;
-  if (typeof identity?.owner!=='string'||identity.owner!==identity.chat||!/^[1-9][0-9]{0,15}$/.test(identity.owner)||message.jsonrpc!=='2.0'||!Object.hasOwn(message,'id')||!a||typeof a!=='object'||Array.isArray(a)||Object.keys(a).sort().join(',')!=='page,site'||!sites.includes(a.site)||!Number.isSafeInteger(a.page)||a.page<1||a.page>100)return fail();
+  if (typeof identity?.owner!=='string'||identity.owner!==identity.chat||!/^[1-9][0-9]{0,15}$/.test(identity.owner)||message.jsonrpc!=='2.0'||!Object.hasOwn(message,'id')||!a||typeof a!=='object'||Array.isArray(a)||Object.keys(a).sort().join(',')!=='page,site'||!sites.includes(a.site)||!Number.isSafeInteger(a.page)||a.page<1||a.page>100||(a.site==='HORIZONTE'&&a.page!==1))return fail();
   return {httpStatus:200,route:'editorial-category-catalog',request:{id:message.id,site:a.site,page:a.page}};
 }
 
@@ -19,7 +19,7 @@ export function classifyCategoryCatalog(message,base,identity) {
 // headers and errors; never reveal credentials, URLs, HTML or transport logs.
 export function formatCategoryCatalog(request,response) {
   const fail=()=>({httpStatus:200,response:{jsonrpc:'2.0',id:request?.id??null,result:{content:[{type:'text',text:'Catálogo no confirmado.'}],structuredContent:{status:'CATEGORY_CATALOG_UNCONFIRMED'},isError:true}}});
-  if(!sites.includes(request?.site)||!Number.isSafeInteger(request?.page)||request.page<1||request.page>100||response?.statusCode!==200||!Array.isArray(response.body)||response.body.length>100||!response.headers||typeof response.headers!=='object')return fail();
+  if(!sites.includes(request?.site)||request.site==='HORIZONTE'||!Number.isSafeInteger(request?.page)||request.page<1||request.page>100||response?.statusCode!==200||!Array.isArray(response.body)||response.body.length>100||!response.headers||typeof response.headers!=='object')return fail();
   const entries=Object.entries(response.headers).filter(([k])=>k.toLowerCase()==='x-wp-totalpages');
   if(entries.length!==1||!/^[1-9][0-9]{0,2}$/.test(String(entries[0][1])))return fail();
   const totalPages=Number(entries[0][1]);
