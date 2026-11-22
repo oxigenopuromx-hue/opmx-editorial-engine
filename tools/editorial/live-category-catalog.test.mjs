@@ -29,3 +29,7 @@ test('rejects incomplete, unavailable, inconsistent and duplicate catalogs', asy
     async()=>({status:200,totalPages:1,body:[row(1,'child',99)]})])
     await assert.rejects(readCategoryCatalog('OPOL',fetchPage),/CATEGORY_CATALOG_/);
 });
+test('rejects a response labeled as another site or page',async()=>{
+ await assert.rejects(readCategoryCatalog('OPURO',async()=>({status:200,site:'OPOL',page:1,totalPages:1,body:[row(1)]})),/INCOMPLETE/);
+ await assert.rejects(readCategoryCatalog('OPURO',async()=>({status:200,site:'OPURO',page:2,totalPages:1,body:[row(1)]})),/INCOMPLETE/);
+});
