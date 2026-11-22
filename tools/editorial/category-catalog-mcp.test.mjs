@@ -5,6 +5,8 @@ const req={id:7,site:'OPURO',page:1};
 const identity={owner:'1',chat:'1'};
 test('routes only a bounded site and page; rejects URLs and extra input',()=>{
  assert.equal(classify(call({site:'OPURO',page:1}),{},identity).route,'editorial-category-catalog');
+ assert.equal(classify(call({site:'HORIZONTE',page:1}),{},identity).route,'editorial-category-catalog');
+ assert.equal(classify(call({site:'HORIZONTE',page:2}),{},identity).response.error.code,-32602);
  for(const a of [{site:'https://example.com',page:1},{site:'OPURO',page:0},{site:'OPURO',page:101},{site:'OPURO',page:1,url:'https://example.com'}])assert.equal(classify(call(a),{},identity).response.error.code,-32602);
  assert.equal(classify(call({site:'OPURO',page:1}),{},null).response.error.code,-32602);
 });
