@@ -62,3 +62,14 @@ test('MCP page responses feed the live preflight without relying on source-provi
  };
  assert.equal((await validate(m,['OPURO','OPOL','LIBERAL'],{fetchPage})).ok,true);
 });
+test('all 15 destination combinations independently query exactly their scoped catalogs',async()=>{
+ const all=['OPURO','OPOL','LIBERAL','HORIZONTE'],term=(id,slug)=>({id,slug,name:slug});
+ const response={statusCode:200,body:{category:[term(8,'politica')],ehc_region:[term(9,'bcs')],ehc_topic:[term(10,'politica')],ehc_municipality:[term(12,'la-paz')]}};
+ const master=structuredClone(m);master.CATEGORIAS.HORIZONTE={PRINCIPAL:'politica',TEMA:'politica',REGION:'bcs',TIPO:'news',MUNICIPIO:'la-paz'};
+ for(let mask=1;mask<16;mask++){
+  const selected=all.filter((_,i)=>mask&(1<<i)),calls=[];
+  const t={fetchPage:async({site})=>{calls.push(site);return {status:200,totalPages:1,body:catalogs[site]}},fetchHorizonteCatalog:async()=>{calls.push('HORIZONTE');return response}};
+  assert.equal((await validate(master,selected,t)).ok,true,selected.join(','));
+  assert.deepEqual(calls.sort(),[...selected].sort());
+ }
+});
