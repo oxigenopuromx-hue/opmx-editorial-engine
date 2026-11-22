@@ -2,7 +2,10 @@
 // injected authenticated transport. This module never accepts a CMS URL from
 // an article, and does not perform writes.
 const SITES = new Set(['OPURO', 'OPOL', 'LIBERAL']);
-const nameKey = s => s.normalize('NFC').trim().toLocaleLowerCase('es-MX');
+// Match the writer's normalization so names which the writer would conflate
+// are treated as ambiguous, including differences in accents and spaces.
+const nameKey = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/\s+/g, ' ').trim().toLocaleLowerCase('es-MX');
 
 export async function readCategoryCatalog(site, fetchPage) {
   if (!SITES.has(site) || typeof fetchPage !== 'function') throw Error('CATEGORY_CATALOG_UNAVAILABLE');
