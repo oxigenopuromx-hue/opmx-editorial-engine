@@ -1,0 +1,3 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {patchMotorFeaturedPolicy as patch} from './featured-policy-motor-patch.mjs';
+test('replaces one instruction with scoped LITERAL and EDITORIAL preparation',()=>{const out=patch('DESTACADA LITERAL (#43): viejo\notro','a'.repeat(40));assert.match(out,/prepareFeaturedForPolicy/);assert.match(out,/chooseMotorPolicy/);assert.match(out,/EDITORIAL o LITERAL/);assert.ok(out.endsWith('otro'))});
+test('refuses stale, duplicated and unpinned prompts',()=>{assert.throws(()=>patch('missing','a'.repeat(40)),/CHANGED/);assert.throws(()=>patch('DESTACADA LITERAL (#43): x\nDESTACADA LITERAL (#43): y','a'.repeat(40)),/CHANGED/);assert.throws(()=>patch('x','main'),/INVALID/)});
