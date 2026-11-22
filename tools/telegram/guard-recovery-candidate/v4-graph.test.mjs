@@ -4,3 +4,5 @@ test('v4 follows four-site paths without broadening historical policies',()=>{
  const [r,route]=new Function(patchV4Code(src))();assert.equal(route('publish-ambos-v4'),'four');assert.equal(route('publish-todos-v3'),'four');assert.equal(route('publish-todos-v2'),'old');assert.equal(r['publish-ambos-v4'].length,4);
 });
 test('v4 adds an allowed policy while retaining old ones',()=>{const f=new Function('scope',patchV4Code("return ['publish-ambos-v1','publish-todos-v2','publish-todos-v3'].includes(scope.policy)"));assert.equal(f({policy:'publish-ambos-v4'}),true);assert.equal(f({policy:'unknown'}),false)});
+
+test('embedded v4 command parser defaults to AMBOS',()=>{const f=new Function('policy',patchV4Code("return policy==='publish-ambos-v1'?'AMBOS':'TODOS'"));assert.equal(f('publish-ambos-v4'),'AMBOS');assert.equal(f('publish-todos-v3'),'TODOS')});
