@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {bindWriterRelease as bind} from './bind-writer-release.mjs';
+const legacy='pin={"workflowId":"4o7K5TmKc7joScqB","versionId":"2130cf37-0a61-4897-b4c9-d5365c4c6b8d","prepareSha256":"8db8e0c0aaafd824450551a91b174c073a02d2da4c7c8c5c4069a22766add645","normalizerSha256":"CANDIDATE_NOT_RELEASED"}';
+const v3="pin={workflowId:'issue44-candidate',versionId:'v3-unreleased',prepareSha256:'NOT_RELEASED',normalizerSha256:'NOT_RELEASED'}";
+const input={nodes:[{name:'MASTER — Validación estática Shared',parameters:{jsCode:legacy+';'+v3}}]},writer={nodes:[{name:'Validar y normalizar OPMX MASTER',parameters:{jsCode:'normalize'}},{name:'Preparar MASTER y binarios',parameters:{jsCode:'prepare'}}]};
+test('binds both branches to the same exact published writer and hashes',()=>{const {graph,pin}=bind(input,{writer,versionId:'09b6af2a-dacc-4d66-b89a-4e15271714b8'});assert.equal(pin.normalizerSha256.length,64);assert.equal(graph.nodes[0].parameters.jsCode.split(pin.normalizerSha256).length,3);assert.match(input.nodes[0].parameters.jsCode,/CANDIDATE_NOT_RELEASED/)});
+test('refuses a stale graph or invalid version',()=>{assert.throws(()=>bind(input,{writer,versionId:'latest'}),/INVALID/);assert.throws(()=>bind({nodes:[]},{writer,versionId:'09b6af2a-dacc-4d66-b89a-4e15271714b8'}),/CHANGED/)});
