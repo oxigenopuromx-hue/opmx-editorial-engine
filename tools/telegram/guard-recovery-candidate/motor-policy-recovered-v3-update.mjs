@@ -9,7 +9,7 @@ const fail=()=>{throw Error('RECOVERED_POLICY_UNCONFIRMED')};
 export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
  if(!inventory||inventory.status!=='PACKAGE_FOUND'||inventory.package_id!==packageId||inventory.revision!==revision||inventory.state!=='READY'||!Array.isArray(inventory.items)||!Array.isArray(sources))fail();
  if(!Object.hasOwn(inventory,'recovered_policy')||!Object.hasOwn(inventory,'confirmed_correction'))fail();
- const p=inventory.recovered_policy;if(p?.policy!=='publish-todos-v3')fail();
+ const p=inventory.recovered_policy;if(!['publish-todos-v3','publish-ambos-v4'].includes(p?.policy))fail();
  if(!p||typeof p!=='object'||Array.isArray(p)||p.authorized!==true||!['PUBLISH','DRAFT'].includes(p.mode)||typeof p.explicit!=='boolean'||
     !['DIRECT_MODE_COMMAND','ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'].includes(p.authorization)||
     (p.authorization==='DIRECT_MODE_COMMAND'&&!p.explicit)||(p.authorization==='ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE'&&(p.explicit||p.mode!=='PUBLISH'))||
@@ -37,7 +37,7 @@ export function chooseMotorPolicy(inventory,sources,{packageId,revision}){
  if(Object.hasOwn(p,'content_mode')){result.content_mode=p.content_mode;result.content_control_item_ids=[...contentIds];}
  if(Object.hasOwn(inventory,'confirmed_correction')){
   const c=inventory.confirmed_correction;
-  if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||(!['CREATE','UPDATE'].includes(c.action)||c.policy!=='publish-todos-v3')||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();
+  if(!c||typeof c!=='object'||Array.isArray(c)||c.package_id!==packageId||c.revision!==revision||(!['CREATE','UPDATE'].includes(c.action)||c.policy!==p.policy)||!['LITERAL','EDITORIAL'].includes(c.content_mode)||!/^[a-f0-9]{64}$/.test(c.preview_hash??''))fail();
   let selected;try{selected=resolveVersionedDestinations(c.destination,c.policy);if(versionedDestinationLabel(selected,c.policy)!==c.destination)fail();if(c.action==='UPDATE'&&selected.some(d=>!previous.includes(d)))fail()}catch{fail()}
   result.policy=c.policy;result.destinations=selected;
   result.destination=c.destination;result.content_mode=c.content_mode;result.confirmed_preview_hash=c.preview_hash;

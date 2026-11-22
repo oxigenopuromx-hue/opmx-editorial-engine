@@ -9,12 +9,12 @@ import {chooseMotorPolicy as chooseRecoveredV3} from './motor-policy-recovered-v
 export function chooseMotorPolicy(inventory,sources,{packageId,revision}={}){
  const fail=()=>{throw Error('RECOVERED_POLICY_UNCONFIRMED')};
  if(!inventory||inventory.status!=='PACKAGE_FOUND'||inventory.package_id!==packageId||inventory.revision!==revision||inventory.state!=='READY'||!Array.isArray(inventory.items)||!Array.isArray(sources))fail();
- let hasV3=false;
- for(const source of sources){if(source?.stream!=='text'||!Buffer.isBuffer(source.bytes))continue;try{const control=decodeControl(new TextDecoder('utf-8',{fatal:true}).decode(source.bytes).trim(),packageId);if(control?.policy==='publish-todos-v3')hasV3=true}catch{/* The selected implementation rejects malformed controls. */}}
+ const modernPolicies=['publish-todos-v3','publish-ambos-v4'];let observedPolicy=null;
+ for(const source of sources){if(source?.stream!=='text'||!Buffer.isBuffer(source.bytes))continue;try{const control=decodeControl(new TextDecoder('utf-8',{fatal:true}).decode(source.bytes).trim(),packageId);if(modernPolicies.includes(control?.policy)){if(observedPolicy&&observedPolicy!==control.policy)fail();observedPolicy=control.policy}}catch{/* The selected implementation rejects malformed controls. */}}
  if(Object.hasOwn(inventory,'recovered_policy')){
-  if(hasV3||inventory.recovered_policy?.policy==='publish-todos-v3'||inventory.confirmed_correction?.policy==='publish-todos-v3'){if(!hasV3||inventory.recovered_policy?.policy!=='publish-todos-v3'||inventory.confirmed_correction?.policy!=='publish-todos-v3')fail();return chooseRecoveredV3(inventory,sources,{packageId,revision});}
+  if(observedPolicy||modernPolicies.includes(inventory.recovered_policy?.policy)||modernPolicies.includes(inventory.confirmed_correction?.policy)){if(!observedPolicy||inventory.recovered_policy?.policy!==observedPolicy||inventory.confirmed_correction?.policy!==observedPolicy)fail();return chooseRecoveredV3(inventory,sources,{packageId,revision});}
   return chooseLegacy(inventory,sources,{packageId,revision});
  }
  if(Object.hasOwn(inventory,'confirmed_correction'))fail();
- return hasV3?chooseTelegramMode(inventory,sources):chooseLegacy(inventory,sources,{packageId,revision});
+ return observedPolicy?chooseTelegramMode(inventory,sources):chooseLegacy(inventory,sources,{packageId,revision});
 }

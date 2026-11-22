@@ -9,7 +9,8 @@ function validControl(command, policy) {
 }
 
 export const ORDER_PREFIX = 'OPMX-TELEGRAM-ORDER-0dda75de5e03b4c2f9b1844865aaa11fd15be97dca854a0d\n';
-export const POLICY = 'publish-todos-v3';
+export const POLICY = 'publish-ambos-v4';
+export const HORIZONTE_POLICY = 'publish-todos-v3';
 export const PREVIOUS_POLICY = 'publish-todos-v2';
 export const LEGACY_POLICY = 'publish-ambos-v1';
 const digest = value => createHash('sha256').update(value).digest('hex');
@@ -20,7 +21,7 @@ const digest = value => createHash('sha256').update(value).digest('hex');
 export function attestedControl(command, packageId, messageId, noticeMessageId, policy) {
   try { command=parseContentModeCommand(command).command; } catch {}
   if (!/^tg_[a-f0-9]{40}$/.test(packageId) || !Number.isSafeInteger(messageId) || messageId < 1) throw Error('CONTROL_INVALID');
-  if (![POLICY, PREVIOUS_POLICY, LEGACY_POLICY].includes(policy)) throw Error('CONTROL_POLICY_UNCONFIRMED');
+  if (![POLICY, HORIZONTE_POLICY, PREVIOUS_POLICY, LEGACY_POLICY].includes(policy)) throw Error('CONTROL_POLICY_UNCONFIRMED');
   if (!validControl(command, policy)) throw Error('CONTROL_INVALID');
   const data = { policy, package_id: packageId, message_id: messageId };
   if (command === '/nuevo') {
@@ -40,14 +41,14 @@ export function decodeControl(text, packageId) {
   const command = marked.slice(0, split);
   // Other marked items, especially multiline image instructions, are not
   // policy envelopes. Identify a possible control before decoding its JSON.
-  if (![POLICY, PREVIOUS_POLICY, LEGACY_POLICY].some(policy=>validControl(command,policy))) {
+  if (![POLICY, HORIZONTE_POLICY, PREVIOUS_POLICY, LEGACY_POLICY].some(policy=>validControl(command,policy))) {
     let contentAlias=false;try{parseContentModeCommand(command);contentAlias=true}catch{}
     if (contentAlias||/^\/(?:publicar|borrador|literal|editorial)(?:\s|$)/i.test(command)) throw Error('CONTROL_INVALID');
     return null;
   }
   let data;
   try { data = JSON.parse(marked.slice(split + 1)); } catch { throw Error('CONTROL_INVALID'); }
-  if (![POLICY, PREVIOUS_POLICY, LEGACY_POLICY].includes(data.policy) || data.package_id !== packageId || !Number.isSafeInteger(data.message_id) || data.message_id < 1) throw Error('CONTROL_BINDING_INVALID');
+  if (![POLICY, HORIZONTE_POLICY, PREVIOUS_POLICY, LEGACY_POLICY].includes(data.policy) || data.package_id !== packageId || !Number.isSafeInteger(data.message_id) || data.message_id < 1) throw Error('CONTROL_BINDING_INVALID');
   if (!validControl(command, data.policy)) {
     let contentAlias=false;try{parseContentModeCommand(command);contentAlias=true}catch{}
     // A malformed or unsupported marked mode must never fall back to the default.
@@ -119,4 +120,5 @@ export function chooseTelegramMode(inventory, sources) {
   if (opening.length) { const selected=parseVersionedDestinationCommand('/publicar',opening[0].policy); return withContent({ mode:'PUBLISH', destination:selected.destination, destinations:selected.destinations, policy:selected.policy, explicit:false, authorized:true, authorization:'ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE', control_item_ids:controlIds }); }
   return { mode:'DRAFT', destination:'AMBOS', explicit:false, authorized:false, authorization:'LEGACY_PRESERVED', control_item_ids:controlIds };
 }
+
 
