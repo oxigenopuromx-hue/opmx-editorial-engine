@@ -1,0 +1,31 @@
+{
+  "schema": "opmx.motor-prompt-change.v1",
+  "issue": "https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/57",
+  "automationId": "6ae9095256948191b33f1e023fbfbf8b",
+  "installedAt": "2026-11-24T16:00:36.772067+00:00",
+  "before": {
+    "sha256": "535c901585bb42a8eb477019600c18634fbe53e15d01eaa17b902ef7a9f52c35",
+    "characters": 65402,
+    "utf8_bytes": 66223
+  },
+  "after": {
+    "sha256": "cf5e5f2704e0d7bb328988582653f6ecc726c9d74c6c4e4e9aeabbfac6c188f1",
+    "characters": 65366,
+    "utf8_bytes": 66189
+  },
+  "changedParagraphs": 1,
+  "preserved": [
+    "id",
+    "title",
+    "schedule",
+    "timing_mode",
+    "is_enabled",
+    "default_timezone",
+    "environment_selection"
+  ],
+  "deployment": "PROMPT_READBACK_CONFIRMED",
+  "case": "AWAITING_NEXT_TELEGRAM_REVIEW",
+  "publicationAttempted": false,
+  "oldParagraph": "Aplica primero las correcciones ya autorizadas que puedas hacer sin pedir trabajo al operador: si la imagen está acreditada como generada con IA, añade/conserva la identificación y el crédito estándar «Ilustración generada con IA»; no vuelvas a pedir una confirmación ya acreditada. La falta de crédito o leyenda en una fotografía ordinaria aportada permite dejar esos campos vacíos: no bloquees por ausencia general de autor, procedencia o metadatos ni inventes autoría. Una foto de servidores sin esos datos no se convierte por ello en IA/composición dudosa. Usa texto alternativo descriptivo, sin atribución no acreditada. IMAGE_ORIGIN_UNCLEAR sólo procede cuando observaste indicios concretos de una composición o atribución cuyo origen o tratamiento cambia el uso editorial, no por la sola ausencia de crédito/EXIF. Describe ese indicio comprobado en Work y pide sólo la aclaración necesaria; no la declares IA para eludir el bloqueo. Las etiquetas/extracto y el perfil LITERAL conservan sus reglas actuales: corrige lo que permiten esas reglas antes de reportar una falla, sin truncar ni reescribir contenido literal.",
+  "newParagraph": "Aplica primero las correcciones autorizadas. Para una imagen acreditada como generada con IA conserva «Ilustración generada con IA». Distingue una fotografía mejorada: si el operador aclara que sólo optimizó su calidad, conserva procedencia y retoque, por ejemplo «Fotografía: La Jornada. Mejora de calidad con IA»; no la reclasifiques como generada ni repitas la pregunta. La marca «Generado por OPPO AI» o letras ilegibles en un documento fotografiado no prueban por sí solas generación integral o alteración documental. No transcribas ni uses esas letras como fuente de hechos. IMAGE_ORIGIN_UNCLEAR requiere una contradicción concreta aún sin resolver, no la mera marca, ilegibilidad o falta de EXIF; identifica el detalle y pide sólo la aclaración necesaria. No certifiques autenticidad ni inventes autoría. Una fotografía ordinaria permite crédito/leyenda vacíos sin bloquear sólo por su ausencia. Estos datos editoriales no autorizan publicar ni cambiar modo/destinos. Etiquetas/extracto y LITERAL conservan sus reglas: corrige lo permitido sin truncar ni reescribir texto literal."
+}
