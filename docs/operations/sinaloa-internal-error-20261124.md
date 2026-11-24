@@ -1,63 +1,72 @@
-# Diagnóstico del bloqueo Sinaloa — 24 de noviembre de 2026
+# Recuperación y publicación de Sinaloa — 24 de noviembre de 2026
 
 Incidente: https://github.com/oxigenopuromx-hue/opmx-editorial-engine/issues/61
 
-## Incidente y autorización
+## Resultado operativo comprobado
 
-Paquete `tg_58c600f50923808a4bba1790c42172cc118258bc`, READY revisión 9, seguridad en Sinaloa. Dirección pide identificar la excepción real, corregir el fallo y comprobar intentos/escrituras antes de reanudar, conservando la misma solicitud y evitando duplicados. No atribuir la falla al comunicado dividido sin evidencia.
+La nota de seguridad en Sinaloa quedó publicada en los dos destinos autorizados. Se conservó el paquete `tg_58c600f50923808a4bba1790c42172cc118258bc`, revisión **9**, y la solicitud canónica **`tg_a7990717070d2a066bf092d40664ab3a1ee2ea325fed86b7fe95090a86da5aec`**. No se abrió otra revisión ni se fabricó otro evento READY o una confirmación de Telegram.
 
-## Evidencia recuperada — 24/11/2026 CDMX
+| Destino | Post | Estado CMS leído | URL pública comprobada HTTP 200 |
+| --- | --- | --- | --- |
+| OPURO | 11152 | publish | https://oxigenopuro.com.mx/seguridad-sinaloa-sheinbaum-estrategia-presencia-federal/ |
+| OPOL | 4098 | publish | https://oxigenopolitico.com.mx/gobierno/seguridad-sinaloa-sheinbaum-estrategia-presencia-federal/ |
 
-- PROGRESS_WRITING 14:09:24 y DIAG|INTERNAL_ERROR|INTERNAL_PROCESSING_ERROR|0 a las 14:09:39, según el registro aportado.
-- Motor `9aa8077a-ee5c-8320-a84c-e6714291ee2e`, ventana 14:09:21–14:13:02. El resultado final distingue este bloqueo de otra nota sobre contratos del INE que sí publicó. No confundir los IDs de esa otra nota con Sinaloa.
-- El resultado retenido del Motor sólo dice error interno, aviso entregado y cierre seguro confirmado. No incluye tipo de excepción, código, stack o módulo/línea. La consulta privada y la vista del chat devolvieron el mismo resumen; no se recuperó una excepción histórica concreta. El código 33 es un fallback definido cuando no se conoce la causa, no prueba por sí solo de una excepción de código.
-- Se recuperaron y verificaron íntegramente tamaños/SHA-256 de los cinco TEXT y del caption de imagen: orden /nuevo, enlace Presidencia, comunicado en dos textos de 3,977 y 2,191 bytes, orden /listo y caption Hero. No hay evidencia de que la separación del comunicado haya causado el bloqueo.
-- Guard `/v1/telegram/reconciliation/observe`, ejecución n8n **90327**, HTTP 200: **RECONCILIATION_VERIFIED**, OPURO BLOCKED y OPOL BLOCKED, writeAuthorized=false, processTerminationClaimed=false. `writesRolledBack=true` corresponde a la transacción diagnóstica revertida; **no significa que se haya revertido una publicación**. Acredita el resultado del gate de conciliación, no una búsqueda global de duplicados bajo otras solicitudes.
-- La consulta SQL QA 90302 fue rechazada por su credencial; es una falla de esta comprobación auxiliar y no la excepción histórica de Sinaloa. No se cambiaron credenciales, IPs ni permisos. Se restauraron los flujos diagnósticos usados.
-- Lectura final posterior: READY9, seis elementos STORED, sin publisher_result. No se abrió otra revisión, no se emitió un nuevo READY ni se llamó a Publisher para esta nota.
+Título: **Seguridad en Sinaloa: Sheinbaum defiende estrategia**.
 
-## Corrección acotada instalada: conservar detalle técnico disponible
+El resultado autenticado del paquete acredita `WRITER_RESULT_CONFIRMED`, fase PUBLISH, destino AMBOS y los dos IDs anteriores. Su hash de recepción es `6de4a92ce3207e3786cbad3125e5042e3ef534643b956e66449783547c331492`; hash de envío `72d2c49b99b54c51de524636180f65267ec239dc77884a6df1f9242605301c43`. Se verificó con el validador conservado del Motor en `99fd6b0f81b41ad484c6e3c7cff4d58ca1c09a11`: completionPermitted=true. El aviso Telegram quedó **SENT** y el cierre del intento original devolvió **ATTEMPT_COMPLETED**, reopenPermitted=false y retryPermitted=false.
 
-Se actualizó únicamente el párrafo de diagnóstico del mismo Motor para que el resultado privado de Work conserve paquete/revisión, etapa, última herramienta/ejecución y, si hubo una excepción realmente observada, tipo/código y módulo/línea saneados. Prohíbe mensaje crudo, secretos y fuentes; no envía trazas técnicas a Telegram y exige decirlo si no consta una excepción.
+## Límite del diagnóstico histórico
 
-Lectura independiente exacta: 65,446 → 65,526 caracteres; actualización 14:19:21 CDMX. Identidad, habilitación, horario, timezone, selección de entorno y todos los pins conservados. Sin nuevo consumidor ni ejecución histórica disparada por instalar. Esta instrucción mejora el diagnóstico de futuras ejecuciones; **no recupera la excepción perdida ni demuestra corregida la causa de la revisión 9**.
+El Motor original `9aa8077a-ee5c-8320-a84c-e6714291ee2e` registró PROGRESS_WRITING a las 14:09:24 y el diagnóstico genérico a las 14:09:39 CDMX. Su resultado retenido sólo dice error interno, aviso entregado y bloqueo confirmado. No conservó tipo de excepción, stack, módulo/línea ni resultado de la herramienta que falló. La consulta privada y la vista de Work devolvieron ese mismo resumen.
 
-## Pendiente para resolver el incidente
+Por tanto, **la excepción histórica concreta no se recuperó y no se afirma corregida una causa raíz que no consta**. El código 33 es un fallback, no prueba de una excepción. La ejecución original también publicó una nota distinta del INE; sus IDs no corresponden a Sinaloa.
 
-1. Obtener un registro concreto de la herramienta/paso que falló o una reproducción aislada de esa fase con los materiales exactos; si ese registro no existe, mantener explícito el límite en lugar de inventar una causa.
-2. Corregir sólo el defecto reproducido y verificarlo sin una publicación de ensayo.
-3. Antes de reanudar: comprobar reservas/submissions/intentos y CMS actuales por el circuito autenticado; conciliar cualquier efecto y conservar identidad/solicitud. La ausencia de publisher_result por sí sola no autoriza reintentar.
-4. Usar únicamente una recuperación soportada para el estado y modalidad reales; no crear otro paquete/clave ni simular confirmaciones para sortear el intento bloqueado.
-5. Acreditar el resultado y cierre del mismo paquete. El incidente permanece abierto; no se ha afirmado reparación de causa raíz.
+Se recuperaron por completo los seis elementos originales y se verificaron tamaños/SHA-256: controles /nuevo y /listo, enlace de Presidencia, comunicado dividido en dos textos de 3,977 y 2,191 bytes, e imagen Hero original de 95,764 bytes. No se atribuye el error a esa división: ambas partes se procesaron con integridad comprobada en la continuación exitosa.
 
-Relacionado: #24, #31, #32 y #40.
+## Comprobaciones antes de recuperar
 
+- Guard observe, ejecución n8n **90327**, devolvió RECONCILIATION_VERIFIED, OPURO/OPOL BLOCKED. Su writesRolledBack=true corresponde a la transacción diagnóstica, no a una publicación revertida.
+- La lectura autenticada de ambos CMS, ejecución **90358**, examinó los 55 resultados OPURO y 15 OPOL de Sinaloa, incluyendo publicados, borradores, pendientes, programados, privados y papelera. No apareció esta nota. La cobertura previa de la captura, del 21 de noviembre, es distinta de la respuesta presidencial del comunicado del 23.
+- La recuperación administrativa ejecutó una comprobación transaccional de ausencia de reservas, solicitudes, destinos, medios, submissions, receipts y claims vinculados, incluyendo las 15 claves históricas posibles. Exigió escritores inactivos, runtime/versiones fijados y hashes/tamaños exactos de fuentes y controles.
+- La consulta SQL QA **90302** había sido rechazada por su credencial; no era la excepción del Motor y no se alteraron credenciales, IPs o permisos para insistir.
+- No se emitió otra solicitud ni se reutilizaron IDs de notas distintas.
 
-## Cambio exacto del párrafo del Motor
+## Defecto de recuperación corregido y desplegado
 
-Se reemplazó una única coincidencia del párrafo de conservación de controles, compactando su redacción y agregando la obligación de registro privado. El resto del prompt permanece idéntico. Todos los IDs/pins conservaron su secuencia exacta; lectura independiente del prompt y metadata realizada después de actualizar.
+La recuperación existente exigía una decisión/preview confirmados de /abrir. Este paquete ordinario /nuevo → /listo no tenía ese tipo de decisión. No se simularon controles para hacerlo pasar por esa rama.
 
-### Texto anterior
+Se implementó `POST /v1/telegram/attempts/recover-ordinary` en Guard, usando autenticación y administrador existentes. Sólo admite el mismo intento ordinario EDITORIAL bloqueado y realmente sin escrituras. Comprueba paquete/revisión/evento, fuentes, autorización original y request_id; rota la capacidad privada del mismo intento y registra RESUME_ORIGINAL_UNWRITTEN. No cambia modalidad ni destinos ni crea otra revisión/evento, y no permite reintentar respuestas inciertas. Las recuperaciones confirmadas, LITERAL y UPDATE conservan su circuito.
 
-```text
-Este bloque cambia cómo comunicas un bloqueo comprobado. Conserva íntegramente el único Motor, READY/preview, sus suscripciones, los pins del selector y fuentes, la modalidad, destinos, request_id, decisiones, controles de escritura y cierre del intento. No reabras ni reproceses paquetes históricos por esta actualización. Las continuaciones manuales autorizadas aplican estas mismas reglas editoriales y de diagnóstico, sin rescatar reglas históricas más restrictivas.
-```
+Código y revisión:
 
-### Texto instalado
+- https://github.com/oxigenopuromx-hue/opmx-publisher-guard/pull/21
+- https://github.com/oxigenopuromx-hue/opmx-publisher-guard/pull/22
+- Release final `e42f801d0310d3daa566728f1a68ec8ea05288d5`, rama release/production.
+- Hostinger mostró el despliegue final completado a las **14:48 CDMX**, commit e42f801d y entrada server.js. Sin GitHub Actions y sin migración de base de datos.
 
-```text
-Conserva Motor único, READY/preview, suscripciones, pins, modalidad, destinos, request_id, decisiones, controles y cierre. Esta actualización no reabre ni procesa históricos. Las continuaciones autorizadas aplican estas reglas, no las históricas más restrictivas.
+La primera entrega c532927 no propagaba el nuevo método desde fence-preview-start.mjs. La comprobación funcional **90672** devolvió HTTP 404, sin efectos. Se corrigió esa delegación en PR22 y se agregó una regresión que extrae la delegación del entrypoint real y verifica el enrutado HTTP al proveedor correcto. **177 pruebas aprobadas y npm test aprobado**, incluyendo lectores/gates reales sobre doble transaccional y rutas autenticadas.
 
-TRAZA EN WORK: Conserva paquete/revisión, etapa y última herramienta/ejecución. Registra sólo tipo/código y módulo/línea de la excepción observada, sin mensaje crudo, secretos ni fuentes. Si no consta excepción, dilo. Código33 no demuestra una excepción. No envíes la traza a Telegram.
-```
+La única recuperación efectiva, ejecución **90690** a las 14:51 CDMX, devolvió HTTP 200 y **ORDINARY_UNWRITTEN_ATTEMPT_RECOVERED**, originalAuthorizationPreserved=true, destino AMBOS, política publish-ambos-v4 y el mismo request_id. La capacidad privada no se incluye en este documento.
 
-## Verificación y reversión
+## Preparación editorial y publicación única
 
-- Motor existente: `6ae9095256948191b33f1e023fbfbf8b`.
-- Caracteres: 65446 antes, 65526 después; dentro del límite de 65,536.
-- Lectura exacta confirmada; ID, título, horario, timezone, estado habilitado, thread y selección de entorno iguales.
-- La actualización no es un run ni prueba de captura del próximo error: falta aceptación integral ante una excepción controlada.
-- Para revertir, releer el prompt actual y reemplazar únicamente el texto instalado por el anterior si sigue siendo una coincidencia única. No sustituir el prompt completo con una copia vieja, porque podría haber cambios concurrentes.
-- No recuperar, reabrir, encolar, publicar ni cambiar request_id al revertir. Los permisos del paquete no dependen de este párrafo.
+- Se usaron los dos textos completos, la fuente oficial del 23 de noviembre y la Hero del paquete. El reportaje mantiene atribución de las cifras a autoridades.
+- Política original validada: PUBLISH, AMBOS (OPURO/OPOL), EDITORIAL, ANNOUNCED_DEFAULT_AND_DIRECT_CLOSE.
+- Catálogo vivo: OPURO Seguridad ID36; OPOL Gobierno ID3. Preflight local y validación de Publisher FILES_VALIDATED / MASTER_SEMANTICS_VALIDATED aprobados.
+- Imagen Hero 1280×854 y destacada 1200×630, JPEG independientes. No se generó ni sustituyó la escena.
+- Se hizo **una sola llamada efectiva de publicación** con la solicitud original. Respondió PUBLISH_SUBMITTED; las lecturas posteriores fueron consultas, sin reenviar.
+- El escritor compartido **90697** completó su ejecución a las 14:52:45 CDMX.
+- Lectura autenticada posterior de CMS, ejecución **90723**: ambos posts publish, slug/título exactos y contenido Gutenberg idéntico al entregado. Fuente oficial presente en el cuerpo.
+- OPURO: Hero11150 y destacada11151; OPOL: Hero4096 y destacada4097. IDs distintos en cada medio.
+- Los dos enlaces públicos devolvieron HTTP200 con el título, contenido y canonical correctos.
+- Los flujos auxiliares se restauraron al diagnóstico original de dos nodos, inactivo y sin los nodos temporales de lectura.
 
-La causa histórica de Sinaloa sigue sin identificarse. No se cambió su texto, modalidad, imágenes, revisión, solicitud ni estados en CMS.
+## Registro de errores futuros y contrato del catálogo
+
+Se compactó un párrafo del Motor existente para conservar en Work paquete/revisión, etapa, última herramienta/ejecución y tipo/código/módulo/línea de una excepción realmente observada, sin mensaje crudo, secretos ni fuentes. No se envían trazas técnicas a Telegram. La instrucción dice expresamente que se informe cuando no consta una excepción.
+
+También se hizo explícito el callback de catálogo: `fetchPage=async({site,page})=>structuredContent;`. El helper pasa un objeto, no argumentos posicionales. Un adaptador local inicialmente incorrecto fue corregido antes del preflight exitoso; **no se presenta como la excepción histórica**.
+
+Lectura independiente final del prompt: 65,524 caracteres, Motor `6ae9095256948191b33f1e023fbfbf8b`, misma identidad, habilitación, horario, timezone, entorno y pins. Sin un consumidor nuevo ni reejecución automática de históricos.
+
+La publicación y el bloqueo operativo de esta solicitud están resueltos. El issue61 permanece abierto únicamente por el límite de diagnóstico original y por la aceptación de captura ante una excepción controlada, sin necesidad de volver a publicar esta nota. El inventario /estado previo a /listo se sigue en #35 como mejora separada.
