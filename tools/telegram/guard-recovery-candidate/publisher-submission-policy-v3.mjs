@@ -7,7 +7,7 @@ const unavailable=()=>({status:'RESULT_UNCONFIRMED',completionPermitted:false,re
 // A Motor must execute this check on the authenticated manifest, not on a
 // source document or a model reconstruction. No result grants a new write.
 export function validatePublisherSubmissionOutcome(inventory,expected){
- if(expected?.policy!=='publish-todos-v3')return validateLegacy(inventory,expected);
+ if(!['publish-todos-v3','publish-ambos-v4'].includes(expected?.policy))return validateLegacy(inventory,expected);
  try{
   const {packageId,revision,requestId,phase,destination,slug,submissionHash=null}=expected??{};
   const sites=resolveVersionedDestinations(destination,expected.policy);

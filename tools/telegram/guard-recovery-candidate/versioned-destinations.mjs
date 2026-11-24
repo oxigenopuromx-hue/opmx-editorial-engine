@@ -4,7 +4,8 @@
 const registries=Object.freeze({
  'publish-ambos-v1':Object.freeze(['OPURO','OPOL']),
  'publish-todos-v2':Object.freeze(['OPURO','OPOL','LIBERAL']),
- 'publish-todos-v3':Object.freeze(['OPURO','OPOL','LIBERAL','HORIZONTE'])
+ 'publish-todos-v3':Object.freeze(['OPURO','OPOL','LIBERAL','HORIZONTE']),
+ 'publish-ambos-v4':Object.freeze(['OPURO','OPOL','LIBERAL','HORIZONTE'])
 });
 export function resolveVersionedDestinations(value,policy) {
  const allowed=registries[policy];
@@ -15,7 +16,7 @@ export function resolveVersionedDestinations(value,policy) {
  for(const item of value.split(',')){
   const token=item.trim().toUpperCase();
   if(!token)throw Error('DESTINATION_EMPTY');
-  const names=token==='AMBOS'?['OPURO','OPOL']:token==='TODOS'?allowed:token==='ACTIVOS'&&policy==='publish-todos-v3'?['OPURO','OPOL','LIBERAL']:[token];
+  const names=token==='AMBOS'?['OPURO','OPOL']:token==='TODOS'?allowed:token==='ACTIVOS'&&['publish-todos-v3','publish-ambos-v4'].includes(policy)?['OPURO','OPOL','LIBERAL']:[token];
   for(const name of names){if(!allowed.includes(name))throw Error('DESTINATION_UNKNOWN');selected.add(name)}
  }
  return allowed.filter(name=>selected.has(name));
@@ -26,7 +27,7 @@ export function versionedDestinationLabel(destinations,policy){
  if(!Array.isArray(destinations)||!destinations.length||destinations.some(v=>typeof v!=='string'||!allowed.includes(v))||new Set(destinations).size!==destinations.length)throw Error('DESTINATION_INVALID');
  const sorted=allowed.filter(v=>destinations.includes(v));
  if(sorted.length===allowed.length&&policy!=='publish-ambos-v1')return 'TODOS';
- if(policy==='publish-todos-v3'&&sorted.length===3&&sorted[0]==='OPURO'&&sorted[1]==='OPOL'&&sorted[2]==='LIBERAL')return 'ACTIVOS';
+ if(['publish-todos-v3','publish-ambos-v4'].includes(policy)&&sorted.length===3&&sorted[0]==='OPURO'&&sorted[1]==='OPOL'&&sorted[2]==='LIBERAL')return 'ACTIVOS';
  if(sorted.length===2&&sorted[0]==='OPURO'&&sorted[1]==='OPOL')return 'AMBOS';
  return sorted.join(',');
 }
@@ -34,7 +35,7 @@ export function parseVersionedDestinationCommand(text,policy){
  if(typeof text!=='string')throw Error('INVALID_COMMAND');
  const match=new RegExp('^/(publicar|borrador)(?:[ \\t]+([A-Za-z0-9_, ]+))?$','i').exec(text.trim());
  if(!match)throw Error('INVALID_COMMAND');
- const value=match[2]??(policy==='publish-ambos-v1'?'AMBOS':'TODOS');
+ const value=match[2]??(['publish-ambos-v1','publish-ambos-v4'].includes(policy)?'AMBOS':'TODOS');
  const destinations=resolveVersionedDestinations(value,policy);
  return {mode:match[1].toLowerCase()==='publicar'?'PUBLISH':'DRAFT',destination:versionedDestinationLabel(destinations,policy),destinations,policy};
 }
