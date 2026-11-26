@@ -10,6 +10,19 @@ const validText=(v,max)=>typeof v==='string'&&v.length<=max&&!unsafe.test(v)&&!/
 const escape=v=>v.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const fail=code=>{throw Error(code)};
 
+// Some WordPress roles store esc_html-equivalent attachment captions. Compare
+// one encoding layer only; this never removes HTML or changes editorial text.
+export function inlineMetadataMatches(actual,expected){
+  if(typeof actual!=='string'||typeof expected!=='string')return false;
+  if(actual===expected)return true;
+  const named={amp:'&',AMP:'&',lt:'<',LT:'<',gt:'>',GT:'>',quot:'"',QUOT:'"',apos:"'",nbsp:'\u00a0'};
+  return actual.replace(/&(#(?:[0-9]+|x[a-f0-9]+)|amp|AMP|lt|LT|gt|GT|quot|QUOT|apos|nbsp);/gi,(token,key)=>{
+    if(Object.hasOwn(named,key))return named[key];
+    const point=/^#x/i.test(key)?parseInt(key.slice(2),16):Number(key.slice(1));
+    return Number.isSafeInteger(point)&&point>0&&point<=0x10ffff&&!(point>=0xd800&&point<=0xdfff)?String.fromCodePoint(point):token;
+  })===expected;
+}
+
 export function inlineMediaRole(id){if(!imageId.test(id??''))fail('INLINE_IMAGE_ID_INVALID');return 'interior_'+id.slice(3);}
 
 export function readInlinePlan(master){
@@ -52,7 +65,7 @@ export function decodeInlineBundle(bundle,plan){
   const assets=bundle.images.map(row=>{
     if(!row||typeof row!=='object'||Array.isArray(row)||Object.keys(row).sort().join(',')!=='base64,id'||!imageId.test(row.id??'')||seen.has(row.id))fail('INLINE_BUNDLE_ASSET_INVALID');
     seen.add(row.id);const declared=plan.find(x=>x.ID===row.id);
-    if(!declared||typeof row.base64!=='string'||!row.base64.length||row.base64.length>4*Math.ceil(INLINE_MEDIA_LIMITS.fileBytes/3)||! /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(row.base64))fail('INLINE_BUNDLE_ASSET_INVALID');
+    if(!declared||typeof row.base64!=='string'||!row.base64.length||row.base64.length%4||row.base64.length>4*Math.ceil(INLINE_MEDIA_LIMITS.fileBytes/3)||/[^A-Za-z0-9+/=]/.test(row.base64))fail('INLINE_BUNDLE_ASSET_INVALID');
     const buffer=Buffer.from(row.base64,'base64');
     if(buffer.toString('base64')!==row.base64||buffer.length!==declared.BYTES||imageSignature(buffer)!==declared.MIME)fail('INLINE_BUNDLE_BYTES_INVALID');
     return {id:row.id,base64:row.base64,buffer,manifest:declared};
@@ -97,7 +110,7 @@ export function verifyInlineAttachment(row,attachment,destination){
 export function inlineImageBlock(row,attachment,destination){
   verifyInlineAttachment(row,attachment,destination);
   const caption=[row.LEYENDA,row.CREDITO].filter(Boolean).join(' | ');
-  const figure='<figure class="wp-block-image size-full"><img src="'+escape(attachment.url)+'" alt="'+escape(row.ALT)+'" class="wp-image-'+attachment.id+'"/>'+
+  const figure='<figure class="wp-block-image size-full"><img src="'+escape(attachment.url)+'" alt="'+escape(row.ALT)+'" class="wp-image-'+attachment.id+'" />'+
     (caption?'<figcaption class="wp-element-caption">'+escape(caption)+'</figcaption>':'')+'</figure>';
   return '<!-- wp:image '+JSON.stringify({id:attachment.id,sizeSlug:'full',linkDestination:'none'})+' -->\n'+figure+'\n<!-- /wp:image -->';
 }

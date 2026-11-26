@@ -1,11 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {readInlinePlan,decodeInlineBundle,assertInlineImageHash,paragraphBoundaries,renderInlineMedia,stripVerifiedInlineMedia,inlineImageBlock} from './inline-media.mjs';
+import {readInlinePlan,decodeInlineBundle,assertInlineImageHash,paragraphBoundaries,renderInlineMedia,stripVerifiedInlineMedia,inlineImageBlock,inlineMetadataMatches} from './inline-media.mjs';
 import {assertLiteralCanonicalText} from './literal-text.mjs';
 const gb=['Primer párrafo.','Segundo párrafo.','Tercer párrafo.'].map(x=>'<!-- wp:paragraph -->\n<p>'+x+'</p>\n<!-- /wp:paragraph -->').join('\n\n');
 const bytes=Buffer.from([137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82]);
 const hash=createHash('sha256').update(bytes).digest('hex');
+
+test('WordPress attachment metadata accepts one entity encoding without removing markup or changing words',()=>{
+ assert.equal(inlineMetadataMatches('Crédito &amp; foto','Crédito & foto'),true);
+ assert.equal(inlineMetadataMatches('Crédito &#038; foto','Crédito & foto'),true);
+ assert.equal(inlineMetadataMatches('Crédito &#x26; foto','Crédito & foto'),true);
+ assert.equal(inlineMetadataMatches('Crédito &amp;amp; foto','Crédito & foto'),false);
+ assert.equal(inlineMetadataMatches('<p>Crédito &amp; foto</p>','Crédito & foto'),false);
+ assert.equal(inlineMetadataMatches('Crédito &amp; otra','Crédito & foto'),false);
+ assert.equal(inlineMetadataMatches('Crédito &#0; foto','Crédito & foto'),false);
+});
 const image=(id='img01',after=1)=>({ID:id,SHA256:hash,BYTES:bytes.length,MIME:'image/png',DESPUES_PARRAFO:after,ALT:'Imagen aportada',LEYENDA:'',CREDITO:''});
 const master=(images=[image()])=>({IMAGENES:{INTERIORES:images},GUTENBERG_FINAL:gb,GUTENBERG_ENRIQUECIDO_FINAL:gb});
 const attachment=(assetId='img01',id=100,site='OPURO')=>({assetId,id,url:({OPURO:'https://cms.oxigenopuro.com.mx',OPOL:'https://cms.oxigenopolitico.com.mx',LIBERAL:'https://cms.elliberal.mx',HORIZONTE:'https://cms.horizontedecalifornia.mx'})[site]+'/wp-content/uploads/2026/11/image-'+id+'.png'});
@@ -22,6 +32,11 @@ test('rejects corrupt bytes, duplicates, extra files and missing files',()=>{
   for(const images of [[],[row,row],[{...row,id:'img02'}],[{...row,base64:'A'.repeat(16)}]]){
     assert.throws(()=>decodeInlineBundle({schema:'opmx.inline-images.v1',images},plan),/INLINE_/);
   }
+});
+test('validates canonical Base64 at the 10MiB transport limit without recursive matching',()=>{
+  const original=Buffer.alloc(10*1024*1024);bytes.copy(original);const manifest={...image(),BYTES:original.length,SHA256:createHash('sha256').update(original).digest('hex')};
+  const plan=readInlinePlan(master([manifest]));const assets=decodeInlineBundle({schema:'opmx.inline-images.v1',images:[{id:'img01',base64:original.toString('base64')}]},plan);
+  assert.equal(assets[0].buffer.length,original.length);assertInlineImageHash(assets[0],manifest.SHA256);
 });
 test('manifest positions must exist in both delivery variants',()=>{
   assert.throws(()=>readInlinePlan(master([image('img01',4)])),/POSITION_OUT_OF_RANGE/);

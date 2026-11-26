@@ -127,6 +127,7 @@ test('manifest adds optional interiors while preserving the previous text contra
  assert.deepEqual(newLiteral.properties.SEO,literal.properties.SEO);assert.deepEqual(newLiteral.properties.TEXTO_EDITORIAL,literal.properties.TEXTO_EDITORIAL);
  assert.deepEqual(newLiteral.properties.IMAGENES.properties.INTERIORES,media.properties.IMAGENES.properties.INTERIORES);
  assert.equal(media.properties.IMAGENES.properties.INTERIORES.maxItems,16);assert.equal(media.contract_rules.secondary_images_object_in_master,true);
+ assert.equal(manifest.optional_extensions.inline_media.motor_instructions,'docs/MOTOR_IMAGES_V1.md');
  assert.equal(editorial.properties.SEO.properties.TITULO_SEO.maxLength,60);assert.equal(editorial.properties.SEO.properties.SUBTITULO.maxLength,160);assert.equal(editorial.properties.TEXTO_EDITORIAL.properties.EN_BREVE.minItems,2);assert.equal(editorial.properties.TEXTO_EDITORIAL.properties.SECCIONES.minItems,1);
  assert.equal(Object.hasOwn(literal.properties.SEO.properties.TITULO_SEO,'maxLength'),false);assert.equal(literal.properties.SEO.properties.SUBTITULO.maxLength,500);assert.equal(literal.properties.TEXTO_EDITORIAL.properties.EN_BREVE.maxItems,0);assert.equal(literal.properties.TEXTO_EDITORIAL.properties.SECCIONES.maxItems,0);
  assert.deepEqual(literal.properties.IMAGENES,editorial.properties.IMAGENES);assert.deepEqual(literal.properties.CATEGORIAS,editorial.properties.CATEGORIAS);

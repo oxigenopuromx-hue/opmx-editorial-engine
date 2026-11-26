@@ -166,6 +166,14 @@
     }
   },
   "optional_extensions": {
+    "inline_media": {
+      "version": "1.0",
+      "status": "APPROVED_FOR_COORDINATED_RELEASE",
+      "path": "docs/INLINE_MEDIA_V1.md",
+      "motor_instructions": "docs/MOTOR_IMAGES_V1.md",
+      "applies_to": ["EDITORIAL", "LITERAL"],
+      "selection": "Fotos activas verificadas por SHA256; Hero y destacada mediante etiquetas o dimensiones, interiores mediante manifiesto y bytes reales. Requiere MCP, escritor y Guard compatibles; conserva la autoridad de publicación y la solicitud originales."
+    },
     "opuro_category_home": {
       "version": "1.0",
       "status": "APPROVED_FOR_RELEASE",
