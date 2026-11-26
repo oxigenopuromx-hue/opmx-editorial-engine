@@ -1,0 +1,66 @@
+{
+  "status": "PRODUCTION_ACTIVE_VERIFIED",
+  "executionId": "98101",
+  "guardMerge": "db59e37bcab3dd849a156f53d6d69e5acbe3df8a",
+  "motorEnabled": true,
+  "motorPromptUnchanged": true,
+  "receiverVersion": "e1464379-af6e-4a95-ac90-53e02fef8e7f",
+  "qaRestored": true,
+  "runtime": {
+    "status": "RUNTIME_OBSERVED",
+    "observedAt": "2026-11-26T23:56:31.404Z",
+    "versionsMatch": true,
+    "noActiveN8nWriters": true,
+    "executionPages": [
+      {
+        "status": "running",
+        "complete": true,
+        "executions": []
+      },
+      {
+        "status": "waiting",
+        "complete": true,
+        "executions": []
+      },
+      {
+        "status": "new",
+        "complete": true,
+        "executions": []
+      }
+    ],
+    "workflows": [
+      {
+        "id": "bnzVMNkZuGO1GQCZ",
+        "activeVersionId": "ba21b431-f3d8-4278-9c69-ae24789eb492",
+        "nodeCount": 203
+      },
+      {
+        "id": "Mt7ts2EGPbyaTC2o",
+        "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+        "nodeCount": 58
+      },
+      {
+        "id": "4o7K5TmKc7joScqB",
+        "activeVersionId": "00ce6967-4d3b-463c-bd5e-804c68bb533a",
+        "nodeCount": 287
+      },
+      {
+        "id": "C4hk6fQQomueYC8f",
+        "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+        "nodeCount": 10
+      },
+      {
+        "id": "qBmLf0DmcMSfuWvm",
+        "activeVersionId": "355d529f-8bd6-4f58-8ba4-4cd19d8ac658",
+        "nodeCount": 10
+      },
+      {
+        "id": "lgh8mpDLuJHTVCKk",
+        "activeVersionId": "130b5033-3389-40dc-bd5c-0d8e47529a8c",
+        "nodeCount": 312
+      }
+    ],
+    "authorizesRecovery": false,
+    "motorTerminationVerified": false
+  }
+}

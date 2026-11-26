@@ -1,6 +1,8 @@
 # OPMX Pipeline — Handoff maestro
 
-Estado histórico: 2026-10-25. Para Publisher y Telegram, prevalece el [estado operativo del 4 de noviembre de 2026](operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md), verificado contra configuraciones activas. Las secciones anteriores a ese corte son historia y no identifican necesariamente el flujo vigente.
+Estado vigente de Publisher Telegram: 26/11/2026. Las imágenes interiores del #62 y la publicación posterior del #55 están instaladas. Para añadir un medio a una nota existente, consultar [Publicar un paquete existente en otro medio](PUBLISH_TO_ADDITIONAL_DESTINATION_V1.md) y su [aceptación de producción](operations/issue55-additional-publication-20261126/acceptance.md). Se conserva el mismo Motor; no se usan GitHub Actions.
+
+Los cortes siguientes registran historia, incluido el [estado del 4 de noviembre](operations/PUBLISHER_TELEGRAM_ESTADO_2026-11-04.md); no identifican necesariamente los flujos o versiones actuales.
 
 ## Propósito
 Punto de entrada técnico para cualquier instancia de ChatGPT Work que opere el flujo OPMX desde la salida editorial hasta distribución social.
@@ -167,3 +169,4 @@ Estado: piloto visual verificado en OPURO con el borrador `post_id=2790` (“Cla
 ### Decisión adicional — cuerpo compartido
 
 `GUTENBERG_EDITORIAL_RENDERING_CONTRACT_v1.0.md` ahora fija `content_gutenberg_v1` como futuro cuerpo editorial canónico compartido por OPURO y OPOL: un documento con bloques Gutenberg nativos, no un bloque HTML monolítico. El Motor entrega blueprint estructurado; Publisher serializa y valida; cada frontend aplica su piel de marca. Pendiente: contrato formal, Publisher vNext, serializador, pruebas y CSS de paridad OPOL.
+
