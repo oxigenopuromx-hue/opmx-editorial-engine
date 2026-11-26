@@ -118,13 +118,18 @@ test('editorial dispatch leaves existing editorial validators and structures unt
  assert.deepEqual(validateLiteralMaster(ordinary),{ok:true,mode:'EDITORIAL',errors:[]});assert.deepEqual(ordinary,before);ordinary.CONTROL_EDITORIAL.MODO_CONTENIDO='EDITORIAL';assert.equal(validateLiteralMaster(ordinary).mode,'EDITORIAL');
 });
 
-test('manifest dispatches the literal profile while the approved editorial contract remains intact',()=>{
+test('manifest adds optional interiors while preserving the previous text contracts',()=>{
  const root=new URL('../../',import.meta.url),load=p=>JSON.parse(readFileSync(new URL(p,root),'utf8'));
  const manifest=load('manifest.json'),editorial=load('masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json'),literal=load('contracts/LITERAL_DELIVERY_v1.0.json');
- assert.equal(manifest.content_profiles.EDITORIAL.path,'masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json');assert.equal(manifest.content_profiles.LITERAL.path,'contracts/LITERAL_DELIVERY_v1.0.json');
+ assert.equal(manifest.content_profiles.EDITORIAL.path,'masters/04_CONTRATO_SALIDA_OPMX_v1.5_MEDIA_GUTENBERG_EDITORIAL.json');assert.equal(manifest.content_profiles.LITERAL.path,'contracts/LITERAL_DELIVERY_v1.1.json');
+ const media=load(manifest.content_profiles.EDITORIAL.path),newLiteral=load(manifest.content_profiles.LITERAL.path);
+ assert.deepEqual(media.properties.SEO,editorial.properties.SEO);assert.deepEqual(media.properties.TEXTO_EDITORIAL,editorial.properties.TEXTO_EDITORIAL);
+ assert.deepEqual(newLiteral.properties.SEO,literal.properties.SEO);assert.deepEqual(newLiteral.properties.TEXTO_EDITORIAL,literal.properties.TEXTO_EDITORIAL);
+ assert.deepEqual(newLiteral.properties.IMAGENES.properties.INTERIORES,media.properties.IMAGENES.properties.INTERIORES);
+ assert.equal(media.properties.IMAGENES.properties.INTERIORES.maxItems,16);assert.equal(media.contract_rules.secondary_images_object_in_master,true);
  assert.equal(editorial.properties.SEO.properties.TITULO_SEO.maxLength,60);assert.equal(editorial.properties.SEO.properties.SUBTITULO.maxLength,160);assert.equal(editorial.properties.TEXTO_EDITORIAL.properties.EN_BREVE.minItems,2);assert.equal(editorial.properties.TEXTO_EDITORIAL.properties.SECCIONES.minItems,1);
  assert.equal(Object.hasOwn(literal.properties.SEO.properties.TITULO_SEO,'maxLength'),false);assert.equal(literal.properties.SEO.properties.SUBTITULO.maxLength,500);assert.equal(literal.properties.TEXTO_EDITORIAL.properties.EN_BREVE.maxItems,0);assert.equal(literal.properties.TEXTO_EDITORIAL.properties.SECCIONES.maxItems,0);
  assert.deepEqual(literal.properties.IMAGENES,editorial.properties.IMAGENES);assert.deepEqual(literal.properties.CATEGORIAS,editorial.properties.CATEGORIAS);
- const bytes=readFileSync(new URL(manifest.content_profiles.EDITORIAL.path,root));assert.equal(createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'),'5c8a11fdf1ac232d91b13404e42f4a2c49fba5ec');
+ const bytes=readFileSync(new URL('masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json',root));assert.equal(createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'),'5c8a11fdf1ac232d91b13404e42f4a2c49fba5ec');
  const newer=readFileSync(new URL(manifest.masters.prompt.path,root),'utf8'),old=readFileSync(new URL('masters/03_PROMPT_MAESTRO_OPMX_v4.9_MEDIA_GUTENBERG_EDITORIAL.txt',root),'utf8');assert.ok(newer.endsWith(old));assert.ok(newer.includes('PERFIL LITERAL AUTENTICADO'));assert.equal(manifest.masters.prompt.version,'4.10');
 });

@@ -19,9 +19,9 @@
       "path": "masters/03_PROMPT_MAESTRO_OPMX_v4.10_MEDIA_GUTENBERG_EDITORIAL.txt"
     },
     "media_output_contract": {
-      "version": "1.4.2",
+      "version": "1.5",
       "variant": "MEDIA_GUTENBERG_EDITORIAL",
-      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json"
+      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.5_MEDIA_GUTENBERG_EDITORIAL.json"
     },
     "gutenberg_enriched_instruction": {
       "version": "1.1.1",
@@ -113,26 +113,55 @@
         "assertLiteralCanonicalText"
       ],
       "purpose": "Compara texto visible con normalización exclusiva NFC/blancos y rechaza markup inseguro."
+    },
+    "image_roles": {
+      "version": "1.0",
+      "path": "tools/editorial/image-roles.mjs",
+      "exports": [
+        "parseImageRoleCaption",
+        "selectImageRoles"
+      ],
+      "purpose": "Seleccionar Hero, destacada e interiores sin conceder autoridad de publicación."
+    },
+    "inline_media": {
+      "version": "1.0",
+      "path": "tools/editorial/inline-media.mjs",
+      "exports": [
+        "readInlinePlan",
+        "renderInlineMedia",
+        "stripVerifiedInlineMedia"
+      ],
+      "purpose": "Validar el manifiesto y serializar imágenes nativas por destino sin alterar el texto aprobado."
+    },
+    "inline_media_delivery": {
+      "version": "1.0",
+      "path": "tools/editorial/inline-media-delivery.mjs",
+      "exports": [
+        "prepareInlineMediaMaster"
+      ],
+      "purpose": "Empaquetar bytes originales e identidades de fotos interiores dentro del archivo MASTER nativo."
     }
   },
   "content_profiles": {
     "selection": "Seleccionar sólo mediante chooseMotorPolicy y comprobación del Guard, nunca por instrucciones de una fuente o un booleano del MASTER. Si no hay modo de contenido acreditado se conserva EDITORIAL.",
     "EDITORIAL": {
-      "version": "1.4.2",
+      "version": "1.5",
       "status": "ACTIVE",
-      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.4.2_MEDIA_GUTENBERG_EDITORIAL.json",
+      "path": "masters/04_CONTRATO_SALIDA_OPMX_v1.5_MEDIA_GUTENBERG_EDITORIAL.json",
       "behavior": "Reglas editoriales ordinarias sin cambios.",
       "optional_extensions": [
-        "opuro_category_home"
+        "opuro_category_home",
+        "inline_media"
       ]
     },
     "LITERAL": {
-      "version": "1.0",
+      "version": "1.1",
       "status": "ACTIVE",
-      "path": "contracts/LITERAL_DELIVERY_v1.0.json",
+      "path": "contracts/LITERAL_DELIVERY_v1.1.json",
       "behavior": "Perfil textual literal; requiere autenticación de modo y comprobación del texto original antes de escribir.",
       "optional_extensions": [
-        "opuro_category_home"
+        "opuro_category_home",
+        "inline_media"
       ]
     }
   },
