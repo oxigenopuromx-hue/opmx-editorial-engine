@@ -1,0 +1,162 @@
+{
+  "issue": 62,
+  "status": "DEPLOYED_AND_ACTIVE",
+  "date": "2026-11-26",
+  "timezone": "America/Mexico_City",
+  "noGithubActions": true,
+  "engine": {
+    "pr": 63,
+    "commit": "da0753303597dc15bfafcac04b45e5767fd3bf25",
+    "merge": "e78f5256fe409c7648b66f5063cf00316b4e2967"
+  },
+  "guard": {
+    "pr": 24,
+    "commit": "64c4fba57115701eabae2f1d11c04f1faffdd70a",
+    "merge": "d311cf5e250304b51c6bb101d625e678d4ef9b1a",
+    "deployment": "Hostinger Git, observed completed/current"
+  },
+  "motor": {
+    "enabled": true,
+    "updatedAt": "2026-11-26T20:07:53.352495+00:00",
+    "promptCharacters": 60107,
+    "imageInstructionsCommit": "da0753303597dc15bfafcac04b45e5767fd3bf25",
+    "subscriptionPreserved": true
+  },
+  "runtime": {
+    "status": "RUNTIME_OBSERVED",
+    "versionsMatch": true,
+    "noActiveWriters": true,
+    "observedAt": "2026-11-26T20:03:49.465Z",
+    "workflows": [
+      {
+        "id": "bnzVMNkZuGO1GQCZ",
+        "activeVersionId": "288249a4-e8a1-4431-9886-22781c718230",
+        "nodeCount": 203
+      },
+      {
+        "id": "Mt7ts2EGPbyaTC2o",
+        "activeVersionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+        "nodeCount": 58
+      },
+      {
+        "id": "4o7K5TmKc7joScqB",
+        "activeVersionId": "5156fe27-b568-43e7-bb09-03e31060ba37",
+        "nodeCount": 276
+      },
+      {
+        "id": "C4hk6fQQomueYC8f",
+        "activeVersionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+        "nodeCount": 10
+      },
+      {
+        "id": "qBmLf0DmcMSfuWvm",
+        "activeVersionId": "355d529f-8bd6-4f58-8ba4-4cd19d8ac658",
+        "nodeCount": 10
+      }
+    ]
+  },
+  "tests": {
+    "engine": 137,
+    "guardSpecific": 31,
+    "guardNpmTest": "PASS",
+    "isolatedMariaDB": {
+      "assertionGroups": 197,
+      "mediaSlots": 64
+    },
+    "nativeSemantic": {
+      "execution": "96996",
+      "cases": 8
+    },
+    "nativeCms": {
+      "executions": [
+        "97017",
+        "97046"
+      ],
+      "destinations": [
+        "OPURO",
+        "OPOL",
+        "LIBERAL",
+        "HORIZONTE"
+      ],
+      "interiorsPerDraft": 2,
+      "draftsTrashed": 4
+    },
+    "nativeFileValidation": {
+      "status": "FILES_VALIDATED",
+      "bytesVerified": true,
+      "destino": "OPURO",
+      "slug": "opmx-prueba-tecnica-interiores-20261126",
+      "estado": "LISTO",
+      "bytes": {
+        "master": 5232,
+        "destacada": 5029,
+        "hero": 6154
+      },
+      "validation_scope": {
+        "ok": true,
+        "status": "MASTER_SEMANTICS_VALIDATED",
+        "scope": "STATIC_MASTER_AND_VERIFIED_IMAGE_BYTES",
+        "shared_workflow_id": "4o7K5TmKc7joScqB",
+        "shared_version_id": "5156fe27-b568-43e7-bb09-03e31060ba37",
+        "prepare_sha256": "72de87351020ff161ee310a2a4a6c57bab5924e165f25562e5e225b7bf512487",
+        "normalizer_sha256": "74999254dd77928d986b6b25ecaf10b97edd5ae547d6374352bbaa59f1dac106",
+        "live_cms_checks": "NOT_CHECKED",
+        "placement_authority": "NOT_CHECKED",
+        "request_binding": "NOT_CHECKED",
+        "writesStarted": false,
+        "retryPermitted": false
+      }
+    },
+    "completeWriter": {
+      "execution": "97082",
+      "cleanup": "97086",
+      "requestId": "opmx_qa62_20261126_native",
+      "status": "COMPLETE_SHARED_DELIVERY_PASS_AND_TRASHED",
+      "postId": 11264,
+      "publications": 0,
+      "sourceTextPreserved": true,
+      "interiors": [
+        {
+          "assetId": "img01",
+          "id": 11262,
+          "url": "https://cms.oxigenopuro.com.mx/wp-content/uploads/2026/11/opmx-img01-a3295dcedec7.png",
+          "transport": "WORDPRESS_CONTENT_MD5",
+          "sourceSha256": "a3295dcedec76ad75a290baae7ad968d2d3a12bb414d8cdee47ea8885d68b092"
+        },
+        {
+          "assetId": "img02",
+          "id": 11263,
+          "url": "https://cms.oxigenopuro.com.mx/wp-content/uploads/2026/11/opmx-img02-9685f00a48af.png",
+          "transport": "WORDPRESS_CONTENT_MD5",
+          "sourceSha256": "9685f00a48af4b1700565684cd0032f5d132915f13f005f6855d42e0669e677e"
+        }
+      ]
+    },
+    "destinationCombinations": {
+      "cases": 30,
+      "status": "PASS"
+    },
+    "publicationPreservation": {
+      "destinations": 4,
+      "status": "PASS",
+      "realPublicationRequests": 0
+    }
+  },
+  "limits": {
+    "interiors": 16,
+    "fileBytes": 10485760,
+    "totalBytes": 26214400
+  },
+  "scope": {
+    "createEditorial": true,
+    "createLiteral": true,
+    "updateWithNewInteriors": false,
+    "laterAdditionalDestinationsIssue": 55,
+    "manualPublisherGeneralIssue": 56
+  },
+  "cleanup": {
+    "technicalDraftsTrashed": 5,
+    "realPublicationRequests": 0,
+    "qaOriginalTwoNodesRestored": true
+  }
+}
