@@ -1,0 +1,46 @@
+{
+  "schema": "opmx.additional-publication-release.v1",
+  "status": "ACTIVE_VERIFIED",
+  "noGithubActions": true,
+  "guardBase": "d311cf5e250304b51c6bb101d625e678d4ef9b1a",
+  "workflows": {
+    "mcp": {
+      "id": "bnzVMNkZuGO1GQCZ",
+      "versionId": "ba21b431-f3d8-4278-9c69-ae24789eb492",
+      "graphHash": "f0300b59b84a6b03499effa121c22a35c00e628238882dae9672db1cbc2605ab",
+      "nodes": 203
+    },
+    "writer": {
+      "id": "4o7K5TmKc7joScqB",
+      "versionId": "00ce6967-4d3b-463c-bd5e-804c68bb533a",
+      "graphHash": "db723a582f5e0839bbdc5eaa2738c705d3564825b0345608b6a578b91f2af1f1",
+      "nodes": 287
+    },
+    "copy-writer": {
+      "id": "lgh8mpDLuJHTVCKk",
+      "versionId": "130b5033-3389-40dc-bd5c-0d8e47529a8c",
+      "graphHash": "9287858f8ac7e7dcaa2348d7561975ac66fc2727b693092c73156807cb7741ed",
+      "nodes": 312
+    },
+    "runtime": {
+      "id": "2HBn1RnSYgyxuHgE",
+      "versionId": "2540fb3f-2266-4edd-bd4e-4cd9eff251d7",
+      "graphHash": "33ca5cc2fed019cf122e2bfb2ce580fc7413756f28feba75da71e87336cca7e3",
+      "nodes": 14
+    },
+    "receiver": {
+      "id": "OSi8AcnzLlI0csRu",
+      "versionId": "e1464379-af6e-4a95-ac90-53e02fef8e7f",
+      "graphHash": "79f55b680033fdabd87a77568603bae6b2a83857788aafe26ca9bde25ac16e8f",
+      "nodes": 63
+    },
+    "observer": {
+      "id": "qewz99eB3DQeqEZo",
+      "versionId": "7e4d24ed-1920-4454-858c-f9912a69e014",
+      "graphHash": "8cb900bd936a1221d43c792392304b8c37cf5b77d29491a153dfc8cd89d02ae0",
+      "nodes": 40
+    }
+  },
+  "guardMerge": "db59e37bcab3dd849a156f53d6d69e5acbe3df8a",
+  "implementationMerge": "084258dcc332a72fb196d7943a8f96222bdd6ff3"
+}

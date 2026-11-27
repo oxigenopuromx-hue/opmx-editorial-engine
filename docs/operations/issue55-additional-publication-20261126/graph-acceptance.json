@@ -1,0 +1,41 @@
+{
+  "status": "ALL_PUBLISHED_GRAPHS_VERIFIED",
+  "writers": [
+    {
+      "id": "bnzVMNkZuGO1GQCZ",
+      "versionId": "ba21b431-f3d8-4278-9c69-ae24789eb492",
+      "graphHash": "f0300b59b84a6b03499effa121c22a35c00e628238882dae9672db1cbc2605ab"
+    },
+    {
+      "id": "4o7K5TmKc7joScqB",
+      "versionId": "00ce6967-4d3b-463c-bd5e-804c68bb533a",
+      "graphHash": "db723a582f5e0839bbdc5eaa2738c705d3564825b0345608b6a578b91f2af1f1"
+    },
+    {
+      "id": "lgh8mpDLuJHTVCKk",
+      "versionId": "130b5033-3389-40dc-bd5c-0d8e47529a8c",
+      "graphHash": "9287858f8ac7e7dcaa2348d7561975ac66fc2727b693092c73156807cb7741ed"
+    },
+    {
+      "id": "Mt7ts2EGPbyaTC2o",
+      "versionId": "5e0e1875-2996-4b8c-99aa-e4d07f7d8822",
+      "graphHash": "121dae57c374586b850619ade4f2e8dcb0dca8c0556f2f430d8335700067ffee"
+    },
+    {
+      "id": "qBmLf0DmcMSfuWvm",
+      "versionId": "355d529f-8bd6-4f58-8ba4-4cd19d8ac658",
+      "graphHash": "ea76f7528313f0ed11c9041a582c50e296962e6d45cc3c84fd3586b8f0d51c8d"
+    },
+    {
+      "id": "C4hk6fQQomueYC8f",
+      "versionId": "1eca0334-b3af-45d9-ac80-341e99a09faa",
+      "graphHash": "84e7d2bd08cb6cafa512ba505ac6e71468dc8f14e64405278c03439f599bd318"
+    }
+  ],
+  "receiver": {
+    "id": "OSi8AcnzLlI0csRu",
+    "versionId": "e1464379-af6e-4a95-ac90-53e02fef8e7f",
+    "graphHash": "79f55b680033fdabd87a77568603bae6b2a83857788aafe26ca9bde25ac16e8f",
+    "nodes": 63
+  }
+}
