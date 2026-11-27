@@ -1,0 +1,26 @@
+[
+  {
+    "destination": "OPURO",
+    "postId": 11294,
+    "status": "publish",
+    "snapshotHash": "bcdffef5f89b22524db912c67b0f869774f13f4eed4df70ec412fa32e9a65504"
+  },
+  {
+    "destination": "OPOL",
+    "postId": 4200,
+    "status": "publish",
+    "snapshotHash": "cac717818b58a38b316b6904691d3954471a0a52b44d187226f16dda183d4b34"
+  },
+  {
+    "destination": "LIBERAL",
+    "postId": 606,
+    "status": "draft",
+    "snapshotHash": "a5354736df4c9ac3d29c6d863ff38c8855e87bd0af8675dce76a7c927015a50b"
+  },
+  {
+    "destination": "HORIZONTE",
+    "postId": 148,
+    "status": "draft",
+    "snapshotHash": "e3b09f97d03b3bdea0dc158deda79211d3b3f3869c1976716d8b59737f5f9013"
+  }
+]
