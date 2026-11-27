@@ -1,0 +1,18 @@
+{
+  "schema": "opmx.default-destination-check.v1",
+  "receiverId": "OSi8AcnzLlI0csRu",
+  "previousVersion": "e1464379-af6e-4a95-ac90-53e02fef8e7f",
+  "versionId": "624aeb3b-d459-4120-aaa9-1f46db0d4b12",
+  "unitTests": 13,
+  "nativeExecution": "101301",
+  "nativeCases": 8,
+  "defaultForNewPackages": "AMBOS",
+  "destinations": [
+    "OPURO",
+    "OPOL"
+  ],
+  "explicitAllPreserved": true,
+  "historicalPoliciesPreserved": true,
+  "existingPublicationsModified": false,
+  "noGithubActions": true
+}
