@@ -1,0 +1,120 @@
+{
+  "schema": "opmx.queue-resume.acceptance.v1",
+  "packageId": "tg_7e86541dfd428f4547bdfec666a5fb55916f660e",
+  "revision": 7,
+  "eventId": "evt_e425b9ade89a93e73c5be2e79e71bcd1779245175aee9483",
+  "requestId": "tg_1153789a668d0a6a8ca931ba129228ae990c0b8becb33e64fc48e81d0d8f5315",
+  "destination": "AMBOS",
+  "targets": [
+    {
+      "destination": "OPURO",
+      "postId": 11319,
+      "slug": "costa-rica-niega-ingreso-francesca-albanese",
+      "status": "publish",
+      "cmsVerified": true,
+      "ledgerVerified": true
+    },
+    {
+      "destination": "OPOL",
+      "postId": 4220,
+      "slug": "costa-rica-niega-ingreso-francesca-albanese",
+      "status": "publish",
+      "cmsVerified": true,
+      "ledgerVerified": true
+    }
+  ],
+  "receiptHash": "ea2d413c98e7b2d472a12c2e114ca555e2b03377962fbbfdae67f33000e5aa77",
+  "finalObservation": {
+    "schema": "opmx.telegram.final-publication-observation.v1",
+    "status": "FINAL_PUBLICATION_CONFIRMED",
+    "packageId": "tg_7e86541dfd428f4547bdfec666a5fb55916f660e",
+    "revision": 7,
+    "requestId": "tg_1153789a668d0a6a8ca931ba129228ae990c0b8becb33e64fc48e81d0d8f5315",
+    "phase": "PUBLISH",
+    "destination": "AMBOS",
+    "slug": "costa-rica-niega-ingreso-francesca-albanese",
+    "receiptHash": "ea2d413c98e7b2d472a12c2e114ca555e2b03377962fbbfdae67f33000e5aa77",
+    "receiptState": "RECORDED",
+    "targets": [
+      {
+        "destination": "OPURO",
+        "postId": 11319,
+        "slug": "costa-rica-niega-ingreso-francesca-albanese",
+        "status": "publish",
+        "cmsVerified": true,
+        "ledgerVerified": true
+      },
+      {
+        "destination": "OPOL",
+        "postId": 4220,
+        "slug": "costa-rica-niega-ingreso-francesca-albanese",
+        "status": "publish",
+        "cmsVerified": true,
+        "ledgerVerified": true
+      }
+    ],
+    "writeAuthorized": false,
+    "retryPermitted": false,
+    "consistentSnapshot": true,
+    "writersIdleVerified": true,
+    "observedAt": "2026-11-27T19:14:56.998Z"
+  },
+  "materialInventoryUnchanged": true,
+  "motorRun": {
+    "id": "3c51d12c-953c-832f-b857-3330ae3aa303",
+    "recorded_status": "completed",
+    "scheduled_for": "2026-11-27T19:08:46.820866Z",
+    "started_at": "2026-11-27T19:08:52.639385Z",
+    "completed_at": "2026-11-27T19:12:20.075857Z",
+    "chat_ref": {
+      "type": "chatgpt",
+      "id": "6b05ee83-f4ec-83e8-b547-30c41ed788f2"
+    }
+  },
+  "motorResult": "La publicación quedó confirmada en WordPress para el paquete `tg_7e86541dfd428f4547bdfec666a5fb55916f660e`, revisión 7:\n\n- **OPURO:** nota 11319, publicada.\n- **OPOL:** nota 4220, publicada.\n\nSe verificaron la integridad SHA256 y la coherencia de los materiales, así como el MASTER y las imágenes. El aviso de publicación por Telegram fue confirmado y el intento quedó cerrado con `ATTEMPT_COMPLETED`.\n\nEl recibo acredita el resultado histórico; la visibilidad pública actual no fue comprobada. La automatización permanece habilitada.",
+  "pauseWindowPackages": [
+    "tg_7e86541dfd428f4547bdfec666a5fb55916f660e"
+  ],
+  "guardMerge": {
+    "sha": "5ff47707bfbc0ee48d7ebfbb4b3d550abbe7ecd8",
+    "merged": true,
+    "message": "Pull Request successfully merged"
+  },
+  "test": {
+    "assertionGroups": 30,
+    "concurrentRepairs": 8,
+    "realCmsWrites": 0
+  },
+  "actionsUsed": false,
+  "productionDeployment": {
+    "workflowExecution": "101837",
+    "observedAt": "2026-11-27T19:18:48.436Z",
+    "guardMerge": "5ff47707bfbc0ee48d7ebfbb4b3d550abbe7ecd8",
+    "status": {
+      "status": "EVENTS_STATUS",
+      "subscriptions": [
+        {
+          "state": "ACTIVE",
+          "count": 1
+        },
+        {
+          "state": "STOPPED",
+          "count": 6
+        }
+      ],
+      "deliveries": [
+        {
+          "state": "SENT",
+          "count": 380
+        }
+      ],
+      "activeUnexpiredSubscriptions": 1,
+      "backlog": {
+        "status": "UNCLAIMED_DELIVERY_BACKLOG",
+        "missingDeliveries": 0
+      }
+    }
+  },
+  "motorPromptPreserved": true,
+  "receiverAndWriterWorkflowsUnmodified": true
+}
